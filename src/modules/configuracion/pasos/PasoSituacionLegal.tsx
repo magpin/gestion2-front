@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AsistenteShell, RUTA_PASO } from "../components/AsistenteShell";
+import { AsistenteShell } from "../components/AsistenteShell";
 import { Bloque, Registrada, Registradas } from "../components/Bloque";
 import { Campo } from "../components/Campo";
 import { SelectorCiiu } from "@/modules/catalogos/components/SelectorCiiu";
@@ -73,7 +72,6 @@ const esquemaActividad = z.object({
  * de papeles distintos.
  */
 export function PasoSituacionLegal() {
-  const router = useRouter();
   const { data: estado } = useEstadoConfiguracion();
   const { data: empresa } = useQuery({
     queryKey: ["empresa"],
@@ -88,7 +86,6 @@ export function PasoSituacionLegal() {
     <AsistenteShell
       clave="SITUACION_LEGAL"
       titulo="Situación legal"
-      alContinuar={() => router.push(RUTA_PASO.RESOLUCIONES)}
       etiquetaContinuar={paso?.estado === "LISTO" ? "Continuar" : "Omitir"}
     >
       <div className="flex flex-col gap-7">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +10,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { AsistenteShell, RUTA_PASO } from "../components/AsistenteShell";
+import { AsistenteShell } from "../components/AsistenteShell";
 import { Bloque, Registrada, Registradas } from "../components/Bloque";
 import { Campo } from "../components/Campo";
 import { SelectorMunicipio } from "../components/SelectorMunicipio";
@@ -30,7 +29,6 @@ const esquema = z.object({
 type Datos = z.infer<typeof esquema>;
 
 export function PasoSedes() {
-  const router = useRouter();
   const [agregando, setAgregando] = useState(false);
 
   const { data: sedes = [] } = useQuery({
@@ -82,7 +80,6 @@ export function PasoSedes() {
       clave="SEDES"
       titulo="Sedes"
       etiquetaContinuar={activas.length > 0 ? "Continuar" : "Omitir"}
-      alContinuar={() => router.push(RUTA_PASO.SITUACION_LEGAL)}
     >
       <div className="flex flex-col gap-8">
         {activas.length > 0 && (

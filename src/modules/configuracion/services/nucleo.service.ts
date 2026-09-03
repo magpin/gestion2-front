@@ -60,12 +60,21 @@ export const empresaApi = {
     api.post(`/empresas/actual/sedes/${id}/desactivar`).then(() => undefined),
 
   configuracionContable: () =>
-    api.get<ConfiguracionContable>("/empresa-legal/configuracion-contable").then((r) => r.data),
+    api
+      .get<ConfiguracionContable>("/empresa-legal/configuracion-contable")
+      .then((r) => r.data),
   editarConfiguracionContable: (datos: Record<string, unknown>) =>
-    api.put<ConfiguracionContable>("/empresa-legal/configuracion-contable", datos).then((r) => r.data),
+    api
+      .put<ConfiguracionContable>(
+        "/empresa-legal/configuracion-contable",
+        datos,
+      )
+      .then((r) => r.data),
 
   estadoConfiguracion: () =>
-    api.get<EstadoConfiguracion>("/empresas/actual/estado-configuracion").then((r) => r.data),
+    api
+      .get<EstadoConfiguracion>("/empresas/actual/estado-configuracion")
+      .then((r) => r.data),
 };
 
 // ---------------------------------------------------------------------------
@@ -82,16 +91,22 @@ export interface FilaVigencia {
 
 export const legalApi = {
   regimenes: () =>
-    api.get<FilaVigencia[]>("/empresa-legal/regimenes?vigentes=false").then((r) => r.data),
+    api
+      .get<FilaVigencia[]>("/empresa-legal/regimenes?vigentes=false")
+      .then((r) => r.data),
   abrirRegimen: (datos: Record<string, unknown>) =>
     api.post("/empresa-legal/regimenes", datos).then((r) => r.data),
   cerrarRegimen: (id: string, fechaFin: string) =>
-    api.post(`/empresa-legal/regimenes/${id}/cerrar`, { fechaFin }).then(() => undefined),
+    api
+      .post(`/empresa-legal/regimenes/${id}/cerrar`, { fechaFin })
+      .then(() => undefined),
 
   /** Casilla 53 del RUT, con vigencia. El catálogo vive en `rutApi`. */
   responsabilidadesRut: () =>
     api
-      .get<FilaVigencia[]>("/empresa-legal/responsabilidades-rut?vigentes=false")
+      .get<FilaVigencia[]>(
+        "/empresa-legal/responsabilidades-rut?vigentes=false",
+      )
       .then((r) => r.data),
   abrirResponsabilidadRut: (datos: Record<string, unknown>) =>
     api.post("/empresa-legal/responsabilidades-rut", datos).then((r) => r.data),
@@ -101,16 +116,22 @@ export const legalApi = {
       .then(() => undefined),
 
   representantes: () =>
-    api.get<FilaVigencia[]>("/empresa-legal/representantes?vigentes=false").then((r) => r.data),
+    api
+      .get<FilaVigencia[]>("/empresa-legal/representantes?vigentes=false")
+      .then((r) => r.data),
   abrirRepresentante: (datos: Record<string, unknown>) =>
     api.post("/empresa-legal/representantes", datos).then((r) => r.data),
 
   actividades: () =>
-    api.get<FilaVigencia[]>("/empresa-legal/actividades?vigentes=false").then((r) => r.data),
+    api
+      .get<FilaVigencia[]>("/empresa-legal/actividades?vigentes=false")
+      .then((r) => r.data),
   abrirActividad: (datos: Record<string, unknown>) =>
     api.post("/empresa-legal/actividades", datos).then((r) => r.data),
   cerrarActividad: (id: string, fechaFin: string) =>
-    api.post(`/empresa-legal/actividades/${id}/cerrar`, { fechaFin }).then(() => undefined),
+    api
+      .post(`/empresa-legal/actividades/${id}/cerrar`, { fechaFin })
+      .then(() => undefined),
 
   /**
    * Los cuatro hechos que ningún documento declara. Se leen y se guardan
@@ -119,10 +140,14 @@ export const legalApi = {
   hechosOperativos: () =>
     api.get<string[]>("/empresa-legal/hechos-operativos").then((r) => r.data),
   guardarHechosOperativos: (hechos: string[]) =>
-    api.put<string[]>("/empresa-legal/hechos-operativos", { hechos }).then((r) => r.data),
+    api
+      .put<string[]>("/empresa-legal/hechos-operativos", { hechos })
+      .then((r) => r.data),
 
   matriculas: () =>
-    api.get<FilaVigencia[]>("/empresa-legal/matriculas?vigentes=false").then((r) => r.data),
+    api
+      .get<FilaVigencia[]>("/empresa-legal/matriculas?vigentes=false")
+      .then((r) => r.data),
   abrirMatricula: (datos: Record<string, unknown>) =>
     api.post("/empresa-legal/matriculas", datos).then((r) => r.data),
 };
@@ -162,7 +187,9 @@ export const resolucionesApi = {
   desactivar: (id: string) =>
     api.post(`/resoluciones/${id}/desactivar`).then(() => undefined),
   credenciales: () =>
-    api.get<EstadoCredenciales>("/resoluciones/credenciales").then((r) => r.data),
+    api
+      .get<EstadoCredenciales>("/resoluciones/credenciales")
+      .then((r) => r.data),
   guardarCredenciales: (datos: Record<string, unknown>) =>
     api.put("/resoluciones/credenciales", datos).then(() => undefined),
 };

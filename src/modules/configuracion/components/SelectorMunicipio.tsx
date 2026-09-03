@@ -6,7 +6,11 @@ import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { geografiaApi } from "../services/nucleo.service";
 
 interface Props {
@@ -54,12 +58,17 @@ export function SelectorMunicipio({ id, valor, onCambio, invalido }: Props) {
         className="w-full justify-between font-normal aria-invalid:border-danger"
       >
         <span className={valor ? "" : "text-muted-foreground"}>
-          {elegido ? `${elegido.nombre} · ${elegido.departamento_nombre}` : "Buscar municipio"}
+          {elegido
+            ? `${elegido.nombre} · ${elegido.departamento_nombre}`
+            : "Buscar municipio"}
         </span>
         <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
       </PopoverTrigger>
 
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] p-0"
+        align="start"
+      >
         <div className="border-b border-border p-2">
           <Input
             autoFocus
@@ -96,12 +105,16 @@ export function SelectorMunicipio({ id, valor, onCambio, invalido }: Props) {
                 <span className="truncate text-xs text-muted-foreground">
                   {m.departamento_nombre}
                 </span>
-                <span className="font-mono text-[10px] text-muted-foreground">{m.codigo}</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {m.codigo}
+                </span>
               </button>
             ))}
 
           {!isFetching && (data ?? []).length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">Sin resultados</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Sin resultados
+            </p>
           )}
         </div>
       </PopoverContent>

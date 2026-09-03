@@ -28,12 +28,16 @@ import { empresaApi } from "../services/nucleo.service";
 const esquema = z.object({
   tipoPersona: z.enum(["JURIDICA", "NATURAL"]),
   razonSocial: z.string().min(3, "Mínimo 3 caracteres").max(200),
-  nit: z.string().regex(/^[0-9]{5,15}$/, "Entre 5 y 15 dígitos, sin puntos ni guiones"),
+  nit: z
+    .string()
+    .regex(/^[0-9]{5,15}$/, "Entre 5 y 15 dígitos, sin puntos ni guiones"),
   sectores: z.array(z.enum(["COMERCIO", "SERVICIOS", "MANUFACTURA"])),
   /** RUT casilla 63. Solo jurídicas; el backend rechaza que una natural la traiga. */
   formaAsociativaCodigo: z.string().optional(),
   grupoNiif: z.enum(["GRUPO_1", "GRUPO_2", "GRUPO_3"]),
-  fechaInicioOperaciones: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato AAAA-MM-DD"),
+  fechaInicioOperaciones: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato AAAA-MM-DD"),
 });
 
 type Datos = z.infer<typeof esquema>;
@@ -96,12 +100,17 @@ export function CrearEmpresaView() {
         <h1 className="text-xl font-semibold tracking-tight">Nueva empresa</h1>
       </div>
 
-      <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={(e) => e.preventDefault()}
+      >
         <div className="grid gap-3 sm:grid-cols-[176px_1fr]">
           <Campo id="tipoPersona" etiqueta="Tipo de persona">
             <Select
               value={form.watch("tipoPersona")}
-              onValueChange={(v) => form.setValue("tipoPersona", v as Datos["tipoPersona"])}
+              onValueChange={(v) =>
+                form.setValue("tipoPersona", v as Datos["tipoPersona"])
+              }
             >
               <SelectTrigger id="tipoPersona">
                 <SelectValue />
@@ -113,14 +122,23 @@ export function CrearEmpresaView() {
             </Select>
           </Campo>
 
-          <Campo id="razonSocial" etiqueta="Razón social" error={errores.razonSocial?.message}>
+          <Campo
+            id="razonSocial"
+            etiqueta="Razón social"
+            error={errores.razonSocial?.message}
+          >
             <Input id="razonSocial" {...form.register("razonSocial")} />
           </Campo>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-[160px_72px_1fr]">
           <Campo id="nit" etiqueta="NIT" error={errores.nit?.message}>
-            <Input id="nit" className="font-mono" placeholder="900123456" {...form.register("nit")} />
+            <Input
+              id="nit"
+              className="font-mono"
+              placeholder="900123456"
+              {...form.register("nit")}
+            />
           </Campo>
 
           {/* De solo lectura: el DV es una función del NIT, no una decisión.
@@ -136,8 +154,6 @@ export function CrearEmpresaView() {
               placeholder="–"
             />
           </Campo>
-
-
         </div>
 
         <Campo
@@ -168,17 +184,25 @@ export function CrearEmpresaView() {
         )}
 
         <div className="grid gap-3 sm:grid-cols-[1fr_152px]">
-          <Campo id="grupoNiif" etiqueta="Grupo NIIF" ayuda="Grupo 2 es lo habitual">
+          <Campo
+            id="grupoNiif"
+            etiqueta="Grupo NIIF"
+            ayuda="Grupo 2 es lo habitual"
+          >
             <Select
               value={form.watch("grupoNiif")}
-              onValueChange={(v) => form.setValue("grupoNiif", v as Datos["grupoNiif"])}
+              onValueChange={(v) =>
+                form.setValue("grupoNiif", v as Datos["grupoNiif"])
+              }
             >
               <SelectTrigger id="grupoNiif">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="GRUPO_1">Grupo 1 · NIIF plenas</SelectItem>
-                <SelectItem value="GRUPO_2">Grupo 2 · NIIF para pymes</SelectItem>
+                <SelectItem value="GRUPO_2">
+                  Grupo 2 · NIIF para pymes
+                </SelectItem>
                 <SelectItem value="GRUPO_3">Grupo 3 · Microempresas</SelectItem>
               </SelectContent>
             </Select>

@@ -66,7 +66,11 @@ interface Props {
   clave: ClavePaso;
   titulo: string;
   children: ReactNode;
-  /** Qué hace el botón principal. Cada paso decide si guarda o solo avanza. */
+  /**
+   * Qué hace el botón principal. Solo lo pasan los pasos que necesitan guardar
+   * antes de avanzar; el resto avanza solo. Cada paso escribiendo a mano cuál es
+   * el siguiente es lo que hacía que situación legal saltara el plan de cuentas.
+   */
   alContinuar?: () => void;
   guardando?: boolean;
   etiquetaContinuar?: string;
@@ -108,8 +112,17 @@ export function AsistenteShell({
   const indice = data.pasos.findIndex((p) => p.clave === clave);
   const paso = data.pasos[indice];
   const anterior = data.pasos[indice - 1];
-  const siguiente = data.pasos[indice + 1];
   const restantes = data.totalObligatorios - data.completados;
+
+  // El siguiente al que se puede entrar. Un paso bloqueado se saltea —entrar a
+  // uno que exige otro antes no lleva a ninguna parte— y si no queda ninguno, la
+  // configuración terminó y el destino es el tablero.
+  const siguiente = data.pasos
+    .slice(indice + 1)
+    .find((p) => p.estado !== "BLOQUEADO");
+
+  const avanzar = () =>
+    router.push(siguiente ? RUTA_PASO[siguiente.clave] : "/dashboard");
 
   return (
     /* Alto de pantalla y sin desbordar: la tarjeta no crece con el contenido.
@@ -238,25 +251,18 @@ export function AsistenteShell({
               <span />
             )}
 
-            <div className="ml-auto flex items-center gap-2">
-              {siguiente && siguiente.estado !== "BLOQUEADO" && (
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(RUTA_PASO[siguiente.clave])}
-                >
-                  Después
-                </Button>
-              )}
-              {alContinuar && (
-                <Button onClick={alContinuar} disabled={guardando}>
-                  {guardando ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : null}
-                  {etiquetaContinuar}
-                  <ArrowRight className="size-4" />
-                </Button>
-              )}
-            </div>
+            {/* Un solo botón para avanzar. Antes había dos —"Después" y
+                "Continuar"— que hacían exactamente lo mismo cuando el paso no
+                guardaba nada, y el de la derecha no siempre aparecía. */}
+            <Button
+              className="ml-auto"
+              onClick={alContinuar ?? avanzar}
+              disabled={guardando}
+            >
+              {guardando ? <Loader2 className="size-4 animate-spin" /> : null}
+              {etiquetaContinuar}
+              <ArrowRight className="size-4" />
+            </Button>
           </div>
         </section>
       </div>

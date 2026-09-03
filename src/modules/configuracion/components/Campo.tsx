@@ -45,7 +45,14 @@ interface CampoProps {
  * Al agregar un campo se toma la medida de esta lista. Si ninguna sirve, es que
  * falta un caso: se agrega acá y se usa, no se inventa un número suelto.
  */
-export function Campo({ id, etiqueta, error, ayuda, className, children }: CampoProps) {
+export function Campo({
+  id,
+  etiqueta,
+  error,
+  ayuda,
+  className,
+  children,
+}: CampoProps) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <label htmlFor={id} className="text-xs font-medium">
@@ -53,7 +60,11 @@ export function Campo({ id, etiqueta, error, ayuda, className, children }: Campo
       </label>
       {children}
       {error ? (
-        <span id={`${id}-error`} role="alert" className="flex items-center gap-1 text-xs text-danger">
+        <span
+          id={`${id}-error`}
+          role="alert"
+          className="flex items-center gap-1 text-xs text-danger"
+        >
           <AlertCircle className="size-3" />
           {error}
         </span>

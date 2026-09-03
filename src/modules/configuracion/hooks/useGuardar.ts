@@ -28,7 +28,12 @@ interface Opciones<T> {
  * reglas contables, y traducirlas acá sería mantener dos versiones del mismo
  * mensaje.
  */
-export function useGuardar<T>({ fn, exito, invalidar = [], alTerminar }: Opciones<T>) {
+export function useGuardar<T>({
+  fn,
+  exito,
+  invalidar = [],
+  alTerminar,
+}: Opciones<T>) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -36,7 +41,9 @@ export function useGuardar<T>({ fn, exito, invalidar = [], alTerminar }: Opcione
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE_ESTADO });
       await Promise.all(
-        invalidar.map((clave) => queryClient.invalidateQueries({ queryKey: clave })),
+        invalidar.map((clave) =>
+          queryClient.invalidateQueries({ queryKey: clave }),
+        ),
       );
       aviso.exito(exito);
       alTerminar?.();

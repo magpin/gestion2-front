@@ -5,11 +5,7 @@
 // garantiza que las dos copias se separen.
 
 export type ClavePaso =
-  | "EMPRESA"
-  | "SEDES"
-  | "SITUACION_LEGAL"
-  | "PLAN_CUENTAS"
-  | "RESOLUCIONES";
+  "EMPRESA" | "SEDES" | "SITUACION_LEGAL" | "PLAN_CUENTAS" | "RESOLUCIONES";
 
 /**
  * `PENDIENTE` es que nunca se tocó; `FALTA` es que se empezó y quedaron datos.

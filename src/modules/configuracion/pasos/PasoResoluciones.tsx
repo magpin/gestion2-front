@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AsistenteShell, RUTA_PASO } from "../components/AsistenteShell";
+import { AsistenteShell } from "../components/AsistenteShell";
 import { Bloque } from "../components/Bloque";
 import { Campo } from "../components/Campo";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
@@ -62,7 +61,6 @@ const TIPOS: Array<[Datos["tipoDocumento"], string]> = [
 ];
 
 export function PasoResoluciones() {
-  const router = useRouter();
   const { data: estado } = useEstadoConfiguracion();
   const { data: resoluciones = [] } = useQuery({
     queryKey: ["resoluciones"],
@@ -107,7 +105,6 @@ export function PasoResoluciones() {
     <AsistenteShell
       clave="RESOLUCIONES"
       titulo="Resoluciones"
-      alContinuar={() => router.push("/dashboard")}
       etiquetaContinuar={paso?.estado === "LISTO" ? "Continuar" : "Omitir"}
     >
       <div className="flex flex-col gap-8">
