@@ -1,0 +1,90 @@
+"use client";
+
+import Swal from "sweetalert2";
+
+// Avisos del sistema, en un solo lugar.
+//
+// Dos pesos distintos a propósito:
+//   · éxito / info → discretos, arriba a la derecha, se van solos. Guardar algo
+//     no debería costar un clic extra: son los avisos más frecuentes del sistema
+//     y bloquear en cada uno haría que el usuario los cierre sin leerlos.
+//   · error / advertencia → ventana central que exige "Entendido". Son los que
+//     cambian lo que el usuario tiene que hacer a continuación, y pasan si no se
+//     miran a tiempo.
+//
+// sweetalert2 inyecta su propio CSS desde el paquete (entrada sweetalert2.all.js),
+// así que globals.css no se toca.
+
+// El sistema es de tema claro y nada más: los avisos se fijan ahí en vez de
+// mirar la preferencia del sistema operativo con theme: "auto", que devolvería
+// oscuro en media empresa y no coincidiría con la pantalla de atrás.
+
+// buttonsStyling: false apaga los botones propios de sweetalert2 para que el
+// botón use el mismo índigo que el resto del sistema.
+const BOTON =
+  "inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90";
+
+// El mixin se crea en la primera llamada y no al importar: sweetalert2 necesita
+// el DOM, y este módulo se evalúa también al renderizar en el servidor.
+let discreto: ReturnType<typeof Swal.mixin> | null = null;
+
+function toast() {
+  discreto ??= Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+  });
+  return discreto;
+}
+
+// ⚠️ sweetalert2 admite UN popup a la vez: al abrir el siguiente destruye el
+// anterior, y el mixin discreto comparte ese estado global. Dos avisos seguidos
+// no se apilan como hacía sonner — el segundo se come al primero. Por eso
+// `exito` e `info` aceptan detalle: cuando una operación termina con más de una
+// cosa que decir, se dicen todas en un solo aviso.
+export const aviso = {
+  exito(mensaje: string, detalle?: string): void {
+    void toast().fire({
+      icon: "success",
+      title: mensaje,
+      text: detalle,
+      theme: "light",
+    });
+  },
+
+  info(mensaje: string, detalle?: string): void {
+    void toast().fire({
+      icon: "info",
+      title: mensaje,
+      text: detalle,
+      theme: "light",
+    });
+  },
+
+  // `detalle` es para el "por qué" cuando el título solo alcanza para el "qué".
+  error(mensaje: string, detalle?: string): void {
+    void Swal.fire({
+      icon: "error",
+      title: mensaje,
+      text: detalle,
+      confirmButtonText: "Entendido",
+      theme: "light",
+      buttonsStyling: false,
+      customClass: { confirmButton: BOTON },
+    });
+  },
+
+  advertencia(mensaje: string, detalle?: string): void {
+    void Swal.fire({
+      icon: "warning",
+      title: mensaje,
+      text: detalle,
+      confirmButtonText: "Entendido",
+      theme: "light",
+      buttonsStyling: false,
+      customClass: { confirmButton: BOTON },
+    });
+  },
+};

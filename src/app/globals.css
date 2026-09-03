@@ -1,0 +1,293 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-inter);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Marca y estados. Son las únicas familias de color fuera de la escala neutra:
+     `brand` es el naranja de identidad, los otros cuatro son semánticos.
+     Se usan con `text-brand`, `bg-success/15`, `border-danger/20`, etc. */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-text: var(--brand-text);
+  /* Texto sobre relleno naranja. Siempre oscuro: el blanco sobre `#F25623` da
+     3.4:1 y está en la tabla de combinaciones prohibidas. */
+  --color-brand-foreground: var(--brand-foreground);
+
+  /* Panel lateral del asistente: la única superficie que va oscura dentro de una
+     pantalla clara. No es un color nuevo — es `neutral-900`, el mismo que ya usa
+     el texto principal — puesto como fondo. */
+  --color-rail: var(--rail);
+  --color-rail-foreground: var(--rail-foreground);
+  --color-rail-muted: var(--rail-muted);
+  --color-rail-line: var(--rail-line);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ===========================================================================
+   PALETA MAESTRA — docs/identidad-visual/reglamento-color.md
+   ===========================================================================
+   Esta es la lista completa de colores del sistema. No se inventan variantes,
+   no se aclaran ni se oscurecen tonos, y ningún componente escribe un color a
+   mano: todos referencian un rol.
+
+   El principio que ordena el resto: los neutros construyen, el acento señala.
+   Toda la estructura —fondos, superficies, texto, bordes— sale de la escala
+   neutra. El naranja no estructura; solo dirige la atención a un punto concreto,
+   y si ocupa más de un 10 % de una vista, algo está mal.
+   =========================================================================== */
+:root {
+  --neutral-0: #ffffff;
+  --neutral-50: #f5f5f5;
+  --neutral-100: #ededed;
+  --neutral-200: #dedede;
+  --neutral-300: #b8b8b8;
+  --neutral-400: #8a8a8a;
+  --neutral-500: #6b6b6b;
+  --neutral-600: #4d4d4d;
+  --neutral-700: #333333;
+  --neutral-800: #2a2a2a;
+  --neutral-850: #202020;
+  --neutral-900: #171717;
+
+  --accent-base: #f25623;
+  --accent-hover-base: #d8481d;
+  --accent-text-base: #c0421a;
+
+  /* `danger` es más frío y profundo que el naranja de marca a propósito: el
+     rojo de error nunca se puede confundir con el acento. */
+  --success-base: #2e7d46;
+  --danger-base: #c62828;
+  --warning-base: #b26a00;
+  --info-base: #2f6fb0;
+
+  --radius: 0.75rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Roles — modo claro
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  --background: var(--neutral-50);
+  --foreground: var(--neutral-900);
+  --card: var(--neutral-0);
+  --card-foreground: var(--neutral-900);
+  --popover: var(--neutral-0);
+  --popover-foreground: var(--neutral-900);
+
+  /* La acción principal nunca es naranja: en superficies grandes se usa relleno
+     neutro fuerte. El naranja como fondo de botón obligaría a texto blanco
+     encima, que no alcanza contraste de lectura. */
+  --primary: var(--neutral-900);
+  --primary-foreground: var(--neutral-0);
+  --secondary: var(--neutral-100);
+  --secondary-foreground: var(--neutral-900);
+  --muted: var(--neutral-100);
+  --muted-foreground: var(--neutral-500);
+
+  /* `--accent` de shadcn es la superficie de hover de medio sistema (menús,
+     filas, ítems de lista). Por eso es un neutro y NO el naranja de marca: el
+     naranja pintando cada hover rompería la regla de dosis. El acento de marca
+     vive en `--brand`. */
+  --accent: var(--neutral-100);
+  --accent-foreground: var(--neutral-900);
+
+  --destructive: var(--danger-base);
+  --border: var(--neutral-200);
+  --input: var(--neutral-300);
+  /* El anillo de foco sí es naranja: es un detalle pequeño, y es justo lo que el
+     acento debe hacer — dirigir la atención a un punto. */
+  --ring: var(--accent-base);
+
+  --brand: var(--accent-base);
+  --brand-hover: var(--accent-hover-base);
+  /* Sobre fondo claro el naranja de relleno no alcanza contraste como texto:
+     para texto y enlaces se usa el tono profundo. */
+  --brand-text: var(--accent-text-base);
+  --brand-foreground: var(--neutral-900);
+
+  --rail: var(--neutral-900);
+  --rail-foreground: var(--neutral-0);
+  --rail-muted: var(--neutral-300);
+  --rail-line: var(--neutral-700);
+
+  --success: var(--success-base);
+  --danger: var(--danger-base);
+  --warning: var(--warning-base);
+  --info: var(--info-base);
+
+  /* Gráficas: acento primero, después la escala neutra. La jerarquía en una
+     gráfica se hace con luminosidad, no metiendo cinco colores distintos. */
+  --chart-1: var(--accent-base);
+  --chart-2: var(--neutral-700);
+  --chart-3: var(--neutral-500);
+  --chart-4: var(--neutral-300);
+  --chart-5: var(--info-base);
+
+  --sidebar: var(--neutral-0);
+  --sidebar-foreground: var(--neutral-900);
+  --sidebar-primary: var(--neutral-900);
+  --sidebar-primary-foreground: var(--neutral-0);
+  --sidebar-accent: var(--neutral-100);
+  --sidebar-accent-foreground: var(--neutral-900);
+  --sidebar-border: var(--neutral-200);
+  --sidebar-ring: var(--accent-base);
+}
+
+/* ---------------------------------------------------------------------------
+   Roles — modo oscuro
+   --------------------------------------------------------------------------- */
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: var(--neutral-900);
+  --foreground: var(--neutral-100);
+  --card: var(--neutral-850);
+  --card-foreground: var(--neutral-100);
+  --popover: var(--neutral-850);
+  --popover-foreground: var(--neutral-100);
+
+  --primary: var(--neutral-100);
+  --primary-foreground: var(--neutral-900);
+  --secondary: var(--neutral-800);
+  --secondary-foreground: var(--neutral-100);
+  --muted: var(--neutral-800);
+  --muted-foreground: var(--neutral-400);
+
+  --accent: var(--neutral-800);
+  --accent-foreground: var(--neutral-100);
+
+  --destructive: var(--danger-base);
+  --border: var(--neutral-700);
+  --input: var(--neutral-600);
+  --ring: var(--accent-base);
+
+  --brand: var(--accent-base);
+  --brand-hover: var(--accent-hover-base);
+  /* Sobre el fondo oscuro el naranja de relleno sí alcanza contraste de lectura
+     (~5.2:1), así que acá texto y relleno son el mismo tono. */
+  --brand-text: var(--accent-base);
+  --brand-foreground: var(--neutral-900);
+
+  /* En modo oscuro el panel no puede ser más oscuro que la página: pasa a ser
+     una superficie elevada, que es como se separa del fondo sin invertir nada. */
+  --rail: var(--neutral-850);
+  --rail-foreground: var(--neutral-100);
+  --rail-muted: var(--neutral-400);
+  --rail-line: var(--neutral-700);
+
+  --success: var(--success-base);
+  --danger: var(--danger-base);
+  --warning: var(--warning-base);
+  --info: var(--info-base);
+
+  --chart-1: var(--accent-base);
+  --chart-2: var(--neutral-300);
+  --chart-3: var(--neutral-400);
+  --chart-4: var(--neutral-600);
+  --chart-5: var(--info-base);
+
+  --sidebar: var(--neutral-850);
+  --sidebar-foreground: var(--neutral-100);
+  --sidebar-primary: var(--neutral-100);
+  --sidebar-primary-foreground: var(--neutral-900);
+  --sidebar-accent: var(--neutral-800);
+  --sidebar-accent-foreground: var(--neutral-100);
+  --sidebar-border: var(--neutral-700);
+  --sidebar-ring: var(--accent-base);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans antialiased;
+  }
+}
+
+/* Impresión de la factura.
+ *
+ * El impreso es el mismo modal que se ve en pantalla, no una vista aparte: una
+ * segunda plantilla se desincronizaría de la primera el día que cambie un
+ * renglón. Al imprimir se oculta todo menos el bloque marcado, que pasa a
+ * ocupar la hoja. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  [data-impreso],
+  [data-impreso] * {
+    visibility: visible;
+  }
+
+  [data-impreso] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    background: #fff;
+    color: #000;
+    padding: 0;
+  }
+
+  /* Los controles del modal no van en el papel. */
+  [data-no-imprimir] {
+    display: none !important;
+  }
+}
