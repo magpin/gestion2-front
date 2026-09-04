@@ -6,6 +6,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, ChevronLeft, Loader2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { mensajeDeError } from "@/core/api/api";
+import { aviso } from "@/lib/avisos";
 import {
   Select,
   SelectContent,
@@ -33,9 +35,15 @@ export function DetalleCuentaView({ id }: { id: string }) {
     queryFn: () => plataformaService.cuenta(id),
   });
 
+  // Cambiar el plan o el estado de una cuenta no avisaba nada: el select se movía
+  // y no había forma de saber si el servidor lo aceptó. Y no es un cambio menor
+  // —CANCELADO deja al tenant sin entrar—, así que confirma y también falla a la vista.
   const cambiar = useMutation({
-    mutationFn: (datos: Record<string, unknown>) => plataformaService.editarCuenta(id, datos),
+    mutationFn: ({ datos }: { datos: Record<string, unknown>; exito: string }) =>
+      plataformaService.editarCuenta(id, datos),
     onMutate: () => setGuardando(true),
+    onSuccess: (_datos, variables) => aviso.exito(variables.exito),
+    onError: (error: unknown) => aviso.error(mensajeDeError(error)),
     onSettled: async () => {
       setGuardando(false);
       await queryClient.invalidateQueries({ queryKey: ["plataforma"] });
@@ -75,7 +83,9 @@ export function DetalleCuentaView({ id }: { id: string }) {
             <div className="flex items-center gap-2">
               <Select
                 value={cuenta.plan}
-                onValueChange={(v) => v && cambiar.mutate({ plan: v })}
+                onValueChange={(v) =>
+                  v && cambiar.mutate({ datos: { plan: v }, exito: `Plan cambiado a ${v}` })
+                }
               >
                 <SelectTrigger className="w-40" aria-label="Plan">
                   <SelectValue />
@@ -90,7 +100,10 @@ export function DetalleCuentaView({ id }: { id: string }) {
 
               <Select
                 value={cuenta.estado}
-                onValueChange={(v) => v && cambiar.mutate({ estado: v })}
+                onValueChange={(v) =>
+                  v &&
+                  cambiar.mutate({ datos: { estado: v }, exito: `Cuenta marcada ${v}` })
+                }
               >
                 <SelectTrigger className="w-40" aria-label="Estado">
                   <SelectValue />

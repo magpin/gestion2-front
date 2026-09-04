@@ -11,6 +11,12 @@ interface CampoProps {
   error?: string;
   ayuda?: string;
   className?: string;
+  /**
+   * `grande` sube etiqueta y ayuda a la escala de las pantallas de trabajo,
+   * donde el control mide `h-11` y una etiqueta de 12px se ve suelta encima.
+   * El asistente sigue en `normal`.
+   */
+  escala?: "normal" | "grande";
   children: ReactNode;
 }
 
@@ -51,11 +57,17 @@ export function Campo({
   error,
   ayuda,
   className,
+  escala = "normal",
   children,
 }: CampoProps) {
+  const grande = escala === "grande";
+
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <label htmlFor={id} className="text-xs font-medium">
+    <div className={cn("flex flex-col", grande ? "gap-2" : "gap-1.5", className)}>
+      <label
+        htmlFor={id}
+        className={cn("font-medium", grande ? "text-sm" : "text-xs")}
+      >
         {etiqueta}
       </label>
       {children}
@@ -63,13 +75,23 @@ export function Campo({
         <span
           id={`${id}-error`}
           role="alert"
-          className="flex items-center gap-1 text-xs text-danger"
+          className={cn(
+            "flex items-center gap-1 text-danger",
+            grande ? "text-[13px]" : "text-xs"
+          )}
         >
           <AlertCircle className="size-3" />
           {error}
         </span>
       ) : ayuda ? (
-        <span className="text-xs text-muted-foreground">{ayuda}</span>
+        <span
+          className={cn(
+            "text-muted-foreground",
+            grande ? "text-[13px]" : "text-xs"
+          )}
+        >
+          {ayuda}
+        </span>
       ) : null}
     </div>
   );

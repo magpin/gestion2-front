@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { AsistenteShell } from "../components/AsistenteShell";
 import { Bloque, Registrada, Registradas } from "../components/Bloque";
 import { Campo } from "../components/Campo";
-import { SelectorMunicipio } from "../components/SelectorMunicipio";
+import { SelectorMunicipio } from "@/modules/catalogos/components/SelectorMunicipio";
 import { useGuardar } from "../hooks/useGuardar";
 import { empresaApi } from "../services/nucleo.service";
 

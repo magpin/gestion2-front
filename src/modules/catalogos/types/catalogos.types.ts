@@ -73,6 +73,20 @@ export interface ResponsabilidadRut {
   codigo_dian_fe: string | null;
 }
 
+/**
+ * Las responsabilidades que viajan en el XML de la factura.
+ *
+ * Son seis, no las 48 del RUT: el anexo técnico solo transporta esas, más
+ * `R-99-PN`, que no es una responsabilidad sino el relleno que exige cuando el
+ * receptor no tiene ninguna.
+ */
+export interface ResponsabilidadFe {
+  codigo: string;
+  descripcion: string;
+  codigo_rut: number | null;
+  descripcion_rut: string | null;
+}
+
 /** Casilla 25 del RUT + anexo técnico de facturación electrónica. */
 export interface TipoDocumento {
   codigo: string;

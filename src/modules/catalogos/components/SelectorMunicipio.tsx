@@ -5,19 +5,22 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { geografiaApi } from "../services/nucleo.service";
+import { geografiaApi } from "../services/catalogos.service";
 
 interface Props {
   id: string;
   valor: string | null;
   onCambio: (codigo: string, nombre: string) => void;
   invalido?: boolean;
+  /** La escala la decide la pantalla: el asistente y terceros no miden igual. */
+  className?: string;
 }
 
 /**
@@ -28,7 +31,13 @@ interface Props {
  * catálogo pesa demasiado para mandarlo entero al navegador, y ahí la búsqueda
  * ignora tildes —"medellin" encuentra "Medellín"—.
  */
-export function SelectorMunicipio({ id, valor, onCambio, invalido }: Props) {
+export function SelectorMunicipio({
+  id,
+  valor,
+  onCambio,
+  invalido,
+  className,
+}: Props) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
 
@@ -55,7 +64,10 @@ export function SelectorMunicipio({ id, valor, onCambio, invalido }: Props) {
         render={<Button type="button" variant="outline" />}
         id={id}
         aria-invalid={invalido || undefined}
-        className="w-full justify-between font-normal aria-invalid:border-danger"
+        className={cn(
+          "w-full justify-between font-normal aria-invalid:border-danger",
+          className
+        )}
       >
         <span className={valor ? "" : "text-muted-foreground"}>
           {elegido

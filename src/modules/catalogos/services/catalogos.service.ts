@@ -7,6 +7,7 @@ import type {
   CuentaPucDetalle,
   FormaAsociativa,
   HijasPuc,
+  ResponsabilidadFe,
   ResponsabilidadRut,
   TipoContribuyente,
   TipoDocumento,
@@ -78,6 +79,12 @@ export const rutApi = {
       })
       .then((r) => r.data),
 
+  /** Las seis que viajan en el XML, más el relleno `R-99-PN`. */
+  responsabilidadesFe: () =>
+    api
+      .get<ResponsabilidadFe[]>("/catalogos/responsabilidades-fe")
+      .then((r) => r.data),
+
   tiposDocumento: (aplicaPersona?: "NATURAL" | "JURIDICA") =>
     api
       .get<TipoDocumento[]>("/catalogos/tipos-documento", {
@@ -90,4 +97,24 @@ export const rutApi = {
 
   tiposContribuyente: () =>
     api.get<TipoContribuyente[]>("/catalogos/tipos-contribuyente").then((r) => r.data),
+};
+
+// ---------------------------------------------------------------------------
+// Catálogo DANE — municipios
+// ---------------------------------------------------------------------------
+// Vive con los demás catálogos y no en un módulo: lo usan las sedes, la
+// actividad económica y la ficha del tercero.
+
+export interface Municipio {
+  codigo: string;
+  nombre: string;
+  departamento_codigo: string;
+  departamento_nombre: string;
+}
+
+export const geografiaApi = {
+  municipios: (q?: string) =>
+    api
+      .get<Municipio[]>("/municipios", { params: q ? { q } : undefined })
+      .then((r) => r.data),
 };

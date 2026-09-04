@@ -23,7 +23,7 @@ import { Campo } from "../components/Campo";
 import { SelectorCiiu } from "@/modules/catalogos/components/SelectorCiiu";
 import { SelectorResponsabilidadRut } from "@/modules/catalogos/components/SelectorResponsabilidadRut";
 import { SelectorTipoDocumento } from "@/modules/catalogos/components/SelectorTipoDocumento";
-import { SelectorMunicipio } from "../components/SelectorMunicipio";
+import { SelectorMunicipio } from "@/modules/catalogos/components/SelectorMunicipio";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
 import { useGuardar } from "../hooks/useGuardar";
 import { empresaApi, legalApi } from "../services/nucleo.service";

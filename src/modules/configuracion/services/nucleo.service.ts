@@ -193,21 +193,3 @@ export const resolucionesApi = {
   guardarCredenciales: (datos: Record<string, unknown>) =>
     api.put("/resoluciones/credenciales", datos).then(() => undefined),
 };
-
-// ---------------------------------------------------------------------------
-// Catálogo DANE
-// ---------------------------------------------------------------------------
-
-export interface Municipio {
-  codigo: string;
-  nombre: string;
-  departamento_codigo: string;
-  departamento_nombre: string;
-}
-
-export const geografiaApi = {
-  municipios: (q?: string) =>
-    api
-      .get<Municipio[]>("/municipios", { params: q ? { q } : undefined })
-      .then((r) => r.data),
-};

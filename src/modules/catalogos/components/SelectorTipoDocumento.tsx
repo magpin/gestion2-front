@@ -18,6 +18,8 @@ interface Props {
   /** Filtra lo que tiene sentido ofrecer: un representante legal es persona natural. */
   aplicaPersona?: "NATURAL" | "JURIDICA";
   invalido?: boolean;
+  /** La escala la decide la pantalla: el asistente y terceros no miden igual. */
+  className?: string;
 }
 
 /**
@@ -32,7 +34,14 @@ interface Props {
  * además lleva la numeración del RUT y la del anexo de facturación electrónica,
  * que no coinciden entre sí y por eso viven en la misma fila.
  */
-export function SelectorTipoDocumento({ id, valor, onCambio, aplicaPersona, invalido }: Props) {
+export function SelectorTipoDocumento({
+  id,
+  valor,
+  onCambio,
+  aplicaPersona,
+  invalido,
+  className,
+}: Props) {
   const { data = [] } = useQuery({
     queryKey: ["tipos-documento", aplicaPersona ?? "todos"],
     queryFn: () => rutApi.tiposDocumento(aplicaPersona),
@@ -43,7 +52,7 @@ export function SelectorTipoDocumento({ id, valor, onCambio, aplicaPersona, inva
   // cadena, así que null se traduce a vacío y ahí lo rechaza la validación.
   return (
     <Select value={valor} onValueChange={(v) => onCambio(v ?? "")}>
-      <SelectTrigger id={id} aria-invalid={invalido || undefined}>
+      <SelectTrigger id={id} aria-invalid={invalido || undefined} className={className}>
         <SelectValue placeholder="Tipo" />
       </SelectTrigger>
       <SelectContent>
