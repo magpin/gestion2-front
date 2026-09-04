@@ -46,7 +46,6 @@ const esquema = z
     esAutorretenedor: z.boolean(),
     esGranContribuyente: z.boolean(),
     regimenSimple: z.boolean(),
-    responsabilidadesDian: z.array(z.string()),
   })
   // Las dos reglas que el backend también sostiene. Validarlas acá evita un
   // viaje al servidor para descubrir algo que el formulario ya sabe.
@@ -85,7 +84,6 @@ const VACIO: DatosTercero = {
   esAutorretenedor: false,
   esGranContribuyente: false,
   regimenSimple: false,
-  responsabilidadesDian: [],
 };
 
 const CALIDADES: Array<[keyof DatosTercero, string, string]> = [
@@ -95,25 +93,6 @@ const CALIDADES: Array<[keyof DatosTercero, string, string]> = [
   ["esGranContribuyente", "Gran contribuyente", "Designado por la DIAN"],
   ["regimenSimple", "Régimen simple", "Tributa por el SIMPLE"],
 ];
-
-/**
- * Qué casilla de arriba dice lo mismo que cada código del anexo.
- *
- * Los dos bloques piden los mismos hechos con nombres distintos —"Gran
- * contribuyente" arriba, `O-13` abajo—, y nada impide contradecirse. Mientras
- * sigan separados, por lo menos que cada código diga con cuál va.
- */
-const EQUIVALE: Record<string, string> = {
-  "O-13": "Es la calidad «Gran contribuyente» de arriba",
-  "O-15": "Es la calidad «Autorretenedor» de arriba",
-  "O-23": "Es la calidad «Agente retenedor» de arriba",
-  "O-47": "Es la calidad «Régimen simple» de arriba",
-  "O-48": "Es la calidad «Responsable de IVA» de arriba",
-  "O-49": "Es lo contrario de «Responsable de IVA»",
-};
-
-/** El relleno del anexo: va solo cuando el receptor no tiene ninguna otra. */
-const NINGUNA = "R-99-PN";
 
 /** La escala del modal: control cómodo, no fila de planilla. */
 const CONTROL = "h-11 rounded-xl px-4";
@@ -155,12 +134,6 @@ export function FormularioTercero({
     defaultValues: VACIO,
   });
 
-  const { data: responsabilidades = [] } = useQuery({
-    queryKey: ["responsabilidades-fe"],
-    queryFn: rutApi.responsabilidadesFe,
-    staleTime: 60 * 60_000,
-  });
-
   const { reset } = form;
   useEffect(() => {
     if (inicial === undefined) return;
@@ -185,27 +158,24 @@ export function FormularioTercero({
       esAutorretenedor: inicial.es_autorretenedor,
       esGranContribuyente: inicial.es_gran_contribuyente,
       regimenSimple: inicial.regimen_simple,
-      responsabilidadesDian: inicial.responsabilidades_dian ?? [],
     });
   }, [inicial, reset]);
+
+  // Solo para mostrar: la sección de abajo está apagada hasta que exista DIAN.
+  const { data: responsabilidades = [] } = useQuery({
+    queryKey: ["responsabilidades-fe"],
+    queryFn: rutApi.responsabilidadesFe,
+    staleTime: 60 * 60_000,
+  });
+  const yaCargadas = inicial?.responsabilidades_dian ?? [];
 
   const errores = form.formState.errors;
   const juridica = form.watch("tipoPersona") === "JURIDICA";
   const esNit = form.watch("tipoDocumento") === "NIT";
   const municipio = form.watch("municipioCodigo");
-  const elegidas = form.watch("responsabilidadesDian");
-
   // El DV es una función del número, no una decisión: la base lo recalcula y
   // rechaza la fila si no coincide.
   const dv = esNit ? digitoVerificacion(form.watch("numeroDocumento")) : "";
-
-  const alternarResponsabilidad = (codigo: string) =>
-    form.setValue(
-      "responsabilidadesDian",
-      elegidas.includes(codigo)
-        ? elegidas.filter((c) => c !== codigo)
-        : [...elegidas, codigo],
-    );
 
   return (
     <form
@@ -460,39 +430,34 @@ export function FormularioTercero({
         </div>
       </Seccion>
 
+      {/* Apagada a propósito.
+          
+          El anexo técnico es del módulo DIAN, que es el sexto de la secuencia:
+          capturar hoy códigos que nadie transmite ni valida es configurar en el
+          vacío. Y el mapeo contra las calidades de arriba todavía tiene un nudo
+          sin resolver —"agente retenedor" no distingue renta de IVA, y el anexo
+          solo tiene código para IVA (O-23)—, que le toca a un contador.
+
+          Se deja a la vista, y no borrada, porque el dato ya existe en la base:
+          `tercero_responsabilidad_fiscal` sigue guardando lo que se haya
+          cargado, y el formulario no manda el campo, así que no lo pisa. */}
       <Seccion
         titulo="Responsabilidades en la factura electrónica"
-        descripcion="Las que viajan en el XML del receptor. Son seis de las cuarenta y ocho del RUT, más el relleno que el anexo exige cuando no hay ninguna."
+        descripcion="Se habilitan con el módulo DIAN. Son las que viajan en el XML del receptor; hasta que haya algo que transmitir, no hay nada que decidir acá."
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          {responsabilidades
-            .filter((r) => r.codigo !== NINGUNA)
-            .map((r) => (
-              <Tarjeta
-                key={r.codigo}
-                codigo={r.codigo}
-                marcada={elegidas.includes(r.codigo)}
-                titulo={r.descripcion}
-                detalle={EQUIVALE[r.codigo] ?? "Sin casilla equivalente arriba"}
-                alAlternar={() => alternarResponsabilidad(r.codigo)}
-              />
-            ))}
-        </div>
-
-        {/* Aparte del resto porque no es una responsabilidad: es lo que el anexo
-            exige poner cuando no hay ninguna, y marcarlo junto a otra no tiene
-            sentido. */}
-        {responsabilidades.some((r) => r.codigo === NINGUNA) && (
-          <div className="border-t border-border pt-4">
+          {responsabilidades.map((r) => (
             <Tarjeta
-              codigo={NINGUNA}
-              marcada={elegidas.includes(NINGUNA)}
-              titulo="No aplica"
-              detalle="Para el tercero que no tiene ninguna de las de arriba. El anexo no admite dejar el campo vacío."
-              alAlternar={() => alternarResponsabilidad(NINGUNA)}
+              key={r.codigo}
+              apagada
+              codigo={r.codigo}
+              marcada={yaCargadas.includes(r.codigo)}
+              titulo={r.descripcion}
+              detalle=""
+              alAlternar={() => {}}
             />
-          </div>
-        )}
+          ))}
+        </div>
       </Seccion>
     </form>
   );
@@ -524,12 +489,15 @@ function Seccion({
 
 function Tarjeta({
   marcada,
+  apagada = false,
   codigo,
   titulo,
   detalle,
   alAlternar,
 }: {
   marcada: boolean;
+  /** A la vista pero fuera de servicio: se ve el dato, no se toca. */
+  apagada?: boolean;
   /** El código del anexo, cuando la tarjeta representa uno. */
   codigo?: string;
   titulo: string;
@@ -540,14 +508,23 @@ function Tarjeta({
     <button
       type="button"
       aria-pressed={marcada}
+      disabled={apagada}
       onClick={alAlternar}
       className={`flex min-h-11 items-center gap-4 rounded-xl border p-5 text-left transition-colors ${
-        marcada ? "border-input bg-muted" : "border-border hover:bg-accent"
+        apagada
+          ? "cursor-not-allowed border-border bg-muted/30 opacity-60"
+          : marcada
+            ? "border-input bg-muted"
+            : "border-border hover:bg-accent"
       }`}
     >
       <span
         className={`grid size-5 shrink-0 place-items-center rounded-full border transition-colors ${
-          marcada ? "border-primary bg-primary text-primary-foreground" : "border-input"
+          marcada && !apagada
+            ? "border-primary bg-primary text-primary-foreground"
+            : marcada
+              ? "border-input bg-muted-foreground/40 text-background"
+              : "border-input"
         }`}
       >
         {marcada && <Check className="size-3" strokeWidth={3} />}
@@ -559,9 +536,11 @@ function Tarjeta({
           </span>
         )}
         <span className="block text-sm font-semibold">{titulo}</span>
-        <span className="mt-1 block text-[13px] leading-5 text-muted-foreground">
-          {detalle}
-        </span>
+        {detalle !== "" && (
+          <span className="mt-1 block text-[13px] leading-5 text-muted-foreground">
+            {detalle}
+          </span>
+        )}
       </span>
     </button>
   );
