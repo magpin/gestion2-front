@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Plus } from "lucide-react";
+import { AlertTriangle, Lock, Plus } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,14 @@ export function PasoResoluciones() {
     queryKey: ["resoluciones"],
     queryFn: resolucionesApi.listar,
   });
+  // Cuánto le queda a cada resolución activa: el backend ya calcula
+  // `dias_restantes` y `vencida`/`agotada`, que recalcularlos a mano acá
+  // dejaría afuera justo la alerta que importa —una resolución ya vencida no
+  // se ve distinto de una sana si nadie compara la fecha contra hoy—.
+  const { data: disponibilidad = [] } = useQuery({
+    queryKey: ["resoluciones", "disponibilidad"],
+    queryFn: resolucionesApi.disponibilidad,
+  });
 
   const paso = estado?.pasos.find((p) => p.clave === "RESOLUCIONES");
   const activas = resoluciones.filter((r) => r.activa);
@@ -108,28 +116,30 @@ export function PasoResoluciones() {
       etiquetaContinuar={paso?.estado === "LISTO" ? "Continuar" : "Omitir"}
     >
       <div className="flex flex-col gap-8">
-        {activas.length > 0 && (
+        {disponibilidad.length > 0 && (
           <Bloque
             titulo="Numeración vigente"
             descripcion="Cuando el consecutivo llega al final, la resolución se agotó y hay que pedir otra a la DIAN."
           >
             <div className="overflow-hidden rounded-xl border border-border">
-              {activas.map((r) => {
-                const restantes =
-                  Number(r.rango_hasta) - Number(r.consecutivo_actual);
-                const usado =
-                  ((Number(r.consecutivo_actual) - Number(r.rango_desde) + 1) /
-                    (Number(r.rango_hasta) - Number(r.rango_desde) + 1)) *
-                  100;
+              {disponibilidad.map((r) => {
+                const desde = Number(r.rango_desde);
+                const hasta = Number(r.rango_hasta);
+                const actual = Number(r.consecutivo_actual);
+                const usado = ((actual - desde + 1) / (hasta - desde + 1)) * 100;
+                const alerta = r.vencida || r.agotada;
 
                 return (
                   <div
-                    key={r.id}
+                    key={`${r.tipo_documento}-${r.ambiente}`}
                     className="flex flex-col gap-2 border-b border-border px-4 py-3 last:border-b-0"
                   >
                     <div className="flex items-center gap-3">
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold">
+                        <span className="flex items-center gap-1.5 text-sm font-semibold">
+                          {alerta && (
+                            <AlertTriangle className="size-3.5 shrink-0 text-danger" />
+                          )}
                           {TIPOS.find((t) => t[0] === r.tipo_documento)?.[1] ??
                             r.tipo_documento}
                         </span>
@@ -140,7 +150,7 @@ export function PasoResoluciones() {
                       </span>
                       <span className="shrink-0 text-right">
                         <span className="block font-mono text-sm font-semibold">
-                          {restantes}
+                          {r.numeros_restantes}
                         </span>
                         <span className="block text-[11px] text-muted-foreground">
                           restantes
@@ -149,12 +159,16 @@ export function PasoResoluciones() {
                     </div>
                     <div className="h-1 overflow-hidden rounded-full bg-muted">
                       <div
-                        className={`h-full rounded-full ${usado > 85 ? "bg-warning" : "bg-success"}`}
+                        className={`h-full rounded-full ${r.agotada ? "bg-danger" : usado > 85 ? "bg-warning" : "bg-success"}`}
                         style={{ width: `${Math.max(usado, 1)}%` }}
                       />
                     </div>
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      Vence {r.fecha_vigencia_hasta}
+                    <span
+                      className={`font-mono text-[11px] ${r.vencida ? "font-semibold text-danger" : "text-muted-foreground"}`}
+                    >
+                      {r.vencida
+                        ? `Venció ${r.fecha_vigencia_hasta}`
+                        : `Vence ${r.fecha_vigencia_hasta} · ${r.dias_restantes} días`}
                     </span>
                   </div>
                 );

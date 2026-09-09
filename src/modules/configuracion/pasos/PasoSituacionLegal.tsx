@@ -62,6 +62,14 @@ const esquemaActividad = z.object({
   fechaInicio: FECHA,
 });
 
+const esquemaMatricula = z.object({
+  numeroMatricula: z.string().min(1, "Requerido").max(30),
+  camaraComercio: z.string().min(3, "Requerido").max(120),
+  fechaMatricula: FECHA,
+  fechaUltimaRenovacion: FECHA.optional(),
+  fechaInicio: FECHA,
+});
+
 /**
  * La situación legal es lo más denso del asistente: cuatro hechos distintos, y
  * cada uno con vigencia propia.
@@ -96,30 +104,9 @@ export function PasoSituacionLegal() {
         <BloqueActividad
           pendiente={falta("codigoCiiu") || falta("tarifaIcaPorMil")}
         />
+        <BloqueMatricula />
       </div>
     </AsistenteShell>
-  );
-}
-
-function Vigentes({
-  filas,
-  texto,
-}: {
-  filas: Array<Record<string, unknown>>;
-  texto: (f: never) => string;
-}) {
-  if (filas.length === 0) return null;
-  return (
-    <ul className="flex flex-wrap gap-1.5">
-      {filas.map((f) => (
-        <li
-          key={String(f.id)}
-          className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold"
-        >
-          {texto(f as never)}
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -456,6 +443,12 @@ function BloqueRepresentante({ pendiente }: { pendiente: boolean }) {
       }),
   });
 
+  const quitar = useGuardar<string>({
+    fn: (id) => legalApi.cerrarRepresentante(id, HOY),
+    exito: "Representante retirado",
+    invalidar: [["representantes"]],
+  });
+
   const errores = form.formState.errors;
 
   return (
@@ -464,10 +457,34 @@ function BloqueRepresentante({ pendiente }: { pendiente: boolean }) {
       descripcion="Quien firma por la empresa. Sale del certificado de existencia y representación."
       pendiente={pendiente}
     >
-      <Vigentes
-        filas={vigentes}
-        texto={(f: { nombre_completo: string }) => f.nombre_completo}
-      />
+      {vigentes.length > 0 && (
+        <Registradas>
+          {vigentes.map((f) => (
+            <Registrada
+              key={String(f.id)}
+              etiqueta={String(f.cargo ?? "Representante")}
+              accion={
+                <button
+                  type="button"
+                  onClick={() => quitar.mutate(String(f.id))}
+                  disabled={quitar.isPending}
+                  className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-danger disabled:opacity-50"
+                  aria-label={`Retirar a ${String(f.nombre_completo)}`}
+                >
+                  <X className="size-3.5" />
+                </button>
+              }
+            >
+              <span className="block text-[13px] font-semibold">
+                {String(f.nombre_completo)}
+              </span>
+              <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">
+                {String(f.tipo_documento)} {String(f.numero_documento)}
+              </span>
+            </Registrada>
+          ))}
+        </Registradas>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <Campo
@@ -532,6 +549,152 @@ function BloqueRepresentante({ pendiente }: { pendiente: boolean }) {
           Registrar
         </Button>
       </div>
+    </Bloque>
+  );
+}
+
+/**
+ * La matrícula mercantil, ante la cámara de comercio.
+ *
+ * A diferencia del régimen, el representante o la actividad, ninguna cuenta
+ * del plan depende de esto — por eso es "opcional" en el estado de
+ * configuración y no bloquea nada. Igual necesita su propio bloque: sin uno,
+ * el aviso de "Matrícula mercantil" que ya muestra el asistente no tenía
+ * dónde llevar a quien hace clic.
+ */
+function BloqueMatricula() {
+  const { data: filas = [] } = useQuery({
+    queryKey: ["matriculas"],
+    queryFn: legalApi.matriculas,
+  });
+  const vigente = filas.find((f) => f.fecha_fin === null);
+
+  const form = useForm<z.infer<typeof esquemaMatricula>>({
+    resolver: zodResolver(esquemaMatricula),
+    defaultValues: {
+      numeroMatricula: "",
+      camaraComercio: "",
+      fechaMatricula: "",
+      fechaUltimaRenovacion: "",
+      fechaInicio: HOY,
+    },
+  });
+
+  const guardar = useGuardar<z.infer<typeof esquemaMatricula>>({
+    fn: (d) =>
+      legalApi.abrirMatricula({
+        ...d,
+        fechaUltimaRenovacion: d.fechaUltimaRenovacion || undefined,
+      }),
+    exito: "Matrícula registrada",
+    invalidar: [["matriculas"]],
+  });
+
+  const quitar = useGuardar<string>({
+    fn: (id) => legalApi.cerrarMatricula(id, HOY),
+    exito: "Matrícula retirada",
+    invalidar: [["matriculas"]],
+  });
+
+  const errores = form.formState.errors;
+
+  return (
+    <Bloque
+      titulo="Matrícula mercantil"
+      descripcion="El registro ante la cámara de comercio. No decide ninguna cuenta del plan; se guarda para tenerlo a mano."
+    >
+      {vigente && (
+        <Registradas>
+          <Registrada
+            etiqueta={vigente.camara_comercio as string}
+            accion={
+              <button
+                type="button"
+                onClick={() => quitar.mutate(String(vigente.id))}
+                disabled={quitar.isPending}
+                className="rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-danger disabled:opacity-50"
+                aria-label="Retirar la matrícula mercantil"
+              >
+                <X className="size-3.5" />
+              </button>
+            }
+          >
+            <span className="block font-mono text-[13px] font-semibold">
+              {String(vigente.numero_matricula)}
+            </span>
+            <span className="mt-0.5 block text-[11px] text-muted-foreground">
+              Matriculada {String(vigente.fecha_matricula)}
+              {vigente.fecha_ultima_renovacion
+                ? ` · Renovada ${String(vigente.fecha_ultima_renovacion)}`
+                : ""}
+            </span>
+          </Registrada>
+        </Registradas>
+      )}
+
+      {!vigente && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Campo
+            id="matNumero"
+            etiqueta="Número de matrícula"
+            error={errores.numeroMatricula?.message}
+          >
+            <Input
+              id="matNumero"
+              className="font-mono"
+              {...form.register("numeroMatricula")}
+            />
+          </Campo>
+
+          <Campo
+            id="matCamara"
+            etiqueta="Cámara de comercio"
+            error={errores.camaraComercio?.message}
+          >
+            <Input
+              id="matCamara"
+              placeholder="Cámara de Comercio de Bogotá"
+              {...form.register("camaraComercio")}
+            />
+          </Campo>
+
+          <Campo
+            id="matFecha"
+            etiqueta="Fecha de matrícula"
+            error={errores.fechaMatricula?.message}
+          >
+            <Input
+              id="matFecha"
+              className="font-mono"
+              placeholder="2020-03-15"
+              {...form.register("fechaMatricula")}
+            />
+          </Campo>
+
+          <Campo
+            id="matRenovacion"
+            etiqueta="Última renovación"
+            ayuda="Opcional"
+          >
+            <Input
+              id="matRenovacion"
+              className="font-mono"
+              placeholder="2026-01-15"
+              {...form.register("fechaUltimaRenovacion")}
+            />
+          </Campo>
+
+          <Button
+            variant="outline"
+            className="self-start"
+            onClick={form.handleSubmit((d) => guardar.mutate(d))}
+            disabled={guardar.isPending}
+          >
+            <Plus className="size-4" />
+            Registrar matrícula
+          </Button>
+        </div>
+      )}
     </Bloque>
   );
 }

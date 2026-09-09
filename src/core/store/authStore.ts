@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import Cookies from "js-cookie";
@@ -120,8 +121,40 @@ export const useAuthStore = create<AuthState>()(
   ),
 );
 
-/** Tiene alguno de los roles pedidos. Los permisos se suman. */
+/**
+ * Tiene alguno de los roles pedidos, fuera de un render (un `onClick`, una
+ * validación antes de llamar a la API). Los permisos se suman.
+ *
+ * No usar esto para decidir qué renderizar: zustand rehidrata desde
+ * `localStorage` apenas este módulo se evalúa en el cliente, antes de que
+ * React llegue a hidratar el árbol, así que el valor que ve el servidor
+ * (sin `localStorage`, siempre `[]`) y el que ve el cliente en ese primer
+ * render pueden no coincidir. Usarlo para un atributo que el HTML del
+ * servidor ya fijó —como `disabled`— dispara un error de hidratación. Para
+ * eso está `useTieneRol`.
+ */
 export function tieneRol(...roles: RolCodigo[]): boolean {
   const propios = useAuthStore.getState().roles;
   return roles.some((r) => propios.includes(r));
+}
+
+/**
+ * Igual que `tieneRol`, pero seguro para decidir qué renderizar.
+ *
+ * `useSyncExternalStore` es el truco: React llama a `getServerSnapshot`
+ * —acá, `false`— tanto en el servidor como en el primer render del cliente
+ * durante la hidratación, así que los dos coinciden con lo que ya mandó el
+ * servidor y no hay nada que discrepe. Recién en el siguiente render, ya
+ * montado, usa `getSnapshot` y lee el valor real. Nada de `useEffect` +
+ * `setState`: eso dispara un render en cascada que el compilador de React
+ * ya marca como error en este proyecto.
+ */
+export function useTieneRol(...roles: RolCodigo[]): boolean {
+  const propios = useAuthStore((s) => s.roles);
+  const montado = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  return montado && roles.some((r) => propios.includes(r));
 }

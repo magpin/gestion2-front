@@ -121,6 +121,10 @@ export const legalApi = {
       .then((r) => r.data),
   abrirRepresentante: (datos: Record<string, unknown>) =>
     api.post("/empresa-legal/representantes", datos).then((r) => r.data),
+  cerrarRepresentante: (id: string, fechaFin: string) =>
+    api
+      .post(`/empresa-legal/representantes/${id}/cerrar`, { fechaFin })
+      .then(() => undefined),
 
   actividades: () =>
     api
@@ -150,6 +154,10 @@ export const legalApi = {
       .then((r) => r.data),
   abrirMatricula: (datos: Record<string, unknown>) =>
     api.post("/empresa-legal/matriculas", datos).then((r) => r.data),
+  cerrarMatricula: (id: string, fechaFin: string) =>
+    api
+      .post(`/empresa-legal/matriculas/${id}/cerrar`, { fechaFin })
+      .then(() => undefined),
 };
 
 // ---------------------------------------------------------------------------
@@ -180,8 +188,29 @@ export interface EstadoCredenciales {
   proveedorTecnologico?: string | null;
 }
 
+/** Cuánto le queda a una resolución activa. Pedir una nueva a la DIAN toma días. */
+export interface DisponibilidadResolucion {
+  tipo_documento: string;
+  ambiente: string;
+  prefijo: string | null;
+  numero_resolucion: string;
+  rango_desde: string;
+  rango_hasta: string;
+  consecutivo_actual: string;
+  numeros_restantes: string;
+  fecha_vigencia_hasta: string;
+  dias_restantes: number;
+  vencida: boolean;
+  agotada: boolean;
+}
+
 export const resolucionesApi = {
   listar: () => api.get<Resolucion[]>("/resoluciones").then((r) => r.data),
+  /** Cuántos números quedan y cuándo vence cada resolución activa. */
+  disponibilidad: () =>
+    api
+      .get<DisponibilidadResolucion[]>("/resoluciones/disponibilidad")
+      .then((r) => r.data),
   crear: (datos: Record<string, unknown>) =>
     api.post<Resolucion>("/resoluciones", datos).then((r) => r.data),
   desactivar: (id: string) =>

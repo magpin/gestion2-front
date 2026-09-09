@@ -13,14 +13,20 @@ import {
   Library,
   Loader2,
   Lock,
+  Package,
   Receipt,
+  ReceiptText,
+  ShoppingCart,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
 
 import { buttonVariants } from "@/components/ui/button";
+import { comprasApi } from "@/modules/compras/services/compras.service";
+import { productosApi } from "@/modules/inventario/services/inventario.service";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
+import { facturasApi } from "@/modules/ventas/services/ventas.service";
 import { useEstadoConfiguracion } from "@/modules/configuracion/hooks/useEstadoConfiguracion";
 import type {
   ClavePaso,
@@ -132,11 +138,12 @@ export function InicioView() {
 }
 
 /**
- * Las tres puertas que hoy existen de verdad.
+ * Las puertas que hoy existen de verdad.
  *
  * No es un menú lateral a propósito: el armazón dice que la navegación por
  * procesos vuelve cuando existan ventas, compras e inventario, y seis puertas
- * cerradas son peores que ninguna. Estas tres están abiertas.
+ * cerradas son peores que ninguna. Inventario, Ventas y Compras ya se
+ * sumaron a las que estaban abiertas.
  */
 function Atajos() {
   const { data: cuentas } = useQuery({
@@ -144,9 +151,24 @@ function Atajos() {
     queryFn: () => planCuentasApi.listar(),
     staleTime: 60_000,
   });
+  const { data: productos } = useQuery({
+    queryKey: ["productos", "conteo"],
+    queryFn: () => productosApi.listar(),
+    staleTime: 60_000,
+  });
+  const { data: facturas } = useQuery({
+    queryKey: ["facturas", "conteo"],
+    queryFn: () => facturasApi.listar(),
+    staleTime: 60_000,
+  });
+  const { data: compras } = useQuery({
+    queryKey: ["compras", "conteo"],
+    queryFn: () => comprasApi.listar(),
+    staleTime: 60_000,
+  });
 
   return (
-    <section className="grid gap-3 sm:grid-cols-3">
+    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <Atajo
         href="/dashboard/plan-cuentas"
         icono={BookOpen}
@@ -155,6 +177,36 @@ function Atajos() {
           cuentas === undefined
             ? "…"
             : `${cuentas.length} cuenta${cuentas.length === 1 ? "" : "s"} activa${cuentas.length === 1 ? "" : "s"}`
+        }
+      />
+      <Atajo
+        href="/dashboard/inventario"
+        icono={Package}
+        titulo="Inventario"
+        detalle={
+          productos === undefined
+            ? "…"
+            : `${productos.total} producto${productos.total === 1 ? "" : "s"}`
+        }
+      />
+      <Atajo
+        href="/dashboard/ventas"
+        icono={ReceiptText}
+        titulo="Ventas"
+        detalle={
+          facturas === undefined
+            ? "…"
+            : `${facturas.total} factura${facturas.total === 1 ? "" : "s"}`
+        }
+      />
+      <Atajo
+        href="/dashboard/compras"
+        icono={ShoppingCart}
+        titulo="Compras"
+        detalle={
+          compras === undefined
+            ? "…"
+            : `${compras.total} factura${compras.total === 1 ? "" : "s"}`
         }
       />
       <Atajo
