@@ -89,6 +89,15 @@ export function FormularioProducto({
   });
   const errores = form.formState.errors;
 
+  // `cuenta` vive afuera (el padre necesita el objeto completo), pero
+  // `cuentaInventarioId` es lo que valida el esquema: sin este puente el
+  // formulario nunca deja de ver el campo como vacío, aunque la pantalla ya
+  // muestre una cuenta elegida.
+  const elegirCuenta = (c: CuentaEmpresa) => {
+    onCuenta(c);
+    form.setValue("cuentaInventarioId", c.id, { shouldValidate: true });
+  };
+
   return (
     <form
       id={id}
@@ -160,7 +169,7 @@ export function FormularioProducto({
           escala="grande"
           className="sm:col-span-2"
         >
-          <SelectorCuenta valor={cuenta} onElegir={onCuenta} invalido={Boolean(errores.cuentaInventarioId)} />
+          <SelectorCuenta valor={cuenta} onElegir={elegirCuenta} invalido={Boolean(errores.cuentaInventarioId)} />
         </Campo>
 
         <Campo

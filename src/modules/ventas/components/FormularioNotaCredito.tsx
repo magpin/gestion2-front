@@ -46,14 +46,19 @@ export function FormularioNotaCredito({
   guardando: boolean;
   facturaFija?: VentaDocumentoResumen;
 }) {
-  const [factura, setFactura] = useState<VentaDocumentoResumen | null>(
-    facturaFija ?? null,
+  // `facturaFija` puede cambiar sin que este diálogo se desmonte —el mismo
+  // formulario se reabre desde filas distintas de la lista de facturas—, así
+  // que la elegida es la fija cuando viene, nunca lo que quedó en el estado
+  // de una apertura anterior.
+  const [elegidaAMano, setElegidaAMano] = useState<VentaDocumentoResumen | null>(
+    null,
   );
+  const factura = facturaFija ?? elegidaAMano;
   const [fecha, setFecha] = useState(hoy());
   const [motivo, setMotivo] = useState("");
 
   const limpiar = () => {
-    setFactura(facturaFija ?? null);
+    setElegidaAMano(null);
     setFecha(hoy());
     setMotivo("");
   };
@@ -104,7 +109,7 @@ export function FormularioNotaCredito({
                 {facturaFija.consecutivo}
               </p>
             ) : (
-              <SelectorFacturaVigente valor={factura} onElegir={setFactura} />
+              <SelectorFacturaVigente valor={factura} onElegir={setElegidaAMano} />
             )}
           </Campo>
 
