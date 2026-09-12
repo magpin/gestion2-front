@@ -23,13 +23,13 @@ import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleCompra } from "../components/DetalleCompra";
 import { FormularioCompra } from "../components/FormularioCompra";
-import { FormularioPagarEfectivo } from "../components/FormularioPagarEfectivo";
+import { FormularioPago } from "../components/FormularioPago";
 import { useMapaProveedores } from "../hooks/useMapasCompra";
 import { comprasApi } from "../services/compras.service";
 import type {
   CompraDocumentoDetalle,
   CompraDocumentoResumen,
-  PagarEfectivoInput,
+  PagarInput,
 } from "../types/compras.types";
 
 const CLAVE = ["compras"];
@@ -91,8 +91,8 @@ export function ComprasView() {
   });
 
   const pagar = useMutation({
-    mutationFn: ({ id, datos }: { id: string; datos: PagarEfectivoInput }) =>
-      comprasApi.pagarEfectivo(id, datos),
+    mutationFn: ({ id, datos }: { id: string; datos: PagarInput }) =>
+      comprasApi.pagar(id, datos),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Pago registrado");
@@ -216,7 +216,7 @@ export function ComprasView() {
                               onClick={() => setPagandoDe(c)}
                             >
                               <Banknote className="size-4" />
-                              Pagar en efectivo
+                              Pagar
                             </Button>
                           )}
                         {puedeAnular && c.estado === "EMITIDA" && (
@@ -258,7 +258,7 @@ export function ComprasView() {
         onCerrar={() => setDetalleId(null)}
       />
 
-      <FormularioPagarEfectivo
+      <FormularioPago
         compra={pagandoDe}
         onCerrar={() => setPagandoDe(null)}
         onGuardar={(datos) =>

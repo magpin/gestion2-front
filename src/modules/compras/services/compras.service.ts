@@ -4,7 +4,7 @@ import type {
   CompraDocumentoResumen,
   CrearCompraInput,
   FiltroCompras,
-  PagarEfectivoInput,
+  PagarInput,
   PaginaCompras,
 } from "../types/compras.types";
 
@@ -35,9 +35,9 @@ export const comprasApi = {
   anular: (id: string, motivo: string) =>
     api.post(`/compras/${id}/anular`, { motivo }).then(() => undefined),
 
-  /** Paga en efectivo, total o parcialmente — el concepto lo arma el backend. */
-  pagarEfectivo: (id: string, datos: PagarEfectivoInput) =>
+  /** Paga por caja o por banco, total o parcialmente — el concepto lo arma el backend. */
+  pagar: (id: string, datos: PagarInput) =>
     api
-      .post<CompraDocumentoResumen>(`/compras/${id}/pagar-efectivo`, datos)
+      .post<CompraDocumentoResumen>(`/compras/${id}/pagar`, datos)
       .then((r) => r.data),
 };

@@ -98,9 +98,13 @@ export interface ConvertirCotizacionInput {
   fecha: string;
 }
 
-/** `cajaId` es la caja que recibe la plata — el concepto lo arma el backend con el número de la factura. */
-export interface CobrarEfectivoInput {
-  cajaId: string;
-  fecha: string;
-  valor: number;
-}
+/**
+ * Cobra por caja o por banco — `cajaId`/`cuentaBancariaId` son
+ * mutuamente excluyentes, discriminados por `medio` (mismo criterio que
+ * el `CobrarDto` del backend). El concepto lo arma el backend con el
+ * número de la factura.
+ */
+export type CobrarInput = { fecha: string; valor: number } & (
+  | { medio: "CAJA"; cajaId: string }
+  | { medio: "BANCO"; cuentaBancariaId: string }
+);

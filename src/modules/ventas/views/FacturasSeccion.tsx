@@ -22,13 +22,13 @@ import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
-import { FormularioCobrarEfectivo } from "../components/FormularioCobrarEfectivo";
+import { FormularioCobro } from "../components/FormularioCobro";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
 import { FormularioNotaCredito } from "../components/FormularioNotaCredito";
 import { useMapaClientes } from "../hooks/useMapasVenta";
 import { facturasApi, notasCreditoApi } from "../services/ventas.service";
 import type {
-  CobrarEfectivoInput,
+  CobrarInput,
   VentaDocumentoDetalle,
   VentaDocumentoResumen,
 } from "../types/ventas.types";
@@ -105,8 +105,8 @@ export function FacturasSeccion() {
   });
 
   const cobrar = useMutation({
-    mutationFn: ({ id, datos }: { id: string; datos: CobrarEfectivoInput }) =>
-      facturasApi.cobrarEfectivo(id, datos),
+    mutationFn: ({ id, datos }: { id: string; datos: CobrarInput }) =>
+      facturasApi.cobrar(id, datos),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Cobro registrado");
@@ -210,7 +210,7 @@ export function FacturasSeccion() {
                               onClick={() => setCobrandoDe(f)}
                             >
                               <Banknote className="size-4" />
-                              Cobrar en efectivo
+                              Cobrar
                             </Button>
                           )}
                         {puedeCrear && f.estado === "EMITIDA" && (
@@ -268,7 +268,7 @@ export function FacturasSeccion() {
         facturaFija={notaCreditoDe ?? undefined}
       />
 
-      <FormularioCobrarEfectivo
+      <FormularioCobro
         factura={cobrandoDe}
         onCerrar={() => setCobrandoDe(null)}
         onGuardar={(datos) =>

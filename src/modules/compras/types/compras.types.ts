@@ -104,9 +104,13 @@ export interface CrearCompraInput {
   retenciones?: RetencionCompraInput[];
 }
 
-/** `cajaId` es la caja que entrega la plata — el concepto lo arma el backend con el número de factura del proveedor. */
-export interface PagarEfectivoInput {
-  cajaId: string;
-  fecha: string;
-  valor: number;
-}
+/**
+ * Paga por caja o por banco — `cajaId`/`cuentaBancariaId` son
+ * mutuamente excluyentes, discriminados por `medio` (mismo criterio que
+ * el `PagarDto` del backend). El concepto lo arma el backend con el
+ * número de factura del proveedor.
+ */
+export type PagarInput = { fecha: string; valor: number } & (
+  | { medio: "CAJA"; cajaId: string }
+  | { medio: "BANCO"; cuentaBancariaId: string }
+);
