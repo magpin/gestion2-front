@@ -27,6 +27,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { comprasApi } from "@/modules/compras/services/compras.service";
 import { productosApi } from "@/modules/inventario/services/inventario.service";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
+import { cuentasBancariasApi } from "@/modules/tesoreria/services/bancos.service";
 import { cajasApi } from "@/modules/tesoreria/services/tesoreria.service";
 import { facturasApi } from "@/modules/ventas/services/ventas.service";
 import { useEstadoConfiguracion } from "@/modules/configuracion/hooks/useEstadoConfiguracion";
@@ -173,6 +174,11 @@ function Atajos() {
     queryFn: () => cajasApi.listar(),
     staleTime: 60_000,
   });
+  const { data: cuentasBancarias } = useQuery({
+    queryKey: ["cuentas-bancarias", "conteo"],
+    queryFn: () => cuentasBancariasApi.listar(),
+    staleTime: 60_000,
+  });
 
   return (
     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -219,11 +225,11 @@ function Atajos() {
       <Atajo
         href="/dashboard/tesoreria"
         icono={Landmark}
-        titulo="Caja"
+        titulo="Tesorería"
         detalle={
-          cajas === undefined
+          cajas === undefined || cuentasBancarias === undefined
             ? "…"
-            : `${cajas.length} caja${cajas.length === 1 ? "" : "s"}`
+            : `${cajas.length} caja${cajas.length === 1 ? "" : "s"} · ${cuentasBancarias.length} cuenta${cuentasBancarias.length === 1 ? "" : "s"} bancaria${cuentasBancarias.length === 1 ? "" : "s"}`
         }
       />
       <Atajo
