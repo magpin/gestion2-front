@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Banknote, Loader2, Plus, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -23,11 +23,13 @@ import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleCompra } from "../components/DetalleCompra";
 import { FormularioCompra } from "../components/FormularioCompra";
+import { FormularioPagarEfectivo } from "../components/FormularioPagarEfectivo";
 import { useMapaProveedores } from "../hooks/useMapasCompra";
 import { comprasApi } from "../services/compras.service";
 import type {
   CompraDocumentoDetalle,
   CompraDocumentoResumen,
+  PagarEfectivoInput,
 } from "../types/compras.types";
 
 const CLAVE = ["compras"];
@@ -41,6 +43,7 @@ export function ComprasView() {
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("COMPRAS", "DIRECTOR");
   const puedeAnular = useTieneRol("DIRECTOR", "CONTADOR");
+  const puedePagar = useTieneRol("CAJA", "DIRECTOR");
   const proveedores = useMapaProveedores();
 
   const [pagina, setPagina] = useState(1);
@@ -50,6 +53,9 @@ export function ComprasView() {
     null,
   );
   const [motivo, setMotivo] = useState("");
+  const [pagandoDe, setPagandoDe] = useState<CompraDocumentoResumen | null>(
+    null,
+  );
 
   const { data: resultado, isLoading } = useQuery({
     queryKey: [...CLAVE, pagina],
@@ -80,6 +86,17 @@ export function ComprasView() {
       aviso.exito("Compra anulada");
       setPorAnular(null);
       setMotivo("");
+    },
+    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+  });
+
+  const pagar = useMutation({
+    mutationFn: ({ id, datos }: { id: string; datos: PagarEfectivoInput }) =>
+      comprasApi.pagarEfectivo(id, datos),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CLAVE });
+      aviso.exito("Pago registrado");
+      setPagandoDe(null);
     },
     onError: (e: unknown) => aviso.error(mensajeDeError(e)),
   });
@@ -190,6 +207,18 @@ export function ComprasView() {
                         >
                           Ver
                         </Button>
+                        {puedePagar &&
+                          c.estado === "EMITIDA" &&
+                          Number(c.monto_pagado) < Number(c.neto_a_pagar) && (
+                            <Button
+                              variant="ghost"
+                              className="h-11 rounded-xl px-5 text-muted-foreground"
+                              onClick={() => setPagandoDe(c)}
+                            >
+                              <Banknote className="size-4" />
+                              Pagar en efectivo
+                            </Button>
+                          )}
                         {puedeAnular && c.estado === "EMITIDA" && (
                           <Button
                             variant="ghost"
@@ -227,6 +256,15 @@ export function ComprasView() {
       <DetalleCompra
         documento={(detalle ?? null) as CompraDocumentoDetalle | null}
         onCerrar={() => setDetalleId(null)}
+      />
+
+      <FormularioPagarEfectivo
+        compra={pagandoDe}
+        onCerrar={() => setPagandoDe(null)}
+        onGuardar={(datos) =>
+          pagandoDe && pagar.mutate({ id: pagandoDe.id, datos })
+        }
+        guardando={pagar.isPending}
       />
 
       <AlertDialog

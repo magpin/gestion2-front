@@ -1,8 +1,10 @@
 import { api } from "@/core/api/api";
 import type {
   CompraDocumentoDetalle,
+  CompraDocumentoResumen,
   CrearCompraInput,
   FiltroCompras,
+  PagarEfectivoInput,
   PaginaCompras,
 } from "../types/compras.types";
 
@@ -32,4 +34,10 @@ export const comprasApi = {
   /** No borra: anula el asiento y marca el documento, junto. */
   anular: (id: string, motivo: string) =>
     api.post(`/compras/${id}/anular`, { motivo }).then(() => undefined),
+
+  /** Paga en efectivo, total o parcialmente — el concepto lo arma el backend. */
+  pagarEfectivo: (id: string, datos: PagarEfectivoInput) =>
+    api
+      .post<CompraDocumentoResumen>(`/compras/${id}/pagar-efectivo`, datos)
+      .then((r) => r.data),
 };

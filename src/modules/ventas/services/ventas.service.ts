@@ -1,5 +1,6 @@
 import { api } from "@/core/api/api";
 import type {
+  CobrarEfectivoInput,
   ConvertirCotizacionInput,
   CrearCotizacionInput,
   CrearFacturaInput,
@@ -7,6 +8,7 @@ import type {
   FiltroVentas,
   PaginaVentas,
   VentaDocumentoDetalle,
+  VentaDocumentoResumen,
 } from "../types/ventas.types";
 
 const parametros = (f: FiltroVentas) => ({
@@ -63,6 +65,12 @@ export const facturasApi = {
   /** No borra: anula el asiento y marca el documento, junto. */
   anular: (id: string, motivo: string) =>
     api.post(`/facturas/${id}/anular`, { motivo }).then(() => undefined),
+
+  /** Cobra en efectivo, total o parcialmente — el concepto lo arma el backend. */
+  cobrarEfectivo: (id: string, datos: CobrarEfectivoInput) =>
+    api
+      .post<VentaDocumentoResumen>(`/facturas/${id}/cobrar-efectivo`, datos)
+      .then((r) => r.data),
 };
 
 /**

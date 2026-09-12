@@ -37,6 +37,8 @@ export interface CompraDocumentoResumen {
   total: string;
   total_retenciones: string;
   neto_a_pagar: string;
+  /** Cuánto se le ha pagado al proveedor. */
+  monto_pagado: string;
   asiento_id: string;
 }
 
@@ -100,4 +102,11 @@ export interface CrearCompraInput {
   numeroFacturaProveedor: string;
   lineas: LineaCompraInput[];
   retenciones?: RetencionCompraInput[];
+}
+
+/** `cajaId` es la caja que entrega la plata — el concepto lo arma el backend con el número de factura del proveedor. */
+export interface PagarEfectivoInput {
+  cajaId: string;
+  fecha: string;
+  valor: number;
 }

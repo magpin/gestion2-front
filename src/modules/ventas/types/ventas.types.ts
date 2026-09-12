@@ -27,6 +27,8 @@ export interface VentaDocumentoResumen {
   subtotal: string;
   total_iva: string;
   total: string;
+  /** Cuánto se ha cobrado. Siempre `"0"` en COTIZACION/NOTA_CREDITO — nadie cobra esas. */
+  monto_pagado: string;
   asiento_id: string | null;
 }
 
@@ -94,4 +96,11 @@ export interface CrearNotaCreditoInput {
  */
 export interface ConvertirCotizacionInput {
   fecha: string;
+}
+
+/** `cajaId` es la caja que recibe la plata — el concepto lo arma el backend con el número de la factura. */
+export interface CobrarEfectivoInput {
+  cajaId: string;
+  fecha: string;
+  valor: number;
 }

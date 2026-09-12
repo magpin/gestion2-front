@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileMinus, Loader2, Trash2 } from "lucide-react";
+import { Banknote, FileMinus, Loader2, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -22,11 +22,13 @@ import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
+import { FormularioCobrarEfectivo } from "../components/FormularioCobrarEfectivo";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
 import { FormularioNotaCredito } from "../components/FormularioNotaCredito";
 import { useMapaClientes } from "../hooks/useMapasVenta";
 import { facturasApi, notasCreditoApi } from "../services/ventas.service";
 import type {
+  CobrarEfectivoInput,
   VentaDocumentoDetalle,
   VentaDocumentoResumen,
 } from "../types/ventas.types";
@@ -42,6 +44,7 @@ export function FacturasSeccion() {
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
   const puedeAnular = useTieneRol("DIRECTOR", "CONTADOR");
+  const puedeCobrar = useTieneRol("CAJA", "DIRECTOR");
   const clientes = useMapaClientes();
 
   const [pagina, setPagina] = useState(1);
@@ -53,6 +56,9 @@ export function FacturasSeccion() {
   const [motivo, setMotivo] = useState("");
   const [notaCreditoDe, setNotaCreditoDe] =
     useState<VentaDocumentoResumen | null>(null);
+  const [cobrandoDe, setCobrandoDe] = useState<VentaDocumentoResumen | null>(
+    null,
+  );
 
   const { data: resultado, isLoading } = useQuery({
     queryKey: [...CLAVE, pagina],
@@ -94,6 +100,17 @@ export function FacturasSeccion() {
       await queryClient.invalidateQueries({ queryKey: ["notas-credito"] });
       aviso.exito("Nota crédito emitida");
       setNotaCreditoDe(null);
+    },
+    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+  });
+
+  const cobrar = useMutation({
+    mutationFn: ({ id, datos }: { id: string; datos: CobrarEfectivoInput }) =>
+      facturasApi.cobrarEfectivo(id, datos),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CLAVE });
+      aviso.exito("Cobro registrado");
+      setCobrandoDe(null);
     },
     onError: (e: unknown) => aviso.error(mensajeDeError(e)),
   });
@@ -184,6 +201,18 @@ export function FacturasSeccion() {
                         >
                           Ver
                         </Button>
+                        {puedeCobrar &&
+                          f.estado === "EMITIDA" &&
+                          Number(f.monto_pagado) < Number(f.total) && (
+                            <Button
+                              variant="ghost"
+                              className="h-11 rounded-xl px-5 text-muted-foreground"
+                              onClick={() => setCobrandoDe(f)}
+                            >
+                              <Banknote className="size-4" />
+                              Cobrar en efectivo
+                            </Button>
+                          )}
                         {puedeCrear && f.estado === "EMITIDA" && (
                           <Button
                             variant="ghost"
@@ -237,6 +266,15 @@ export function FacturasSeccion() {
         onGuardar={(datos) => crearNotaCredito.mutate(datos)}
         guardando={crearNotaCredito.isPending}
         facturaFija={notaCreditoDe ?? undefined}
+      />
+
+      <FormularioCobrarEfectivo
+        factura={cobrandoDe}
+        onCerrar={() => setCobrandoDe(null)}
+        onGuardar={(datos) =>
+          cobrandoDe && cobrar.mutate({ id: cobrandoDe.id, datos })
+        }
+        guardando={cobrar.isPending}
       />
 
       <DetalleVenta
