@@ -10,6 +10,7 @@ import {
   ChevronRight,
   CircleDashed,
   FileText,
+  Landmark,
   Library,
   Loader2,
   Lock,
@@ -26,6 +27,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { comprasApi } from "@/modules/compras/services/compras.service";
 import { productosApi } from "@/modules/inventario/services/inventario.service";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
+import { cajasApi } from "@/modules/tesoreria/services/tesoreria.service";
 import { facturasApi } from "@/modules/ventas/services/ventas.service";
 import { useEstadoConfiguracion } from "@/modules/configuracion/hooks/useEstadoConfiguracion";
 import type {
@@ -166,6 +168,11 @@ function Atajos() {
     queryFn: () => comprasApi.listar(),
     staleTime: 60_000,
   });
+  const { data: cajas } = useQuery({
+    queryKey: ["cajas", "conteo"],
+    queryFn: () => cajasApi.listar(),
+    staleTime: 60_000,
+  });
 
   return (
     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -207,6 +214,16 @@ function Atajos() {
           compras === undefined
             ? "…"
             : `${compras.total} factura${compras.total === 1 ? "" : "s"}`
+        }
+      />
+      <Atajo
+        href="/dashboard/tesoreria"
+        icono={Landmark}
+        titulo="Caja"
+        detalle={
+          cajas === undefined
+            ? "…"
+            : `${cajas.length} caja${cajas.length === 1 ? "" : "s"}`
         }
       />
       <Atajo
