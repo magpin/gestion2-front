@@ -38,6 +38,8 @@ export function DetalleCompra({
                 <DialogDescription>
                   {documento.tercero_nombre}
                   {" · "}
+                  {documento.tercero_identificacion}
+                  {" · "}
                   {formatFecha(documento.fecha)}
                 </DialogDescription>
               </div>

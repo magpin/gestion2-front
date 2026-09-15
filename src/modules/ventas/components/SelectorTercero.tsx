@@ -48,7 +48,9 @@ export function SelectorTercero({
         className="h-11 w-full justify-between rounded-xl px-4 font-normal aria-invalid:border-danger"
       >
         <span className={cn("truncate", valor ? "" : "text-muted-foreground")}>
-          {valor ? valor.nombre : "Seleccione un cliente"}
+          {valor
+            ? `${valor.nombre} · ${valor.tipoDocumento} ${valor.numeroDocumento}`
+            : "Seleccione un cliente"}
         </span>
         <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
       </PopoverTrigger>

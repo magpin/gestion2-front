@@ -19,6 +19,8 @@ export interface VentaDocumentoResumen {
   tercero_id: string;
   /** Razón social o nombre completo: viene de la API para no resolverlo acá. */
   tercero_nombre: string;
+  /** Ya formateada por el backend: `NIT 900123456-7`, `CC 19400748`. */
+  tercero_identificacion: string;
   fecha: string;
   estado: EstadoVentaDocumento;
   prefijo: string | null;

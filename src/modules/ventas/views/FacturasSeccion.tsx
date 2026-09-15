@@ -172,6 +172,9 @@ export function FacturasSeccion() {
                     </td>
                     <td className="px-5 py-5 text-sm font-medium">
                       {f.tercero_nombre}
+                      <span className="mt-0.5 block font-mono text-xs font-normal text-muted-foreground">
+                        {f.tercero_identificacion}
+                      </span>
                     </td>
                     <td className="px-5 py-5 font-mono text-sm font-semibold">
                       {formatCOP(Number(f.total))}
