@@ -72,10 +72,16 @@ export function mensajeDeError(error: unknown): string {
   if (!cuerpo) return "No se pudo conectar con el servidor.";
 
   if (Array.isArray(cuerpo.message)) return cuerpo.message.join(". ");
-  return cuerpo.message ?? "Ocurrió un error.";
+  // Los errores traducidos de Postgres —duplicados, reglas de la base— no
+  // traen `message`: traen `error` con el texto ya en lenguaje de la persona.
+  // Sin esta línea, "esa factura ya está registrada" salía como "Ocurrió un
+  // error", que es justo lo que el filtro del backend existe para evitar.
+  const texto = cuerpo.message ?? (typeof cuerpo.error === "string" ? cuerpo.error : undefined);
+  return texto ?? "Ocurrió un error.";
 }
 
 /** La restricción de base que se rompió, para señalar el campo exacto. */
 export function restriccionRota(error: unknown): string | undefined {
-  return (error as AxiosError<ApiError>)?.response?.data?.constraint;
+  const cuerpo = (error as AxiosError<ApiError>)?.response?.data;
+  return cuerpo?.constraint ?? cuerpo?.restriccion;
 }

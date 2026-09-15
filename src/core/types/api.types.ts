@@ -19,4 +19,11 @@ export interface ApiError {
    */
   constraint?: string;
   detail?: string;
+  /**
+   * Lo que manda el filtro de errores de Postgres del backend, que no usa
+   * la forma de Nest: `estado` en vez de `statusCode`, el texto en `error` y
+   * la restricción en `restriccion`. Se aceptan las dos formas.
+   */
+  estado?: number;
+  restriccion?: string;
 }

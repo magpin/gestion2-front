@@ -23,6 +23,8 @@ import Swal from "sweetalert2";
 // botón use el mismo índigo que el resto del sistema.
 const BOTON =
   "inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90";
+const BOTON_SECUNDARIO =
+  "mr-2 inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-accent";
 
 // El mixin se crea en la primera llamada y no al importar: sweetalert2 necesita
 // el DOM, y este módulo se evalúa también al renderizar en el servidor.
@@ -73,6 +75,32 @@ export const aviso = {
       theme: "light",
       buttonsStyling: false,
       customClass: { confirmButton: BOTON },
+    });
+  },
+
+  /**
+   * Un error que tiene salida: además de "Entendido" ofrece ir a resolverlo.
+   * Para cuando lo que falta no está en esta pantalla —una resolución de la
+   * DIAN, una cuenta del plan— y decirlo sin llevar hasta ahí deja al usuario
+   * buscando por el menú.
+   */
+  errorConSalida(
+    mensaje: string,
+    salida: { etiqueta: string; ir: () => void },
+    detalle?: string,
+  ): void {
+    void Swal.fire({
+      icon: "error",
+      title: mensaje,
+      text: detalle,
+      showCancelButton: true,
+      confirmButtonText: salida.etiqueta,
+      cancelButtonText: "Entendido",
+      theme: "light",
+      buttonsStyling: false,
+      customClass: { confirmButton: BOTON, cancelButton: BOTON_SECUNDARIO },
+    }).then((r) => {
+      if (r.isConfirmed) salida.ir();
     });
   },
 
