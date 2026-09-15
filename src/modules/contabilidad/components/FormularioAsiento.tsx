@@ -206,6 +206,7 @@ export function FormularioAsiento({
           <div className="grid gap-4 sm:grid-cols-[200px_200px_1fr]">
             <Campo id="comprobante" etiqueta="Comprobante" escala="grande">
               <Select
+                items={digitables.map((c) => ({ value: c.id, label: `${c.codigo} · ${c.nombre}` }))}
                 value={comprobanteTipoId}
                 onValueChange={(v) => setElegido(v ?? "")}
               >

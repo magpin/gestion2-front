@@ -32,7 +32,7 @@ export function SelectorCaja({
   });
 
   return (
-    <Select
+    <Select items={cajas.map((c) => ({ value: c.id, label: c.nombre }))}
       value={valor?.id ?? ""}
       onValueChange={(id) => {
         const caja = cajas.find((c) => c.id === id);

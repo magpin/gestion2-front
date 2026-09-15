@@ -122,7 +122,7 @@ export function ConciliacionSeccion() {
         {cuenta && (
           <label className="flex min-h-12 min-w-[260px] flex-col justify-center rounded-2xl border border-border bg-card px-4">
             <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Extracto abierto</span>
-            <Select value={extractoId ?? ""} onValueChange={setExtractoId}>
+            <Select items={abiertos.map((e) => ({ value: e.id, label: `${formatFecha(e.fecha_desde)} – ${formatFecha(e.fecha_hasta)}` }))} value={extractoId ?? ""} onValueChange={setExtractoId}>
               <SelectTrigger className="h-auto border-0 bg-transparent p-0 text-sm font-semibold shadow-none">
                 <SelectValue placeholder="Elegí un extracto" />
               </SelectTrigger>

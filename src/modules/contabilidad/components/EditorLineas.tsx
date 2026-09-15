@@ -165,6 +165,7 @@ export function EditorLineas({
                     {l.cuenta?.exige_tercero && (
                       <div className="mt-2">
                         <Select
+                          items={(terceros?.datos ?? []).map((t) => ({ value: t.id, label: t.nombre }))}
                           value={l.terceroId}
                           onValueChange={(v) =>
                             actualizar(l.clave, { terceroId: v ?? "" })
@@ -187,6 +188,7 @@ export function EditorLineas({
                     {l.cuenta?.exige_centro_costo && (
                       <div className="mt-2">
                         <Select
+                          items={centros.map((c) => ({ value: c.id, label: `${c.codigo} · ${c.nombre}` }))}
                           value={l.centroCostoId}
                           onValueChange={(v) =>
                             actualizar(l.clave, { centroCostoId: v ?? "" })

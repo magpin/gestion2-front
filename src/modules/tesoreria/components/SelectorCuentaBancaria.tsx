@@ -32,6 +32,7 @@ export function SelectorCuentaBancaria({
 
   return (
     <Select
+      items={cuentas.map((c) => ({ value: c.id, label: `${c.banco} · ${c.numero_cuenta}` }))}
       value={valor?.id ?? ""}
       onValueChange={(id) => {
         const cuenta = cuentas.find((c) => c.id === id);

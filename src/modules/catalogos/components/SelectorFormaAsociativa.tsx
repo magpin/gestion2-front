@@ -36,7 +36,7 @@ export function SelectorFormaAsociativa({ id, valor, onCambio, invalido }: Props
   });
 
   return (
-    <Select value={valor} onValueChange={(v) => onCambio(v ?? "")}>
+    <Select items={data.map((f) => ({ value: f.codigo, label: f.descripcion }))} value={valor} onValueChange={(v) => onCambio(v ?? "")}>
       <SelectTrigger id={id} aria-invalid={invalido || undefined}>
         <SelectValue placeholder="Sin definir" />
       </SelectTrigger>

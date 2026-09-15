@@ -110,6 +110,7 @@ export function FormularioCaja({
           escala="grande"
         >
           <Select
+            items={sedes.map((s) => ({ value: s.id, label: s.nombre }))}
             value={form.watch("sedeId")}
             onValueChange={(v) => form.setValue("sedeId", v ?? undefined)}
           >

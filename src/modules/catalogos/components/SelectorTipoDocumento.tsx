@@ -51,7 +51,7 @@ export function SelectorTipoDocumento({
   // El control admite null al deseleccionar; el formulario siempre quiere una
   // cadena, así que null se traduce a vacío y ahí lo rechaza la validación.
   return (
-    <Select value={valor} onValueChange={(v) => onCambio(v ?? "")}>
+    <Select items={data.map((t) => ({ value: t.codigo, label: t.codigo }))} value={valor} onValueChange={(v) => onCambio(v ?? "")}>
       <SelectTrigger id={id} aria-invalid={invalido || undefined} className={className}>
         <SelectValue placeholder="Tipo" />
       </SelectTrigger>

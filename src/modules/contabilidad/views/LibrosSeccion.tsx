@@ -102,7 +102,7 @@ export function LibrosSeccion() {
         {libro === "balance" ? (
           <label className="flex min-w-64 flex-1 flex-col gap-2 text-sm font-medium">
             Período
-            <Select value={periodoId} onValueChange={(v) => setPeriodoId(v ?? "")}>
+            <Select items={periodos.map((p) => ({ value: p.id, label: `${p.anio}-${String(p.mes).padStart(2, "0")}` }))} value={periodoId} onValueChange={(v) => setPeriodoId(v ?? "")}>
               <SelectTrigger className="h-11 w-full rounded-xl px-4">
                 <SelectValue placeholder="Elegí un período" />
               </SelectTrigger>
