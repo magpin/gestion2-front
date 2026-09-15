@@ -71,3 +71,28 @@ export interface FiltroTerceros {
   soloInactivos?: boolean;
   pagina?: number;
 }
+
+/**
+ * La ficha completa vista como resumen: lo que piden los selectores.
+ *
+ * Hace falta al precargar un documento que ya existe —corregir una
+ * cotización—: el documento guarda el id del tercero, y el selector trabaja
+ * con el objeto. La ficha se pide igual para eso.
+ */
+export function resumirTercero(d: TerceroDetalle): TerceroResumen {
+  return {
+    id: d.id,
+    tipoDocumento: d.tipo_documento,
+    numeroDocumento: d.numero_documento,
+    dv: d.dv,
+    nombre:
+      d.razon_social ??
+      [d.primer_nombre, d.segundo_nombre, d.primer_apellido, d.segundo_apellido]
+        .filter((p) => p !== null && p !== "")
+        .join(" "),
+    esCliente: d.es_cliente,
+    esProveedor: d.es_proveedor,
+    responsableIva: d.responsable_iva,
+    activo: d.activo,
+  };
+}

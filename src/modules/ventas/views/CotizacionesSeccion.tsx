@@ -3,9 +3,20 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRightLeft, Loader2 } from "lucide-react";
+import { ArrowRightLeft, Loader2, Pencil, Trash2 } from "lucide-react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
@@ -14,8 +25,12 @@ import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioConvertirCotizacion } from "../components/FormularioConvertirCotizacion";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
+import { productosApi } from "@/modules/inventario/services/inventario.service";
+import { tercerosApi } from "@/modules/terceros/services/terceros.service";
+import { resumirTercero } from "@/modules/terceros/types/terceros.types";
 import { cotizacionesApi, facturasApi } from "../services/ventas.service";
 import type {
+  CrearCotizacionInput,
   VentaDocumentoDetalle,
   VentaDocumentoResumen,
 } from "../types/ventas.types";
@@ -23,10 +38,11 @@ import type {
 const CLAVE = ["cotizaciones"];
 
 /**
- * Cotizaciones: no asientan ni mueven inventario, así que no hay "anular"
- * acá — se hacen y se quedan como referencia. La única transición que
- * tienen es "Convertir a factura", que reusa sus líneas sin volver a
- * pedirlas (`FacturaService.convertirCotizacion` en el backend).
+ * Cotizaciones: no asientan ni mueven inventario, así que se corrigen y se
+ * descartan —cosa que una factura no puede—. Tres transiciones: corregir
+ * (reemplaza cliente, fecha y líneas, conservando el número), descartar
+ * (queda ANULADA con su motivo; nada se borra) y convertir a factura, que
+ * reusa sus líneas sin volver a pedirlas.
  */
 export function CotizacionesSeccion() {
   const router = useRouter();
@@ -38,6 +54,10 @@ export function CotizacionesSeccion() {
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [convirtiendo, setConvirtiendo] =
     useState<VentaDocumentoResumen | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [porDescartar, setPorDescartar] =
+    useState<VentaDocumentoResumen | null>(null);
+  const [motivo, setMotivo] = useState("");
 
   const { data: resultado, isLoading } = useQuery({
     queryKey: [...CLAVE, pagina],
@@ -56,6 +76,69 @@ export function CotizacionesSeccion() {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Cotización creada");
       setCreando(false);
+    },
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
+  });
+
+  // Para corregir hace falta la cotización completa y, con ella, el cliente y
+  // los productos como objetos: el documento guarda ids y los selectores
+  // trabajan con la ficha.
+  const { data: aCorregir } = useQuery({
+    queryKey: [...CLAVE, "detalle", editandoId],
+    queryFn: () => cotizacionesApi.porId(editandoId!),
+    enabled: editandoId !== null,
+  });
+
+  const { data: clienteACorregir } = useQuery({
+    queryKey: ["terceros", "ficha", aCorregir?.tercero_id],
+    queryFn: () => tercerosApi.porId(aCorregir!.tercero_id),
+    enabled: aCorregir !== undefined,
+  });
+
+  const { data: productosACorregir } = useQuery({
+    queryKey: ["productos", "de-cotizacion", aCorregir?.id],
+    queryFn: () =>
+      Promise.all(
+        (aCorregir?.lineas ?? []).map((l) => productosApi.porId(l.producto_id)),
+      ),
+    enabled: aCorregir !== undefined,
+  });
+
+  const inicialCorregir =
+    aCorregir && clienteACorregir && productosACorregir
+      ? {
+          tercero: resumirTercero(clienteACorregir),
+          fecha: aCorregir.fecha.slice(0, 10),
+          lineas: aCorregir.lineas.map((l, i) => ({
+            clave: i,
+            producto: productosACorregir[i],
+            cantidad: String(Number(l.cantidad)),
+            // El precio se vuelve a resolver contra el vigente; si el producto
+            // sigue sin precio de lista, se muestra el que tenía la línea.
+            precioUnitario: "",
+          })),
+        }
+      : undefined;
+
+  const corregir = useMutation({
+    mutationFn: (datos: CrearCotizacionInput) =>
+      cotizacionesApi.editar(editandoId!, datos),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CLAVE });
+      aviso.exito("Cotización corregida");
+      setEditandoId(null);
+    },
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
+  });
+
+  const descartar = useMutation({
+    mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
+      cotizacionesApi.descartar(id, motivo),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CLAVE });
+      aviso.exito("Cotización descartada");
+      setPorDescartar(null);
+      setMotivo("");
     },
     onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
@@ -164,19 +247,23 @@ export function CotizacionesSeccion() {
                     <td className="px-5 py-5">
                       <span
                         className={`inline-flex items-center gap-2 text-[13px] font-semibold ${
-                          c.estado === "CONVERTIDA"
-                            ? "text-muted-foreground"
-                            : "text-success"
+                          c.estado === "EMITIDA"
+                            ? "text-success"
+                            : "text-muted-foreground"
                         }`}
                       >
                         <span
                           className={`size-2 rounded-full ${
-                            c.estado === "CONVERTIDA"
-                              ? "bg-muted-foreground"
-                              : "bg-success"
+                            c.estado === "EMITIDA"
+                              ? "bg-success"
+                              : "bg-muted-foreground"
                           }`}
                         />
-                        {c.estado === "CONVERTIDA" ? "Convertida" : "Vigente"}
+                        {c.estado === "EMITIDA"
+                          ? "Vigente"
+                          : c.estado === "CONVERTIDA"
+                            ? "Convertida"
+                            : "Descartada"}
                       </span>
                     </td>
                     <td className="px-5 py-5">
@@ -189,14 +276,32 @@ export function CotizacionesSeccion() {
                           Ver
                         </Button>
                         {puedeCrear && c.estado === "EMITIDA" && (
-                          <Button
-                            variant="ghost"
-                            className="h-11 rounded-xl px-5 text-muted-foreground"
-                            onClick={() => setConvirtiendo(c)}
-                          >
-                            <ArrowRightLeft className="size-4" />
-                            Convertir a factura
-                          </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              className="h-11 rounded-xl px-4 text-muted-foreground"
+                              onClick={() => setEditandoId(c.id)}
+                            >
+                              <Pencil className="size-4" />
+                              Corregir
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              className="h-11 rounded-xl px-4 text-muted-foreground hover:text-danger"
+                              onClick={() => setPorDescartar(c)}
+                            >
+                              <Trash2 className="size-4" />
+                              Descartar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              className="h-11 rounded-xl px-5 text-muted-foreground"
+                              onClick={() => setConvirtiendo(c)}
+                            >
+                              <ArrowRightLeft className="size-4" />
+                              Convertir a factura
+                            </Button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -226,10 +331,77 @@ export function CotizacionesSeccion() {
         precioEditable
       />
 
+      {/* Corregir es el mismo formulario, precargado: remontarlo por
+          cotización evita que queden los valores de la anterior. */}
+      {inicialCorregir && (
+        <FormularioDocumentoVenta
+          key={editandoId ?? "sin-corregir"}
+          abierto={editandoId !== null}
+          onCerrar={() => setEditandoId(null)}
+          onGuardar={(datos) => corregir.mutate(datos)}
+          guardando={corregir.isPending}
+          titulo="Corregir cotización"
+          descripcion="Se reemplaza lo que había: el número no cambia, así el cliente sigue viendo el mismo."
+          etiquetaBoton="Guardar cambios"
+          precioEditable
+          inicial={inicialCorregir}
+        />
+      )}
+
       <DetalleVenta
         documento={(detalle ?? null) as VentaDocumentoDetalle | null}
         onCerrar={() => setDetalleId(null)}
       />
+
+      <AlertDialog
+        open={porDescartar !== null}
+        onOpenChange={(abierto) => {
+          if (!abierto) {
+            setPorDescartar(null);
+            setMotivo("");
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Descartar la cotización {porDescartar?.prefijo}
+              {porDescartar?.consecutivo}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              No se borra: queda en la lista como descartada, con el motivo. El
+              número ya está gastado y no se reutiliza.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Motivo — el cliente no la tomó, se rehízo, se cotizó por error…"
+            className="min-h-24 rounded-xl"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-12 rounded-xl px-6">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="h-12 rounded-xl px-6"
+              disabled={motivo.trim().length < 3 || descartar.isPending}
+              onClick={() =>
+                porDescartar &&
+                descartar.mutate({
+                  id: porDescartar.id,
+                  motivo: motivo.trim(),
+                })
+              }
+            >
+              {descartar.isPending && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+              Descartar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FormularioConvertirCotizacion
         cotizacion={convirtiendo}

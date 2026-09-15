@@ -44,6 +44,7 @@ export function FormularioDocumentoVenta({
   etiquetaBoton,
   fechaDeHoy = false,
   precioEditable = false,
+  inicial,
 }: {
   abierto: boolean;
   onCerrar: () => void;
@@ -63,17 +64,28 @@ export function FormularioDocumentoVenta({
    * precio de lista, en vez de trabarse. Ver `EditorLineasVenta`.
    */
   precioEditable?: boolean;
+  /**
+   * La cotización que se está corrigiendo, con su cliente y sus productos ya
+   * resueltos. Sin esto, el formulario crea uno nuevo.
+   */
+  inicial?: {
+    tercero: TerceroResumen;
+    fecha: string;
+    lineas: LineaVentaBorrador[];
+  };
 }) {
-  const [tercero, setTercero] = useState<TerceroResumen | null>(null);
-  const [fecha, setFecha] = useState(hoyEnColombia());
-  const [lineas, setLineas] = useState<LineaVentaBorrador[]>([
-    lineaVentaVacia(),
-  ]);
+  const [tercero, setTercero] = useState<TerceroResumen | null>(
+    inicial?.tercero ?? null,
+  );
+  const [fecha, setFecha] = useState(inicial?.fecha ?? hoyEnColombia());
+  const [lineas, setLineas] = useState<LineaVentaBorrador[]>(
+    inicial?.lineas ?? [lineaVentaVacia()],
+  );
 
   const limpiar = () => {
-    setTercero(null);
-    setFecha(hoyEnColombia());
-    setLineas([lineaVentaVacia()]);
+    setTercero(inicial?.tercero ?? null);
+    setFecha(inicial?.fecha ?? hoyEnColombia());
+    setLineas(inicial?.lineas ?? [lineaVentaVacia()]);
   };
 
   const sinProducto = lineas

@@ -35,6 +35,19 @@ export const cotizacionesApi = {
     api
       .post<VentaDocumentoDetalle>("/cotizaciones", datos)
       .then((r) => r.data),
+
+  /**
+   * Corrige una cotización vigente. Se manda completa —cliente, fecha y
+   * líneas—, no un parche: el backend reemplaza lo que había.
+   */
+  editar: (id: string, datos: CrearCotizacionInput) =>
+    api
+      .put<VentaDocumentoDetalle>(`/cotizaciones/${id}`, datos)
+      .then((r) => r.data),
+
+  /** La descarta con motivo. No borra: el número queda con su explicación. */
+  descartar: (id: string, motivo: string) =>
+    api.post(`/cotizaciones/${id}/anular`, { motivo }).then(() => undefined),
 };
 
 /**
