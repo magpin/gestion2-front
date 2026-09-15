@@ -141,12 +141,11 @@ export function InicioView() {
 }
 
 /**
- * Las puertas que hoy existen de verdad.
+ * Los módulos, con una cifra al lado.
  *
- * No es un menú lateral a propósito: el armazón dice que la navegación por
- * procesos vuelve cuando existan ventas, compras e inventario, y seis puertas
- * cerradas son peores que ninguna. Inventario, Ventas y Compras ya se
- * sumaron a las que estaban abiertas.
+ * La barra lateral ya lleva a cada uno; esto no la duplica, la completa: el
+ * menú dice adónde se puede ir y estas tarjetas dicen cuánto hay ahí —cuántas
+ * facturas, cuántos productos— antes de entrar.
  */
 function Atajos() {
   const { data: cuentas } = useQuery({

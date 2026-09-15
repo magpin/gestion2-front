@@ -41,7 +41,7 @@ export function VentasView() {
         </p>
       </header>
 
-      <nav className="mb-7 flex gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
+      <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
         {SECCIONES.map(([nombre, Icono]) => (
           <button
             key={nombre}

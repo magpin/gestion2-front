@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Building2, ChevronsUpDown, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/core/store/authStore";
 import { NOMBRE_ROL } from "@/modules/auth/types/auth.types";
 import { useCerrarSesion } from "@/modules/auth/hooks/useAuth";
@@ -15,6 +17,9 @@ import { useCerrarSesion } from "@/modules/auth/hooks/useAuth";
  * donde una persona lleva quince empresas, equivocarse de empresa es registrar
  * una compra en los libros de otro cliente — y eso se corrige anulando, no
  * editando.
+ *
+ * Es `sticky`: el contenido de un módulo puede ser largo (un kardex, un libro)
+ * y la empresa en la que se está parado tiene que quedar a la vista siempre.
  */
 export function BarraSuperior() {
   const usuario = useAuthStore((s) => s.usuario);
@@ -26,7 +31,9 @@ export function BarraSuperior() {
   const empresa = empresas.find((e) => e.id === empresaId);
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b border-border bg-card px-4 md:px-8">
+    <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border bg-card px-4 md:px-6">
+      <SidebarTrigger className="-ml-1" title="Mostrar u ocultar el menú (Ctrl+B)" />
+      <Separator orientation="vertical" className="mr-1 data-vertical:h-5 data-vertical:self-center" />
       <Link
         href="/empresa"
         className="flex items-center gap-2.5 rounded-md border border-border bg-background px-3 py-1.5 transition-colors hover:border-input"
