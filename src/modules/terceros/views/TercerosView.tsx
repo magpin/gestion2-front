@@ -149,9 +149,19 @@ export function TercerosView() {
         municipioCodigo: d.municipioCodigo || undefined,
       };
 
-      return editando === "nuevo"
-        ? tercerosApi.crear(datos)
-        : tercerosApi.editar(editando!, datos);
+      if (editando === "nuevo") return tercerosApi.crear(datos);
+
+      // La identidad no se edita: el formulario la muestra fija y el backend
+      // rechaza el PATCH entero si esos campos viajan. Se quitan acá y no en
+      // el formulario, que es el mismo para crear.
+      const {
+        tipoPersona: _tipoPersona,
+        tipoDocumento: _tipoDocumento,
+        numeroDocumento: _numeroDocumento,
+        dv: _dv,
+        ...editables
+      } = datos;
+      return tercerosApi.editar(editando!, editables);
     },
     onSuccess: async () => {
       await refrescar();
