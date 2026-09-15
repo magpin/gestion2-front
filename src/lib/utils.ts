@@ -23,3 +23,16 @@ export function formatFecha(isoFecha: string | null | undefined): string {
   }
   return format(parseISO(isoFecha), "dd MMM yyyy", { locale: es });
 }
+
+// El día de hoy como lo ve la empresa: AAAA-MM-DD en hora de Colombia, igual
+// que `hoyEnColombia()` del backend. No se usa la del navegador: un portátil
+// puesto en otra zona —o alguien de viaje— mandaría una fecha que el backend
+// rechaza, porque para él hoy es otro día.
+export function hoyEnColombia(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}

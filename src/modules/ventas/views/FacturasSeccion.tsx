@@ -261,6 +261,7 @@ export function FacturasSeccion() {
         titulo="Nueva factura"
         descripcion="Numera contra la resolución DIAN vigente, asienta y descuenta el kardex al guardar."
         etiquetaBoton="Emitir factura"
+        fechaDeHoy
       />
 
       <FormularioNotaCredito

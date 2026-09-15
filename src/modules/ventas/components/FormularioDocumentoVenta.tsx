@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { formatFecha, hoyEnColombia } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { SelectorTercero } from "./SelectorTercero";
@@ -24,11 +25,6 @@ import {
   type LineaVentaBorrador,
 } from "./EditorLineasVenta";
 import type { CrearCotizacionInput } from "../types/ventas.types";
-
-const hoy = (): string => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
 
 /**
  * El formulario de cotización y el de factura son el mismo: cliente, fecha
@@ -46,6 +42,7 @@ export function FormularioDocumentoVenta({
   titulo,
   descripcion,
   etiquetaBoton,
+  fechaDeHoy = false,
 }: {
   abierto: boolean;
   onCerrar: () => void;
@@ -54,16 +51,22 @@ export function FormularioDocumentoVenta({
   titulo: string;
   descripcion: string;
   etiquetaBoton: string;
+  /**
+   * Una factura se emite hoy y ninguna otra fecha, así que el campo se
+   * muestra fijo. Una cotización no es un documento fiscal —no numera contra
+   * la resolución ni asienta— y puede fecharse cuando haga falta.
+   */
+  fechaDeHoy?: boolean;
 }) {
   const [tercero, setTercero] = useState<TerceroResumen | null>(null);
-  const [fecha, setFecha] = useState(hoy());
+  const [fecha, setFecha] = useState(hoyEnColombia());
   const [lineas, setLineas] = useState<LineaVentaBorrador[]>([
     lineaVentaVacia(),
   ]);
 
   const limpiar = () => {
     setTercero(null);
-    setFecha(hoy());
+    setFecha(hoyEnColombia());
     setLineas([lineaVentaVacia()]);
   };
 
@@ -131,14 +134,28 @@ export function FormularioDocumentoVenta({
               <SelectorTercero valor={tercero} onElegir={setTercero} />
             </Campo>
 
-            <Campo id="fecha" etiqueta="Fecha" escala="grande">
-              <Input
-                id="fecha"
-                type="date"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                className="h-11 rounded-xl px-4"
-              />
+            <Campo
+              id="fecha"
+              etiqueta="Fecha"
+              escala="grande"
+              ayuda={fechaDeHoy ? "Un documento fiscal se emite el día que se emite: no se atrasa ni se adelanta." : undefined}
+            >
+              {fechaDeHoy ? (
+                <p
+                  id="fecha"
+                  className="flex h-11 items-center rounded-xl border border-border bg-muted/40 px-4 text-sm font-medium"
+                >
+                  {formatFecha(fecha)}
+                </p>
+              ) : (
+                <Input
+                  id="fecha"
+                  type="date"
+                  value={fecha}
+                  onChange={(e) => setFecha(e.target.value)}
+                  className="h-11 rounded-xl px-4"
+                />
+              )}
             </Campo>
           </div>
 
