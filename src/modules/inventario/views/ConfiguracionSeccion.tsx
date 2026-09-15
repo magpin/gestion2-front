@@ -31,9 +31,12 @@ export function ConfiguracionSeccion() {
   const [cuenta, setCuenta] = useState<CuentaEmpresa | null>(null);
 
   const guardar = useMutation({
-    mutationFn: (cuentaAjusteId: string) => configuracionApi.fijarCuentaAjuste(cuentaAjusteId),
+    mutationFn: (cuentaAjusteId: string) =>
+      configuracionApi.fijarCuentaAjuste(cuentaAjusteId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["inventario", "configuracion"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["inventario", "configuracion"],
+      });
       aviso.exito("Configuración guardada");
     },
     onError: (e: unknown) => aviso.error(mensajeDeError(e)),
@@ -54,13 +57,20 @@ export function ConfiguracionSeccion() {
       <span className="grid size-12 place-items-center rounded-2xl bg-brand/10 text-brand">
         <Settings2 />
       </span>
-      <h2 className="mt-6 text-2xl font-semibold">Configuración de inventario</h2>
+      <h2 className="mt-6 text-2xl font-semibold">
+        Configuración de inventario
+      </h2>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-        Define la cuenta contable que se va a usar automáticamente para los ajustes de inventario.
+        Define la cuenta contable que se va a usar automáticamente para los
+        ajustes de inventario.
       </p>
 
       <div className="mt-6">
-        <Campo id="cuentaAjuste" etiqueta="Cuenta contable para ajustes de inventario" escala="grande">
+        <Campo
+          id="cuentaAjuste"
+          etiqueta="Cuenta contable para ajustes de inventario"
+          escala="grande"
+        >
           <SelectorCuenta valor={cuenta} onElegir={setCuenta} />
         </Campo>
       </div>
@@ -81,7 +91,9 @@ export function ConfiguracionSeccion() {
         Guardar configuración
       </Button>
       {!puedeConfigurar && (
-        <p className="mt-3 text-xs text-muted-foreground">Solo Contador o Director pueden cambiar esta cuenta.</p>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Solo Contador o Director pueden cambiar esta cuenta.
+        </p>
       )}
     </section>
   );

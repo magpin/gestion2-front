@@ -35,7 +35,9 @@ const esquema = z
     primerApellido: z.string().max(100).optional(),
     segundoApellido: z.string().max(100).optional(),
     nombreComercial: z.string().max(200).optional(),
-    email: z.union([z.string().email("Correo inválido"), z.literal("")]).optional(),
+    email: z
+      .union([z.string().email("Correo inválido"), z.literal("")])
+      .optional(),
     telefono: z.string().max(40).optional(),
     direccion: z.string().max(200).optional(),
     municipioCodigo: z.string().optional(),
@@ -88,8 +90,16 @@ const VACIO: DatosTercero = {
 
 const CALIDADES: Array<[keyof DatosTercero, string, string]> = [
   ["responsableIva", "Responsable de IVA", "Le facturás con IVA discriminado"],
-  ["esAgenteRetenedor", "Agente retenedor", "Practica retención sobre lo que le pagás"],
-  ["esAutorretenedor", "Autorretenedor", "Se retiene a sí mismo; no se le retiene"],
+  [
+    "esAgenteRetenedor",
+    "Agente retenedor",
+    "Practica retención sobre lo que le pagás",
+  ],
+  [
+    "esAutorretenedor",
+    "Autorretenedor",
+    "Se retiene a sí mismo; no se le retiene",
+  ],
   ["esGranContribuyente", "Gran contribuyente", "Designado por la DIAN"],
   ["regimenSimple", "Régimen simple", "Tributa por el SIMPLE"],
 ];
@@ -115,6 +125,7 @@ export function FormularioTercero({
   id,
   edicion,
   inicial,
+  valoresIniciales,
   alGuardar,
 }: {
   /** El `id` del `<form>`, para que el botón del pie del modal lo envíe. */
@@ -127,11 +138,18 @@ export function FormularioTercero({
   edicion: boolean;
   /** La ficha a editar. Sin esto, el formulario crea uno nuevo. */
   inicial?: TerceroDetalle;
+  /**
+   * Con qué arranca un tercero nuevo. Lo usa quien abre el formulario desde
+   * otra pantalla: creando un cliente en medio de una venta, `esCliente` tiene
+   * que venir marcado —si no, el tercero se guarda y el selector que lo pidió
+   * no lo encuentra, porque filtra por rol—.
+   */
+  valoresIniciales?: Partial<DatosTercero>;
   alGuardar: (datos: DatosTercero & { dv?: string }) => void;
 }) {
   const form = useForm<DatosTercero>({
     resolver: zodResolver(esquema),
-    defaultValues: VACIO,
+    defaultValues: { ...VACIO, ...valoresIniciales },
   });
 
   const { reset } = form;
@@ -195,7 +213,11 @@ export function FormularioTercero({
       >
         {edicion ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            <Campo id="tipoPersonaFijo" etiqueta="Tipo de persona" escala="grande">
+            <Campo
+              id="tipoPersonaFijo"
+              etiqueta="Tipo de persona"
+              escala="grande"
+            >
               <Input
                 id="tipoPersonaFijo"
                 className={CONTROL}
@@ -216,68 +238,77 @@ export function FormularioTercero({
           </div>
         ) : (
           <>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Campo id="tipoPersona" etiqueta="Tipo de persona" escala="grande">
-            <Select
-              value={form.watch("tipoPersona")}
-              onValueChange={(v) =>
-                form.setValue("tipoPersona", v as DatosTercero["tipoPersona"])
-              }
-            >
-              <SelectTrigger id="tipoPersona" className={`w-full ${CONTROL}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NATURAL">Natural</SelectItem>
-                <SelectItem value="JURIDICA">Jurídica</SelectItem>
-              </SelectContent>
-            </Select>
-          </Campo>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Campo
+                id="tipoPersona"
+                etiqueta="Tipo de persona"
+                escala="grande"
+              >
+                <Select
+                  value={form.watch("tipoPersona")}
+                  onValueChange={(v) =>
+                    form.setValue(
+                      "tipoPersona",
+                      v as DatosTercero["tipoPersona"],
+                    )
+                  }
+                >
+                  <SelectTrigger
+                    id="tipoPersona"
+                    className={`w-full ${CONTROL}`}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NATURAL">Natural</SelectItem>
+                    <SelectItem value="JURIDICA">Jurídica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Campo>
 
-          <Campo id="tipoDocumento" etiqueta="Documento" escala="grande">
-            <SelectorTipoDocumento
-              id="tipoDocumento"
-              valor={form.watch("tipoDocumento")}
-              aplicaPersona={form.watch("tipoPersona")}
-              onCambio={(v) => form.setValue("tipoDocumento", v)}
-              className={`w-full ${CONTROL}`}
-            />
-          </Campo>
-        </div>
+              <Campo id="tipoDocumento" etiqueta="Documento" escala="grande">
+                <SelectorTipoDocumento
+                  id="tipoDocumento"
+                  valor={form.watch("tipoDocumento")}
+                  aplicaPersona={form.watch("tipoPersona")}
+                  onCambio={(v) => form.setValue("tipoDocumento", v)}
+                  className={`w-full ${CONTROL}`}
+                />
+              </Campo>
+            </div>
 
-        <div className="grid gap-4 sm:grid-cols-[1fr_112px]">
-          <Campo
-            id="numeroDocumento"
-            etiqueta="Número"
-            error={errores.numeroDocumento?.message}
-            escala="grande"
-          >
-            <Input
-              id="numeroDocumento"
-              className={`font-mono ${CONTROL}`}
-              {...form.register("numeroDocumento")}
-            />
-          </Campo>
+            <div className="grid gap-4 sm:grid-cols-[1fr_112px]">
+              <Campo
+                id="numeroDocumento"
+                etiqueta="Número"
+                error={errores.numeroDocumento?.message}
+                escala="grande"
+              >
+                <Input
+                  id="numeroDocumento"
+                  className={`font-mono ${CONTROL}`}
+                  {...form.register("numeroDocumento")}
+                />
+              </Campo>
 
-          {/* De solo lectura: el DV se calcula del número. Solo el NIT lo lleva. */}
-          <Campo
-            id="dv"
-            etiqueta="DV"
-            ayuda={esNit ? "Se calcula" : undefined}
-            escala="grande"
-          >
-            <Input
-              id="dv"
-              className={`font-mono ${CONTROL}`}
-              value={dv}
-              readOnly
-              tabIndex={-1}
-              disabled={!esNit}
-              placeholder="–"
-            />
-          </Campo>
-        </div>
-
+              {/* De solo lectura: el DV se calcula del número. Solo el NIT lo lleva. */}
+              <Campo
+                id="dv"
+                etiqueta="DV"
+                ayuda={esNit ? "Se calcula" : undefined}
+                escala="grande"
+              >
+                <Input
+                  id="dv"
+                  className={`font-mono ${CONTROL}`}
+                  value={dv}
+                  readOnly
+                  tabIndex={-1}
+                  disabled={!esNit}
+                  placeholder="–"
+                />
+              </Campo>
+            </div>
           </>
         )}
 
@@ -315,14 +346,22 @@ export function FormularioTercero({
                 {...form.register("segundoNombre")}
               />
             </Campo>
-            <Campo id="primerApellido" etiqueta="Primer apellido" escala="grande">
+            <Campo
+              id="primerApellido"
+              etiqueta="Primer apellido"
+              escala="grande"
+            >
               <Input
                 id="primerApellido"
                 className={CONTROL}
                 {...form.register("primerApellido")}
               />
             </Campo>
-            <Campo id="segundoApellido" etiqueta="Segundo apellido" escala="grande">
+            <Campo
+              id="segundoApellido"
+              etiqueta="Segundo apellido"
+              escala="grande"
+            >
               <Input
                 id="segundoApellido"
                 className={CONTROL}
@@ -397,13 +436,17 @@ export function FormularioTercero({
             marcada={form.watch("esCliente")}
             titulo="Cliente"
             detalle="Le vendés: aparece al hacer una factura"
-            alAlternar={() => form.setValue("esCliente", !form.watch("esCliente"))}
+            alAlternar={() =>
+              form.setValue("esCliente", !form.watch("esCliente"))
+            }
           />
           <Tarjeta
             marcada={form.watch("esProveedor")}
             titulo="Proveedor"
             detalle="Le comprás: aparece al registrar una compra"
-            alAlternar={() => form.setValue("esProveedor", !form.watch("esProveedor"))}
+            alAlternar={() =>
+              form.setValue("esProveedor", !form.watch("esProveedor"))
+            }
           />
         </div>
         {errores.esCliente && (
@@ -479,7 +522,9 @@ function Seccion({
           {titulo}
         </h3>
         {descripcion && (
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{descripcion}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {descripcion}
+          </p>
         )}
       </div>
       {children}

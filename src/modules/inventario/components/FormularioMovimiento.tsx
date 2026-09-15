@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { SelectorProducto } from "./SelectorProducto";
-import type { ProductoResumen, TipoMovimiento } from "../types/inventario.types";
+import type {
+  ProductoResumen,
+  TipoMovimiento,
+} from "../types/inventario.types";
 
 // Un solo esquema para los tres tipos, con `costoUnitario` opcional: la
 // salida de ajuste no lo pide (se valora al promedio vigente), pero
@@ -75,17 +78,26 @@ export function FormularioMovimiento({
   const bloqueado = tipo !== "ENTRADA_INICIAL" && !configurado;
 
   return (
-    <form id={id} className="flex flex-col gap-5" onSubmit={form.handleSubmit(alGuardar)}>
+    <form
+      id={id}
+      className="flex flex-col gap-5"
+      onSubmit={form.handleSubmit(alGuardar)}
+    >
       {onProducto ? (
         <Campo id="producto" etiqueta="Producto *" escala="grande">
           <SelectorProducto valor={producto} onElegir={onProducto} />
         </Campo>
       ) : (
         <p className="rounded-2xl bg-muted p-4 text-sm">
-          <span className="font-semibold">{producto?.nombre ?? "Selecciona un producto"}</span>
+          <span className="font-semibold">
+            {producto?.nombre ?? "Selecciona un producto"}
+          </span>
           {producto && (
             <>
-              {" · "}Existencia actual: <span className="font-mono font-semibold">{existencia ?? "0"} unidades</span>
+              {" · "}Existencia actual:{" "}
+              <span className="font-mono font-semibold">
+                {existencia ?? "0"} unidades
+              </span>
             </>
           )}
         </p>
@@ -94,7 +106,9 @@ export function FormularioMovimiento({
       {NOTA[tipo] && (
         <div
           className={`flex items-start gap-3 rounded-2xl p-4 text-sm ${
-            tipo === "ENTRADA_INICIAL" ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
+            tipo === "ENTRADA_INICIAL"
+              ? "bg-success/10 text-success"
+              : "bg-warning/10 text-warning"
           }`}
         >
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
@@ -104,16 +118,32 @@ export function FormularioMovimiento({
 
       {bloqueado && (
         <div className="rounded-2xl bg-warning/10 p-4 text-sm text-warning">
-          Configura la cuenta contable de ajustes antes de registrar entradas o salidas.
+          Configura la cuenta contable de ajustes antes de registrar entradas o
+          salidas.
         </div>
       )}
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Campo id="fecha" etiqueta="Fecha *" error={errores.fecha?.message} escala="grande">
-          <Input id="fecha" type="date" className={CONTROL} {...form.register("fecha")} />
+        <Campo
+          id="fecha"
+          etiqueta="Fecha *"
+          error={errores.fecha?.message}
+          escala="grande"
+        >
+          <Input
+            id="fecha"
+            type="date"
+            className={CONTROL}
+            {...form.register("fecha")}
+          />
         </Campo>
 
-        <Campo id="cantidad" etiqueta="Cantidad *" error={errores.cantidad?.message} escala="grande">
+        <Campo
+          id="cantidad"
+          etiqueta="Cantidad *"
+          error={errores.cantidad?.message}
+          escala="grande"
+        >
           <Input
             id="cantidad"
             type="number"
@@ -143,7 +173,12 @@ export function FormularioMovimiento({
         )}
       </div>
 
-      <Campo id="motivo" etiqueta="Motivo *" error={errores.motivo?.message} escala="grande">
+      <Campo
+        id="motivo"
+        etiqueta="Motivo *"
+        error={errores.motivo?.message}
+        escala="grande"
+      >
         <Textarea
           id="motivo"
           className="min-h-24 rounded-xl px-4 py-3"

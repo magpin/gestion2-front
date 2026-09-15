@@ -49,7 +49,11 @@ export function FormularioPrecio({
   const errores = form.formState.errors;
 
   return (
-    <form id={id} className="flex flex-col gap-5" onSubmit={form.handleSubmit(alGuardar)}>
+    <form
+      id={id}
+      className="flex flex-col gap-5"
+      onSubmit={form.handleSubmit(alGuardar)}
+    >
       {onProducto && (
         <Campo id="producto" etiqueta="Producto *" escala="grande">
           <SelectorProducto valor={producto} onElegir={onProducto} />
@@ -58,14 +62,21 @@ export function FormularioPrecio({
 
       {!onProducto && producto && (
         <p className="rounded-2xl bg-muted p-4 text-sm">
-          <span className="font-mono text-xs text-muted-foreground">{producto.codigo}</span>
+          <span className="font-mono text-xs text-muted-foreground">
+            {producto.codigo}
+          </span>
           <span className="mx-2 text-muted-foreground">·</span>
           {producto.nombre}
         </p>
       )}
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Campo id="precioVenta" etiqueta="Nuevo precio *" error={errores.precioVenta?.message} escala="grande">
+        <Campo
+          id="precioVenta"
+          etiqueta="Nuevo precio *"
+          error={errores.precioVenta?.message}
+          escala="grande"
+        >
           <Input
             id="precioVenta"
             type="number"
@@ -76,13 +87,33 @@ export function FormularioPrecio({
           />
         </Campo>
 
-        <Campo id="fechaInicio" etiqueta="Vigente desde *" error={errores.fechaInicio?.message} escala="grande">
-          <Input id="fechaInicio" type="date" className={CONTROL} {...form.register("fechaInicio")} />
+        <Campo
+          id="fechaInicio"
+          etiqueta="Vigente desde *"
+          error={errores.fechaInicio?.message}
+          escala="grande"
+        >
+          <Input
+            id="fechaInicio"
+            type="date"
+            className={CONTROL}
+            {...form.register("fechaInicio")}
+          />
         </Campo>
       </div>
 
-      <Campo id="nota" etiqueta="Nota / motivo" ayuda="Opcional" escala="grande">
-        <Textarea id="nota" className="min-h-24 rounded-xl px-4 py-3" placeholder="Este campo es opcional" {...form.register("nota")} />
+      <Campo
+        id="nota"
+        etiqueta="Nota / motivo"
+        ayuda="Opcional"
+        escala="grande"
+      >
+        <Textarea
+          id="nota"
+          className="min-h-24 rounded-xl px-4 py-3"
+          placeholder="Este campo es opcional"
+          {...form.register("nota")}
+        />
       </Campo>
     </form>
   );

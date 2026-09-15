@@ -15,7 +15,12 @@ import {
 import { SelectorCuenta } from "@/modules/contabilidad/components/SelectorCuenta";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
-import { NOMBRE_UNIDAD, UNIDADES_MEDIDA, TARIFAS_IVA } from "../types/inventario.types";
+import {
+  NOMBRE_UNIDAD,
+  UNIDADES_MEDIDA,
+  TARIFAS_IVA,
+  type ProductoResumen,
+} from "../types/inventario.types";
 
 const esquema = z.object({
   codigo: z
@@ -57,6 +62,9 @@ const CONTROL = "h-11 rounded-xl px-4";
  */
 export function FormularioProducto({
   id,
+  edicion = false,
+  inicial,
+  codigoSugerido,
   cuenta,
   onCuenta,
   cuentaCosto,
@@ -67,6 +75,19 @@ export function FormularioProducto({
 }: {
   /** El `id` del `<form>`, para que el botón del pie del modal lo envíe. */
   id: string;
+  /**
+   * Corrigiendo un producto que ya existe. Deja fijos los tres datos que el
+   * backend no acepta en el PATCH: el código (es la identidad del producto en
+   * el kardex), la cuenta de inventario (cambiarla dejaría los movimientos
+   * viejos apuntando a una cuenta que el producto ya no dice usar) y el
+   * precio, que tiene su propio formulario porque abre una fila nueva en el
+   * historial en vez de pisar la anterior.
+   */
+  edicion?: boolean;
+  /** El producto a corregir. Sin esto, el formulario da de alta uno nuevo. */
+  inicial?: ProductoResumen;
+  /** Lo que se venía buscando cuando el producto no apareció, como código. */
+  codigoSugerido?: string;
   /** La cuenta elegida, controlada afuera porque `SelectorCuenta` trabaja con el objeto completo, no solo el id. */
   cuenta: CuentaEmpresa | null;
   onCuenta: (cuenta: CuentaEmpresa) => void;
@@ -85,7 +106,18 @@ export function FormularioProducto({
 }) {
   const form = useForm<DatosProducto>({
     resolver: zodResolver(esquema),
-    defaultValues: VACIO,
+    defaultValues:
+      inicial === undefined
+        ? { ...VACIO, codigo: codigoSugerido ?? "" }
+        : {
+            codigo: inicial.codigo,
+            nombre: inicial.nombre,
+            unidadMedida: inicial.unidad_medida,
+            ivaTarifa: Number(inicial.iva_tarifa) as DatosProducto["ivaTarifa"],
+            cuentaInventarioId: inicial.cuenta_inventario_id,
+            // No viaja en el PATCH; está para que el esquema valide.
+            precioVenta: 0,
+          },
   });
   const errores = form.formState.errors;
 
@@ -105,30 +137,61 @@ export function FormularioProducto({
       onSubmit={form.handleSubmit((d) =>
         alGuardar({
           ...d,
-          cuentaInventarioId: cuenta?.id ?? "",
+          cuentaInventarioId: cuenta?.id ?? inicial?.cuenta_inventario_id ?? "",
           cuentaCostoVentaId: cuentaCosto?.id,
           cuentaIngresoId: cuentaIngreso?.id,
         }),
       )}
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <Campo id="codigo" etiqueta="Código *" error={errores.codigo?.message} escala="grande">
-          <Input
-            id="codigo"
-            className={`font-mono ${CONTROL}`}
-            placeholder="Ej. FER-001"
-            {...form.register("codigo")}
-          />
+        <Campo
+          id="codigo"
+          etiqueta="Código *"
+          error={errores.codigo?.message}
+          ayuda={
+            edicion
+              ? "El código no se cambia: es como el kardex nombra a este producto"
+              : undefined
+          }
+          escala="grande"
+        >
+          {edicion ? (
+            <p
+              id="codigo"
+              className={`flex items-center rounded-xl border border-border bg-muted/40 font-mono text-sm font-medium ${CONTROL}`}
+            >
+              {inicial?.codigo}
+            </p>
+          ) : (
+            <Input
+              id="codigo"
+              className={`font-mono ${CONTROL}`}
+              placeholder="Ej. FER-001"
+              {...form.register("codigo")}
+            />
+          )}
         </Campo>
 
-        <Campo id="nombre" etiqueta="Nombre *" error={errores.nombre?.message} escala="grande">
-          <Input id="nombre" className={CONTROL} placeholder="Nombre del producto" {...form.register("nombre")} />
+        <Campo
+          id="nombre"
+          etiqueta="Nombre *"
+          error={errores.nombre?.message}
+          escala="grande"
+        >
+          <Input
+            id="nombre"
+            className={CONTROL}
+            placeholder="Nombre del producto"
+            {...form.register("nombre")}
+          />
         </Campo>
 
         <Campo id="unidadMedida" etiqueta="Unidad de medida" escala="grande">
           <Select
             value={form.watch("unidadMedida")}
-            onValueChange={(v) => form.setValue("unidadMedida", v as DatosProducto["unidadMedida"])}
+            onValueChange={(v) =>
+              form.setValue("unidadMedida", v as DatosProducto["unidadMedida"])
+            }
           >
             <SelectTrigger id="unidadMedida" className={`w-full ${CONTROL}`}>
               <SelectValue />
@@ -146,7 +209,12 @@ export function FormularioProducto({
         <Campo id="ivaTarifa" etiqueta="Tarifa de IVA" escala="grande">
           <Select
             value={String(form.watch("ivaTarifa"))}
-            onValueChange={(v) => form.setValue("ivaTarifa", Number(v) as DatosProducto["ivaTarifa"])}
+            onValueChange={(v) =>
+              form.setValue(
+                "ivaTarifa",
+                Number(v) as DatosProducto["ivaTarifa"],
+              )
+            }
           >
             <SelectTrigger id="ivaTarifa" className={`w-full ${CONTROL}`}>
               <SelectValue />
@@ -161,16 +229,22 @@ export function FormularioProducto({
           </Select>
         </Campo>
 
-        <Campo
-          id="cuentaInventarioId"
-          etiqueta="Cuenta de inventario *"
-          error={errores.cuentaInventarioId?.message}
-          ayuda="No se puede cambiar después de creado"
-          escala="grande"
-          className="sm:col-span-2"
-        >
-          <SelectorCuenta valor={cuenta} onElegir={elegirCuenta} invalido={Boolean(errores.cuentaInventarioId)} />
-        </Campo>
+        {!edicion && (
+          <Campo
+            id="cuentaInventarioId"
+            etiqueta="Cuenta de inventario *"
+            error={errores.cuentaInventarioId?.message}
+            ayuda="No se puede cambiar después de creado"
+            escala="grande"
+            className="sm:col-span-2"
+          >
+            <SelectorCuenta
+              valor={cuenta}
+              onElegir={elegirCuenta}
+              invalido={Boolean(errores.cuentaInventarioId)}
+            />
+          </Campo>
+        )}
 
         <Campo
           id="cuentaCostoVentaId"
@@ -192,21 +266,23 @@ export function FormularioProducto({
           <SelectorCuenta valor={cuentaIngreso} onElegir={onCuentaIngreso} />
         </Campo>
 
-        <Campo
-          id="precioVenta"
-          etiqueta="Precio de venta inicial *"
-          error={errores.precioVenta?.message}
-          escala="grande"
-        >
-          <Input
+        {!edicion && (
+          <Campo
             id="precioVenta"
-            type="number"
-            min="0"
-            step="0.01"
-            className={CONTROL}
-            {...form.register("precioVenta", { valueAsNumber: true })}
-          />
-        </Campo>
+            etiqueta="Precio de venta inicial *"
+            error={errores.precioVenta?.message}
+            escala="grande"
+          >
+            <Input
+              id="precioVenta"
+              type="number"
+              min="0"
+              step="0.01"
+              className={CONTROL}
+              {...form.register("precioVenta", { valueAsNumber: true })}
+            />
+          </Campo>
+        )}
       </div>
     </form>
   );

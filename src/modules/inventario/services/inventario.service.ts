@@ -2,6 +2,7 @@ import { api } from "@/core/api/api";
 import type {
   CambiarPrecioInput,
   CrearProductoInput,
+  EditarProductoInput,
   InventarioConfiguracion,
   PaginaMovimientos,
   PaginaPrecios,
@@ -36,6 +37,14 @@ export const productosApi = {
 
   crear: (datos: CrearProductoInput) =>
     api.post<ProductoResumen>("/productos", datos).then((r) => r.data),
+
+  /**
+   * Corrige lo que se puede corregir: nombre, unidad, tarifa de IVA y las dos
+   * cuentas de venta. El código y la cuenta de inventario no viajan —el
+   * backend los rechaza— y el precio va por su propio endpoint.
+   */
+  editar: (id: string, datos: EditarProductoInput) =>
+    api.patch<ProductoResumen>(`/productos/${id}`, datos).then((r) => r.data),
 
   desactivar: (id: string) => api.post(`/productos/${id}/desactivar`).then(() => undefined),
 

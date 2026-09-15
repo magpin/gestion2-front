@@ -160,3 +160,12 @@ export interface RegistrarMovimientoInput {
   costoUnitario?: number;
   motivo: string;
 }
+
+/** Lo que `PATCH /productos/:id` acepta — ver `EditarProductoDto` del backend. */
+export interface EditarProductoInput {
+  nombre?: string;
+  unidadMedida?: UnidadMedida;
+  ivaTarifa?: number;
+  cuentaCostoVentaId?: string;
+  cuentaIngresoId?: string;
+}

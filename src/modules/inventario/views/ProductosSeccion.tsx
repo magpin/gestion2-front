@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, MoreHorizontal, Package, Search } from "lucide-react";
+import { Loader2, MoreHorizontal, Package, Pencil, Search } from "lucide-react";
 
 import {
   AlertDialog,
@@ -42,22 +42,31 @@ import { formatCOP, formatFecha } from "@/lib/utils";
 import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
-import { FormularioPrecio, type DatosPrecio } from "../components/FormularioPrecio";
-import { kardexApi, precioApi, productosApi } from "../services/inventario.service";
+import {
+  FormularioPrecio,
+  type DatosPrecio,
+} from "../components/FormularioPrecio";
+import { DialogoProducto } from "../components/DialogoProducto";
+import {
+  kardexApi,
+  precioApi,
+  productosApi,
+} from "../services/inventario.service";
 import { NOMBRE_MOVIMIENTO, NOMBRE_UNIDAD } from "../types/inventario.types";
 import type { ProductoResumen } from "../types/inventario.types";
 
 const CLAVE = ["productos"];
 type Estado = "Todos" | "Activo" | "Inactivo";
-type Modal = "detalle" | "precio" | "toggle" | null;
+type Modal = "detalle" | "precio" | "editar" | "toggle" | null;
 const ID_FORMULARIO_PRECIO = "formulario-precio-producto";
 
 /**
- * El catálogo. Nada de "editar" acá: la única forma de cambiar algo después
- * de creado un producto es su precio (`FormularioPrecio`, propia fila
- * histórica) o su estado (activar/desactivar). El código y la cuenta de
- * inventario no se tocan — cambiar la cuenta dejaría el kardex viejo
- * apuntando a una cuenta que el producto ya no dice usar.
+ * El catálogo. Se corrige lo que el backend acepta corregir —nombre, unidad,
+ * tarifa de IVA y las dos cuentas de venta (`DialogoProducto`)—; el precio va
+ * por su propio formulario porque abre una fila nueva en el historial en vez
+ * de pisar la anterior, y el código y la cuenta de inventario no se tocan:
+ * cambiar la cuenta dejaría el kardex viejo apuntando a una cuenta que el
+ * producto ya no dice usar.
  */
 export function ProductosSeccion() {
   const queryClient = useQueryClient();
@@ -66,7 +75,9 @@ export function ProductosSeccion() {
   const [busqueda, setBusqueda] = useState("");
   const [estado, setEstado] = useState<Estado>("Todos");
   const [pagina, setPagina] = useState(1);
-  const [seleccionado, setSeleccionado] = useState<ProductoResumen | null>(null);
+  const [seleccionado, setSeleccionado] = useState<ProductoResumen | null>(
+    null,
+  );
   const [modal, setModal] = useState<Modal>(null);
 
   const hayFiltro = busqueda.trim() !== "" || estado !== "Todos";
@@ -146,9 +157,14 @@ export function ProductosSeccion() {
             setPagina(1);
           }}
         >
-          <SelectTrigger aria-label="Estado" className="min-h-12 min-w-[145px] rounded-2xl border-border bg-card px-4 shadow-sm">
+          <SelectTrigger
+            aria-label="Estado"
+            className="min-h-12 min-w-[145px] rounded-2xl border-border bg-card px-4 shadow-sm"
+          >
             <span className="flex flex-col items-start">
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Estado</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                Estado
+              </span>
               <SelectValue className="text-sm font-semibold" />
             </span>
           </SelectTrigger>
@@ -161,14 +177,21 @@ export function ProductosSeccion() {
           </SelectContent>
         </Select>
 
-        <Button variant="outline" onClick={limpiar} className="h-auto min-h-12 rounded-2xl px-4 text-muted-foreground">
+        <Button
+          variant="outline"
+          onClick={limpiar}
+          className="h-auto min-h-12 rounded-2xl px-4 text-muted-foreground"
+        >
           Limpiar
         </Button>
       </section>
 
       <div className="mb-3 px-1">
         <p className="text-sm text-muted-foreground">
-          <strong className="font-semibold text-foreground">{productos.length}</strong> de {resultado?.total ?? 0} productos
+          <strong className="font-semibold text-foreground">
+            {productos.length}
+          </strong>{" "}
+          de {resultado?.total ?? 0} productos
         </p>
       </div>
 
@@ -184,16 +207,25 @@ export function ProductosSeccion() {
             <table className="w-full min-w-[820px] text-left">
               <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Producto", "Unidad", "IVA", "Estado", "Acciones"].map((x) => (
-                    <th key={x} scope="col" className={`px-5 py-4 ${x === "Acciones" ? "text-right" : ""}`}>
-                      {x}
-                    </th>
-                  ))}
+                  {["Producto", "Unidad", "IVA", "Estado", "Acciones"].map(
+                    (x) => (
+                      <th
+                        key={x}
+                        scope="col"
+                        className={`px-5 py-4 ${x === "Acciones" ? "text-right" : ""}`}
+                      >
+                        {x}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {productos.map((p) => (
-                  <tr key={p.id} className="transition-colors hover:bg-muted/40">
+                  <tr
+                    key={p.id}
+                    className="transition-colors hover:bg-muted/40"
+                  >
                     <td className={`px-5 py-5 ${p.activo ? "" : "opacity-60"}`}>
                       <button
                         type="button"
@@ -203,17 +235,27 @@ export function ProductosSeccion() {
                         }}
                         className="text-left"
                       >
-                        <span className="block text-sm font-semibold hover:text-brand-text">{p.nombre}</span>
-                        <span className="mt-1 block font-mono text-xs text-muted-foreground">{p.codigo}</span>
+                        <span className="block text-sm font-semibold hover:text-brand-text">
+                          {p.nombre}
+                        </span>
+                        <span className="mt-1 block font-mono text-xs text-muted-foreground">
+                          {p.codigo}
+                        </span>
                       </button>
                     </td>
-                    <td className="px-5 py-5 text-sm text-muted-foreground">{NOMBRE_UNIDAD[p.unidad_medida]}</td>
+                    <td className="px-5 py-5 text-sm text-muted-foreground">
+                      {NOMBRE_UNIDAD[p.unidad_medida]}
+                    </td>
                     <td className="px-5 py-5">
-                      <span className="rounded-full border border-border px-3 py-1.5 text-xs">{p.iva_tarifa}%</span>
+                      <span className="rounded-full border border-border px-3 py-1.5 text-xs">
+                        {p.iva_tarifa}%
+                      </span>
                     </td>
                     <td className="px-5 py-5">
                       <span className="inline-flex items-center gap-2 text-[13px] font-semibold">
-                        <span className={`size-2 rounded-full ${p.activo ? "bg-success" : "bg-muted-foreground"}`} />
+                        <span
+                          className={`size-2 rounded-full ${p.activo ? "bg-success" : "bg-muted-foreground"}`}
+                        />
                         {p.activo ? "Activo" : "Inactivo"}
                       </span>
                     </td>
@@ -241,13 +283,17 @@ export function ProductosSeccion() {
       )}
 
       {/* Detalle: datos generales, historial de precio y kardex reciente. */}
-      <Dialog open={modal === "detalle"} onOpenChange={(a) => !a && setModal(null)}>
+      <Dialog
+        open={modal === "detalle"}
+        onOpenChange={(a) => !a && setModal(null)}
+      >
         <DialogContent size="lg">
           {seleccionado && (
             <DetalleProducto
               producto={seleccionado}
               puedeOperar={puedeOperar}
               onCambiarPrecio={() => setModal("precio")}
+              onEditar={() => setModal("editar")}
               onCerrar={() => setModal(null)}
             />
           )}
@@ -255,13 +301,17 @@ export function ProductosSeccion() {
       </Dialog>
 
       {/* Cambiar precio, con el producto ya fijo. */}
-      <Dialog open={modal === "precio"} onOpenChange={(a) => !a && setModal(null)}>
+      <Dialog
+        open={modal === "precio"}
+        onOpenChange={(a) => !a && setModal(null)}
+      >
         <DialogContent size="lg">
           <DialogHeader>
             <div>
               <DialogTitle>Cambiar precio</DialogTitle>
               <DialogDescription>
-                Cierra el precio vigente y abre uno nuevo — el anterior queda en el historial.
+                Cierra el precio vigente y abre uno nuevo — el anterior queda en
+                el historial.
               </DialogDescription>
             </div>
             <DialogCloseIcon />
@@ -274,7 +324,12 @@ export function ProductosSeccion() {
             />
           </DialogBody>
           <DialogFooter>
-            <Button type="button" variant="outline" className="h-12 rounded-xl px-6" onClick={() => setModal(null)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 rounded-xl px-6"
+              onClick={() => setModal(null)}
+            >
               Cancelar
             </Button>
             <Button
@@ -283,21 +338,33 @@ export function ProductosSeccion() {
               className="h-12 rounded-xl px-6"
               disabled={cambiarPrecio.isPending}
             >
-              {cambiarPrecio.isPending && <Loader2 className="size-4 animate-spin" />}
+              {cambiarPrecio.isPending && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
               Guardar precio
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={modal === "toggle"} onOpenChange={(a) => !a && setModal(null)}>
+      <DialogoProducto
+        editando={modal === "editar" ? seleccionado : null}
+        onCerrar={() => setModal(null)}
+      />
+
+      <AlertDialog
+        open={modal === "toggle"}
+        onOpenChange={(a) => !a && setModal(null)}
+      >
         <AlertDialogContent className="gap-6 p-6 sm:max-w-md!">
           <AlertDialogHeader>
             <AlertDialogMedia className="bg-warning/10 text-warning">
               <Package />
             </AlertDialogMedia>
             <AlertDialogTitle className="text-lg">
-              {seleccionado?.activo ? "¿Desactivar este producto?" : "¿Activar este producto?"}
+              {seleccionado?.activo
+                ? "¿Desactivar este producto?"
+                : "¿Activar este producto?"}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[15px] leading-6">
               {seleccionado?.activo
@@ -306,7 +373,9 @@ export function ProductosSeccion() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="-mx-6 -mb-6 p-6">
-            <AlertDialogCancel className="h-11 rounded-xl px-6">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="h-11 rounded-xl px-6">
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               className="h-11 rounded-xl px-6"
               disabled={desactivar.isPending || activar.isPending}
@@ -316,7 +385,9 @@ export function ProductosSeccion() {
                 else activar.mutate(seleccionado.id);
               }}
             >
-              {(desactivar.isPending || activar.isPending) && <Loader2 className="size-4 animate-spin" />}
+              {(desactivar.isPending || activar.isPending) && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
               {seleccionado?.activo ? "Desactivar" : "Activar"}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -330,11 +401,13 @@ function DetalleProducto({
   producto,
   puedeOperar,
   onCambiarPrecio,
+  onEditar,
   onCerrar,
 }: {
   producto: ProductoResumen;
   puedeOperar: boolean;
   onCambiarPrecio: () => void;
+  onEditar: () => void;
   onCerrar: () => void;
 }) {
   const { data: precios = [] } = useQuery({
@@ -346,7 +419,8 @@ function DetalleProducto({
     queryFn: () => kardexApi.listar(producto.id, 1),
   });
 
-  const vigente = precios.find((p) => p.fecha_fin === null) ?? precios[0] ?? null;
+  const vigente =
+    precios.find((p) => p.fecha_fin === null) ?? precios[0] ?? null;
   const ultimo = movimientos?.datos[0] ?? null;
 
   return (
@@ -356,7 +430,10 @@ function DetalleProducto({
           <DialogTitle>
             {producto.codigo} · {producto.nombre}
           </DialogTitle>
-          <DialogDescription>{NOMBRE_UNIDAD[producto.unidad_medida]} · {producto.iva_tarifa}% de IVA</DialogDescription>
+          <DialogDescription>
+            {NOMBRE_UNIDAD[producto.unidad_medida]} · {producto.iva_tarifa}% de
+            IVA
+          </DialogDescription>
         </div>
         <DialogCloseIcon />
       </DialogHeader>
@@ -365,15 +442,25 @@ function DetalleProducto({
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl bg-muted p-4">
             <span className="text-xs text-muted-foreground">Existencias</span>
-            <b className="mt-2 block font-mono text-2xl">{ultimo?.saldo_cantidad ?? "0"}</b>
+            <b className="mt-2 block font-mono text-2xl">
+              {ultimo?.saldo_cantidad ?? "0"}
+            </b>
           </div>
           <div className="rounded-2xl bg-muted p-4">
-            <span className="text-xs text-muted-foreground">Costo promedio</span>
-            <b className="mt-2 block font-mono text-xl">{formatCOP(Number(ultimo?.saldo_costo_promedio ?? 0))}</b>
+            <span className="text-xs text-muted-foreground">
+              Costo promedio
+            </span>
+            <b className="mt-2 block font-mono text-xl">
+              {formatCOP(Number(ultimo?.saldo_costo_promedio ?? 0))}
+            </b>
           </div>
           <div className="rounded-2xl bg-muted p-4">
-            <span className="text-xs text-muted-foreground">Precio vigente</span>
-            <b className="mt-2 block font-mono text-xl">{formatCOP(Number(vigente?.precio_venta ?? 0))}</b>
+            <span className="text-xs text-muted-foreground">
+              Precio vigente
+            </span>
+            <b className="mt-2 block font-mono text-xl">
+              {formatCOP(Number(vigente?.precio_venta ?? 0))}
+            </b>
           </div>
         </div>
 
@@ -394,10 +481,23 @@ function DetalleProducto({
               <p className="text-muted-foreground">Todavía no hay historial.</p>
             ) : (
               precios.slice(0, 5).map((p) => (
-                <div key={p.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
-                  <span className="font-mono font-semibold">{formatCOP(Number(p.precio_venta))}</span>
-                  <span className="text-muted-foreground">{formatFecha(p.fecha_inicio)}</span>
-                  <span className={p.fecha_fin === null ? "text-success" : "text-muted-foreground"}>
+                <div
+                  key={p.id}
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-3"
+                >
+                  <span className="font-mono font-semibold">
+                    {formatCOP(Number(p.precio_venta))}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {formatFecha(p.fecha_inicio)}
+                  </span>
+                  <span
+                    className={
+                      p.fecha_fin === null
+                        ? "text-success"
+                        : "text-muted-foreground"
+                    }
+                  >
                     {p.fecha_fin === null ? "Vigente" : "Anterior"}
                   </span>
                 </div>
@@ -414,7 +514,10 @@ function DetalleProducto({
             ) : (
               movimientos.datos.slice(0, 5).map((m) => (
                 <p key={m.id}>
-                  {formatFecha(m.fecha)} · {NOMBRE_MOVIMIENTO[m.tipo]} · <b className="font-mono text-foreground">{m.cantidad} unidades</b>
+                  {formatFecha(m.fecha)} · {NOMBRE_MOVIMIENTO[m.tipo]} ·{" "}
+                  <b className="font-mono text-foreground">
+                    {m.cantidad} unidades
+                  </b>
                 </p>
               ))
             )}
@@ -422,8 +525,23 @@ function DetalleProducto({
         </section>
       </DialogBody>
 
-      <DialogFooter>
-        <Button type="button" variant="outline" className="h-12 rounded-xl px-6" onClick={onCerrar}>
+      <DialogFooter className="sm:justify-between">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-12 gap-2 rounded-xl px-6"
+          disabled={!puedeOperar}
+          onClick={onEditar}
+        >
+          <Pencil className="size-4" />
+          Editar ficha
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-12 rounded-xl px-6"
+          onClick={onCerrar}
+        >
           Cerrar
         </Button>
       </DialogFooter>
@@ -437,9 +555,13 @@ function Vacio({ hayFiltro }: { hayFiltro: boolean }) {
       <span className="grid size-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
         <Package className="size-6" />
       </span>
-      <p className="text-lg font-semibold">{hayFiltro ? "Ningún producto coincide" : "Todavía no hay productos"}</p>
+      <p className="text-lg font-semibold">
+        {hayFiltro ? "Ningún producto coincide" : "Todavía no hay productos"}
+      </p>
       <p className="max-w-md text-sm leading-6 text-muted-foreground">
-        {hayFiltro ? "Probá con otro texto, o quitá los filtros." : "Creá el primero con el botón «Nuevo producto» de arriba."}
+        {hayFiltro
+          ? "Probá con otro texto, o quitá los filtros."
+          : "Creá el primero con el botón «Nuevo producto» de arriba."}
       </p>
     </div>
   );
