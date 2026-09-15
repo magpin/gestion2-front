@@ -43,6 +43,7 @@ export function FormularioDocumentoVenta({
   descripcion,
   etiquetaBoton,
   fechaDeHoy = false,
+  precioEditable = false,
 }: {
   abierto: boolean;
   onCerrar: () => void;
@@ -57,6 +58,11 @@ export function FormularioDocumentoVenta({
    * la resolución ni asienta— y puede fecharse cuando haga falta.
    */
   fechaDeHoy?: boolean;
+  /**
+   * Solo la cotización: deja digitar el precio del producto que no tiene
+   * precio de lista, en vez de trabarse. Ver `EditorLineasVenta`.
+   */
+  precioEditable?: boolean;
 }) {
   const [tercero, setTercero] = useState<TerceroResumen | null>(null);
   const [fecha, setFecha] = useState(hoyEnColombia());
@@ -105,6 +111,9 @@ export function FormularioDocumentoVenta({
       lineas: lineas.map((l) => ({
         productoId: l.producto!.id,
         cantidad: Number(l.cantidad),
+        // Solo viaja si se digitó: con precio de lista, el backend lo ignora.
+        precioUnitario:
+          l.precioUnitario === "" ? undefined : Number(l.precioUnitario),
       })),
     });
   };
@@ -138,7 +147,11 @@ export function FormularioDocumentoVenta({
               id="fecha"
               etiqueta="Fecha"
               escala="grande"
-              ayuda={fechaDeHoy ? "Un documento fiscal se emite el día que se emite: no se atrasa ni se adelanta." : undefined}
+              ayuda={
+                fechaDeHoy
+                  ? "Un documento fiscal se emite el día que se emite: no se atrasa ni se adelanta."
+                  : undefined
+              }
             >
               {fechaDeHoy ? (
                 <p
@@ -159,7 +172,11 @@ export function FormularioDocumentoVenta({
             </Campo>
           </div>
 
-          <EditorLineasVenta lineas={lineas} onCambiar={setLineas} />
+          <EditorLineasVenta
+            lineas={lineas}
+            onCambiar={setLineas}
+            precioEditable={precioEditable}
+          />
         </DialogBody>
 
         <DialogFooter className="sm:justify-between">

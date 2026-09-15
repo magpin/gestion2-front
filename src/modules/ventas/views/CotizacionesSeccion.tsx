@@ -119,7 +119,10 @@ export function CotizacionesSeccion() {
               </thead>
               <tbody className="divide-y divide-border">
                 {cotizaciones.map((c) => (
-                  <tr key={c.id} className="transition-colors hover:bg-muted/40">
+                  <tr
+                    key={c.id}
+                    className="transition-colors hover:bg-muted/40"
+                  >
                     <td className="px-5 py-5 font-mono text-sm font-bold">
                       {c.prefijo ?? ""}
                       {c.consecutivo}
@@ -196,8 +199,9 @@ export function CotizacionesSeccion() {
         onGuardar={(datos) => crear.mutate(datos)}
         guardando={crear.isPending}
         titulo="Nueva cotización"
-        descripcion="El precio de cada línea es el de lista vigente del producto."
+        descripcion="El precio es el de lista vigente; al producto que todavía no tiene, se le digita acá."
         etiquetaBoton="Crear cotización"
+        precioEditable
       />
 
       <DetalleVenta
@@ -210,7 +214,10 @@ export function CotizacionesSeccion() {
         onCerrar={() => setConvirtiendo(null)}
         onGuardar={(datos) =>
           convirtiendo &&
-          convertir.mutate({ cotizacionId: convirtiendo.id, fecha: datos.fecha })
+          convertir.mutate({
+            cotizacionId: convirtiendo.id,
+            fecha: datos.fecha,
+          })
         }
         guardando={convertir.isPending}
       />

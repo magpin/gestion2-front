@@ -73,8 +73,18 @@ export interface FiltroVentas {
 export interface LineaDocumentoInput {
   productoId: string;
   cantidad: number;
+  /**
+   * Solo en cotizaciones, y solo cuando el producto no tiene precio de lista:
+   * si lo tiene, el backend manda el de lista y este se ignora.
+   */
+  precioUnitario?: number;
 }
 
+/**
+ * El precio por línea solo lo acepta la cotización, y solo se manda cuando el
+ * producto no tiene precio de lista: si lo tiene, el backend usa el de lista y
+ * lo ignora.
+ */
 export interface CrearCotizacionInput {
   terceroId: string;
   fecha: string;
