@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BookOpen, CalendarDays, FileText, Plus, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useTieneRol } from "@/core/store/authStore";
 import { FormularioAsiento } from "../components/FormularioAsiento";
 import { periodosApi } from "../services/contabilidad.service";
 import { AsientosSeccion } from "./AsientosSeccion";
@@ -28,6 +29,9 @@ const SECCIONES: Array<[Seccion, typeof FileText]> = [
  * una navegación completa a cada salto.
  */
 export function ContabilidadView() {
+  // Solo el contador escribe asientos manuales (`@Roles('CONTADOR')` en el
+  // backend). Mostrarle el botón a un director es una puerta cerrada.
+  const puedeAsentar = useTieneRol("CONTADOR");
   const [seccion, setSeccion] = useState<Seccion>("Asientos");
   const [creando, setCreando] = useState(false);
 
@@ -54,18 +58,20 @@ export function ContabilidadView() {
           </p>
         </div>
 
-        <Button
-          onClick={() => setCreando(true)}
-          className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-brand hover:text-white"
-        >
-          <span className="flex size-7 items-center justify-center rounded-full bg-white/15">
-            <Plus className="size-4" />
-          </span>
-          Nuevo asiento
-        </Button>
+        {puedeAsentar && (
+          <Button
+            onClick={() => setCreando(true)}
+            className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-brand hover:text-white"
+          >
+            <span className="flex size-7 items-center justify-center rounded-full bg-white/15">
+              <Plus className="size-4" />
+            </span>
+            Nuevo asiento
+          </Button>
+        )}
       </header>
 
-      <nav className="mb-7 flex gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
+      <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
         {SECCIONES.map(([nombre, Icono]) => (
           <button
             key={nombre}

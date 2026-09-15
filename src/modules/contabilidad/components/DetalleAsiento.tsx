@@ -1,0 +1,138 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogBody,
+  DialogCloseIcon,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { formatCOP, formatFecha } from "@/lib/utils";
+import { asientosApi } from "../services/contabilidad.service";
+
+/**
+ * Las líneas de un asiento: cuenta, tercero, débito y crédito.
+ *
+ * Es la pregunta que se hace un contador delante de cualquier fila del
+ * libro —"¿contra qué se movió esto?"— y hasta ahora la lista solo dejaba
+ * anular. Pide el asiento al abrirse, no antes: la lista trae solo la
+ * cabecera, y traer las líneas de cincuenta asientos para mirar uno es
+ * pagar de más.
+ */
+export function DetalleAsiento({
+  asientoId,
+  onCerrar,
+}: {
+  asientoId: string | null;
+  onCerrar: () => void;
+}) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["asientos", "detalle", asientoId],
+    queryFn: () => asientosApi.porId(asientoId!),
+    enabled: asientoId !== null,
+  });
+
+  return (
+    <Dialog open={asientoId !== null} onOpenChange={(a) => !a && onCerrar()}>
+      <DialogContent size="lg">
+        {isLoading && (
+          <div className="flex justify-center py-16 text-muted-foreground">
+            <Loader2 className="size-5 animate-spin" />
+          </div>
+        )}
+        {data && (
+          <>
+            <DialogHeader>
+              <div>
+                <DialogTitle className="flex items-center gap-3">
+                  <span className="font-mono">{data.numero}</span>
+                  <Badge variant="outline">{data.comprobante_codigo}</Badge>
+                  {data.estado === "ANULADO" && (
+                    <Badge variant="destructive">Anulado</Badge>
+                  )}
+                </DialogTitle>
+                <DialogDescription>
+                  {formatFecha(data.fecha)} · {data.glosa}
+                </DialogDescription>
+              </div>
+              <DialogCloseIcon />
+            </DialogHeader>
+            <DialogBody className="flex flex-col gap-5">
+              <div className="overflow-x-auto rounded-2xl border border-border">
+                <table className="w-full min-w-[640px] text-left">
+                  <thead className="border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    <tr>
+                      <th scope="col" className="px-4 py-3">
+                        Cuenta
+                      </th>
+                      <th scope="col" className="px-4 py-3">
+                        Tercero
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-right">
+                        Débito
+                      </th>
+                      <th scope="col" className="px-4 py-3 text-right">
+                        Crédito
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {data.lineas.map((l) => (
+                      <tr key={l.id}>
+                        <td className="px-4 py-3 text-sm">
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {l.cuenta_codigo}
+                          </span>
+                          <span className="ml-2 font-medium">{l.cuenta_nombre}</span>
+                          {l.detalle && (
+                            <span className="block text-xs text-muted-foreground">
+                              {l.detalle}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">
+                          {l.tercero_nombre ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm">
+                          {Number(l.debito) > 0 ? formatCOP(Number(l.debito)) : ""}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm">
+                          {Number(l.credito) > 0 ? formatCOP(Number(l.credito)) : ""}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t border-border bg-muted/40 text-sm font-semibold">
+                    <tr>
+                      <td className="px-4 py-3" colSpan={2}>
+                        Sumas iguales
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">
+                        {formatCOP(Number(data.total_debito))}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">
+                        {formatCOP(Number(data.total_credito))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              {data.motivo_anulacion && (
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold text-danger">Anulado:</span>{" "}
+                  {data.motivo_anulacion}
+                </p>
+              )}
+            </DialogBody>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Search, Trash2 } from "lucide-react";
+import { Eye, Loader2, Search, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTieneRol } from "@/core/store/authStore";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   InputGroup,
@@ -34,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
+import { DetalleAsiento } from "../components/DetalleAsiento";
 import { FormularioAsiento } from "../components/FormularioAsiento";
 import {
   asientosApi,
@@ -63,6 +65,7 @@ export function AsientosSeccion() {
   const [creando, setCreando] = useState(false);
   const [porAnular, setPorAnular] = useState<AsientoResumen | null>(null);
   const [motivo, setMotivo] = useState("");
+  const [detalleId, setDetalleId] = useState<string | null>(null);
 
   const hayFiltro = busqueda.trim() !== "" || tipo !== TODOS || verAnulados;
 
@@ -252,7 +255,15 @@ export function AsientosSeccion() {
                       </span>
                     </td>
                     <td className="px-5 py-5">
-                      <div className="flex justify-end">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          className="h-11 rounded-xl px-5 text-muted-foreground hover:text-foreground"
+                          onClick={() => setDetalleId(a.id)}
+                        >
+                          <Eye className="size-4" />
+                          Ver
+                        </Button>
                         {a.estado !== "ANULADO" && (
                           <Button
                             variant="ghost"
@@ -279,6 +290,8 @@ export function AsientosSeccion() {
           />
         </section>
       )}
+
+      <DetalleAsiento asientoId={detalleId} onCerrar={() => setDetalleId(null)} />
 
       <FormularioAsiento
         abierto={creando}
@@ -396,6 +409,8 @@ function Vacio({
   hayFiltro: boolean;
   onCrear: () => void;
 }) {
+  // Mismo criterio que el botón del encabezado: asentar es del contador.
+  const puedeAsentar = useTieneRol("CONTADOR");
   return (
     <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
       <p className="text-lg font-semibold">
@@ -406,7 +421,7 @@ function Vacio({
           ? "Probá con otro texto, o quitá los filtros."
           : "Acá va la historia contable de la empresa: cada hecho, con su fecha, su número y su explicación."}
       </p>
-      {!hayFiltro && (
+      {!hayFiltro && puedeAsentar && (
         <Button className="mt-2 h-12 rounded-xl px-6" onClick={onCrear}>
           Nuevo asiento
         </Button>
