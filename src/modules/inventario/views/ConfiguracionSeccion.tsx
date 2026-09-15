@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
@@ -14,14 +15,18 @@ import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.ty
 import { configuracionApi } from "../services/inventario.service";
 
 /**
- * Un solo campo: la contrapartida contable de los ajustes de inventario. Se
- * fija una sola vez por empresa, y solo con criterio contable —CONTADOR o
- * DIRECTOR, nunca INVENTARIO— porque elegirla es una decisión de mapeo de
- * cuentas, no una operación de bodega.
+ * Dos decisiones de empresa, cada una con su dueño.
+ *
+ * La contrapartida contable de los ajustes la elige quien tiene criterio
+ * contable —CONTADOR o DIRECTOR, nunca INVENTARIO—: es mapeo de cuentas, no
+ * operación de bodega. Vender sin existencia lo decide **solo el DIRECTOR**:
+ * es asumir que el kardex pueda quedar en rojo y que el costo de esa venta se
+ * valore con el último promedio conocido.
  */
 export function ConfiguracionSeccion() {
   const queryClient = useQueryClient();
   const puedeConfigurar = useTieneRol("CONTADOR", "DIRECTOR");
+  const esDirector = useTieneRol("DIRECTOR");
 
   const { data: configuracion, isLoading } = useQuery({
     queryKey: ["inventario", "configuracion"],
@@ -38,6 +43,22 @@ export function ConfiguracionSeccion() {
         queryKey: ["inventario", "configuracion"],
       });
       aviso.exito("Configuración guardada");
+    },
+    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+  });
+
+  const permitirDescubierto = useMutation({
+    mutationFn: (permite: boolean) =>
+      configuracionApi.fijarExistenciaNegativa(permite),
+    onSuccess: async (guardada) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["inventario", "configuracion"],
+      });
+      aviso.exito(
+        guardada.permite_existencia_negativa
+          ? "Se puede facturar sin existencia, confirmando cada vez"
+          : "Facturar sin existencia queda bloqueado",
+      );
     },
     onError: (e: unknown) => aviso.error(mensajeDeError(e)),
   });
@@ -93,6 +114,34 @@ export function ConfiguracionSeccion() {
       {!puedeConfigurar && (
         <p className="mt-3 text-xs text-muted-foreground">
           Solo Contador o Director pueden cambiar esta cuenta.
+        </p>
+      )}
+
+      <hr className="my-8 border-border" />
+
+      <h3 className="text-lg font-semibold">Vender sin existencia</h3>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        Con esto apagado, una factura que saque más de lo que hay se rechaza y
+        no hay forma de seguir. Encendido, quien factura tiene que confirmarlo
+        documento por documento —no pasa solo—, el inventario de ese producto
+        queda en negativo y lo que falte se anota en la pestaña Faltantes con la
+        factura que lo sacó. La venta se valora al último costo promedio
+        conocido del producto; si nunca tuvo una entrada, se rechaza igual.
+      </p>
+
+      <label className="mt-5 flex w-fit items-center gap-3 rounded-2xl border border-border px-4 py-3 text-sm font-medium">
+        <Checkbox
+          checked={configuracion?.permite_existencia_negativa ?? false}
+          disabled={!esDirector || permitirDescubierto.isPending}
+          onCheckedChange={(marcado) =>
+            permitirDescubierto.mutate(marcado === true)
+          }
+        />
+        Permitir facturar sin existencia
+      </label>
+      {!esDirector && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Solo el Director puede cambiar esto.
         </p>
       )}
     </section>

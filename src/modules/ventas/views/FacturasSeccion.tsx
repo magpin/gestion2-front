@@ -18,9 +18,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
-import { avisarErrorVenta } from "../lib/errores";
+import { avisarErrorVenta, esFaltaDeExistencia } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioCobro } from "../components/FormularioCobro";
@@ -78,7 +79,28 @@ export function FacturasSeccion() {
       aviso.exito("Factura creada");
       setCreando(false);
     },
-    onError: (e: unknown) => avisarErrorVenta(e, router.push),
+    /**
+     * Falta de existencia no es un "no": es un "¿seguro?". El cliente está
+     * esperando y la mercancía puede haber llegado sin registrarse, así que
+     * se pregunta y, si confirma, se reintenta con `confirmaSinExistencia`.
+     * El backend sigue teniendo la última palabra: si la empresa no habilitó
+     * el descubierto, o el producto nunca tuvo una entrada, ese segundo
+     * intento también se rechaza —y ahí el mensaje explica qué falta—.
+     */
+    onError: async (e: unknown, datos) => {
+      if (!esFaltaDeExistencia(e) || datos.confirmaSinExistencia === true) {
+        avisarErrorVenta(e, router.push);
+        return;
+      }
+      const seguir = await aviso.confirmar(
+        mensajeDeError(e),
+        "Si emitís la factura igual, el inventario de ese producto queda en negativo y lo que falte queda anotado en la lista de compras pendientes, con la factura que lo sacó.",
+        "Emitir igual",
+      );
+      if (seguir) {
+        crear.mutate({ ...datos, confirmaSinExistencia: true });
+      }
+    },
   });
 
   const anular = useMutation({
@@ -162,7 +184,10 @@ export function FacturasSeccion() {
               </thead>
               <tbody className="divide-y divide-border">
                 {facturas.map((f) => (
-                  <tr key={f.id} className="transition-colors hover:bg-muted/40">
+                  <tr
+                    key={f.id}
+                    className="transition-colors hover:bg-muted/40"
+                  >
                     <td className="px-5 py-5 font-mono text-sm font-bold">
                       {f.prefijo ?? ""}
                       {f.consecutivo}
@@ -307,8 +332,8 @@ export function FacturasSeccion() {
             <AlertDialogDescription className="text-[15px] leading-6">
               La factura y su asiento quedan marcados como anulados, sin
               borrarse. El kardex no se revierte solo con anular — si la
-              mercancía vuelve a bodega, hace falta una nota crédito o un
-              ajuste de inventario.
+              mercancía vuelve a bodega, hace falta una nota crédito o un ajuste
+              de inventario.
             </AlertDialogDescription>
           </AlertDialogHeader>
 

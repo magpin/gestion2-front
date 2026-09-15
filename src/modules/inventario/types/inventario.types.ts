@@ -127,6 +127,8 @@ export interface PaginaMovimientos {
 export interface InventarioConfiguracion {
   empresa_id: string;
   cuenta_ajuste_id: string | null;
+  /** Si la empresa acepta facturar sin existencia. Ver migración `0037`. */
+  permite_existencia_negativa: boolean;
 }
 
 export interface CrearProductoInput {
@@ -168,4 +170,28 @@ export interface EditarProductoInput {
   ivaTarifa?: number;
   cuentaCostoVentaId?: string;
   cuentaIngresoId?: string;
+}
+
+/** Una línea que se vendió sin tener: lo que hay que comprar. */
+export interface FaltanteResumen {
+  id: string;
+  producto_id: string;
+  producto_codigo: string;
+  producto_nombre: string;
+  cantidad_faltante: string;
+  costo_referencia: string;
+  venta_documento_id: string;
+  /** Prefijo y consecutivo juntos, como los muestra la factura. */
+  documento: string;
+  fecha: string;
+  creado_en: string;
+  /** Lo que hay hoy en el kardex: si sigue negativo, el faltante está vivo. */
+  saldo_actual: string;
+}
+
+export interface PaginaFaltantes {
+  datos: FaltanteResumen[];
+  pagina: number;
+  tamano: number;
+  total: number;
 }

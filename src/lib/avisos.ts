@@ -104,6 +104,31 @@ export const aviso = {
     });
   },
 
+  /**
+   * Una pregunta que el usuario tiene que responder antes de seguir, cuando
+   * lo que va a pasar no es reversible del todo. Devuelve si confirmó.
+   *
+   * A diferencia de `advertencia`, que solo informa: acá el "sí" hace algo.
+   */
+  async confirmar(
+    mensaje: string,
+    detalle: string,
+    etiquetaConfirmar = "Sí, continuar",
+  ): Promise<boolean> {
+    const r = await Swal.fire({
+      icon: "warning",
+      title: mensaje,
+      text: detalle,
+      showCancelButton: true,
+      confirmButtonText: etiquetaConfirmar,
+      cancelButtonText: "Cancelar",
+      theme: "light",
+      buttonsStyling: false,
+      customClass: { confirmButton: BOTON, cancelButton: BOTON_SECUNDARIO },
+    });
+    return r.isConfirmed;
+  },
+
   advertencia(mensaje: string, detalle?: string): void {
     void Swal.fire({
       icon: "warning",

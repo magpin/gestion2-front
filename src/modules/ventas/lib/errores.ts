@@ -25,3 +25,25 @@ export function avisarErrorVenta(
   }
   aviso.error(mensaje);
 }
+
+/**
+ * ¿Falló por falta de existencia?
+ *
+ * El backend contesta "Solo hay 3 en existencia; no se puede sacar 10"
+ * (`kardex.reglas.ts`). No es un error cualquiera: quien factura puede
+ * confirmarlo y emitir igual, si la empresa lo habilitó.
+ */
+export function esFaltaDeExistencia(error: unknown): boolean {
+  return /en existencia/i.test(mensajeDeError(error));
+}
+
+/**
+ * ¿Falló porque la empresa no permite el descubierto, o porque el producto
+ * nunca tuvo una entrada? Son los dos casos donde confirmar no sirve de nada,
+ * y el mensaje del backend ya explica qué hacer.
+ */
+export function esDescubiertoImposible(error: unknown): boolean {
+  return /existencia negativa|nunca ha tenido una entrada/i.test(
+    mensajeDeError(error),
+  );
+}

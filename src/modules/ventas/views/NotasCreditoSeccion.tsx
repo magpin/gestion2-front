@@ -106,9 +106,7 @@ export function NotasCreditoSeccion() {
         </div>
       ) : notas.length === 0 ? (
         <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <p className="text-lg font-semibold">
-            Todavía no hay notas crédito
-          </p>
+          <p className="text-lg font-semibold">Todavía no hay notas crédito</p>
           <p className="max-w-md text-sm leading-6 text-muted-foreground">
             Acá van las correcciones a facturas ya emitidas.
           </p>
@@ -133,7 +131,10 @@ export function NotasCreditoSeccion() {
               </thead>
               <tbody className="divide-y divide-border">
                 {notas.map((n) => (
-                  <tr key={n.id} className="transition-colors hover:bg-muted/40">
+                  <tr
+                    key={n.id}
+                    className="transition-colors hover:bg-muted/40"
+                  >
                     <td className="px-5 py-5 font-mono text-sm font-bold">
                       {n.prefijo ?? ""}
                       {n.consecutivo}

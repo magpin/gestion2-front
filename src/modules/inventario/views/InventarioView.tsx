@@ -1,22 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, History, Package, Plus, Settings2, Tag } from "lucide-react";
+import {
+  Archive,
+  History,
+  Package,
+  PackageX,
+  Plus,
+  Settings2,
+  Tag,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useTieneRol } from "@/core/store/authStore";
 import { DialogoProducto } from "../components/DialogoProducto";
 import { ConfiguracionSeccion } from "./ConfiguracionSeccion";
+import { FaltantesSeccion } from "./FaltantesSeccion";
 import { KardexSeccion } from "./KardexSeccion";
 import { PreciosSeccion } from "./PreciosSeccion";
 import { ProductosSeccion } from "./ProductosSeccion";
 
-type Seccion = "Productos" | "Precios" | "Kardex" | "Configuración";
+type Seccion =
+  "Productos" | "Precios" | "Kardex" | "Faltantes" | "Configuración";
 
 const SECCIONES: Array<[Seccion, typeof Package]> = [
   ["Productos", Package],
   ["Precios", Tag],
   ["Kardex", History],
+  ["Faltantes", PackageX],
   ["Configuración", Settings2],
 ];
 
@@ -84,6 +95,7 @@ export function InventarioView() {
       {seccion === "Productos" && <ProductosSeccion />}
       {seccion === "Precios" && <PreciosSeccion />}
       {seccion === "Kardex" && <KardexSeccion />}
+      {seccion === "Faltantes" && <FaltantesSeccion />}
       {seccion === "Configuración" && <ConfiguracionSeccion />}
 
       <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground print:hidden">

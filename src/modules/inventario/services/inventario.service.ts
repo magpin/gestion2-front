@@ -3,6 +3,7 @@ import type {
   CambiarPrecioInput,
   CrearProductoInput,
   EditarProductoInput,
+  PaginaFaltantes,
   InventarioConfiguracion,
   PaginaMovimientos,
   PaginaPrecios,
@@ -108,5 +109,29 @@ export const configuracionApi = {
   fijarCuentaAjuste: (cuentaAjusteId: string) =>
     api
       .put<InventarioConfiguracion>("/inventario/configuracion", { cuentaAjusteId })
+      .then((r) => r.data),
+
+  /** Vender sin existencia: solo DIRECTOR, ver el controlador del backend. */
+  fijarExistenciaNegativa: (permite: boolean) =>
+    api
+      .put<InventarioConfiguracion>("/inventario/configuracion/existencia-negativa", { permite })
+      .then((r) => r.data),
+};
+
+/**
+ * Lo que se vendió sin tener. La ruta vive en ventas —es ventas quien lo
+ * escribe— pero se consulta desde inventario, que es donde importa: es la
+ * lista de qué hay que comprar.
+ */
+export const faltantesApi = {
+  listar: (f: { soloPendientes?: boolean; pagina?: number } = {}) =>
+    api
+      .get<PaginaFaltantes>("/faltantes", {
+        params: {
+          soloPendientes: f.soloPendientes ? "true" : undefined,
+          pagina: f.pagina ?? 1,
+          tamano: 50,
+        },
+      })
       .then((r) => r.data),
 };

@@ -6,9 +6,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
-import { avisarErrorVenta } from "../lib/errores";
+import { avisarErrorVenta, esFaltaDeExistencia } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioConvertirCotizacion } from "../components/FormularioConvertirCotizacion";
@@ -60,9 +61,14 @@ export function CotizacionesSeccion() {
   });
 
   const convertir = useMutation({
-    mutationFn: (datos: { cotizacionId: string; fecha: string }) =>
+    mutationFn: (datos: {
+      cotizacionId: string;
+      fecha: string;
+      confirmaSinExistencia?: boolean;
+    }) =>
       facturasApi.convertirCotizacion(datos.cotizacionId, {
         fecha: datos.fecha,
+        confirmaSinExistencia: datos.confirmaSinExistencia,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
@@ -70,7 +76,23 @@ export function CotizacionesSeccion() {
       aviso.exito("Cotización convertida en factura");
       setConvirtiendo(null);
     },
-    onError: (e: unknown) => avisarErrorVenta(e, router.push),
+    // Cotizar no mira la existencia, facturar sí: es acá donde aparece el
+    // faltante. Mismo criterio que `FacturasSeccion`: se pregunta y, si
+    // confirma, se reintenta.
+    onError: async (e: unknown, datos) => {
+      if (!esFaltaDeExistencia(e) || datos.confirmaSinExistencia === true) {
+        avisarErrorVenta(e, router.push);
+        return;
+      }
+      const seguir = await aviso.confirmar(
+        mensajeDeError(e),
+        "Si emitís la factura igual, el inventario de ese producto queda en negativo y lo que falte queda anotado en la lista de compras pendientes, con la factura que lo sacó.",
+        "Emitir igual",
+      );
+      if (seguir) {
+        convertir.mutate({ ...datos, confirmaSinExistencia: true });
+      }
+    },
   });
 
   const cotizaciones = resultado?.datos ?? [];

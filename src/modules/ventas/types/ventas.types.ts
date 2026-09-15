@@ -95,6 +95,12 @@ export interface CrearFacturaInput {
   terceroId: string;
   fecha: string;
   lineas: LineaDocumentoInput[];
+  /**
+   * "Sé que no hay existencia y la emito igual". No es un permiso: el backend
+   * la rechaza igual si la empresa no habilitó el descubierto o si el producto
+   * nunca tuvo una entrada (no habría costo con el que valorar la venta).
+   */
+  confirmaSinExistencia?: boolean;
 }
 
 export interface CrearNotaCreditoInput {
@@ -112,6 +118,8 @@ export interface CrearNotaCreditoInput {
  */
 export interface ConvertirCotizacionInput {
   fecha: string;
+  /** Ver `CrearFacturaInput.confirmaSinExistencia`: la factura sale igual. */
+  confirmaSinExistencia?: boolean;
 }
 
 /**
