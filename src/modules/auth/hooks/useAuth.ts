@@ -96,13 +96,16 @@ export const useElegirEmpresa = () => {
       // Sin datos de la empresa anterior en caché: son contabilidades distintas.
       queryClient.clear();
 
-      // El primer vistazo depende de si la empresa ya puede operar. A una recién
-      // entregada le falta todo, y mandarla al tablero mostraría seis tarjetas en
-      // ámbar sin decirle por dónde empezar.
+      // Al asistente va solo la empresa recién entregada, a la que le falta todo:
+      // mandarla al tablero mostraría seis tarjetas en ámbar sin decirle por
+      // dónde empezar. La que ya configuró algo entra a operar: el tablero le
+      // muestra lo que falta —una resolución, típicamente— con su "Continuar",
+      // y no se puede obligar a quien lleva meses trabajando a pasar por el
+      // asistente cada vez que entra.
       try {
         const estado = await configuracionService.estado();
         router.push(
-          estado.completa || !estado.siguiente
+          estado.completados > 0 || !estado.siguiente
             ? "/dashboard"
             : `/configuracion/${estado.siguiente.toLowerCase()}`,
         );
