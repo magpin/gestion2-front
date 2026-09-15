@@ -28,6 +28,8 @@ export const CONCEPTOS_RETENCION: Array<{
 export interface CompraDocumentoResumen {
   id: string;
   tercero_id: string;
+  /** Razón social o nombre completo: viene de la API para no resolverlo acá. */
+  tercero_nombre: string;
   fecha: string;
   numero_factura_proveedor: string;
   estado: EstadoCompra;
@@ -47,6 +49,8 @@ export interface CompraDocumentoLineaResumen {
   compra_documento_id: string;
   orden: number;
   producto_id: string;
+  producto_codigo: string;
+  producto_nombre: string;
   cantidad: string;
   costo_unitario: string;
   iva_tarifa: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
@@ -17,13 +18,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
+import { avisarErrorVenta } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioNotaCredito } from "../components/FormularioNotaCredito";
-import { useMapaClientes } from "../hooks/useMapasVenta";
 import { notasCreditoApi } from "../services/ventas.service";
 import type {
   VentaDocumentoDetalle,
@@ -38,10 +38,10 @@ const CLAVE = ["notas-credito"];
  * factura en la pestaña de Facturas — mismo formulario en los dos casos.
  */
 export function NotasCreditoSeccion() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
   const puedeAnular = useTieneRol("DIRECTOR", "CONTADOR");
-  const clientes = useMapaClientes();
 
   const [pagina, setPagina] = useState(1);
   const [creando, setCreando] = useState(false);
@@ -70,7 +70,7 @@ export function NotasCreditoSeccion() {
       aviso.exito("Nota crédito emitida");
       setCreando(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
   const anular = useMutation({
@@ -82,7 +82,7 @@ export function NotasCreditoSeccion() {
       setPorAnular(null);
       setMotivo("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
   const notas = resultado?.datos ?? [];
@@ -142,7 +142,7 @@ export function NotasCreditoSeccion() {
                       {formatFecha(n.fecha)}
                     </td>
                     <td className="px-5 py-5 text-sm font-medium">
-                      {clientes.get(n.tercero_id) ?? n.tercero_id}
+                      {n.tercero_nombre}
                     </td>
                     <td className="px-5 py-5 font-mono text-sm font-semibold">
                       {formatCOP(Number(n.total))}

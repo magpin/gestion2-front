@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Banknote, FileMinus, Loader2, Trash2 } from "lucide-react";
@@ -17,15 +18,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
+import { avisarErrorVenta } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioCobro } from "../components/FormularioCobro";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
 import { FormularioNotaCredito } from "../components/FormularioNotaCredito";
-import { useMapaClientes } from "../hooks/useMapasVenta";
 import { facturasApi, notasCreditoApi } from "../services/ventas.service";
 import type {
   CobrarInput,
@@ -41,11 +41,11 @@ const CLAVE = ["facturas"];
  * marcados, no los borra) o emitir una nota crédito que reversa el asiento.
  */
 export function FacturasSeccion() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
   const puedeAnular = useTieneRol("DIRECTOR", "CONTADOR");
   const puedeCobrar = useTieneRol("CAJA", "DIRECTOR");
-  const clientes = useMapaClientes();
 
   const [pagina, setPagina] = useState(1);
   const [creando, setCreando] = useState(false);
@@ -78,7 +78,7 @@ export function FacturasSeccion() {
       aviso.exito("Factura creada");
       setCreando(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
   const anular = useMutation({
@@ -90,7 +90,7 @@ export function FacturasSeccion() {
       setPorAnular(null);
       setMotivo("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
   const crearNotaCredito = useMutation({
@@ -101,7 +101,7 @@ export function FacturasSeccion() {
       aviso.exito("Nota crédito emitida");
       setNotaCreditoDe(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
   const cobrar = useMutation({
@@ -112,7 +112,7 @@ export function FacturasSeccion() {
       aviso.exito("Cobro registrado");
       setCobrandoDe(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
   const facturas = resultado?.datos ?? [];
@@ -171,7 +171,7 @@ export function FacturasSeccion() {
                       {formatFecha(f.fecha)}
                     </td>
                     <td className="px-5 py-5 text-sm font-medium">
-                      {clientes.get(f.tercero_id) ?? f.tercero_id}
+                      {f.tercero_nombre}
                     </td>
                     <td className="px-5 py-5 font-mono text-sm font-semibold">
                       {formatCOP(Number(f.total))}

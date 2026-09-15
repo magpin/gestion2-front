@@ -24,7 +24,6 @@ import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleCompra } from "../components/DetalleCompra";
 import { FormularioCompra } from "../components/FormularioCompra";
 import { FormularioPago } from "../components/FormularioPago";
-import { useMapaProveedores } from "../hooks/useMapasCompra";
 import { comprasApi } from "../services/compras.service";
 import type {
   CompraDocumentoDetalle,
@@ -44,7 +43,6 @@ export function ComprasView() {
   const puedeCrear = useTieneRol("COMPRAS", "DIRECTOR");
   const puedeAnular = useTieneRol("DIRECTOR", "CONTADOR");
   const puedePagar = useTieneRol("CAJA", "DIRECTOR");
-  const proveedores = useMapaProveedores();
 
   const [pagina, setPagina] = useState(1);
   const [creando, setCreando] = useState(false);
@@ -177,7 +175,7 @@ export function ComprasView() {
                       {formatFecha(c.fecha)}
                     </td>
                     <td className="px-5 py-5 text-sm font-medium">
-                      {proveedores.get(c.tercero_id) ?? c.tercero_id}
+                      {c.tercero_nombre}
                     </td>
                     <td className="px-5 py-5 font-mono text-sm font-semibold">
                       {formatCOP(Number(c.neto_a_pagar))}

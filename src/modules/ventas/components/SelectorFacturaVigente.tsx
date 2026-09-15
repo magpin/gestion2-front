@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/popover";
 import { cn, formatCOP } from "@/lib/utils";
 import { facturasApi } from "../services/ventas.service";
-import { useMapaClientes } from "../hooks/useMapasVenta";
 import type { VentaDocumentoResumen } from "../types/ventas.types";
 
 /**
@@ -35,7 +34,6 @@ export function SelectorFacturaVigente({
 }) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
-  const clientes = useMapaClientes();
 
   const { data: pagina, isFetching } = useQuery({
     queryKey: ["facturas", "selector-vigente"],
@@ -50,7 +48,7 @@ export function SelectorFacturaVigente({
     .filter((f) => {
       if (q === "") return true;
       const numero = `${f.prefijo ?? ""}${f.consecutivo}`.toLowerCase();
-      const cliente = (clientes.get(f.tercero_id) ?? "").toLowerCase();
+      const cliente = f.tercero_nombre.toLowerCase();
       return numero.includes(q) || cliente.includes(q);
     });
 
@@ -62,7 +60,7 @@ export function SelectorFacturaVigente({
       >
         <span className={cn("truncate", valor ? "" : "text-muted-foreground")}>
           {valor
-            ? `${valor.prefijo ?? ""}${valor.consecutivo} · ${clientes.get(valor.tercero_id) ?? valor.tercero_id}`
+            ? `${valor.prefijo ?? ""}${valor.consecutivo} · ${valor.tercero_nombre}`
             : "Seleccione una factura"}
         </span>
         <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
@@ -116,7 +114,7 @@ export function SelectorFacturaVigente({
                     </span>
                   </span>
                   <span className="block truncate text-sm font-medium">
-                    {clientes.get(f.tercero_id) ?? f.tercero_id}
+                    {f.tercero_nombre}
                   </span>
                 </span>
               </button>

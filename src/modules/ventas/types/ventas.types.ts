@@ -17,6 +17,8 @@ export interface VentaDocumentoResumen {
   id: string;
   tipo: TipoVentaDocumento;
   tercero_id: string;
+  /** Razón social o nombre completo: viene de la API para no resolverlo acá. */
+  tercero_nombre: string;
   fecha: string;
   estado: EstadoVentaDocumento;
   prefijo: string | null;
@@ -37,6 +39,8 @@ export interface VentaDocumentoLineaResumen {
   venta_documento_id: string;
   orden: number;
   producto_id: string;
+  producto_codigo: string;
+  producto_nombre: string;
   cantidad: string;
   precio_unitario: string;
   iva_tarifa: string;

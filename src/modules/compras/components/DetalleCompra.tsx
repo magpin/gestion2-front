@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatCOP, formatFecha } from "@/lib/utils";
-import { useMapaProductos, useMapaProveedores } from "../hooks/useMapasCompra";
 import { CONCEPTOS_RETENCION } from "../types/compras.types";
 import type { CompraDocumentoDetalle } from "../types/compras.types";
 
@@ -25,8 +24,6 @@ export function DetalleCompra({
   documento: CompraDocumentoDetalle | null;
   onCerrar: () => void;
 }) {
-  const proveedores = useMapaProveedores();
-  const productos = useMapaProductos();
 
   return (
     <Dialog open={documento !== null} onOpenChange={(a) => !a && onCerrar()}>
@@ -39,7 +36,7 @@ export function DetalleCompra({
                   Factura de compra {documento.numero_factura_proveedor}
                 </DialogTitle>
                 <DialogDescription>
-                  {proveedores.get(documento.tercero_id) ?? documento.tercero_id}
+                  {documento.tercero_nombre}
                   {" · "}
                   {formatFecha(documento.fecha)}
                 </DialogDescription>
@@ -73,8 +70,7 @@ export function DetalleCompra({
                     {documento.lineas.map((l) => (
                       <tr key={l.id}>
                         <td className="px-4 py-3 text-sm font-medium">
-                          {productos.get(l.producto_id)?.nombre ??
-                            l.producto_id}
+                          {l.producto_nombre}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {l.cantidad}

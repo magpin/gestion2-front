@@ -1,18 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
+import { avisarErrorVenta } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioConvertirCotizacion } from "../components/FormularioConvertirCotizacion";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
-import { useMapaClientes } from "../hooks/useMapasVenta";
 import { cotizacionesApi, facturasApi } from "../services/ventas.service";
 import type {
   VentaDocumentoDetalle,
@@ -28,9 +28,9 @@ const CLAVE = ["cotizaciones"];
  * pedirlas (`FacturaService.convertirCotizacion` en el backend).
  */
 export function CotizacionesSeccion() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
-  const clientes = useMapaClientes();
 
   const [pagina, setPagina] = useState(1);
   const [creando, setCreando] = useState(false);
@@ -56,7 +56,7 @@ export function CotizacionesSeccion() {
       aviso.exito("Cotización creada");
       setCreando(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
   const convertir = useMutation({
@@ -70,7 +70,7 @@ export function CotizacionesSeccion() {
       aviso.exito("Cotización convertida en factura");
       setConvirtiendo(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
   const cotizaciones = resultado?.datos ?? [];
@@ -128,7 +128,7 @@ export function CotizacionesSeccion() {
                       {formatFecha(c.fecha)}
                     </td>
                     <td className="px-5 py-5 text-sm font-medium">
-                      {clientes.get(c.tercero_id) ?? c.tercero_id}
+                      {c.tercero_nombre}
                     </td>
                     <td className="px-5 py-5 font-mono text-sm font-semibold">
                       {formatCOP(Number(c.total))}

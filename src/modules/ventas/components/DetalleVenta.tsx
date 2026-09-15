@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatCOP, formatFecha } from "@/lib/utils";
-import { useMapaClientes, useMapaProductos } from "../hooks/useMapasVenta";
 import type { VentaDocumentoDetalle } from "../types/ventas.types";
 
 const TITULOS = {
@@ -27,8 +26,6 @@ export function DetalleVenta({
   documento: VentaDocumentoDetalle | null;
   onCerrar: () => void;
 }) {
-  const clientes = useMapaClientes();
-  const productos = useMapaProductos();
 
   return (
     <Dialog open={documento !== null} onOpenChange={(a) => !a && onCerrar()}>
@@ -42,7 +39,7 @@ export function DetalleVenta({
                   {documento.consecutivo}
                 </DialogTitle>
                 <DialogDescription>
-                  {clientes.get(documento.tercero_id) ?? documento.tercero_id}
+                  {documento.tercero_nombre}
                   {" · "}
                   {formatFecha(documento.fecha)}
                 </DialogDescription>
@@ -76,8 +73,7 @@ export function DetalleVenta({
                     {documento.lineas.map((l) => (
                       <tr key={l.id}>
                         <td className="px-4 py-3 text-sm font-medium">
-                          {productos.get(l.producto_id)?.nombre ??
-                            l.producto_id}
+                          {l.producto_nombre}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {l.cantidad}
