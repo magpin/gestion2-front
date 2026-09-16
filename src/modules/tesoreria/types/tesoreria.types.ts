@@ -123,3 +123,13 @@ export interface CajaConfiguracion {
   empresa_id: string;
   cuenta_diferencia_id: string | null;
 }
+
+/**
+ * Un renglón de un cobro o de un pago: de dónde sale o entra la plata, y
+ * cuánta. Vive acá y no en `ventas`/`compras` porque el medio de pago es
+ * asunto de Tesorería: las dos lo usan, y el editor que los arma también.
+ */
+export type MedioPagoInput = { valor: number } & (
+  | { medio: "CAJA"; cajaId: string }
+  | { medio: "BANCO"; cuentaBancariaId: string }
+);

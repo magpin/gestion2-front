@@ -1,3 +1,5 @@
+import type { MedioPagoInput } from "@/modules/tesoreria/types/tesoreria.types";
+
 // Espejo de `/cotizaciones`, `/facturas` y `/notas-credito`.
 //
 // Un solo documento con tres tipos, no tres formas distintas: comparten
@@ -174,12 +176,12 @@ export interface ConvertirCotizacionInput {
 }
 
 /**
- * Cobra por caja o por banco — `cajaId`/`cuentaBancariaId` son
- * mutuamente excluyentes, discriminados por `medio` (mismo criterio que
- * el `CobrarDto` del backend). El concepto lo arma el backend con el
- * número de la factura.
+ * Cobra una factura repartida entre uno o varios medios: una fecha —es un
+ * solo acto— y un renglón por caja o cuenta que recibe. Con un renglón se
+ * comporta como el cobro de siempre. El concepto de cada movimiento lo arma
+ * el backend con el número de la factura.
  */
-export type CobrarInput = { fecha: string; valor: number } & (
-  | { medio: "CAJA"; cajaId: string }
-  | { medio: "BANCO"; cuentaBancariaId: string }
-);
+export interface CobrarInput {
+  fecha: string;
+  pagos: MedioPagoInput[];
+}

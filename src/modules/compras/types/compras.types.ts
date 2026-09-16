@@ -1,3 +1,5 @@
+import type { MedioPagoInput } from "@/modules/tesoreria/types/tesoreria.types";
+
 // Espejo de `/compras` y `/compras/notas`.
 //
 // Tres tipos sobre la misma tabla —factura del proveedor, nota crédito y
@@ -128,15 +130,13 @@ export interface CrearCompraInput {
 }
 
 /**
- * Paga por caja o por banco — `cajaId`/`cuentaBancariaId` son
- * mutuamente excluyentes, discriminados por `medio` (mismo criterio que
- * el `PagarDto` del backend). El concepto lo arma el backend con el
- * número de factura del proveedor.
+ * Paga una compra repartida entre uno o varios medios. Espejo de
+ * `CobrarInput` de ventas, que explica el porqué.
  */
-export type PagarInput = { fecha: string; valor: number } & (
-  | { medio: "CAJA"; cajaId: string }
-  | { medio: "BANCO"; cuentaBancariaId: string }
-);
+export interface PagarInput {
+  fecha: string;
+  pagos: MedioPagoInput[];
+}
 
 /** Una línea de la compra que la nota crédito corrige, y por cuánto. */
 export interface LineaNotaCreditoCompraInput {
