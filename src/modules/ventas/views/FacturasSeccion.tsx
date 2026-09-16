@@ -16,6 +16,10 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  AccionesDropdown,
+  type DropdownAccion,
+} from "@/components/shared/AccionesDropdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { mensajeDeError } from "@/core/api/api";
@@ -161,6 +165,51 @@ export function FacturasSeccion({
     onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
+  /**
+   * Lo que se puede hacer con una factura, según su estado y quién mira.
+   * Va al menú de tres puntos y no a la fila: eran cinco botones de texto y
+   * la columna se comía la mitad de la tabla. `Ver` se queda afuera porque es
+   * lo que se hace todo el día.
+   */
+  const accionesDe = (f: VentaDocumentoResumen): DropdownAccion[] => {
+    if (f.estado !== "EMITIDA") return [];
+    const acciones: DropdownAccion[] = [];
+
+    // Contra `pendiente` y no contra el total: una factura con una nota
+    // crédito encima puede no deber nada aunque su total siga en pie.
+    if (puedeCobrar && Number(f.pendiente) > 0) {
+      acciones.push({
+        label: "Cobrar",
+        icon: Banknote,
+        onSelect: () => setCobrandoDe(f),
+      });
+    }
+    if (puedeCrear) {
+      acciones.push(
+        {
+          label: "Nota crédito",
+          icon: FileMinus,
+          onSelect: () => setNotaCreditoDe(f),
+        },
+        {
+          label: "Nota débito",
+          icon: FilePlus,
+          onSelect: () => setNotaDebitoDe(f),
+        },
+      );
+    }
+    if (puedeAnular) {
+      acciones.push({
+        label: "Anular",
+        icon: Trash2,
+        variant: "destructive",
+        separadorAntes: true,
+        onSelect: () => setPorAnular(f),
+      });
+    }
+    return acciones;
+  };
+
   const facturas = resultado?.datos ?? [];
 
   return (
@@ -234,7 +283,7 @@ export function FacturasSeccion({
                       </span>
                     </td>
                     <td className="px-5 py-5">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           className="h-11 rounded-xl px-5 text-muted-foreground"
@@ -242,50 +291,8 @@ export function FacturasSeccion({
                         >
                           Ver
                         </Button>
-                        {/* Contra `pendiente` y no contra el total: una
-                            factura con una nota crédito encima puede no deber
-                            nada aunque su total siga en pie. */}
-                        {puedeCobrar &&
-                          f.estado === "EMITIDA" &&
-                          Number(f.pendiente) > 0 && (
-                            <Button
-                              variant="ghost"
-                              className="h-11 rounded-xl px-5 text-muted-foreground"
-                              onClick={() => setCobrandoDe(f)}
-                            >
-                              <Banknote className="size-4" />
-                              Cobrar
-                            </Button>
-                          )}
-                        {puedeCrear && f.estado === "EMITIDA" && (
-                          <Button
-                            variant="ghost"
-                            className="h-11 rounded-xl px-5 text-muted-foreground"
-                            onClick={() => setNotaCreditoDe(f)}
-                          >
-                            <FileMinus className="size-4" />
-                            Nota crédito
-                          </Button>
-                        )}
-                        {puedeCrear && f.estado === "EMITIDA" && (
-                          <Button
-                            variant="ghost"
-                            className="h-11 rounded-xl px-5 text-muted-foreground"
-                            onClick={() => setNotaDebitoDe(f)}
-                          >
-                            <FilePlus className="size-4" />
-                            Nota débito
-                          </Button>
-                        )}
-                        {puedeAnular && f.estado === "EMITIDA" && (
-                          <Button
-                            variant="ghost"
-                            className="h-11 rounded-xl px-5 text-muted-foreground hover:text-danger"
-                            onClick={() => setPorAnular(f)}
-                          >
-                            <Trash2 className="size-4" />
-                            Anular
-                          </Button>
+                        {accionesDe(f).length > 0 && (
+                          <AccionesDropdown acciones={accionesDe(f)} />
                         )}
                       </div>
                     </td>

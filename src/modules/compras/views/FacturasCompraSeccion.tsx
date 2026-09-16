@@ -21,6 +21,10 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  AccionesDropdown,
+  type DropdownAccion,
+} from "@/components/shared/AccionesDropdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { mensajeDeError } from "@/core/api/api";
@@ -148,6 +152,44 @@ export function FacturasCompraSeccion({
     onError: (e: unknown) => aviso.error(mensajeDeError(e)),
   });
 
+  /** Lo mismo que en `FacturasSeccion` de ventas, y allá está el porqué. */
+  const accionesDe = (c: CompraDocumentoResumen): DropdownAccion[] => {
+    if (c.estado !== "EMITIDA") return [];
+    const acciones: DropdownAccion[] = [];
+
+    if (puedePagar && Number(c.pendiente) > 0) {
+      acciones.push({
+        label: "Pagar",
+        icon: Banknote,
+        onSelect: () => setPagandoDe(c),
+      });
+    }
+    if (puedeCrear) {
+      acciones.push(
+        {
+          label: "Nota crédito",
+          icon: FileMinus,
+          onSelect: () => setNotaCreditoDe(c),
+        },
+        {
+          label: "Nota débito",
+          icon: FilePlus,
+          onSelect: () => setNotaDebitoDe(c),
+        },
+      );
+    }
+    if (puedeAnular) {
+      acciones.push({
+        label: "Anular",
+        icon: Trash2,
+        variant: "destructive",
+        separadorAntes: true,
+        onSelect: () => setPorAnular(c),
+      });
+    }
+    return acciones;
+  };
+
   const compras = resultado?.datos ?? [];
 
   return (
@@ -221,7 +263,7 @@ export function FacturasCompraSeccion({
                       </span>
                     </td>
                     <td className="px-5 py-5">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           className="h-11 rounded-xl px-5 text-muted-foreground"
@@ -229,49 +271,8 @@ export function FacturasCompraSeccion({
                         >
                           Ver
                         </Button>
-                        {/* Contra `pendiente`: ver el mismo cambio en
-                            `FacturasSeccion`, del lado de ventas. */}
-                        {puedePagar &&
-                          c.estado === "EMITIDA" &&
-                          Number(c.pendiente) > 0 && (
-                            <Button
-                              variant="ghost"
-                              className="h-11 rounded-xl px-5 text-muted-foreground"
-                              onClick={() => setPagandoDe(c)}
-                            >
-                              <Banknote className="size-4" />
-                              Pagar
-                            </Button>
-                          )}
-                        {puedeCrear && c.estado === "EMITIDA" && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              className="h-11 rounded-xl px-5 text-muted-foreground"
-                              onClick={() => setNotaCreditoDe(c)}
-                            >
-                              <FileMinus className="size-4" />
-                              Nota crédito
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="h-11 rounded-xl px-5 text-muted-foreground"
-                              onClick={() => setNotaDebitoDe(c)}
-                            >
-                              <FilePlus className="size-4" />
-                              Nota débito
-                            </Button>
-                          </>
-                        )}
-                        {puedeAnular && c.estado === "EMITIDA" && (
-                          <Button
-                            variant="ghost"
-                            className="h-11 rounded-xl px-5 text-muted-foreground hover:text-danger"
-                            onClick={() => setPorAnular(c)}
-                          >
-                            <Trash2 className="size-4" />
-                            Anular
-                          </Button>
+                        {accionesDe(c).length > 0 && (
+                          <AccionesDropdown acciones={accionesDe(c)} />
                         )}
                       </div>
                     </td>

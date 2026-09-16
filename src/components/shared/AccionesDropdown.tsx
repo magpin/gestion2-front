@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import type { LucideIcon } from "lucide-react";
 import { MoreHorizontal } from "lucide-react";
 import {
@@ -53,7 +54,10 @@ export function AccionesDropdown({
       />
       <DropdownMenuContent align={align} className="min-w-44">
         {acciones.map((accion) => (
-          <div key={accion.label}>
+          // `Fragment` y no un `div`: el menú de Base UI recorre sus ítems
+          // para moverse con el teclado, y un envoltorio en el medio lo
+          // rompe. Se nota recién al usarlo, y hasta hoy no lo usaba nadie.
+          <Fragment key={accion.label}>
             {accion.separadorAntes && <DropdownMenuSeparator />}
             <DropdownMenuItem
               variant={accion.variant ?? "default"}
@@ -63,7 +67,7 @@ export function AccionesDropdown({
               {accion.icon && <accion.icon size={15} strokeWidth={1.5} />}
               {accion.label}
             </DropdownMenuItem>
-          </div>
+          </Fragment>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>

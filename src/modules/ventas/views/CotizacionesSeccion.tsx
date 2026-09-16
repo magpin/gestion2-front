@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AccionesDropdown } from "@/components/shared/AccionesDropdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { mensajeDeError } from "@/core/api/api";
@@ -262,7 +263,7 @@ export function CotizacionesSeccion({
                       </span>
                     </td>
                     <td className="px-5 py-5">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           className="h-11 rounded-xl px-5 text-muted-foreground"
@@ -271,32 +272,27 @@ export function CotizacionesSeccion({
                           Ver
                         </Button>
                         {puedeCrear && c.estado === "EMITIDA" && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              className="h-11 rounded-xl px-4 text-muted-foreground"
-                              onClick={() => setEditandoId(c.id)}
-                            >
-                              <Pencil className="size-4" />
-                              Corregir
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="h-11 rounded-xl px-4 text-muted-foreground hover:text-danger"
-                              onClick={() => setPorDescartar(c)}
-                            >
-                              <Trash2 className="size-4" />
-                              Descartar
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="h-11 rounded-xl px-5 text-muted-foreground"
-                              onClick={() => setConvirtiendo(c)}
-                            >
-                              <ArrowRightLeft className="size-4" />
-                              Convertir a factura
-                            </Button>
-                          </>
+                          <AccionesDropdown
+                            acciones={[
+                              {
+                                label: "Convertir a factura",
+                                icon: ArrowRightLeft,
+                                onSelect: () => setConvirtiendo(c),
+                              },
+                              {
+                                label: "Corregir",
+                                icon: Pencil,
+                                onSelect: () => setEditandoId(c.id),
+                              },
+                              {
+                                label: "Descartar",
+                                icon: Trash2,
+                                variant: "destructive",
+                                separadorAntes: true,
+                                onSelect: () => setPorDescartar(c),
+                              },
+                            ]}
+                          />
                         )}
                       </div>
                     </td>
