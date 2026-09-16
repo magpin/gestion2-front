@@ -120,11 +120,15 @@ export interface LineaCompraInput {
   sinIva?: boolean;
 }
 
-/** Base y valor son manuales: este corte no calcula tarifas de retención. */
+/**
+ * Qué se retiene y sobre qué base. **El valor lo calcula el servidor** con la
+ * tarifa y la base mínima del catálogo del año del documento: el agente
+ * retenedor responde ante la DIAN por lo que debió retener, no por lo que
+ * alguien escribió.
+ */
 export interface RetencionCompraInput {
-  concepto: ConceptoRetencion;
+  conceptoId: string;
   base: number;
-  valor: number;
 }
 
 export interface CrearCompraInput {

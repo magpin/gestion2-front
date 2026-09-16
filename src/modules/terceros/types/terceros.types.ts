@@ -18,6 +18,8 @@ export interface TerceroResumen {
   esCliente: boolean;
   esProveedor: boolean;
   responsableIva: boolean;
+  /** Si declara renta. Decide la tarifa de retefuente donde hay dos (4% o 6%). */
+  declaranteRenta: boolean;
   activo: boolean;
 }
 
@@ -50,6 +52,8 @@ export interface TerceroDetalle {
   es_autorretenedor: boolean;
   es_gran_contribuyente: boolean;
   regimen_simple: boolean;
+  /** Si declara renta. Decide la tarifa de retefuente donde hay dos (4% o 6%). */
+  declarante_renta: boolean;
   /** Códigos del anexo técnico: O-13, O-48, R-99-PN. */
   responsabilidades_dian: string[];
   activo: boolean;
@@ -93,6 +97,7 @@ export function resumirTercero(d: TerceroDetalle): TerceroResumen {
     esCliente: d.es_cliente,
     esProveedor: d.es_proveedor,
     responsableIva: d.responsable_iva,
+    declaranteRenta: d.declarante_renta ?? true,
     activo: d.activo,
   };
 }

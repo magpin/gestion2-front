@@ -81,12 +81,10 @@ export function FormularioCompra({
         : null,
     )
     .filter((n): n is number => n !== null);
+  // El valor ya no se digita —lo calcula el servidor contra el catálogo—, así
+  // que lo único que puede faltar es el concepto o la base.
   const retencionesIncompletas = retenciones.some(
-    (r) =>
-      r.base.trim() === "" ||
-      Number(r.base) <= 0 ||
-      r.valor.trim() === "" ||
-      Number(r.valor) <= 0,
+    (r) => r.conceptoId === "" || r.base.trim() === "" || Number(r.base) <= 0,
   );
 
   const nombrar = (renglones: number[]) =>
@@ -129,9 +127,8 @@ export function FormularioCompra({
         retenciones.length === 0
           ? undefined
           : retenciones.map((r) => ({
-              concepto: r.concepto,
+              conceptoId: r.conceptoId,
               base: Number(r.base),
-              valor: Number(r.valor),
             })),
     });
   };
@@ -194,6 +191,8 @@ export function FormularioCompra({
           <EditorRetenciones
             retenciones={retenciones}
             onCambiar={setRetenciones}
+            fecha={fecha}
+            declaranteRenta={proveedor?.declaranteRenta ?? true}
           />
         </DialogBody>
 

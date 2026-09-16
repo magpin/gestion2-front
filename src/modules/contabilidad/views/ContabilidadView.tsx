@@ -2,22 +2,31 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, CalendarDays, FileText, Plus, ShieldCheck } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  FileText,
+  Percent,
+  Plus,
+  ShieldCheck,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useTieneRol } from "@/core/store/authStore";
 import { FormularioAsiento } from "../components/FormularioAsiento";
 import { periodosApi } from "../services/contabilidad.service";
 import { AsientosSeccion } from "./AsientosSeccion";
+import { RetencionesSeccion } from "@/modules/retenciones/views/RetencionesSeccion";
 import { LibrosSeccion } from "./LibrosSeccion";
 import { PeriodosSeccion } from "./PeriodosSeccion";
 
-type Seccion = "Asientos" | "Períodos" | "Libros";
+type Seccion = "Asientos" | "Períodos" | "Libros" | "Retenciones";
 
 const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Asientos", FileText],
   ["Períodos", CalendarDays],
   ["Libros", BookOpen],
+  ["Retenciones", Percent],
 ];
 
 /**
@@ -93,6 +102,7 @@ export function ContabilidadView() {
       {seccion === "Asientos" && <AsientosSeccion />}
       {seccion === "Períodos" && <PeriodosSeccion />}
       {seccion === "Libros" && <LibrosSeccion />}
+      {seccion === "Retenciones" && <RetencionesSeccion />}
 
       {/* La regla que explica por qué no hay botón de editar en ninguna fila. */}
       <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground print:hidden">
