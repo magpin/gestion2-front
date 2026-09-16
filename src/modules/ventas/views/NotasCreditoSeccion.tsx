@@ -37,14 +37,19 @@ const CLAVE = ["notas-credito"];
  * eligiendo la factura en el propio formulario, o desde la fila de la
  * factura en la pestaña de Facturas — mismo formulario en los dos casos.
  */
-export function NotasCreditoSeccion() {
+export function NotasCreditoSeccion({
+  creando,
+  onCerrarCreacion,
+}: {
+  /** Lo maneja la vista: el botón de crear vive en la cabecera, arriba de las pestañas. */
+  creando: boolean;
+  onCerrarCreacion: () => void;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
   const puedeAnular = useTieneRol("DIRECTOR", "CONTADOR");
 
   const [pagina, setPagina] = useState(1);
-  const [creando, setCreando] = useState(false);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [porAnular, setPorAnular] = useState<VentaDocumentoResumen | null>(
     null,
@@ -68,7 +73,7 @@ export function NotasCreditoSeccion() {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
       await queryClient.invalidateQueries({ queryKey: ["facturas"] });
       aviso.exito("Nota crédito emitida");
-      setCreando(false);
+      onCerrarCreacion();
     },
     onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
@@ -89,17 +94,6 @@ export function NotasCreditoSeccion() {
 
   return (
     <>
-      {puedeCrear && (
-        <div className="mb-6 flex justify-end">
-          <Button
-            className="h-12 rounded-xl px-6"
-            onClick={() => setCreando(true)}
-          >
-            Nueva nota crédito
-          </Button>
-        </div>
-      )}
-
       {isLoading ? (
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
@@ -205,7 +199,7 @@ export function NotasCreditoSeccion() {
 
       <FormularioNotaCredito
         abierto={creando}
-        onCerrar={() => setCreando(false)}
+        onCerrar={() => onCerrarCreacion()}
         onGuardar={(datos) => crear.mutate(datos)}
         guardando={crear.isPending}
       />

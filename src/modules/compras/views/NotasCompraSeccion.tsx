@@ -39,17 +39,23 @@ type TipoNota = "NOTA_CREDITO" | "NOTA_DEBITO";
  * Tenerlas separadas en pantalla es lo que mantiene la lista de compras
  * respondiendo "cuánto le debo a este proveedor" sin mezclarle correcciones.
  */
-export function NotasCompraSeccion({ tipo }: { tipo: TipoNota }) {
+export function NotasCompraSeccion({
+  tipo,
+  creando,
+  onCerrarCreacion,
+}: {
+  tipo: TipoNota;
+  /** Lo maneja la vista: el botón de crear vive en la cabecera. */
+  creando: boolean;
+  onCerrarCreacion: () => void;
+}) {
   const esCredito = tipo === "NOTA_CREDITO";
-  const etiqueta = esCredito ? "nota crédito" : "nota débito";
   const CLAVE = [esCredito ? "notas-compra-credito" : "notas-compra-debito"];
 
   const queryClient = useQueryClient();
-  const puedeCrear = useTieneRol("COMPRAS", "DIRECTOR");
   const puedeAnular = useTieneRol("DIRECTOR", "CONTADOR");
 
   const [pagina, setPagina] = useState(1);
-  const [creando, setCreando] = useState(false);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [porAnular, setPorAnular] = useState<CompraDocumentoResumen | null>(
     null,
@@ -86,7 +92,7 @@ export function NotasCompraSeccion({ tipo }: { tipo: TipoNota }) {
     onSuccess: async () => {
       await invalidar();
       aviso.exito(`${que} registrada`);
-      setCreando(false);
+      onCerrarCreacion();
     },
     onError: (e: unknown) => aviso.error(mensajeDeError(e)),
   });
@@ -117,17 +123,6 @@ export function NotasCompraSeccion({ tipo }: { tipo: TipoNota }) {
 
   return (
     <>
-      {puedeCrear && (
-        <div className="mb-6 flex justify-end">
-          <Button
-            className="h-12 rounded-xl px-6"
-            onClick={() => setCreando(true)}
-          >
-            Nueva {etiqueta}
-          </Button>
-        </div>
-      )}
-
       {isLoading ? (
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
@@ -241,14 +236,14 @@ export function NotasCompraSeccion({ tipo }: { tipo: TipoNota }) {
       {esCredito ? (
         <FormularioNotaCreditoCompra
           abierto={creando}
-          onCerrar={() => setCreando(false)}
+          onCerrar={() => onCerrarCreacion()}
           onGuardar={(datos) => crearCredito.mutate(datos)}
           guardando={crearCredito.isPending}
         />
       ) : (
         <FormularioNotaDebitoCompra
           abierto={creando}
-          onCerrar={() => setCreando(false)}
+          onCerrar={() => onCerrarCreacion()}
           onGuardar={(datos) => crearDebito.mutate(datos)}
           guardando={crearDebito.isPending}
         />

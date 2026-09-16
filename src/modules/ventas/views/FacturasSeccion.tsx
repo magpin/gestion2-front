@@ -46,7 +46,14 @@ const CLAVE = ["facturas"];
  * única corrección posible acá es anular (deja el documento y el asiento
  * marcados, no los borra) o emitir una nota crédito que reversa el asiento.
  */
-export function FacturasSeccion() {
+export function FacturasSeccion({
+  creando,
+  onCerrarCreacion,
+}: {
+  /** Lo maneja la vista: el botón de crear vive en la cabecera, arriba de las pestañas. */
+  creando: boolean;
+  onCerrarCreacion: () => void;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
@@ -54,7 +61,6 @@ export function FacturasSeccion() {
   const puedeCobrar = useTieneRol("CAJA", "DIRECTOR");
 
   const [pagina, setPagina] = useState(1);
-  const [creando, setCreando] = useState(false);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [porAnular, setPorAnular] = useState<VentaDocumentoResumen | null>(
     null,
@@ -84,7 +90,7 @@ export function FacturasSeccion() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Factura creada");
-      setCreando(false);
+      onCerrarCreacion();
     },
     /**
      * Falta de existencia no es un "no": es un "¿seguro?". El cliente está
@@ -159,17 +165,6 @@ export function FacturasSeccion() {
 
   return (
     <>
-      {puedeCrear && (
-        <div className="mb-6 flex justify-end">
-          <Button
-            className="h-12 rounded-xl px-6"
-            onClick={() => setCreando(true)}
-          >
-            Nueva factura
-          </Button>
-        </div>
-      )}
-
       {isLoading ? (
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
@@ -311,7 +306,7 @@ export function FacturasSeccion() {
 
       <FormularioDocumentoVenta
         abierto={creando}
-        onCerrar={() => setCreando(false)}
+        onCerrar={() => onCerrarCreacion()}
         onGuardar={(datos) => crear.mutate(datos)}
         guardando={crear.isPending}
         titulo="Nueva factura"

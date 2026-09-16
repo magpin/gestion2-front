@@ -7,7 +7,6 @@ import {
   FileMinus,
   FilePlus,
   Loader2,
-  Plus,
   Trash2,
 } from "lucide-react";
 
@@ -52,14 +51,20 @@ const CLAVE = ["compras"];
  * viven en la misma tabla. Se separan en pestañas para que esta lista siga
  * respondiendo "cuánto le debo a este proveedor" sin correcciones mezcladas.
  */
-export function FacturasCompraSeccion() {
+export function FacturasCompraSeccion({
+  creando,
+  onCerrarCreacion,
+}: {
+  /** Lo maneja la vista: el botón de crear vive en la cabecera, arriba de las pestañas. */
+  creando: boolean;
+  onCerrarCreacion: () => void;
+}) {
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("COMPRAS", "DIRECTOR");
   const puedeAnular = useTieneRol("DIRECTOR", "CONTADOR");
   const puedePagar = useTieneRol("CAJA", "DIRECTOR");
 
   const [pagina, setPagina] = useState(1);
-  const [creando, setCreando] = useState(false);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [porAnular, setPorAnular] = useState<CompraDocumentoResumen | null>(
     null,
@@ -89,7 +94,7 @@ export function FacturasCompraSeccion() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Compra registrada");
-      setCreando(false);
+      onCerrarCreacion();
     },
     onError: (e: unknown) => aviso.error(mensajeDeError(e)),
   });
@@ -147,20 +152,6 @@ export function FacturasCompraSeccion() {
 
   return (
     <>
-      <div className="mb-6 flex justify-end">
-        {puedeCrear && (
-          <Button
-            onClick={() => setCreando(true)}
-            className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-brand hover:text-white"
-          >
-            <span className="flex size-7 items-center justify-center rounded-full bg-white/15">
-              <Plus className="size-4" />
-            </span>
-            Nueva compra
-          </Button>
-        )}
-      </div>
-
       {isLoading ? (
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
@@ -301,7 +292,7 @@ export function FacturasCompraSeccion() {
 
       <FormularioCompra
         abierto={creando}
-        onCerrar={() => setCreando(false)}
+        onCerrar={() => onCerrarCreacion()}
         onGuardar={(datos) => crear.mutate(datos)}
         guardando={crear.isPending}
       />

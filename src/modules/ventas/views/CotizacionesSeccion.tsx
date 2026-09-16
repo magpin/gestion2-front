@@ -44,13 +44,19 @@ const CLAVE = ["cotizaciones"];
  * (queda ANULADA con su motivo; nada se borra) y convertir a factura, que
  * reusa sus líneas sin volver a pedirlas.
  */
-export function CotizacionesSeccion() {
+export function CotizacionesSeccion({
+  creando,
+  onCerrarCreacion,
+}: {
+  /** Lo maneja la vista: el botón de crear vive en la cabecera, arriba de las pestañas. */
+  creando: boolean;
+  onCerrarCreacion: () => void;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
 
   const [pagina, setPagina] = useState(1);
-  const [creando, setCreando] = useState(false);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [convirtiendo, setConvirtiendo] =
     useState<VentaDocumentoResumen | null>(null);
@@ -75,7 +81,7 @@ export function CotizacionesSeccion() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Cotización creada");
-      setCreando(false);
+      onCerrarCreacion();
     },
     onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
@@ -182,17 +188,6 @@ export function CotizacionesSeccion() {
 
   return (
     <>
-      {puedeCrear && (
-        <div className="mb-6 flex justify-end">
-          <Button
-            className="h-12 rounded-xl px-6"
-            onClick={() => setCreando(true)}
-          >
-            Nueva cotización
-          </Button>
-        </div>
-      )}
-
       {isLoading ? (
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
@@ -322,7 +317,7 @@ export function CotizacionesSeccion() {
 
       <FormularioDocumentoVenta
         abierto={creando}
-        onCerrar={() => setCreando(false)}
+        onCerrar={() => onCerrarCreacion()}
         onGuardar={(datos) => crear.mutate(datos)}
         guardando={crear.isPending}
         titulo="Nueva cotización"

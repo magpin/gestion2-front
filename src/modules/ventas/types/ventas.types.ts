@@ -156,11 +156,23 @@ export interface CrearNotaDebitoInput {
   lineas: LineaNotaDebitoInput[];
 }
 
+/** Una línea de la factura que la nota crédito corrige, y por cuánto. */
+export interface LineaNotaCreditoInput {
+  lineaOrigenId: string;
+  cantidad: number;
+}
+
+/**
+ * Nota crédito de venta: baja lo que el cliente debe. Sin `lineas` reversa la
+ * factura completa —menos lo que notas anteriores ya devolvieron—; con ellas,
+ * solo esas cantidades. El precio y el IVA no se piden: son los de la
+ * factura, no se renegocian al corregir.
+ */
 export interface CrearNotaCreditoInput {
-  /** La factura EMITIDA que se corrige, completa — no hay notas parciales en este corte. */
   documentoOrigenId: string;
   fecha: string;
   motivo: string;
+  lineas?: LineaNotaCreditoInput[];
 }
 
 /**

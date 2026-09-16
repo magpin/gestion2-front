@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { FileMinus, FilePlus, FileText, ReceiptText } from "lucide-react";
 
+import { BotonNuevo } from "@/components/shared/BotonNuevo";
+import { useTieneRol } from "@/core/store/authStore";
 import { CotizacionesSeccion } from "./CotizacionesSeccion";
 import { FacturasSeccion } from "./FacturasSeccion";
 import { NotasCreditoSeccion } from "./NotasCreditoSeccion";
@@ -17,6 +19,14 @@ const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Notas débito", FilePlus],
 ];
 
+/** Qué crea el botón de la cabecera en cada pestaña. */
+const ETIQUETA_NUEVO: Record<Seccion, string> = {
+  Cotizaciones: "Nueva cotización",
+  Facturas: "Nueva factura",
+  "Notas crédito": "Nueva nota crédito",
+  "Notas débito": "Nueva nota débito",
+};
+
 /**
  * Ventas: cuatro vistas del mismo documento —cabecera y líneas de
  * producto/cantidad—, no cuatro pantallas separadas. Una cotización no
@@ -28,21 +38,35 @@ const SECCIONES: Array<[Seccion, typeof FileText]> = [
  */
 export function VentasView() {
   const [seccion, setSeccion] = useState<Seccion>("Cotizaciones");
+  // El estado de "estoy creando" vive acá y no en cada sección: el botón está
+  // en la cabecera, arriba de las pestañas, y desde ahí no alcanzaría.
+  const [creando, setCreando] = useState(false);
+  const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
+  const cerrarCreacion = () => setCreando(false);
 
   return (
     <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
-      <header className="mb-8">
-        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
-          <span className="size-2 rounded-full bg-brand" />
-          Ventas
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
+            <span className="size-2 rounded-full bg-brand" />
+            Ventas
+          </div>
+          <h1 className="text-4xl font-semibold tracking-[-0.04em]">
+            Ventas<span className="text-brand">.</span>
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Cotiza, factura y corrige — todo contra el catálogo y los precios
+            vigentes.
+          </p>
         </div>
-        <h1 className="text-4xl font-semibold tracking-[-0.04em]">
-          Ventas<span className="text-brand">.</span>
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Cotiza, factura y corrige — todo contra el catálogo y los precios
-          vigentes.
-        </p>
+
+        {puedeCrear && (
+          <BotonNuevo
+            etiqueta={ETIQUETA_NUEVO[seccion]}
+            onClick={() => setCreando(true)}
+          />
+        )}
       </header>
 
       <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
@@ -51,7 +75,10 @@ export function VentasView() {
             key={nombre}
             type="button"
             aria-current={seccion === nombre ? "page" : undefined}
-            onClick={() => setSeccion(nombre)}
+            onClick={() => {
+              setSeccion(nombre);
+              setCreando(false);
+            }}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
               seccion === nombre
                 ? "bg-primary text-primary-foreground"
@@ -64,10 +91,27 @@ export function VentasView() {
         ))}
       </nav>
 
-      {seccion === "Cotizaciones" && <CotizacionesSeccion />}
-      {seccion === "Facturas" && <FacturasSeccion />}
-      {seccion === "Notas crédito" && <NotasCreditoSeccion />}
-      {seccion === "Notas débito" && <NotasDebitoSeccion />}
+      {seccion === "Cotizaciones" && (
+        <CotizacionesSeccion
+          creando={creando}
+          onCerrarCreacion={cerrarCreacion}
+        />
+      )}
+      {seccion === "Facturas" && (
+        <FacturasSeccion creando={creando} onCerrarCreacion={cerrarCreacion} />
+      )}
+      {seccion === "Notas crédito" && (
+        <NotasCreditoSeccion
+          creando={creando}
+          onCerrarCreacion={cerrarCreacion}
+        />
+      )}
+      {seccion === "Notas débito" && (
+        <NotasDebitoSeccion
+          creando={creando}
+          onCerrarCreacion={cerrarCreacion}
+        />
+      )}
     </div>
   );
 }
