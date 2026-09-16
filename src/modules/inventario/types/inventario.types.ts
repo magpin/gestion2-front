@@ -52,6 +52,19 @@ export interface ProductoResumen {
   cuenta_costo_venta_id: string | null;
   cuenta_ingreso_id: string | null;
   activo: boolean;
+  /** Cuántas unidades hay hoy, según el último movimiento del kardex. */
+  saldo_cantidad: string;
+  /** El promedio ponderado con el que salen las ventas. */
+  saldo_costo_promedio: string;
+  /** Cuánta plata hay parada en este producto. */
+  saldo_valor: string;
+}
+
+/** Cuánto vale el inventario entero, para la cabecera del catálogo. */
+export interface ValorInventario {
+  valor: string;
+  productos: string;
+  sin_existencia: string;
 }
 
 export interface PaginaProductos {

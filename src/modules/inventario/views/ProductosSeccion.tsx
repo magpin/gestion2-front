@@ -87,6 +87,14 @@ export function ProductosSeccion() {
     setPagina(1);
   };
 
+  // El valor del inventario es su propia consulta y no la suma de la página:
+  // sumar cincuenta productos y llamarlo "el inventario" sería mentir. No
+  // depende del filtro por la misma razón.
+  const { data: valorTotal } = useQuery({
+    queryKey: [...CLAVE, "valor"],
+    queryFn: productosApi.valorInventario,
+  });
+
   const { data: resultado, isLoading } = useQuery({
     queryKey: [...CLAVE, busqueda, estado, pagina],
     queryFn: () =>
@@ -186,13 +194,29 @@ export function ProductosSeccion() {
         </Button>
       </section>
 
-      <div className="mb-3 px-1">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-5 px-1">
         <p className="text-sm text-muted-foreground">
           <strong className="font-semibold text-foreground">
             {productos.length}
           </strong>{" "}
           de {resultado?.total ?? 0} productos
         </p>
+
+        {valorTotal !== undefined && (
+          <div className="flex flex-wrap items-end gap-8">
+            <Cifra
+              etiqueta="Valor del inventario"
+              valor={formatCOP(Number(valorTotal.valor))}
+              destacada
+            />
+            <Cifra etiqueta="Productos activos" valor={valorTotal.productos} />
+            <Cifra
+              etiqueta="Sin existencia"
+              valor={valorTotal.sin_existencia}
+              alarma={Number(valorTotal.sin_existencia) > 0}
+            />
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -204,20 +228,34 @@ export function ProductosSeccion() {
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left">
+            <table className="w-full min-w-[1080px] text-left">
               <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Producto", "Unidad", "IVA", "Estado", "Acciones"].map(
-                    (x) => (
-                      <th
-                        key={x}
-                        scope="col"
-                        className={`px-5 py-4 ${x === "Acciones" ? "text-right" : ""}`}
-                      >
-                        {x}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Producto",
+                    "Unidad",
+                    "IVA",
+                    "Existencia",
+                    "Costo prom.",
+                    "Valor",
+                    "Estado",
+                    "Acciones",
+                  ].map((x) => (
+                    <th
+                      key={x}
+                      scope="col"
+                      className={`px-5 py-4 ${
+                        x === "Acciones" ||
+                        x === "Existencia" ||
+                        x === "Costo prom." ||
+                        x === "Valor"
+                          ? "text-right"
+                          : ""
+                      }`}
+                    >
+                      {x}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -250,6 +288,25 @@ export function ProductosSeccion() {
                       <span className="rounded-full border border-border px-3 py-1.5 text-xs">
                         {p.iva_tarifa}%
                       </span>
+                    </td>
+                    {/* Los tres salen del último movimiento del kardex: el
+                        catálogo no vuelve a calcular lo que el kardex ya
+                        lleva. Sin existencia se marca, que es la pregunta que
+                        se hace quien va a vender. */}
+                    <td className="px-5 py-5 text-right font-mono text-sm">
+                      {Number(p.saldo_cantidad) > 0 ? (
+                        <span className="font-semibold">
+                          {Number(p.saldo_cantidad)}
+                        </span>
+                      ) : (
+                        <span className="text-warning">sin existencia</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-5 text-right font-mono text-sm text-muted-foreground">
+                      {formatCOP(Number(p.saldo_costo_promedio))}
+                    </td>
+                    <td className="px-5 py-5 text-right font-mono text-sm font-semibold">
+                      {formatCOP(Number(p.saldo_valor))}
                     </td>
                     <td className="px-5 py-5">
                       <span className="inline-flex items-center gap-2 text-[13px] font-semibold">
@@ -562,6 +619,38 @@ function Vacio({ hayFiltro }: { hayFiltro: boolean }) {
         {hayFiltro
           ? "Probá con otro texto, o quitá los filtros."
           : "Creá el primero con el botón «Nuevo producto» de arriba."}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Una cifra de la cabecera. En grande y fuera de la tabla a propósito: "cuánta
+ * plata tengo en inventario" es una pregunta que se contesta de un vistazo, no
+ * sumando una columna.
+ */
+function Cifra({
+  etiqueta,
+  valor,
+  destacada = false,
+  alarma = false,
+}: {
+  etiqueta: string;
+  valor: string;
+  destacada?: boolean;
+  alarma?: boolean;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        {etiqueta}
+      </p>
+      <p
+        className={`font-mono font-semibold tabular-nums ${
+          destacada ? "text-3xl tracking-[-0.03em]" : "text-xl"
+        } ${alarma ? "text-warning" : ""}`}
+      >
+        {valor}
       </p>
     </div>
   );

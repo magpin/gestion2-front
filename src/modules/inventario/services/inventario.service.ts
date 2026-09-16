@@ -11,6 +11,7 @@ import type {
   PrecioResumen,
   ProductoResumen,
   RegistrarMovimientoInput,
+  ValorInventario,
 } from "../types/inventario.types";
 
 /**
@@ -21,6 +22,10 @@ import type {
  * la rechaza, así que ni se ofrece.
  */
 export const productosApi = {
+  /** Cuánta plata hay parada en el inventario. No sale de sumar la página. */
+  valorInventario: () =>
+    api.get<ValorInventario>("/productos/valor").then((r) => r.data),
+
   listar: (f: { q?: string; incluirInactivos?: boolean; soloInactivos?: boolean; pagina?: number } = {}) =>
     api
       .get<PaginaProductos>("/productos", {
