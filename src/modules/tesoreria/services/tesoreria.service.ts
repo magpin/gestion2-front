@@ -12,6 +12,7 @@ import type {
   IngresoCajaInput,
   PaginaArqueos,
   PaginaMovimientosCaja,
+  ResumenLibro,
 } from "../types/tesoreria.types";
 
 /**
@@ -43,6 +44,12 @@ export const cajasApi = {
  * ni se borra, se corrige con el contrario — mismo criterio que el kardex.
  */
 export const movimientosCajaApi = {
+  /** Cuánto entró y cuánto salió en el libro entero, no en la página. */
+  resumen: (cajaId: string) =>
+    api
+      .get<ResumenLibro>(`/cajas/${cajaId}/movimientos/resumen`)
+      .then((r) => r.data),
+
   listar: (cajaId: string, pagina = 1) =>
     api
       .get<PaginaMovimientosCaja>(`/cajas/${cajaId}/movimientos`, {

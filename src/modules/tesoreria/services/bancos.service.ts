@@ -1,4 +1,5 @@
 import { api } from "@/core/api/api";
+import type { ResumenLibro } from "../types/tesoreria.types";
 import type {
   AgregarLineaExtractoInput,
   CargaInicialBancoInput,
@@ -46,6 +47,14 @@ export const cuentasBancariasApi = {
  * movimiento no se edita ni se borra, se corrige con el contrario.
  */
 export const movimientosBancoApi = {
+  /** Cuánto entró y cuánto salió en el libro entero, no en la página. */
+  resumen: (cuentaBancariaId: string) =>
+    api
+      .get<ResumenLibro>(
+        `/cuentas-bancarias/${cuentaBancariaId}/movimientos/resumen`,
+      )
+      .then((r) => r.data),
+
   listar: (cuentaBancariaId: string, pagina = 1) =>
     api
       .get<PaginaMovimientosBanco>(`/cuentas-bancarias/${cuentaBancariaId}/movimientos`, {

@@ -19,6 +19,10 @@ export interface CuentaBancariaResumen {
   tipo_cuenta: TipoCuentaBancaria;
   cuenta_id: string;
   activa: boolean;
+  /** Cuánta plata hay hoy. Puede ser negativo: el banco admite sobregiro. */
+  saldo: string;
+  /** El día del último movimiento, o `null` si nunca se movió. */
+  ultimo_movimiento: string | null;
 }
 
 export interface CrearCuentaBancariaInput {

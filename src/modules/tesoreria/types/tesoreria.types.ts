@@ -19,6 +19,22 @@ export interface CajaResumen {
   sede_id: string | null;
   cuenta_id: string;
   activa: boolean;
+  /** Cuánta plata hay adentro hoy. Lo calcula la API sobre el último movimiento. */
+  saldo: string;
+  /** El día del último movimiento, o `null` si la caja nunca se movió. */
+  ultimo_movimiento: string | null;
+}
+
+/**
+ * Cuánto entró y cuánto salió en un libro **entero**, no en la página que se
+ * está mirando. El saldo inicial va aparte: no es plata que entró, es de dónde
+ * arrancó la cuenta.
+ */
+export interface ResumenLibro {
+  entradas: string;
+  salidas: string;
+  saldo_inicial: string;
+  saldo: string;
 }
 
 export interface CrearCajaInput {

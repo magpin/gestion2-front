@@ -63,6 +63,15 @@ export function LibroCajaSeccion() {
     enabled: caja !== null,
   });
 
+  // Cuánto entró y cuánto salió en el libro ENTERO. No se suma la página: el
+  // libro viene paginado y sumar cincuenta renglones para titularlo "entradas"
+  // sería mentir.
+  const { data: resumen } = useQuery({
+    queryKey: [...clave, "resumen"],
+    queryFn: () => movimientosCajaApi.resumen(caja!.id),
+    enabled: caja !== null,
+  });
+
   const hayMovimientos = (movimientos?.datos.length ?? 0) > 0;
   const tipoFormulario: TipoMovimientoCaja = hayMovimientos ? tipo : "SALDO_INICIAL";
   const saldoActual = movimientos?.datos[0]?.saldo_valor ?? null;
@@ -143,14 +152,24 @@ export function LibroCajaSeccion() {
           </div>
         ) : movimientos && movimientos.datos.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left">
+            <table className="w-full min-w-[900px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Fecha", "Movimiento", "Concepto", "Valor", "Saldo"].map((x) => (
-                    <th key={x} scope="col" className="px-5 py-4">
-                      {x}
-                    </th>
-                  ))}
+                  {["Fecha", "Movimiento", "Concepto", "Entrada", "Salida", "Saldo"].map(
+                    (x) => (
+                      <th
+                        key={x}
+                        scope="col"
+                        className={`px-5 py-4 ${
+                          x === "Entrada" || x === "Salida" || x === "Saldo"
+                            ? "text-right"
+                            : ""
+                        }`}
+                      >
+                        {x}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -161,11 +180,41 @@ export function LibroCajaSeccion() {
                       <span className="rounded-full border border-border px-3 py-1.5 text-xs">{NOMBRE_MOVIMIENTO_CAJA[m.tipo]}</span>
                     </td>
                     <td className="px-5 py-5 text-sm">{m.concepto}</td>
-                    <td className="px-5 py-5 font-mono font-semibold">{formatCOP(Number(m.valor))}</td>
-                    <td className="px-5 py-5 font-mono font-semibold">{formatCOP(Number(m.saldo_valor))}</td>
+                    {/* El saldo inicial no va en ninguna de las dos columnas:
+                        no es plata que entró, es de dónde arrancó la caja. Si
+                        fuera a "Entrada", la columna dejaría de sumar lo mismo
+                        que el total del pie. */}
+                    <td className="px-5 py-5 text-right font-mono font-semibold text-success">
+                      {m.tipo === "INGRESO" ? formatCOP(Number(m.valor)) : ""}
+                    </td>
+                    <td className="px-5 py-5 text-right font-mono font-semibold text-danger">
+                      {m.tipo === "EGRESO" ? formatCOP(Number(m.valor)) : ""}
+                    </td>
+                    <td className="px-5 py-5 text-right font-mono font-semibold">{formatCOP(Number(m.saldo_valor))}</td>
                   </tr>
                 ))}
               </tbody>
+              {resumen !== undefined && (
+                <tfoot className="border-t-2 border-border bg-muted/40">
+                  <tr>
+                    <td colSpan={3} className="px-5 py-4 text-sm font-semibold">
+                      Todo el libro
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        · arrancó con {formatCOP(Number(resumen.saldo_inicial))}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-right font-mono font-bold text-success">
+                      {formatCOP(Number(resumen.entradas))}
+                    </td>
+                    <td className="px-5 py-4 text-right font-mono font-bold text-danger">
+                      {formatCOP(Number(resumen.salidas))}
+                    </td>
+                    <td className="px-5 py-4 text-right font-mono font-bold">
+                      {formatCOP(Number(resumen.saldo))}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         ) : (

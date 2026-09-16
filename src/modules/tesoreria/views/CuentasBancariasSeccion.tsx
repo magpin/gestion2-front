@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
+import { formatCOP, formatFecha } from "@/lib/utils";
 import { cuentasBancariasApi } from "../services/bancos.service";
 import { NOMBRE_TIPO_CUENTA_BANCARIA } from "../types/bancos.types";
 import type { CuentaBancariaResumen } from "../types/bancos.types";
@@ -103,7 +104,7 @@ export function CuentasBancariasSeccion() {
             <table className="w-full min-w-[720px] text-left">
               <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Banco", "Número", "Tipo", "Estado", "Acciones"].map((x) => (
+                  {["Banco", "Número", "Tipo", "Saldo", "Últ. movimiento", "Estado", "Acciones"].map((x) => (
                     <th key={x} scope="col" className={`px-5 py-4 ${x === "Acciones" ? "text-right" : ""}`}>
                       {x}
                     </th>
@@ -117,6 +118,20 @@ export function CuentasBancariasSeccion() {
                     <td className="px-5 py-5 font-mono text-sm">{c.numero_cuenta}</td>
                     <td className="px-5 py-5">
                       <span className="rounded-full border border-border px-3 py-1.5 text-xs">{NOMBRE_TIPO_CUENTA_BANCARIA[c.tipo_cuenta]}</span>
+                    </td>
+                    {/* En rojo si está en negativo: el banco admite sobregiro
+                        y un saldo negativo tiene que verse como lo que es. */}
+                    <td
+                      className={`px-5 py-5 font-mono text-sm font-semibold ${
+                        Number(c.saldo) < 0 ? "text-danger" : ""
+                      }`}
+                    >
+                      {formatCOP(Number(c.saldo))}
+                    </td>
+                    <td className="px-5 py-5 text-sm text-muted-foreground">
+                      {c.ultimo_movimiento === null
+                        ? "sin movimientos"
+                        : formatFecha(c.ultimo_movimiento)}
                     </td>
                     <td className="px-5 py-5">
                       <span className="inline-flex items-center gap-2 text-[13px] font-semibold">

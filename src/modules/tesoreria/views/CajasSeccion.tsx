@@ -20,6 +20,7 @@ import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { cajasApi } from "../services/tesoreria.service";
+import { formatCOP, formatFecha } from "@/lib/utils";
 import { NOMBRE_TIPO_CAJA } from "../types/tesoreria.types";
 import type { CajaResumen } from "../types/tesoreria.types";
 
@@ -105,7 +106,7 @@ export function CajasSeccion() {
             <table className="w-full min-w-[720px] text-left">
               <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Caja", "Tipo", "Estado", "Acciones"].map((x) => (
+                  {["Caja", "Tipo", "Saldo", "Últ. movimiento", "Estado", "Acciones"].map((x) => (
                     <th key={x} scope="col" className={`px-5 py-4 ${x === "Acciones" ? "text-right" : ""}`}>
                       {x}
                     </th>
@@ -118,6 +119,14 @@ export function CajasSeccion() {
                     <td className="px-5 py-5 text-sm font-semibold">{c.nombre}</td>
                     <td className="px-5 py-5">
                       <span className="rounded-full border border-border px-3 py-1.5 text-xs">{NOMBRE_TIPO_CAJA[c.tipo]}</span>
+                    </td>
+                    <td className="px-5 py-5 font-mono text-sm font-semibold">
+                      {formatCOP(Number(c.saldo))}
+                    </td>
+                    <td className="px-5 py-5 text-sm text-muted-foreground">
+                      {c.ultimo_movimiento === null
+                        ? "sin movimientos"
+                        : formatFecha(c.ultimo_movimiento)}
                     </td>
                     <td className="px-5 py-5">
                       <span className="inline-flex items-center gap-2 text-[13px] font-semibold">

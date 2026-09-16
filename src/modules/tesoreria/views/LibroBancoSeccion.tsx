@@ -71,6 +71,13 @@ export function LibroBancoSeccion() {
     enabled: cuenta !== null,
   });
 
+  // El libro entero, no la página. Mismo criterio que en el de caja.
+  const { data: resumen } = useQuery({
+    queryKey: [...clave, "resumen"],
+    queryFn: () => movimientosBancoApi.resumen(cuenta!.id),
+    enabled: cuenta !== null,
+  });
+
   const hayMovimientos = (movimientos?.datos.length ?? 0) > 0;
   const tipoFormulario: TipoMovimientoBanco = hayMovimientos ? tipo : "SALDO_INICIAL";
   const saldoActual = movimientos?.datos[0]?.saldo_valor ?? null;
@@ -157,11 +164,27 @@ export function LibroBancoSeccion() {
           </div>
         ) : movimientos && movimientos.datos.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left">
+            <table className="w-full min-w-[960px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Fecha", "Movimiento", "Concepto", "Valor", "Saldo", "Conciliado"].map((x) => (
-                    <th key={x} scope="col" className="px-5 py-4">
+                  {[
+                    "Fecha",
+                    "Movimiento",
+                    "Concepto",
+                    "Entrada",
+                    "Salida",
+                    "Saldo",
+                    "Conciliado",
+                  ].map((x) => (
+                    <th
+                      key={x}
+                      scope="col"
+                      className={`px-5 py-4 ${
+                        x === "Entrada" || x === "Salida" || x === "Saldo"
+                          ? "text-right"
+                          : ""
+                      }`}
+                    >
                       {x}
                     </th>
                   ))}
@@ -175,8 +198,21 @@ export function LibroBancoSeccion() {
                       <span className="rounded-full border border-border px-3 py-1.5 text-xs">{NOMBRE_MOVIMIENTO_BANCO[m.tipo]}</span>
                     </td>
                     <td className="px-5 py-5 text-sm">{m.concepto}</td>
-                    <td className="px-5 py-5 font-mono font-semibold">{formatCOP(Number(m.valor))}</td>
-                    <td className={`px-5 py-5 font-mono font-semibold ${Number(m.saldo_valor) < 0 ? "text-danger" : ""}`}>
+                    {/* En un banco la entrada son dos tipos y la salida otros
+                        dos. El saldo inicial no va en ninguna: ver el libro de
+                        caja, donde está escrito el porqué. */}
+                    <td className="px-5 py-5 text-right font-mono font-semibold text-success">
+                      {m.tipo === "CONSIGNACION" ||
+                      m.tipo === "TRANSFERENCIA_ENTRANTE"
+                        ? formatCOP(Number(m.valor))
+                        : ""}
+                    </td>
+                    <td className="px-5 py-5 text-right font-mono font-semibold text-danger">
+                      {m.tipo === "RETIRO" || m.tipo === "TRANSFERENCIA_SALIENTE"
+                        ? formatCOP(Number(m.valor))
+                        : ""}
+                    </td>
+                    <td className={`px-5 py-5 text-right font-mono font-semibold ${Number(m.saldo_valor) < 0 ? "text-danger" : ""}`}>
                       {formatCOP(Number(m.saldo_valor))}
                     </td>
                     <td className="px-5 py-5">
@@ -189,6 +225,32 @@ export function LibroBancoSeccion() {
                   </tr>
                 ))}
               </tbody>
+              {resumen !== undefined && (
+                <tfoot className="border-t-2 border-border bg-muted/40">
+                  <tr>
+                    <td colSpan={3} className="px-5 py-4 text-sm font-semibold">
+                      Todo el libro
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        · arrancó con {formatCOP(Number(resumen.saldo_inicial))}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-right font-mono font-bold text-success">
+                      {formatCOP(Number(resumen.entradas))}
+                    </td>
+                    <td className="px-5 py-4 text-right font-mono font-bold text-danger">
+                      {formatCOP(Number(resumen.salidas))}
+                    </td>
+                    <td
+                      className={`px-5 py-4 text-right font-mono font-bold ${
+                        Number(resumen.saldo) < 0 ? "text-danger" : ""
+                      }`}
+                    >
+                      {formatCOP(Number(resumen.saldo))}
+                    </td>
+                    <td />
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Banknote,
   ClipboardCheck,
@@ -10,10 +10,10 @@ import {
   History,
   Landmark,
   Loader2,
-  Plus,
   Settings2,
 } from "lucide-react";
 
+import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { mensajeDeError } from "@/core/api/api";
+import { formatCOP } from "@/lib/utils";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
@@ -36,6 +37,7 @@ import {
 } from "../components/FormularioCuentaBancaria";
 import { cuentasBancariasApi } from "../services/bancos.service";
 import { cajasApi } from "../services/tesoreria.service";
+import { NOMBRE_TIPO_CAJA } from "../types/tesoreria.types";
 import { ArqueoSeccion } from "./ArqueoSeccion";
 import { CajasSeccion } from "./CajasSeccion";
 import { ConciliacionSeccion } from "./ConciliacionSeccion";
@@ -140,29 +142,14 @@ export function TesoreriaView() {
           </p>
         </div>
 
-        {mostrarNuevaCaja && (
-          <Button
-            onClick={() => setCreandoCaja(true)}
-            disabled={!puedeCrear}
-            className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-brand hover:text-white"
-          >
-            <span className="flex size-7 items-center justify-center rounded-full bg-white/15">
-              <Plus className="size-4" />
-            </span>
-            Nueva caja
-          </Button>
+        {puedeCrear && mostrarNuevaCaja && (
+          <BotonNuevo etiqueta="Nueva caja" onClick={() => setCreandoCaja(true)} />
         )}
-        {mostrarNuevaCuentaBancaria && (
-          <Button
+        {puedeCrear && mostrarNuevaCuentaBancaria && (
+          <BotonNuevo
+            etiqueta="Nueva cuenta bancaria"
             onClick={() => setCreandoCuentaBancaria(true)}
-            disabled={!puedeCrear}
-            className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-brand hover:text-white"
-          >
-            <span className="flex size-7 items-center justify-center rounded-full bg-white/15">
-              <Plus className="size-4" />
-            </span>
-            Nueva cuenta bancaria
-          </Button>
+          />
         )}
       </header>
 
@@ -218,6 +205,8 @@ export function TesoreriaView() {
           ))}
         </nav>
       )}
+
+      <Saldos grupo={grupo} />
 
       {grupo === "Caja" && (
         <>
@@ -321,6 +310,113 @@ export function TesoreriaView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/**
+ * Cuánta plata hay, en números y debajo de las pestañas.
+ *
+ * Muestra **solo lo del grupo abierto**: parado en Caja, las cajas; en Bancos,
+ * las cuentas. Mezclar los dos obligaba a buscar cuál de los renglones era el
+ * que importaba, y el módulo ya se divide en dos por algo.
+ *
+ * Suma en el cliente porque las dos listas vienen completas —una empresa tiene
+ * pocas cajas y pocas cuentas—; el saldo de cada una lo calcula la API sobre
+ * su último movimiento, que es la única fuente de esa verdad.
+ */
+function Saldos({ grupo }: { grupo: Grupo }) {
+  const esCaja = grupo === "Caja";
+
+  const { data: cajas } = useQuery({
+    queryKey: ["cajas"],
+    queryFn: () => cajasApi.listar(),
+    enabled: esCaja,
+  });
+  const { data: cuentas } = useQuery({
+    queryKey: ["cuentas-bancarias"],
+    queryFn: () => cuentasBancariasApi.listar(),
+    enabled: !esCaja,
+  });
+
+  const renglones = esCaja
+    ? (cajas ?? []).map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        detalle: NOMBRE_TIPO_CAJA[c.tipo],
+        saldo: Number(c.saldo),
+      }))
+    : (cuentas ?? []).map((c) => ({
+        id: c.id,
+        nombre: c.banco,
+        detalle: c.numero_cuenta,
+        saldo: Number(c.saldo),
+      }));
+
+  if (renglones.length === 0) return null;
+
+  const total = renglones.reduce((t, r) => t + r.saldo, 0);
+
+  return (
+    <section className="mb-7 rounded-3xl border border-border bg-card shadow-sm">
+      <div className="flex flex-wrap items-end justify-between gap-5 px-6 py-5">
+        <Cifra
+          etiqueta={esCaja ? "Total en caja" : "Total en bancos"}
+          valor={total}
+          destacada
+        />
+        <p className="text-sm text-muted-foreground">
+          {renglones.length} {esCaja ? "caja" : "cuenta"}
+          {renglones.length === 1 ? "" : "s"}
+        </p>
+      </div>
+
+      {/* Cada caja o cuenta con lo suyo. Con una sola, el desglose repetiría
+          el total y no se muestra. */}
+      {renglones.length > 1 && (
+        <div className="grid gap-px border-t border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          {renglones.map((r) => (
+            <div key={r.id} className="bg-card px-6 py-4">
+              <p className="truncate text-sm font-semibold">{r.nombre}</p>
+              <p className="text-xs text-muted-foreground">{r.detalle}</p>
+              <p
+                className={`mt-1 font-mono text-lg font-semibold tabular-nums ${
+                  r.saldo < 0 ? "text-danger" : ""
+                }`}
+              >
+                {formatCOP(r.saldo)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Cifra({
+  etiqueta,
+  valor,
+  destacada = false,
+}: {
+  etiqueta: string;
+  valor: number;
+  destacada?: boolean;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        {etiqueta}
+      </p>
+      {/* En rojo cuando está en negativo: el banco admite sobregiro, y un
+          saldo negativo tiene que verse como lo que es. */}
+      <p
+        className={`font-mono font-semibold tabular-nums ${
+          destacada ? "text-3xl tracking-[-0.03em]" : "text-2xl"
+        } ${valor < 0 ? "text-danger" : ""}`}
+      >
+        {formatCOP(valor)}
+      </p>
     </div>
   );
 }
