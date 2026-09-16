@@ -58,6 +58,14 @@ export interface ProductoResumen {
   saldo_costo_promedio: string;
   /** Cuánta plata hay parada en este producto. */
   saldo_valor: string;
+  /**
+   * A cuánto se compró la última vez. **No es el costo promedio**: el promedio
+   * es con lo que sale la mercancía y mezcla todas las entradas; esto es lo
+   * que dijo la última factura del proveedor. `null` si nunca se compró.
+   */
+  ultimo_costo_compra: string | null;
+  /** Cuándo fue esa compra. */
+  ultima_compra_fecha: string | null;
 }
 
 /** Cuánto vale el inventario entero, para la cabecera del catálogo. */

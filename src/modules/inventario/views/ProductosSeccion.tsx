@@ -228,7 +228,7 @@ export function ProductosSeccion() {
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1080px] text-left">
+            <table className="w-full min-w-[1220px] text-left">
               <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
                   {[
@@ -236,6 +236,7 @@ export function ProductosSeccion() {
                     "Unidad",
                     "IVA",
                     "Existencia",
+                    "Últ. compra",
                     "Costo prom.",
                     "Valor",
                     "Estado",
@@ -247,6 +248,7 @@ export function ProductosSeccion() {
                       className={`px-5 py-4 ${
                         x === "Acciones" ||
                         x === "Existencia" ||
+                        x === "Últ. compra" ||
                         x === "Costo prom." ||
                         x === "Valor"
                           ? "text-right"
@@ -300,6 +302,26 @@ export function ProductosSeccion() {
                         </span>
                       ) : (
                         <span className="text-warning">sin existencia</span>
+                      )}
+                    </td>
+                    {/* A cuánto se compró la última vez, con su fecha. Es el
+                        número que se mira para decidir a cuánto vender hoy; el
+                        promedio de al lado es otra cosa —con lo que sale la
+                        mercancía— y por eso van los dos. */}
+                    <td className="px-5 py-5 text-right">
+                      {p.ultimo_costo_compra === null ? (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      ) : (
+                        <>
+                          <span className="block font-mono text-sm font-semibold">
+                            {formatCOP(Number(p.ultimo_costo_compra))}
+                          </span>
+                          {p.ultima_compra_fecha !== null && (
+                            <span className="mt-0.5 block text-xs text-muted-foreground">
+                              {formatFecha(p.ultima_compra_fecha)}
+                            </span>
+                          )}
+                        </>
                       )}
                     </td>
                     <td className="px-5 py-5 text-right font-mono text-sm text-muted-foreground">
@@ -496,12 +518,27 @@ function DetalleProducto({
       </DialogHeader>
 
       <DialogBody className="flex flex-col gap-7">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl bg-muted p-4">
             <span className="text-xs text-muted-foreground">Existencias</span>
             <b className="mt-2 block font-mono text-2xl">
               {ultimo?.saldo_cantidad ?? "0"}
             </b>
+          </div>
+          <div className="rounded-2xl bg-muted p-4">
+            <span className="text-xs text-muted-foreground">
+              Última compra
+            </span>
+            <b className="mt-2 block font-mono text-xl">
+              {producto.ultimo_costo_compra === null
+                ? "—"
+                : formatCOP(Number(producto.ultimo_costo_compra))}
+            </b>
+            {producto.ultima_compra_fecha !== null && (
+              <span className="mt-1 block text-xs text-muted-foreground">
+                {formatFecha(producto.ultima_compra_fecha)}
+              </span>
+            )}
           </div>
           <div className="rounded-2xl bg-muted p-4">
             <span className="text-xs text-muted-foreground">
