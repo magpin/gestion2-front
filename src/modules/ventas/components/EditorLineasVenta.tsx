@@ -63,11 +63,25 @@ export function EditorLineasVenta({
   lineas,
   onCambiar,
   precioEditable = false,
+  precioSiempreDigitado = false,
+  mostrarExistencia = true,
 }: {
   lineas: LineaVentaBorrador[];
   onCambiar: (lineas: LineaVentaBorrador[]) => void;
   /** Solo la cotización: deja digitar el precio del producto que no tiene. */
   precioEditable?: boolean;
+  /**
+   * Solo la nota débito: el precio se digita siempre, tenga o no el producto
+   * uno de lista. Lo que se le cobra de más al cliente —un flete, un interés,
+   * un mayor valor— es un importe nuevo, y el precio de venta del catálogo no
+   * tiene nada que ver con él.
+   */
+  precioSiempreDigitado?: boolean;
+  /**
+   * La existencia se muestra donde importa. Una nota débito no mueve el
+   * kardex, y ahí el saldo en bodega es ruido.
+   */
+  mostrarExistencia?: boolean;
 }) {
   const actualizar = (clave: number, cambio: Partial<LineaVentaBorrador>) =>
     onCambiar(lineas.map((l) => (l.clave === clave ? { ...l, ...cambio } : l)));
@@ -88,7 +102,7 @@ export function EditorLineasVenta({
               <th scope="col" className="px-4 py-3">
                 Cantidad
               </th>
-              {precioEditable && (
+              {(precioEditable || precioSiempreDigitado) && (
                 <th scope="col" className="px-4 py-3">
                   Precio
                 </th>
@@ -106,7 +120,9 @@ export function EditorLineasVenta({
                       actualizar(l.clave, { producto, precioUnitario: "" })
                     }
                   />
-                  {l.producto && <Existencia producto={l.producto} />}
+                  {mostrarExistencia && l.producto && (
+                    <Existencia producto={l.producto} />
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <Input
@@ -122,7 +138,7 @@ export function EditorLineasVenta({
                     aria-label={`Cantidad de la línea ${i + 1}`}
                   />
                 </td>
-                {precioEditable && (
+                {(precioEditable || precioSiempreDigitado) && (
                   <td className="px-4 py-3">
                     <PrecioDeLinea
                       producto={l.producto}
@@ -131,6 +147,7 @@ export function EditorLineasVenta({
                         actualizar(l.clave, { precioUnitario })
                       }
                       etiqueta={`Precio de la línea ${i + 1}`}
+                      siempreDigitado={precioSiempreDigitado}
                     />
                   </td>
                 )}
@@ -205,21 +222,23 @@ function PrecioDeLinea({
   valor,
   onCambiar,
   etiqueta,
+  siempreDigitado = false,
 }: {
   producto: ProductoResumen | null;
   valor: string;
   onCambiar: (valor: string) => void;
   etiqueta: string;
+  siempreDigitado?: boolean;
 }) {
   const { precio, cargando } = usePrecioVigente(producto);
 
   if (producto === null) {
     return <span className="text-sm text-muted-foreground">—</span>;
   }
-  if (cargando && precio === null) {
+  if (!siempreDigitado && cargando && precio === null) {
     return <span className="text-sm text-muted-foreground">…</span>;
   }
-  if (precio !== null) {
+  if (!siempreDigitado && precio !== null) {
     return (
       <span className="block w-32 text-right font-mono text-sm">
         {formatCOP(precio)}
@@ -242,7 +261,7 @@ function PrecioDeLinea({
         aria-label={etiqueta}
       />
       <span className="mt-1 block text-[10px] text-muted-foreground">
-        sin precio de lista
+        {siempreDigitado ? "lo que se cobra de más" : "sin precio de lista"}
       </span>
     </>
   );

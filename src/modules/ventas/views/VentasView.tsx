@@ -1,26 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { FileMinus, FileText, ReceiptText } from "lucide-react";
+import { FileMinus, FilePlus, FileText, ReceiptText } from "lucide-react";
 
 import { CotizacionesSeccion } from "./CotizacionesSeccion";
 import { FacturasSeccion } from "./FacturasSeccion";
 import { NotasCreditoSeccion } from "./NotasCreditoSeccion";
+import { NotasDebitoSeccion } from "./NotasDebitoSeccion";
 
-type Seccion = "Cotizaciones" | "Facturas" | "Notas crédito";
+type Seccion = "Cotizaciones" | "Facturas" | "Notas crédito" | "Notas débito";
 
 const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Cotizaciones", FileText],
   ["Facturas", ReceiptText],
   ["Notas crédito", FileMinus],
+  ["Notas débito", FilePlus],
 ];
 
 /**
- * Ventas: tres vistas del mismo documento —cabecera y líneas de
- * producto/cantidad—, no tres pantallas separadas. Una cotización no
+ * Ventas: cuatro vistas del mismo documento —cabecera y líneas de
+ * producto/cantidad—, no cuatro pantallas separadas. Una cotización no
  * asienta ni mueve inventario; una factura sí, de un solo golpe; una nota
- * crédito reversa una factura completa. El precio de cada línea siempre es
- * el de lista vigente del producto: acá no se negocia por documento.
+ * crédito reversa una factura —entera o por línea— y una nota débito le
+ * cobra de más sobre una que ya existe. El precio de cada línea es el de
+ * lista vigente del producto; la excepción es la nota débito, donde lo que
+ * se cobra es un importe nuevo y se digita.
  */
 export function VentasView() {
   const [seccion, setSeccion] = useState<Seccion>("Cotizaciones");
@@ -63,6 +67,7 @@ export function VentasView() {
       {seccion === "Cotizaciones" && <CotizacionesSeccion />}
       {seccion === "Facturas" && <FacturasSeccion />}
       {seccion === "Notas crédito" && <NotasCreditoSeccion />}
+      {seccion === "Notas débito" && <NotasDebitoSeccion />}
     </div>
   );
 }

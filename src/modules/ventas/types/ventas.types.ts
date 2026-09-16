@@ -135,6 +135,25 @@ export interface CrearFacturaInput {
   confirmaSinExistencia?: boolean;
 }
 
+/**
+ * Qué se le cobra de más al cliente. A diferencia de la nota crédito —que
+ * devuelve al precio de la factura—, acá el precio se digita siempre: lo que
+ * se cobra es un valor nuevo, no uno del catálogo.
+ */
+export interface LineaNotaDebitoInput {
+  productoId: string;
+  cantidad: number;
+  precioUnitario: number;
+}
+
+export interface CrearNotaDebitoInput {
+  /** La factura EMITIDA sobre la que se cobra. Sin factura no hay nota. */
+  documentoOrigenId: string;
+  fecha: string;
+  motivo: string;
+  lineas: LineaNotaDebitoInput[];
+}
+
 export interface CrearNotaCreditoInput {
   /** La factura EMITIDA que se corrige, completa — no hay notas parciales en este corte. */
   documentoOrigenId: string;

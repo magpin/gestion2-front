@@ -5,6 +5,7 @@ import type {
   CrearCotizacionInput,
   CrearFacturaInput,
   CrearNotaCreditoInput,
+  CrearNotaDebitoInput,
   FiltroVentas,
   PaginaVentas,
   VentaDocumentoDetalle,
@@ -109,4 +110,26 @@ export const notasCreditoApi = {
 
   anular: (id: string, motivo: string) =>
     api.post(`/notas-credito/${id}/anular`, { motivo }).then(() => undefined),
+};
+
+/**
+ * Notas débito: le cobran más al cliente sobre una factura que ya existe —un
+ * flete, un interés de mora, un mayor valor facturado de menos—. No copian
+ * las líneas de la factura: cada línea es un concepto nuevo con su precio
+ * digitado. Tampoco tocan el kardex: no sale ni entra mercancía.
+ */
+export const notasDebitoApi = {
+  listar: (f: FiltroVentas = {}) =>
+    api
+      .get<PaginaVentas>("/notas-debito", { params: parametros(f) })
+      .then((r) => r.data),
+
+  porId: (id: string) =>
+    api.get<VentaDocumentoDetalle>(`/notas-debito/${id}`).then((r) => r.data),
+
+  crear: (datos: CrearNotaDebitoInput) =>
+    api.post<VentaDocumentoDetalle>("/notas-debito", datos).then((r) => r.data),
+
+  anular: (id: string, motivo: string) =>
+    api.post(`/notas-debito/${id}/anular`, { motivo }).then(() => undefined),
 };

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Banknote, FileMinus, Loader2, Trash2 } from "lucide-react";
+import { Banknote, FileMinus, FilePlus, Loader2, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -27,7 +27,12 @@ import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioCobro } from "../components/FormularioCobro";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
 import { FormularioNotaCredito } from "../components/FormularioNotaCredito";
-import { facturasApi, notasCreditoApi } from "../services/ventas.service";
+import { FormularioNotaDebito } from "../components/FormularioNotaDebito";
+import {
+  facturasApi,
+  notasCreditoApi,
+  notasDebitoApi,
+} from "../services/ventas.service";
 import type {
   CobrarInput,
   VentaDocumentoDetalle,
@@ -56,6 +61,8 @@ export function FacturasSeccion() {
   );
   const [motivo, setMotivo] = useState("");
   const [notaCreditoDe, setNotaCreditoDe] =
+    useState<VentaDocumentoResumen | null>(null);
+  const [notaDebitoDe, setNotaDebitoDe] =
     useState<VentaDocumentoResumen | null>(null);
   const [cobrandoDe, setCobrandoDe] = useState<VentaDocumentoResumen | null>(
     null,
@@ -122,6 +129,17 @@ export function FacturasSeccion() {
       await queryClient.invalidateQueries({ queryKey: ["notas-credito"] });
       aviso.exito("Nota crédito emitida");
       setNotaCreditoDe(null);
+    },
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
+  });
+
+  const crearNotaDebito = useMutation({
+    mutationFn: notasDebitoApi.crear,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CLAVE });
+      await queryClient.invalidateQueries({ queryKey: ["notas-debito"] });
+      aviso.exito("Nota débito emitida");
+      setNotaDebitoDe(null);
     },
     onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
@@ -254,6 +272,16 @@ export function FacturasSeccion() {
                             Nota crédito
                           </Button>
                         )}
+                        {puedeCrear && f.estado === "EMITIDA" && (
+                          <Button
+                            variant="ghost"
+                            className="h-11 rounded-xl px-5 text-muted-foreground"
+                            onClick={() => setNotaDebitoDe(f)}
+                          >
+                            <FilePlus className="size-4" />
+                            Nota débito
+                          </Button>
+                        )}
                         {puedeAnular && f.estado === "EMITIDA" && (
                           <Button
                             variant="ghost"
@@ -298,6 +326,14 @@ export function FacturasSeccion() {
         onGuardar={(datos) => crearNotaCredito.mutate(datos)}
         guardando={crearNotaCredito.isPending}
         facturaFija={notaCreditoDe ?? undefined}
+      />
+
+      <FormularioNotaDebito
+        abierto={notaDebitoDe !== null}
+        onCerrar={() => setNotaDebitoDe(null)}
+        onGuardar={(datos) => crearNotaDebito.mutate(datos)}
+        guardando={crearNotaDebito.isPending}
+        facturaFija={notaDebitoDe ?? undefined}
       />
 
       <FormularioCobro
