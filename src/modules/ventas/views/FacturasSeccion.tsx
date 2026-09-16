@@ -25,7 +25,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
-import { avisarErrorVenta, esFaltaDeExistencia } from "../lib/errores";
+import {
+  avisarErrorVenta,
+  esFaltaDeExistencia,
+  esPrecioBajoCosto,
+} from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioCobro } from "../components/FormularioCobro";
@@ -105,6 +109,20 @@ export function FacturasSeccion({
      * intento también se rechaza —y ahí el mensaje explica qué falta—.
      */
     onError: async (e: unknown, datos) => {
+      // Vender con pérdida: mismo patrón que la falta de existencia —se
+      // pregunta y se reintenta—, pero el backend solo lo acepta de un
+      // DIRECTOR y deja anotado en la línea quién lo autorizó.
+      if (esPrecioBajoCosto(e) && datos.confirmaPrecioBajoCosto !== true) {
+        const seguir = await aviso.confirmar(
+          mensajeDeError(e),
+          "Emitirla igual deja la venta con pérdida y anota en la línea quién lo autorizó. Solo un DIRECTOR puede hacerlo.",
+          "Emitir con pérdida",
+        );
+        if (seguir) {
+          crear.mutate({ ...datos, confirmaPrecioBajoCosto: true });
+        }
+        return;
+      }
       if (!esFaltaDeExistencia(e) || datos.confirmaSinExistencia === true) {
         avisarErrorVenta(e, router.push);
         return;

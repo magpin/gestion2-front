@@ -135,6 +135,11 @@ export interface CrearFacturaInput {
    * nunca tuvo una entrada (no habría costo con el que valorar la venta).
    */
   confirmaSinExistencia?: boolean;
+  /**
+   * "Sé que esta venta pierde plata y la emito igual". Solo un DIRECTOR puede
+   * autorizarla, y queda anotado en la línea quién lo hizo.
+   */
+  confirmaPrecioBajoCosto?: boolean;
 }
 
 /**
@@ -185,6 +190,8 @@ export interface ConvertirCotizacionInput {
   fecha: string;
   /** Ver `CrearFacturaInput.confirmaSinExistencia`: la factura sale igual. */
   confirmaSinExistencia?: boolean;
+  /** Ver `CrearFacturaInput.confirmaPrecioBajoCosto`. */
+  confirmaPrecioBajoCosto?: boolean;
 }
 
 /**

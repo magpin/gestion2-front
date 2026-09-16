@@ -4,8 +4,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { Aviso } from "@/components/shared/Aviso";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { formatCOP } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { SelectorProducto } from "./SelectorProducto";
 import type { ProductoResumen } from "../types/inventario.types";
@@ -47,6 +49,18 @@ export function FormularioPrecio({
     defaultValues: { precioVenta: 0, fechaInicio: hoy(), nota: "" },
   });
   const errores = form.formState.errors;
+
+  // Se mira mientras se digita: enterarse de que el precio quedó bajo el costo
+  // al intentar facturar, tres pantallas después, es tarde.
+  const precio = form.watch("precioVenta");
+  const costo = Number(producto?.saldo_costo_promedio ?? 0);
+  const ultimaCompra =
+    producto?.ultimo_costo_compra == null
+      ? null
+      : Number(producto.ultimo_costo_compra);
+  const bajoCosto = costo > 0 && precio > 0 && precio < costo;
+  const noRepone =
+    !bajoCosto && ultimaCompra !== null && precio > 0 && precio < ultimaCompra;
 
   return (
     <form
@@ -101,6 +115,34 @@ export function FormularioPrecio({
           />
         </Campo>
       </div>
+
+      {/* Avisa mientras se digita, y no bloquea: fijar un precio no vende
+          nada. El que bloquea es el que emite la factura. */}
+      {bajoCosto && (
+        <Aviso
+          tono="error"
+          titulo="Ese precio pierde plata"
+          cifra={formatCOP(costo - precio)}
+        >
+          El producto cuesta <b className="font-mono">{formatCOP(costo)}</b> en
+          promedio y lo estás dejando en{" "}
+          <b className="font-mono">{formatCOP(precio)}</b>: se pierde esa
+          diferencia por unidad. El precio se puede guardar, pero facturar a ese
+          valor lo va a tener que autorizar un DIRECTOR.
+        </Aviso>
+      )}
+
+      {noRepone && (
+        <Aviso
+          tono="alarma"
+          titulo="Con ese precio no lo reponés"
+          cifra={formatCOP(ultimaCompra! - precio)}
+        >
+          Da ganancia contra el costo promedio, pero la última compra fue a{" "}
+          <b className="font-mono">{formatCOP(ultimaCompra!)}</b>: si hay que
+          volver a comprarlo hoy, esa diferencia sale de tu bolsillo.
+        </Aviso>
+      )}
 
       <Campo
         id="nota"

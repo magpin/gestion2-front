@@ -21,7 +21,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
-import { avisarErrorVenta, esFaltaDeExistencia } from "../lib/errores";
+import {
+  avisarErrorVenta,
+  esFaltaDeExistencia,
+  esPrecioBajoCosto,
+} from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioConvertirCotizacion } from "../components/FormularioConvertirCotizacion";
@@ -155,10 +159,12 @@ export function CotizacionesSeccion({
       cotizacionId: string;
       fecha: string;
       confirmaSinExistencia?: boolean;
+      confirmaPrecioBajoCosto?: boolean;
     }) =>
       facturasApi.convertirCotizacion(datos.cotizacionId, {
         fecha: datos.fecha,
         confirmaSinExistencia: datos.confirmaSinExistencia,
+        confirmaPrecioBajoCosto: datos.confirmaPrecioBajoCosto,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
@@ -170,6 +176,19 @@ export function CotizacionesSeccion({
     // faltante. Mismo criterio que `FacturasSeccion`: se pregunta y, si
     // confirma, se reintenta.
     onError: async (e: unknown, datos) => {
+      // El precio de la cotización puede haberse digitado bajo costo, o el
+      // costo puede haber subido desde que se cotizó: las dos terminan acá.
+      if (esPrecioBajoCosto(e) && datos.confirmaPrecioBajoCosto !== true) {
+        const seguir = await aviso.confirmar(
+          mensajeDeError(e),
+          "Emitirla igual deja la venta con pérdida y anota en la línea quién lo autorizó. Solo un DIRECTOR puede hacerlo.",
+          "Emitir con pérdida",
+        );
+        if (seguir) {
+          convertir.mutate({ ...datos, confirmaPrecioBajoCosto: true });
+        }
+        return;
+      }
       if (!esFaltaDeExistencia(e) || datos.confirmaSinExistencia === true) {
         avisarErrorVenta(e, router.push);
         return;

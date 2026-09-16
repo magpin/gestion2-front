@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { Aviso } from "@/components/shared/Aviso";
 import { formatCOP } from "@/lib/utils";
 import type { ArqueoResumen } from "../types/tesoreria.types";
 
@@ -74,7 +75,6 @@ export function FormularioCerrarArqueo({
 
   const saldoContado = form.watch("saldoContado");
   const diferencia = (Number.isFinite(saldoContado) ? saldoContado : 0) - Number(arqueo.saldo_sistema);
-  const tono = diferencia === 0 ? "text-muted-foreground" : diferencia > 0 ? "text-success" : "text-danger";
 
   return (
     <form id={id} className="flex flex-col gap-5" onSubmit={form.handleSubmit(alGuardar)}>
@@ -93,21 +93,23 @@ export function FormularioCerrarArqueo({
         />
       </Campo>
 
-      <div className={`rounded-2xl bg-muted p-4 text-sm ${tono}`}>
-        {diferencia === 0 ? (
-          "Sin diferencia: el cierre no va a generar ningún asiento."
-        ) : diferencia > 0 ? (
-          <>
-            Sobrante: <span className="font-mono font-semibold">{formatCOP(diferencia)}</span> — se va a asentar
-            contra la cuenta de diferencia configurada.
-          </>
-        ) : (
-          <>
-            Faltante: <span className="font-mono font-semibold">{formatCOP(Math.abs(diferencia))}</span> — se va a
-            asentar contra la cuenta de diferencia configurada.
-          </>
-        )}
-      </div>
+      {/* El resultado aparece mientras se digita, no al guardar: si alguien
+          contó mal, tiene que enterarse antes de cerrar y no después. */}
+      <Aviso
+        tono={diferencia === 0 ? "exito" : diferencia < 0 ? "error" : "alarma"}
+        titulo={
+          diferencia === 0
+            ? "Caja cuadrada"
+            : diferencia < 0
+              ? "Faltante"
+              : "Sobrante"
+        }
+        cifra={diferencia === 0 ? undefined : formatCOP(Math.abs(diferencia))}
+      >
+        {diferencia === 0
+          ? "Lo contado coincide con el sistema: el cierre no genera ningún asiento."
+          : "Se va a asentar contra la cuenta de diferencia configurada."}
+      </Aviso>
 
       <Campo id="nota" etiqueta="Nota" escala="grande">
         <Textarea id="nota" className="min-h-20 rounded-xl px-4 py-3" placeholder="Opcional" {...form.register("nota")} />

@@ -263,6 +263,18 @@ function PrecioDeLinea({
       <span className="mt-1 block text-[10px] text-muted-foreground">
         {siempreDigitado ? "lo que se cobra de más" : "sin precio de lista"}
       </span>
+      {/* Avisar acá y no solo al facturar: el precio se decide mientras se
+          cotiza, con el cliente esperando. El costo sale del catálogo, que ya
+          lo trae. No aplica a la nota débito —lo que se cobra de más no tiene
+          costo contra el cual compararse—. */}
+      {!siempreDigitado &&
+        Number(producto.saldo_costo_promedio) > 0 &&
+        Number(valor) > 0 &&
+        Number(valor) < Number(producto.saldo_costo_promedio) && (
+          <span className="mt-1 block text-[10px] font-semibold text-danger">
+            cuesta {formatCOP(Number(producto.saldo_costo_promedio))}
+          </span>
+        )}
     </>
   );
 }

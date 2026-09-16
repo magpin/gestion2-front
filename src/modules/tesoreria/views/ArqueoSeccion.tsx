@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardCheck, Loader2 } from "lucide-react";
 
+import { Aviso } from "@/components/shared/Aviso";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -58,6 +59,12 @@ export function ArqueoSeccion() {
   const configurado = configuracion?.cuenta_diferencia_id != null;
 
   const abierto = arqueos?.datos.find((a) => a.estado === "ABIERTO") ?? null;
+  // El último cerrado es el que contesta "¿quedé cuadrado?", que es la pregunta
+  // con la que alguien entra a esta pantalla.
+  const ultimoCerrado =
+    arqueos?.datos.find((a) => a.estado === "CERRADO") ?? null;
+  const diferenciaUltimo =
+    ultimoCerrado?.diferencia == null ? null : Number(ultimoCerrado.diferencia);
 
   const refrescar = () => queryClient.invalidateQueries({ queryKey: clave });
 
@@ -99,25 +106,95 @@ export function ArqueoSeccion() {
         </Button>
       </section>
 
+      {/* El resultado del último cuadre, en grande y en la cara: cuadrado en
+          verde, faltante en rojo, sobrante en ámbar. Un faltante es plata que
+          no está y un sobrante es plata sin explicar — se parecen poco y no
+          pueden verse igual. */}
+      {diferenciaUltimo !== null && abierto === null && (
+        <Aviso
+          tono={
+            diferenciaUltimo === 0
+              ? "exito"
+              : diferenciaUltimo < 0
+                ? "error"
+                : "alarma"
+          }
+          titulo={
+            diferenciaUltimo === 0
+              ? `Caja cuadrada el ${formatFecha(ultimoCerrado!.fecha)}`
+              : diferenciaUltimo < 0
+                ? `Faltante en el arqueo del ${formatFecha(ultimoCerrado!.fecha)}`
+                : `Sobrante en el arqueo del ${formatFecha(ultimoCerrado!.fecha)}`
+          }
+          cifra={
+            diferenciaUltimo === 0
+              ? undefined
+              : formatCOP(Math.abs(diferenciaUltimo))
+          }
+        >
+          {diferenciaUltimo === 0 ? (
+            <>
+              Lo contado coincidió con lo que decía el sistema:{" "}
+              <b className="font-mono">
+                {formatCOP(Number(ultimoCerrado!.saldo_sistema))}
+              </b>
+              .
+            </>
+          ) : diferenciaUltimo < 0 ? (
+            <>
+              Se contaron{" "}
+              <b className="font-mono">
+                {formatCOP(Number(ultimoCerrado!.saldo_contado))}
+              </b>{" "}
+              y el sistema decía{" "}
+              <b className="font-mono">
+                {formatCOP(Number(ultimoCerrado!.saldo_sistema))}
+              </b>
+              . Falta plata: revisá si hay un cobro sin registrar, un egreso
+              cargado de más o un error al contar. El arqueo ya quedó cerrado
+              con su asiento de ajuste; corregirlo es abrir uno nuevo.
+            </>
+          ) : (
+            <>
+              Se contaron{" "}
+              <b className="font-mono">
+                {formatCOP(Number(ultimoCerrado!.saldo_contado))}
+              </b>{" "}
+              y el sistema decía{" "}
+              <b className="font-mono">
+                {formatCOP(Number(ultimoCerrado!.saldo_sistema))}
+              </b>
+              . Hay plata de más: casi siempre es un ingreso que no se registró.
+            </>
+          )}
+        </Aviso>
+      )}
+
       {abierto && !configurado && (
-        <div className="mb-5 rounded-2xl bg-warning/10 p-4 text-sm text-warning">
-          Configura la cuenta de diferencia antes de cerrar con un faltante o sobrante — sin diferencia, el cierre
-          igual funciona.
-        </div>
+        <Aviso
+          tono="alarma"
+          titulo="Falta la cuenta de diferencia"
+          accion={
+            <span className="text-sm font-semibold">
+              Tesorería → Configuración
+            </span>
+          }
+        >
+          Sin ella, un cierre con faltante o sobrante no puede asentar el
+          ajuste. El cierre funciona igual, pero la diferencia no queda en el
+          libro.
+        </Aviso>
       )}
 
       {abierto && (
-        <div className="mb-5 flex items-center gap-4 rounded-2xl border border-border bg-card p-5">
-          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand">
-            <ClipboardCheck className="size-5" />
-          </span>
-          <div>
-            <p className="text-sm font-semibold">Arqueo abierto desde {formatFecha(abierto.fecha)}</p>
-            <p className="text-sm text-muted-foreground">
-              Saldo del sistema: <span className="font-mono font-semibold text-foreground">{formatCOP(Number(abierto.saldo_sistema))}</span>
-            </p>
-          </div>
-        </div>
+        <Aviso
+          tono="info"
+          titulo={`Arqueo abierto desde el ${formatFecha(abierto.fecha)}`}
+          cifra={formatCOP(Number(abierto.saldo_sistema))}
+        >
+          Es lo que el sistema dice que debería haber en la caja. Contá el
+          efectivo y cerralo con lo que realmente encontraste.
+        </Aviso>
       )}
 
       <section className="overflow-hidden rounded-3xl border border-border bg-card">

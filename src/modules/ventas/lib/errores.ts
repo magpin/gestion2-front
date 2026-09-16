@@ -47,3 +47,20 @@ export function esDescubiertoImposible(error: unknown): boolean {
     mensajeDeError(error),
   );
 }
+
+/**
+ * ¿Falló porque la venta perdería plata?
+ *
+ * El backend contesta "se vendería por debajo de su costo: cuesta X y el
+ * precio de lista es Y". Como la falta de existencia, no es un "no" sino un
+ * "¿seguro?" — pero este solo lo puede levantar un DIRECTOR, y el segundo
+ * mensaje lo dice.
+ */
+export function esPrecioBajoCosto(error: unknown): boolean {
+  return /por debajo de su costo/i.test(mensajeDeError(error));
+}
+
+/** El caso en que confirmar no sirve: quien factura no es DIRECTOR. */
+export function esAutorizacionAjena(error: unknown): boolean {
+  return /lo tiene que autorizar un DIRECTOR/i.test(mensajeDeError(error));
+}
