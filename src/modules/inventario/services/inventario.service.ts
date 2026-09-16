@@ -72,6 +72,39 @@ export const productosApi = {
 
   porId: (id: string) => api.get<ProductoResumen>(`/productos/${id}`).then((r) => r.data),
 
+  /**
+   * Sube la imagen **directo al bucket**, sin pasar por la API: se pide una
+   * URL firmada, se le hace `PUT` el archivo, y recién ahí se confirma la
+   * llave. Una foto de tres megas por cada producto del catálogo ocuparía el
+   * servidor para nada.
+   */
+  subirImagen: async (id: string, archivo: File) => {
+    const { data } = await api.post<{ url: string; clave: string }>(
+      `/productos/${id}/imagen/carga`,
+      { tipoMime: archivo.type },
+    );
+    // `fetch` y no `api`: va al bucket, no a la API, y mandarle el token de
+    // sesión a un tercero sería regalarlo.
+    const subida = await fetch(data.url, {
+      method: "PUT",
+      body: archivo,
+      headers: { "Content-Type": archivo.type },
+    });
+    if (!subida.ok) {
+      throw new Error("No se pudo subir la imagen al almacenamiento.");
+    }
+    const { data: producto } = await api.put<ProductoResumen>(
+      `/productos/${id}/imagen`,
+      { clave: data.clave },
+    );
+    return producto;
+  },
+
+  quitarImagen: (id: string) =>
+    api
+      .delete<ProductoResumen>(`/productos/${id}/imagen`)
+      .then((r) => r.data),
+
   crear: (datos: CrearProductoInput) =>
     api.post<ProductoResumen>("/productos", datos).then((r) => r.data),
 

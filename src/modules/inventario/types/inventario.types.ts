@@ -72,6 +72,10 @@ export interface ProductoResumen {
   categoria_nombre: string | null;
   /** Lo que trae el empaque. `null` en los importados. */
   codigo_barras: string | null;
+  /** La llave del objeto en el bucket. La URL se firma al leer. */
+  imagen_clave: string | null;
+  /** La URL firmada con la que se ve. Caduca en una hora: no se guarda ni se comparte. */
+  imagen_url?: string | null;
 }
 
 /** Una categoría del catálogo. Una lista, no un árbol: un nivel alcanza. */

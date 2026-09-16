@@ -314,8 +314,17 @@ export function ProductosSeccion() {
                           setSeleccionado(p);
                           setModal("detalle");
                         }}
-                        className="text-left"
+                        className="flex items-start gap-3 text-left"
                       >
+                        {p.imagen_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={p.imagen_url}
+                            alt=""
+                            className="size-10 shrink-0 rounded-xl border border-border object-cover"
+                          />
+                        )}
+                        <span>
                         <span className="block text-sm font-semibold hover:text-brand-text">
                           {p.nombre}
                         </span>
@@ -328,6 +337,7 @@ export function ProductosSeccion() {
                             {p.categoria_nombre}
                           </span>
                         )}
+                        </span>
                       </button>
                     </td>
                     <td className="px-5 py-5 text-sm text-muted-foreground">

@@ -20,6 +20,7 @@ import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.ser
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 import { useState } from "react";
 import { FormularioProducto, type DatosProducto } from "./FormularioProducto";
+import { ImagenProducto } from "./ImagenProducto";
 import { productosApi } from "../services/inventario.service";
 import type { ProductoResumen } from "../types/inventario.types";
 
@@ -136,7 +137,11 @@ export function DialogoProducto({
           <DialogCloseIcon />
         </DialogHeader>
 
-        <DialogBody>
+        <DialogBody className="flex flex-col gap-6">
+          {/* Solo al corregir: la imagen se guarda contra el id del producto,
+              y al dar de alta todavía no hay ninguno. */}
+          {producto !== undefined && <ImagenProducto producto={producto} />}
+
           <FormularioProducto
             // Remontar por producto evita que los valores del anterior se
             // queden en el formulario al abrir otro.
