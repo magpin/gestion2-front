@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import type {
   VentaDocumentoDetalle,
@@ -35,6 +36,9 @@ export function DetalleVenta({
   documento: VentaDocumentoDetalle | null;
   onCerrar: () => void;
 }) {
+  // Una empresa que no liquida IVA no tiene que ver una columna de ceros: el
+  // dato es siempre `0` y ocupa lugar sin decir nada.
+  const conIva = useResponsableIva();
 
   return (
     <Dialog open={documento !== null} onOpenChange={(a) => !a && onCerrar()}>
@@ -72,9 +76,11 @@ export function DetalleVenta({
                       <th scope="col" className="px-4 py-3 text-right">
                         Precio
                       </th>
-                      <th scope="col" className="px-4 py-3 text-right">
-                        IVA
-                      </th>
+                      {conIva && (
+                        <th scope="col" className="px-4 py-3 text-right">
+                          IVA
+                        </th>
+                      )}
                       <th scope="col" className="px-4 py-3 text-right">
                         Total
                       </th>
@@ -92,9 +98,11 @@ export function DetalleVenta({
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {formatCOP(Number(l.precio_unitario))}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-sm text-muted-foreground">
-                          {formatCOP(Number(l.iva_valor))}
-                        </td>
+                        {conIva && (
+                          <td className="px-4 py-3 text-right font-mono text-sm text-muted-foreground">
+                            {formatCOP(Number(l.iva_valor))}
+                          </td>
+                        )}
                         <td className="px-4 py-3 text-right font-mono text-sm font-semibold">
                           {formatCOP(Number(l.total))}
                         </td>
@@ -111,12 +119,14 @@ export function DetalleVenta({
                     {formatCOP(Number(documento.subtotal))}
                   </span>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>IVA</span>
-                  <span className="font-mono">
-                    {formatCOP(Number(documento.total_iva))}
-                  </span>
-                </div>
+                {conIva && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>IVA</span>
+                    <span className="font-mono">
+                      {formatCOP(Number(documento.total_iva))}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
                   <span>Total</span>
                   <span className="font-mono">

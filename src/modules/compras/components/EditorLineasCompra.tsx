@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { SelectorProducto } from "@/modules/inventario/components/SelectorProducto";
 import type { ProductoResumen } from "@/modules/inventario/types/inventario.types";
 
@@ -14,6 +15,12 @@ export interface LineaCompraBorrador {
   producto: ProductoResumen | null;
   cantidad: string;
   costoUnitario: string;
+  /**
+   * "Esta línea vino sin IVA aunque debería llevarlo". La tarifa normal sale
+   * del proveedor y del producto; esto es para cuando la factura dice otra
+   * cosa —un régimen simple, una exportación, un excluido—.
+   */
+  sinIva: boolean;
 }
 
 export function lineaCompraVacia(): LineaCompraBorrador {
@@ -22,6 +29,7 @@ export function lineaCompraVacia(): LineaCompraBorrador {
     producto: null,
     cantidad: "",
     costoUnitario: "",
+    sinIva: false,
   };
 }
 
@@ -38,6 +46,8 @@ export function EditorLineasCompra({
   lineas: LineaCompraBorrador[];
   onCambiar: (lineas: LineaCompraBorrador[]) => void;
 }) {
+  const conIva = useResponsableIva();
+
   const actualizar = (clave: number, cambio: Partial<LineaCompraBorrador>) =>
     onCambiar(
       lineas.map((l) => (l.clave === clave ? { ...l, ...cambio } : l)),
@@ -62,6 +72,11 @@ export function EditorLineasCompra({
               <th scope="col" className="px-4 py-3">
                 Costo unitario
               </th>
+              {conIva && (
+                <th scope="col" className="px-4 py-3 text-center">
+                  Sin IVA
+                </th>
+              )}
               <th scope="col" className="w-12 px-4 py-3" />
             </tr>
           </thead>
@@ -102,6 +117,23 @@ export function EditorLineasCompra({
                     aria-label={`Costo unitario de la línea ${i + 1}`}
                   />
                 </td>
+                {/* La tarifa sale del proveedor y del producto; esto es para
+                    cuando la factura dice otra cosa —un régimen simple, una
+                    exportación, un excluido—. Solo baja a cero: poner IVA
+                    donde el proveedor no lo cobró sería inventarlo. */}
+                {conIva && (
+                  <td className="px-4 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={l.sinIva}
+                      onChange={(e) =>
+                        actualizar(l.clave, { sinIva: e.target.checked })
+                      }
+                      className="size-4 rounded border-border"
+                      aria-label={`La línea ${i + 1} vino sin IVA`}
+                    />
+                  </td>
+                )}
                 <td className="px-4 py-3">
                   {/* Con una sola línea no se ofrece quitar: es el mínimo del documento. */}
                   {lineas.length > 1 && (

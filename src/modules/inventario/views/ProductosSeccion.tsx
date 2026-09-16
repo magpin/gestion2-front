@@ -42,6 +42,7 @@ import { formatCOP, formatFecha } from "@/lib/utils";
 import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
+import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import {
   FormularioPrecio,
   type DatosPrecio,
@@ -76,6 +77,7 @@ export function ProductosSeccion() {
   const [busqueda, setBusqueda] = useState("");
   const [estado, setEstado] = useState<Estado>("Todos");
   const [categoriaId, setCategoriaId] = useState("");
+  const conIva = useResponsableIva();
   const [pagina, setPagina] = useState(1);
   const [seleccionado, setSeleccionado] = useState<ProductoResumen | null>(
     null,
@@ -275,7 +277,7 @@ export function ProductosSeccion() {
                   {[
                     "Producto",
                     "Unidad",
-                    "IVA",
+                    ...(conIva ? ["IVA"] : []),
                     "Existencia",
                     "Últ. compra",
                     "Costo prom.",
@@ -343,11 +345,16 @@ export function ProductosSeccion() {
                     <td className="px-5 py-5 text-sm text-muted-foreground">
                       {NOMBRE_UNIDAD[p.unidad_medida]}
                     </td>
-                    <td className="px-5 py-5">
-                      <span className="rounded-full border border-border px-3 py-1.5 text-xs">
-                        {p.iva_tarifa}%
-                      </span>
-                    </td>
+                    {/* La tarifa del producto no le dice nada a una empresa
+                        que no liquida IVA: sería una columna de "19%" que
+                        nunca se cobra. */}
+                    {conIva && (
+                      <td className="px-5 py-5">
+                        <span className="rounded-full border border-border px-3 py-1.5 text-xs">
+                          {p.iva_tarifa}%
+                        </span>
+                      </td>
+                    )}
                     {/* Los tres salen del último movimiento del kardex: el
                         catálogo no vuelve a calcular lo que el kardex ya
                         lleva. Sin existencia se marca, que es la pregunta que

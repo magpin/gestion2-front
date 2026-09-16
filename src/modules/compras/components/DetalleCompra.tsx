@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { CONCEPTOS_RETENCION } from "../types/compras.types";
 import type {
@@ -34,6 +35,9 @@ export function DetalleCompra({
   documento: CompraDocumentoDetalle | null;
   onCerrar: () => void;
 }) {
+  // Una empresa que no liquida IVA compra igual, pero no discrimina: mostrarle
+  // una columna de ceros es ruido. Ver `DetalleVenta`.
+  const conIva = useResponsableIva();
 
   return (
     <Dialog open={documento !== null} onOpenChange={(a) => !a && onCerrar()}>
@@ -70,9 +74,11 @@ export function DetalleCompra({
                       <th scope="col" className="px-4 py-3 text-right">
                         Costo
                       </th>
-                      <th scope="col" className="px-4 py-3 text-right">
-                        IVA
-                      </th>
+                      {conIva && (
+                        <th scope="col" className="px-4 py-3 text-right">
+                          IVA
+                        </th>
+                      )}
                       <th scope="col" className="px-4 py-3 text-right">
                         Total
                       </th>
@@ -90,14 +96,16 @@ export function DetalleCompra({
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {formatCOP(Number(l.costo_unitario))}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-sm text-muted-foreground">
-                          {formatCOP(Number(l.iva_valor))}
-                          {!l.iva_descontable && Number(l.iva_valor) > 0 && (
-                            <span className="ml-1 text-[10px] text-warning">
-                              no descontable
-                            </span>
-                          )}
-                        </td>
+                        {conIva && (
+                          <td className="px-4 py-3 text-right font-mono text-sm text-muted-foreground">
+                            {formatCOP(Number(l.iva_valor))}
+                            {!l.iva_descontable && Number(l.iva_valor) > 0 && (
+                              <span className="ml-1 text-[10px] text-warning">
+                                no descontable
+                              </span>
+                            )}
+                          </td>
+                        )}
                         <td className="px-4 py-3 text-right font-mono text-sm font-semibold">
                           {formatCOP(Number(l.total))}
                         </td>
@@ -149,12 +157,39 @@ export function DetalleCompra({
                     {formatCOP(Number(documento.subtotal))}
                   </span>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>IVA</span>
-                  <span className="font-mono">
-                    {formatCOP(Number(documento.total_iva))}
-                  </span>
-                </div>
+                {/* Discriminado solo cuando hay de las dos: en un documento
+                    todo gravado, repetir el subtotal no aporta nada. */}
+                {conIva &&
+                  (() => {
+                    const gravado = documento.lineas
+                      .filter((l) => Number(l.iva_tarifa) > 0)
+                      .reduce((t, l) => t + Number(l.subtotal), 0);
+                    const sinIva =
+                      Number(documento.subtotal) - gravado;
+                    if (gravado === 0 || sinIva === 0) return null;
+                    return (
+                      <>
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Gravado</span>
+                          <span className="font-mono">
+                            {formatCOP(gravado)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Sin IVA</span>
+                          <span className="font-mono">{formatCOP(sinIva)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                {conIva && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>IVA</span>
+                    <span className="font-mono">
+                      {formatCOP(Number(documento.total_iva))}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-border pt-2 font-semibold">
                   <span>Total factura</span>
                   <span className="font-mono">

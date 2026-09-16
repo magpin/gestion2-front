@@ -112,6 +112,12 @@ export interface LineaCompraInput {
   cantidad: number;
   /** El costo que dice la factura del proveedor — no un precio de catálogo. */
   costoUnitario: number;
+  /**
+   * "Esta línea vino sin IVA aunque debería llevarlo". Solo baja a cero: poner
+   * IVA donde el proveedor no lo cobró sería inventar un descontable que nadie
+   * pagó.
+   */
+  sinIva?: boolean;
 }
 
 /** Base y valor son manuales: este corte no calcula tarifas de retención. */

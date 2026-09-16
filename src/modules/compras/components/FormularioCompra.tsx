@@ -123,6 +123,7 @@ export function FormularioCompra({
         productoId: l.producto!.id,
         cantidad: Number(l.cantidad),
         costoUnitario: Number(l.costoUnitario),
+        sinIva: l.sinIva || undefined,
       })),
       retenciones:
         retenciones.length === 0
