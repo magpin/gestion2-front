@@ -245,10 +245,15 @@ export function FacturasSeccion({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
+                {/* La fila entera abre el detalle: es lo que se hace todo el
+                    día y buscar el botón cada vez sobra. El botón "Ver" se
+                    queda igual — es el que alcanza el teclado, y sin él la
+                    fila sería un destino al que no se llega tabulando. */}
                 {facturas.map((f) => (
                   <tr
                     key={f.id}
-                    className="transition-colors hover:bg-muted/40"
+                    className="cursor-pointer transition-colors hover:bg-muted/40"
+                    onClick={() => setDetalleId(f.id)}
                   >
                     <td className="px-5 py-5 font-mono text-sm font-bold">
                       {f.prefijo ?? ""}
@@ -282,7 +287,10 @@ export function FacturasSeccion({
                         {f.estado === "ANULADA" ? "Anulada" : "Emitida"}
                       </span>
                     </td>
-                    <td className="px-5 py-5">
+                    <td
+                      className="px-5 py-5"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
