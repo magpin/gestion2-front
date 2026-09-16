@@ -1,8 +1,8 @@
-// Espejo de `/compras`.
+// Espejo de `/compras` y `/compras/notas`.
 //
-// Un solo tipo de documento —a diferencia de ventas, acá no hay cotización
-// ni nota crédito de proveedor en este corte (ver "Qué NO entra" en
-// `docs/planes/compras-backend.md`).
+// Tres tipos sobre la misma tabla —factura del proveedor, nota crédito y
+// nota débito—: no hay cotización, que es la única de ventas que acá no tiene
+// equivalente. El número de los tres lo pone el proveedor, no nosotros.
 
 export type EstadoCompra = "EMITIDA" | "ANULADA";
 /** Desde el paso 7: `compra_documento` ya no guarda solo facturas. */
@@ -137,3 +137,39 @@ export type PagarInput = { fecha: string; valor: number } & (
   | { medio: "CAJA"; cajaId: string }
   | { medio: "BANCO"; cuentaBancariaId: string }
 );
+
+/** Una línea de la compra que la nota crédito corrige, y por cuánto. */
+export interface LineaNotaCreditoCompraInput {
+  lineaOrigenId: string;
+  cantidad: number;
+}
+
+/**
+ * Nota crédito del proveedor: baja lo que se le debe. Sin `lineas` devuelve
+ * la compra completa —menos lo que notas anteriores ya devolvieron—; con
+ * ellas, solo esas cantidades.
+ */
+export interface CrearNotaCreditoCompraInput {
+  documentoOrigenId: string;
+  fecha: string;
+  /** El número que el proveedor le puso a SU nota, que no es el de la factura. */
+  numeroNotaProveedor: string;
+  motivo: string;
+  lineas?: LineaNotaCreditoCompraInput[];
+}
+
+/** Lo que el proveedor cobra de más: un concepto nuevo, con su costo. */
+export interface LineaNotaDebitoCompraInput {
+  productoId: string;
+  cantidad: number;
+  costoUnitario: number;
+}
+
+/** Nota débito del proveedor: sube lo que se le debe. Siempre lleva líneas. */
+export interface CrearNotaDebitoCompraInput {
+  documentoOrigenId: string;
+  fecha: string;
+  numeroNotaProveedor: string;
+  motivo: string;
+  lineas: LineaNotaDebitoCompraInput[];
+}
