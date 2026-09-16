@@ -48,6 +48,7 @@ import {
 } from "../components/FormularioPrecio";
 import { DialogoProducto } from "../components/DialogoProducto";
 import {
+  categoriasApi,
   kardexApi,
   precioApi,
   productosApi,
@@ -74,18 +75,26 @@ export function ProductosSeccion() {
 
   const [busqueda, setBusqueda] = useState("");
   const [estado, setEstado] = useState<Estado>("Todos");
+  const [categoriaId, setCategoriaId] = useState("");
   const [pagina, setPagina] = useState(1);
   const [seleccionado, setSeleccionado] = useState<ProductoResumen | null>(
     null,
   );
   const [modal, setModal] = useState<Modal>(null);
 
-  const hayFiltro = busqueda.trim() !== "" || estado !== "Todos";
+  const hayFiltro =
+    busqueda.trim() !== "" || estado !== "Todos" || categoriaId !== "";
   const limpiar = () => {
     setBusqueda("");
     setEstado("Todos");
+    setCategoriaId("");
     setPagina(1);
   };
+
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["categorias"],
+    queryFn: () => categoriasApi.listar(),
+  });
 
   // El valor del inventario es su propia consulta y no la suma de la página:
   // sumar cincuenta productos y llamarlo "el inventario" sería mentir. No
@@ -96,12 +105,13 @@ export function ProductosSeccion() {
   });
 
   const { data: resultado, isLoading } = useQuery({
-    queryKey: [...CLAVE, busqueda, estado, pagina],
+    queryKey: [...CLAVE, busqueda, estado, categoriaId, pagina],
     queryFn: () =>
       productosApi.listar({
         q: busqueda.trim() || undefined,
         incluirInactivos: estado !== "Activo",
         soloInactivos: estado === "Inactivo",
+        categoriaId: categoriaId || undefined,
         pagina,
       }),
   });
@@ -180,6 +190,37 @@ export function ProductosSeccion() {
             {(["Todos", "Activo", "Inactivo"] as const).map((o) => (
               <SelectItem key={o} value={o}>
                 {o}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* "Sin categoría" es una opción de verdad: es la lista con la que se
+            empieza a clasificar un catálogo de 1.634 productos importados. */}
+        <Select
+          value={categoriaId || "todas"}
+          onValueChange={(v) => {
+            setCategoriaId(v === "todas" || v === null ? "" : v);
+            setPagina(1);
+          }}
+        >
+          <SelectTrigger
+            aria-label="Categoría"
+            className="min-h-12 min-w-[190px] rounded-2xl border-border bg-card px-4 shadow-sm"
+          >
+            <span className="flex flex-col items-start">
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                Categoría
+              </span>
+              <SelectValue className="text-sm font-semibold" />
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Todas</SelectItem>
+            <SelectItem value="sin">Sin categoría</SelectItem>
+            {categorias.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.nombre}
               </SelectItem>
             ))}
           </SelectContent>
@@ -280,7 +321,13 @@ export function ProductosSeccion() {
                         </span>
                         <span className="mt-1 block font-mono text-xs text-muted-foreground">
                           {p.codigo}
+                          {p.codigo_barras !== null && ` · ${p.codigo_barras}`}
                         </span>
+                        {p.categoria_nombre !== null && (
+                          <span className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                            {p.categoria_nombre}
+                          </span>
+                        )}
                       </button>
                     </td>
                     <td className="px-5 py-5 text-sm text-muted-foreground">

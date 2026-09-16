@@ -66,6 +66,21 @@ export interface ProductoResumen {
   ultimo_costo_compra: string | null;
   /** Cuándo fue esa compra. */
   ultima_compra_fecha: string | null;
+  /** A qué categoría pertenece, o `null` si nadie lo clasificó. */
+  categoria_id: string | null;
+  /** El nombre de esa categoría, que es lo que se muestra. */
+  categoria_nombre: string | null;
+  /** Lo que trae el empaque. `null` en los importados. */
+  codigo_barras: string | null;
+}
+
+/** Una categoría del catálogo. Una lista, no un árbol: un nivel alcanza. */
+export interface CategoriaResumen {
+  id: string;
+  nombre: string;
+  activa: boolean;
+  /** Cuántos productos tiene clasificados. */
+  productos: string;
 }
 
 /** Cuánto vale el inventario entero, para la cabecera del catálogo. */
@@ -167,6 +182,10 @@ export interface CrearProductoInput {
   cuentaCostoVentaId?: string;
   /** La pareja de `cuentaCostoVentaId`: el crédito cuando se vende. Mismo criterio. */
   cuentaIngresoId?: string;
+  /** A qué categoría pertenece. Opcional: los importados no traen ninguna. */
+  categoriaId?: string;
+  /** Lo que trae el empaque. Único por empresa cuando existe. */
+  codigoBarras?: string;
   precioVenta: number;
 }
 
@@ -191,6 +210,9 @@ export interface EditarProductoInput {
   ivaTarifa?: number;
   cuentaCostoVentaId?: string;
   cuentaIngresoId?: string;
+  /** Se puede reclasificar cuando se quiera: no ancla ningún movimiento. */
+  categoriaId?: string;
+  codigoBarras?: string;
 }
 
 /** Una línea que se vendió sin tener: lo que hay que comprar. */

@@ -9,6 +9,7 @@ import {
   Plus,
   Settings2,
   Tag,
+  Tags,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,13 +19,20 @@ import { ConfiguracionSeccion } from "./ConfiguracionSeccion";
 import { FaltantesSeccion } from "./FaltantesSeccion";
 import { KardexSeccion } from "./KardexSeccion";
 import { PreciosSeccion } from "./PreciosSeccion";
+import { CategoriasSeccion } from "./CategoriasSeccion";
 import { ProductosSeccion } from "./ProductosSeccion";
 
 type Seccion =
-  "Productos" | "Precios" | "Kardex" | "Faltantes" | "Configuración";
+  | "Productos"
+  | "Categorías"
+  | "Precios"
+  | "Kardex"
+  | "Faltantes"
+  | "Configuración";
 
 const SECCIONES: Array<[Seccion, typeof Package]> = [
   ["Productos", Package],
+  ["Categorías", Tags],
   ["Precios", Tag],
   ["Kardex", History],
   ["Faltantes", PackageX],
@@ -93,6 +101,7 @@ export function InventarioView() {
       </nav>
 
       {seccion === "Productos" && <ProductosSeccion />}
+      {seccion === "Categorías" && <CategoriasSeccion />}
       {seccion === "Precios" && <PreciosSeccion />}
       {seccion === "Kardex" && <KardexSeccion />}
       {seccion === "Faltantes" && <FaltantesSeccion />}

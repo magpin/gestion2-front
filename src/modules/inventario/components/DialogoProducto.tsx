@@ -92,6 +92,8 @@ export function DialogoProducto({
           cuentaInventarioId: d.cuentaInventarioId,
           cuentaCostoVentaId: d.cuentaCostoVentaId,
           cuentaIngresoId: d.cuentaIngresoId,
+          categoriaId: d.categoriaId || undefined,
+          codigoBarras: d.codigoBarras || undefined,
           precioVenta: d.precioVenta,
         });
       }
@@ -101,6 +103,8 @@ export function DialogoProducto({
         ivaTarifa: d.ivaTarifa,
         cuentaCostoVentaId: d.cuentaCostoVentaId,
         cuentaIngresoId: d.cuentaIngresoId,
+        categoriaId: d.categoriaId || undefined,
+        codigoBarras: d.codigoBarras || undefined,
       });
     },
     onSuccess: async (guardado) => {

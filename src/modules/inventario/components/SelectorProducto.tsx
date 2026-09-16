@@ -51,6 +51,24 @@ export function SelectorProducto({
   });
   const productos = pagina?.datos ?? [];
 
+  /**
+   * El lector de código de barras teclea el código y manda Enter. Si lo
+   * digitado coincide **exacto** con el código de barras de un producto, se
+   * elige sin pedir confirmación: ese es todo el punto de tener un lector.
+   *
+   * Exacto y no "el primero de la lista": con una coincidencia parcial se
+   * elegiría un producto que nadie miró.
+   */
+  const elegirPorCodigoBarras = () => {
+    const leido = busqueda.trim();
+    if (leido === "") return;
+    const exacto = productos.find((p) => p.codigo_barras === leido);
+    if (exacto === undefined) return;
+    onElegir(exacto);
+    setAbierto(false);
+    setBusqueda("");
+  };
+
   return (
     <>
       <Popover open={abierto} onOpenChange={setAbierto}>
@@ -84,7 +102,13 @@ export function SelectorProducto({
               autoFocus
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Código o nombre"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  elegirPorCodigoBarras();
+                }
+              }}
+              placeholder="Código, nombre o código de barras"
               className="h-11 rounded-xl px-4"
               aria-label="Buscar producto"
             />

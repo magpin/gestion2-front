@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,6 +16,7 @@ import {
 import { SelectorCuenta } from "@/modules/contabilidad/components/SelectorCuenta";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
+import { categoriasApi } from "../services/inventario.service";
 import {
   NOMBRE_UNIDAD,
   UNIDADES_MEDIDA,
@@ -33,6 +35,14 @@ const esquema = z.object({
   ivaTarifa: z.union([z.literal(0), z.literal(5), z.literal(19)]),
   cuentaInventarioId: z.string().min(1, "Elegí una cuenta de inventario"),
   precioVenta: z.number().min(0, "No puede ser negativo"),
+  categoriaId: z.string().optional(),
+  codigoBarras: z
+    .string()
+    .trim()
+    .min(6, "Muy corto para ser un código de barras")
+    .max(48)
+    .optional()
+    .or(z.literal("")),
 });
 
 export type DatosProducto = z.infer<typeof esquema>;
@@ -44,6 +54,8 @@ const VACIO: DatosProducto = {
   ivaTarifa: 19,
   cuentaInventarioId: "",
   precioVenta: 0,
+  categoriaId: "",
+  codigoBarras: "",
 };
 
 /** La escala del modal: control cómodo, no fila de planilla. */
@@ -115,11 +127,20 @@ export function FormularioProducto({
             unidadMedida: inicial.unidad_medida,
             ivaTarifa: Number(inicial.iva_tarifa) as DatosProducto["ivaTarifa"],
             cuentaInventarioId: inicial.cuenta_inventario_id,
+            categoriaId: inicial.categoria_id ?? "",
+            codigoBarras: inicial.codigo_barras ?? "",
             // No viaja en el PATCH; está para que el esquema valide.
             precioVenta: 0,
           },
   });
   const errores = form.formState.errors;
+
+  // Solo las activas: clasificar en una categoría que alguien archivó es
+  // volver a abrirla por la puerta de atrás.
+  const { data: categorias = [] } = useQuery({
+    queryKey: ["categorias"],
+    queryFn: () => categoriasApi.listar(),
+  });
 
   // `cuenta` vive afuera (el padre necesita el objeto completo), pero
   // `cuentaInventarioId` es lo que valida el esquema: sin este puente el
@@ -184,6 +205,45 @@ export function FormularioProducto({
             placeholder="Nombre del producto"
             {...form.register("nombre")}
           />
+        </Campo>
+
+        {/* El lector escribe acá y manda Enter: el campo acepta lo que venga
+            del empaque tal cual, sin normalizar, porque normalizarlo rompería
+            el cruce con lo que el lector lee. */}
+        <Campo
+          id="codigoBarras"
+          etiqueta="Código de barras"
+          error={errores.codigoBarras?.message}
+          ayuda="Pasá el lector o escribilo. Opcional."
+          escala="grande"
+        >
+          <Input
+            id="codigoBarras"
+            className={`font-mono ${CONTROL}`}
+            placeholder="7702001012345"
+            {...form.register("codigoBarras")}
+          />
+        </Campo>
+
+        <Campo id="categoriaId" etiqueta="Categoría" escala="grande">
+          <Select
+            value={form.watch("categoriaId") || "sin"}
+            onValueChange={(v) =>
+              form.setValue("categoriaId", v === "sin" || v === null ? "" : v)
+            }
+          >
+            <SelectTrigger id="categoriaId" className={`w-full ${CONTROL}`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sin">Sin categoría</SelectItem>
+              {categorias.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Campo>
 
         <Campo id="unidadMedida" etiqueta="Unidad de medida" escala="grande">

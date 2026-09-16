@@ -12,6 +12,7 @@ import type {
   ProductoResumen,
   RegistrarMovimientoInput,
   ValorInventario,
+  CategoriaResumen,
 } from "../types/inventario.types";
 
 /**
@@ -21,18 +22,48 @@ import type {
  * conserva su kardex. `cuentaInventarioId` no se manda al editar — el backend
  * la rechaza, así que ni se ofrece.
  */
+/**
+ * Las categorías del catálogo. Sin paginar: una empresa tiene decenas, no
+ * miles. No se borran, se desactivan — borrarlas dejaría productos sin
+ * clasificar sin que nadie se entere.
+ */
+export const categoriasApi = {
+  listar: (incluirInactivas = false) =>
+    api
+      .get<CategoriaResumen[]>("/categorias", {
+        params: { incluirInactivas: incluirInactivas ? "true" : undefined },
+      })
+      .then((r) => r.data),
+
+  crear: (nombre: string) =>
+    api.post<CategoriaResumen>("/categorias", { nombre }).then((r) => r.data),
+
+  editar: (id: string, datos: { nombre?: string; activa?: boolean }) =>
+    api.patch<CategoriaResumen>(`/categorias/${id}`, datos).then((r) => r.data),
+};
+
 export const productosApi = {
   /** Cuánta plata hay parada en el inventario. No sale de sumar la página. */
   valorInventario: () =>
     api.get<ValorInventario>("/productos/valor").then((r) => r.data),
 
-  listar: (f: { q?: string; incluirInactivos?: boolean; soloInactivos?: boolean; pagina?: number } = {}) =>
+  listar: (
+    f: {
+      q?: string;
+      incluirInactivos?: boolean;
+      soloInactivos?: boolean;
+      /** Una categoría, o `"sin"` para los que nadie clasificó. */
+      categoriaId?: string;
+      pagina?: number;
+    } = {},
+  ) =>
     api
       .get<PaginaProductos>("/productos", {
         params: {
           q: f.q || undefined,
           incluirInactivos: f.incluirInactivos ? "true" : undefined,
           soloInactivos: f.soloInactivos ? "true" : undefined,
+          categoriaId: f.categoriaId || undefined,
           pagina: f.pagina ?? 1,
           tamano: 50,
         },
