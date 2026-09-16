@@ -5,6 +5,8 @@
 // `docs/planes/compras-backend.md`).
 
 export type EstadoCompra = "EMITIDA" | "ANULADA";
+/** Desde el paso 7: `compra_documento` ya no guarda solo facturas. */
+export type TipoCompraDocumento = "FACTURA" | "NOTA_CREDITO" | "NOTA_DEBITO";
 export type ConceptoRetencion =
   | "HONORARIOS"
   | "COMISIONES"
@@ -27,6 +29,9 @@ export const CONCEPTOS_RETENCION: Array<{
 
 export interface CompraDocumentoResumen {
   id: string;
+  tipo: TipoCompraDocumento;
+  /** La factura del proveedor que esta nota corrige. `null` en una factura. */
+  documento_origen_id: string | null;
   tercero_id: string;
   /** Razón social o nombre completo: viene de la API para no resolverlo acá. */
   tercero_nombre: string;
@@ -43,6 +48,14 @@ export interface CompraDocumentoResumen {
   neto_a_pagar: string;
   /** Cuánto se le ha pagado al proveedor. */
   monto_pagado: string;
+  /** Lo que las notas del proveedor le restaron (NC) o sumaron (ND). */
+  ajuste_notas: string;
+  /** `neto_a_pagar + ajuste_notas`: lo que hoy se le debe. Lo calcula la API. */
+  neto_efectivo: string;
+  /** Lo que falta por pagarle, nunca negativo. Ver `pendiente` en ventas. */
+  pendiente: string;
+  /** Lo pagado de más: plata que el proveedor tiene que devolver. */
+  saldo_a_favor: string;
   asiento_id: string;
 }
 
@@ -74,6 +87,10 @@ export interface CompraRetencionResumen {
 export interface CompraDocumentoDetalle extends CompraDocumentoResumen {
   lineas: CompraDocumentoLineaResumen[];
   retenciones: CompraRetencionResumen[];
+  /** En una nota: la factura del proveedor que corrige. */
+  documento_origen?: CompraDocumentoResumen | null;
+  /** En una factura: las notas del proveedor que le apuntan. */
+  notas?: CompraDocumentoResumen[];
 }
 
 export interface PaginaCompras {

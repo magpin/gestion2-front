@@ -33,8 +33,8 @@ const hoy = (): string => {
 /**
  * Paga una compra, total o parcialmente, por caja o por banco. `compra`
  * viene fija —se abre desde una fila ya elegida—; el valor arranca en el
- * saldo pendiente (`neto_a_pagar - monto_pagado`), editable para dejar un
- * abono.
+ * `pendiente` que manda la API —el neto efectivo menos lo pagado—, editable
+ * para dejar un abono.
  *
  * Mismo patrón que `FormularioCobro` de Ventas: `Contenido` monta con
  * `key={compra.id}` para que el estado arranque de cero en cada compra, sin
@@ -79,7 +79,9 @@ function Contenido({
   onGuardar: (datos: PagarInput) => void;
   guardando: boolean;
 }) {
-  const saldoPendiente = Number(compra.neto_a_pagar) - Number(compra.monto_pagado);
+  // Lo calcula la API, igual que en el cobro: las notas del proveedor mueven
+  // lo que se le debe.
+  const saldoPendiente = Number(compra.pendiente);
 
   const [medio, setMedio] = useState<Medio>("CAJA");
   const [caja, setCaja] = useState<CajaResumen | null>(null);

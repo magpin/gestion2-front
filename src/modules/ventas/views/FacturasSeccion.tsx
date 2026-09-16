@@ -229,9 +229,12 @@ export function FacturasSeccion() {
                         >
                           Ver
                         </Button>
+                        {/* Contra `pendiente` y no contra el total: una
+                            factura con una nota crédito encima puede no deber
+                            nada aunque su total siga en pie. */}
                         {puedeCobrar &&
                           f.estado === "EMITIDA" &&
-                          Number(f.monto_pagado) < Number(f.total) && (
+                          Number(f.pendiente) > 0 && (
                             <Button
                               variant="ghost"
                               className="h-11 rounded-xl px-5 text-muted-foreground"

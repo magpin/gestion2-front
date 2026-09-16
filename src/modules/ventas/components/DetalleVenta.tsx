@@ -10,13 +10,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatCOP, formatFecha } from "@/lib/utils";
-import type { VentaDocumentoDetalle } from "../types/ventas.types";
+import type {
+  VentaDocumentoDetalle,
+  VentaDocumentoResumen,
+} from "../types/ventas.types";
 
 const TITULOS = {
   COTIZACION: "Cotización",
   FACTURA: "Factura",
   NOTA_CREDITO: "Nota crédito",
+  NOTA_DEBITO: "Nota débito",
 } as const;
+
+/** `SETP-991`, y solo el consecutivo cuando el documento no lleva prefijo. */
+function numeroDe(d: { prefijo: string | null; consecutivo: number }) {
+  return d.prefijo === null ? String(d.consecutivo) : `${d.prefijo}-${d.consecutivo}`;
+}
 
 /** El detalle de cualquiera de los tres documentos: cabecera y líneas. */
 export function DetalleVenta({
@@ -114,7 +123,101 @@ export function DetalleVenta({
                     {formatCOP(Number(documento.total))}
                   </span>
                 </div>
+
+                {/* Solo cuando hay notas encima: en un documento sin ellas,
+                    el total ya es la respuesta y estas filas sobran. */}
+                {Number(documento.ajuste_notas) !== 0 && (
+                  <>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Notas</span>
+                      <span className="font-mono">
+                        {formatCOP(Number(documento.ajuste_notas))}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
+                      <span>Saldo</span>
+                      <span className="font-mono">
+                        {formatCOP(Number(documento.saldo_efectivo))}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {documento.tipo === "FACTURA" &&
+                  Number(documento.monto_pagado) > 0 && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Cobrado</span>
+                      <span className="font-mono">
+                        {formatCOP(Number(documento.monto_pagado))}
+                      </span>
+                    </div>
+                  )}
+                {documento.tipo === "FACTURA" &&
+                  Number(documento.pendiente) > 0 && (
+                    <div className="flex justify-between font-semibold">
+                      <span>Pendiente</span>
+                      <span className="font-mono">
+                        {formatCOP(Number(documento.pendiente))}
+                      </span>
+                    </div>
+                  )}
+                {Number(documento.saldo_a_favor) > 0 && (
+                  <div className="flex justify-between font-semibold text-warning">
+                    <span>A favor del cliente</span>
+                    <span className="font-mono">
+                      {formatCOP(Number(documento.saldo_a_favor))}
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* Las dos direcciones del enlace: desde la nota, su factura;
+                  desde la factura, las notas que le colgaron encima. */}
+              {documento.documento_origen && (
+                <p className="rounded-xl bg-muted/40 px-4 py-3 text-sm">
+                  <span className="text-muted-foreground">
+                    {documento.tipo === "FACTURA" ? "Viene de " : "Corrige "}
+                  </span>
+                  <span className="font-medium">
+                    {TITULOS[documento.documento_origen.tipo]}{" "}
+                    {numeroDe(documento.documento_origen)}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {" · "}
+                    {formatFecha(documento.documento_origen.fecha)}
+                    {" · "}
+                    {formatCOP(Number(documento.documento_origen.total))}
+                  </span>
+                </p>
+              )}
+
+              {documento.notas !== undefined && documento.notas.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    Notas sobre esta factura
+                  </p>
+                  {documento.notas.map((n: VentaDocumentoResumen) => (
+                    <p
+                      key={n.id}
+                      className="rounded-xl bg-muted/40 px-4 py-3 text-sm"
+                    >
+                      <span className="font-medium">
+                        {TITULOS[n.tipo]} {numeroDe(n)}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {" · "}
+                        {formatFecha(n.fecha)}
+                        {" · "}
+                        {n.tipo === "NOTA_CREDITO" ? "−" : "+"}
+                        {formatCOP(Number(n.total))}
+                      </span>
+                      {n.estado === "ANULADA" && (
+                        <span className="text-danger"> · anulada</span>
+                      )}
+                    </p>
+                  ))}
+                </div>
+              )}
 
               {documento.estado === "ANULADA" && (
                 <p className="rounded-xl bg-danger/10 px-4 py-3 text-sm font-medium text-danger">

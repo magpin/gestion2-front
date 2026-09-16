@@ -33,8 +33,8 @@ const hoy = (): string => {
 /**
  * Cobra una factura, total o parcialmente, por caja o por banco. `factura`
  * viene fija —se abre desde una fila ya elegida—; el valor arranca en el
- * saldo pendiente completo, editable para dejar un abono en vez de saldar
- * del todo.
+ * `pendiente` que manda la API —el saldo efectivo menos lo cobrado—,
+ * editable para dejar un abono en vez de saldar del todo.
  *
  * El contenido vive en `Contenido`, montado con `key={factura.id}`: así el
  * estado (medio, caja/cuenta, fecha, valor) arranca de cero cada vez que se
@@ -79,7 +79,9 @@ function Contenido({
   onGuardar: (datos: CobrarInput) => void;
   guardando: boolean;
 }) {
-  const saldoPendiente = Number(factura.total) - Number(factura.monto_pagado);
+  // Lo calcula la API: con notas crédito o débito encima, `total` dejó de ser
+  // lo que el cliente debe.
+  const saldoPendiente = Number(factura.pendiente);
 
   const [medio, setMedio] = useState<Medio>("CAJA");
   const [caja, setCaja] = useState<CajaResumen | null>(null);

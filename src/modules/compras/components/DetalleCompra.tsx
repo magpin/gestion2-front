@@ -11,7 +11,17 @@ import {
 } from "@/components/ui/dialog";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { CONCEPTOS_RETENCION } from "../types/compras.types";
-import type { CompraDocumentoDetalle } from "../types/compras.types";
+import type {
+  CompraDocumentoDetalle,
+  CompraDocumentoResumen,
+} from "../types/compras.types";
+
+/** Cómo se nombra cada tipo en pantalla, del lado de compras. */
+const TITULOS = {
+  FACTURA: "Factura",
+  NOTA_CREDITO: "Nota crédito",
+  NOTA_DEBITO: "Nota débito",
+} as const;
 
 const etiquetaConcepto = (c: string): string =>
   CONCEPTOS_RETENCION.find((x) => x.valor === c)?.etiqueta ?? c;
@@ -165,7 +175,96 @@ export function DetalleCompra({
                     {formatCOP(Number(documento.neto_a_pagar))}
                   </span>
                 </div>
+
+                {/* Mismo criterio que en el detalle de venta: estas filas solo
+                    aparecen cuando hay notas del proveedor encima. */}
+                {Number(documento.ajuste_notas) !== 0 && (
+                  <>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Notas</span>
+                      <span className="font-mono">
+                        {formatCOP(Number(documento.ajuste_notas))}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
+                      <span>Se le debe</span>
+                      <span className="font-mono">
+                        {formatCOP(Number(documento.neto_efectivo))}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {Number(documento.monto_pagado) > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Pagado</span>
+                    <span className="font-mono">
+                      {formatCOP(Number(documento.monto_pagado))}
+                    </span>
+                  </div>
+                )}
+                {Number(documento.pendiente) > 0 && (
+                  <div className="flex justify-between font-semibold">
+                    <span>Pendiente</span>
+                    <span className="font-mono">
+                      {formatCOP(Number(documento.pendiente))}
+                    </span>
+                  </div>
+                )}
+                {Number(documento.saldo_a_favor) > 0 && (
+                  <div className="flex justify-between font-semibold text-warning">
+                    <span>A favor nuestro</span>
+                    <span className="font-mono">
+                      {formatCOP(Number(documento.saldo_a_favor))}
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* Las dos direcciones del enlace, igual que en ventas. */}
+              {documento.documento_origen && (
+                <p className="rounded-xl bg-muted/40 px-4 py-3 text-sm">
+                  <span className="text-muted-foreground">Corrige la </span>
+                  <span className="font-medium">
+                    {TITULOS[documento.documento_origen.tipo].toLowerCase()}{" "}
+                    {documento.documento_origen.numero_factura_proveedor}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {" · "}
+                    {formatFecha(documento.documento_origen.fecha)}
+                    {" · "}
+                    {formatCOP(Number(documento.documento_origen.neto_a_pagar))}
+                  </span>
+                </p>
+              )}
+
+              {documento.notas !== undefined && documento.notas.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    Notas del proveedor sobre esta factura
+                  </p>
+                  {documento.notas.map((n: CompraDocumentoResumen) => (
+                    <p
+                      key={n.id}
+                      className="rounded-xl bg-muted/40 px-4 py-3 text-sm"
+                    >
+                      <span className="font-medium">
+                        {TITULOS[n.tipo]} {n.numero_factura_proveedor}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {" · "}
+                        {formatFecha(n.fecha)}
+                        {" · "}
+                        {n.tipo === "NOTA_CREDITO" ? "−" : "+"}
+                        {formatCOP(Number(n.neto_a_pagar))}
+                      </span>
+                      {n.estado === "ANULADA" && (
+                        <span className="text-danger"> · anulada</span>
+                      )}
+                    </p>
+                  ))}
+                </div>
+              )}
 
               {documento.estado === "ANULADA" && (
                 <p className="rounded-xl bg-danger/10 px-4 py-3 text-sm font-medium text-danger">

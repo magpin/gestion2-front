@@ -208,9 +208,11 @@ export function ComprasView() {
                         >
                           Ver
                         </Button>
+                        {/* Contra `pendiente`: ver el mismo cambio en
+                            `FacturasSeccion`, del lado de ventas. */}
                         {puedePagar &&
                           c.estado === "EMITIDA" &&
-                          Number(c.monto_pagado) < Number(c.neto_a_pagar) && (
+                          Number(c.pendiente) > 0 && (
                             <Button
                               variant="ghost"
                               className="h-11 rounded-xl px-5 text-muted-foreground"

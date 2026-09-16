@@ -5,7 +5,11 @@
 // una resolución DIAN, si asienta, si mueve inventario). Mismo criterio que
 // ya explica `docs/planes/ventas-backend.md`.
 
-export type TipoVentaDocumento = "COTIZACION" | "FACTURA" | "NOTA_CREDITO";
+export type TipoVentaDocumento =
+  | "COTIZACION"
+  | "FACTURA"
+  | "NOTA_CREDITO"
+  | "NOTA_DEBITO";
 /** `CONVERTIDA` es exclusivo de COTIZACION: la que ya se pasó a factura. */
 export type EstadoVentaDocumento =
   | "BORRADOR"
@@ -33,6 +37,24 @@ export interface VentaDocumentoResumen {
   total: string;
   /** Cuánto se ha cobrado. Siempre `"0"` en COTIZACION/NOTA_CREDITO — nadie cobra esas. */
   monto_pagado: string;
+  /**
+   * Lo que las notas no anuladas le sumaron o restaron: negativo por cada
+   * nota crédito, positivo por cada nota débito. `"0"` si no tiene ninguna.
+   */
+  ajuste_notas: string;
+  /** `total + ajuste_notas`: lo que el documento vale hoy. Lo calcula la API. */
+  saldo_efectivo: string;
+  /**
+   * Lo que falta por cobrar, nunca negativo. **Es esto y no `total` lo que
+   * decide si una factura se puede cobrar**: con una nota crédito encima, el
+   * total dejó de ser lo que el cliente debe.
+   */
+  pendiente: string;
+  /**
+   * Lo cobrado de más: plata que hay que devolverle al cliente. Aparece
+   * cuando una factura ya cobrada entera recibe después una nota crédito.
+   */
+  saldo_a_favor: string;
   asiento_id: string | null;
 }
 
@@ -55,6 +77,16 @@ export interface VentaDocumentoLineaResumen {
 
 export interface VentaDocumentoDetalle extends VentaDocumentoResumen {
   lineas: VentaDocumentoLineaResumen[];
+  /**
+   * En una nota: la factura que corrige. En una factura convertida de una
+   * cotización: esa cotización. `null` cuando no hay ninguno.
+   */
+  documento_origen?: VentaDocumentoResumen | null;
+  /**
+   * En una factura: sus notas crédito y débito, anuladas incluidas —una nota
+   * anulada explica por qué el saldo volvió a subir—.
+   */
+  notas?: VentaDocumentoResumen[];
 }
 
 export interface PaginaVentas {
