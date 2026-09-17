@@ -10,9 +10,11 @@ import type {
   EditarCajaInput,
   EgresoCajaInput,
   IngresoCajaInput,
+  MovimientoCajaResumen,
   PaginaArqueos,
   PaginaMovimientosCaja,
   ResumenLibro,
+  ReversarMovimientoCajaInput,
 } from "../types/tesoreria.types";
 
 /**
@@ -66,6 +68,12 @@ export const movimientosCajaApi = {
 
   egreso: (cajaId: string, datos: EgresoCajaInput) =>
     api.post(`/cajas/${cajaId}/movimientos/egreso`, datos).then((r) => r.data),
+
+  /** Corrige un ingreso o egreso manual con el movimiento contrario. */
+  reversar: (cajaId: string, movimientoId: string, datos: ReversarMovimientoCajaInput) =>
+    api
+      .post<MovimientoCajaResumen>(`/cajas/${cajaId}/movimientos/${movimientoId}/reversar`, datos)
+      .then((r) => r.data),
 };
 
 /**

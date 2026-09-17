@@ -233,7 +233,27 @@ export function ArqueoSeccion() {
                     <tr key={a.id}>
                       <td className="px-5 py-5 text-sm text-muted-foreground">{formatFecha(a.fecha)}</td>
                       <td className="px-5 py-5 font-mono">{formatCOP(Number(a.saldo_sistema))}</td>
-                      <td className="px-5 py-5 font-mono">{a.saldo_contado === null ? "—" : formatCOP(Number(a.saldo_contado))}</td>
+                      <td className="px-5 py-5 font-mono">
+                        {a.saldo_contado === null ? "—" : formatCOP(Number(a.saldo_contado))}
+                        {/* El conteo se guarda para poder buscar dónde estuvo el error:
+                            se muestra al lado del total, sin abrir otra pantalla. */}
+                        {a.denominaciones.length > 0 && (
+                          <details className="mt-1 font-sans text-xs text-muted-foreground">
+                            <summary className="cursor-pointer select-none">Ver conteo</summary>
+                            <ul className="mt-2 flex flex-col gap-0.5">
+                              {a.denominaciones.map((d) => (
+                                <li key={`${d.tipo}-${d.denominacion}`} className="flex justify-between gap-4 font-mono">
+                                  <span>
+                                    {d.cantidad} × {formatCOP(Number(d.denominacion))}
+                                    {d.tipo === "MONEDA" ? " (moneda)" : ""}
+                                  </span>
+                                  <span>{formatCOP(Number(d.subtotal))}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        )}
+                      </td>
                       <td
                         className={`px-5 py-5 font-mono font-semibold ${
                           diferencia === null || diferencia === 0

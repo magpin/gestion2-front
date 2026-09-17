@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { History, Loader2 } from "lucide-react";
+import { History, Loader2, Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,8 @@ import {
 import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
-import { formatCOP, formatFecha } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { formatCOP, formatFecha, hoyEnColombia } from "@/lib/utils";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 import {
   FormularioMovimientoCaja,
@@ -34,7 +35,11 @@ import {
 import { SelectorCaja } from "../components/SelectorCaja";
 import { movimientosCajaApi } from "../services/tesoreria.service";
 import { NOMBRE_MOVIMIENTO_CAJA } from "../types/tesoreria.types";
-import type { CajaResumen, TipoMovimientoCaja } from "../types/tesoreria.types";
+import type {
+  CajaResumen,
+  MovimientoCajaResumen,
+  TipoMovimientoCaja,
+} from "../types/tesoreria.types";
 
 const ID_FORMULARIO = "formulario-movimiento-caja";
 
@@ -50,6 +55,10 @@ const ID_FORMULARIO = "formulario-movimiento-caja";
 export function LibroCajaSeccion() {
   const queryClient = useQueryClient();
   const puedeOperar = useTieneRol("CAJA", "DIRECTOR");
+  // Reversar es corregir, no operar la caja: mismo criterio que anular una factura.
+  const puedeReversar = useTieneRol("DIRECTOR", "CONTADOR");
+  const [porReversar, setPorReversar] = useState<MovimientoCajaResumen | null>(null);
+  const [motivo, setMotivo] = useState("");
 
   const [caja, setCaja] = useState<CajaResumen | null>(null);
   const [tipo, setTipo] = useState<Exclude<TipoMovimientoCaja, "SALDO_INICIAL">>("INGRESO");
@@ -100,6 +109,31 @@ export function LibroCajaSeccion() {
     onError: (e: unknown) => aviso.error(mensajeDeError(e)),
   });
 
+  const reversar = useMutation({
+    mutationFn: (m: MovimientoCajaResumen) =>
+      movimientosCajaApi.reversar(caja!.id, m.id, { fecha: hoyEnColombia(), motivo: motivo.trim() }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: clave });
+      aviso.exito("Movimiento reversado");
+      setPorReversar(null);
+      setMotivo("");
+    },
+    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+  });
+
+  /**
+   * Lo mismo que rechaza el backend, para no ofrecer un botón que va a fallar:
+   * los cobros y pagos se corrigen desde su documento, el ajuste de un arqueo
+   * con otro arqueo, y una reversa no se reversa.
+   */
+  const sePuedeReversar = (m: MovimientoCajaResumen) =>
+    puedeReversar &&
+    m.tipo !== "SALDO_INICIAL" &&
+    m.origen_tipo === null &&
+    m.reversa_de === null &&
+    m.reversado_por === null &&
+    !m.es_ajuste_arqueo;
+
   return (
     <>
       <section className="mb-6 flex flex-wrap items-end gap-3">
@@ -137,7 +171,7 @@ export function LibroCajaSeccion() {
         <div className="border-b border-border p-6">
           <h2 className="text-2xl font-semibold">Libro de caja</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Un movimiento no se edita ni se anula: se corrige con el movimiento contrario.
+            Un movimiento no se edita ni se borra: se corrige reversándolo, con su motivo.
           </p>
         </div>
 
@@ -155,7 +189,7 @@ export function LibroCajaSeccion() {
             <table className="w-full min-w-[900px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Fecha", "Movimiento", "Concepto", "Entrada", "Salida", "Saldo"].map(
+                  {["Fecha", "Movimiento", "Concepto", "Entrada", "Salida", "Saldo", ""].map(
                     (x) => (
                       <th
                         key={x}
@@ -179,7 +213,19 @@ export function LibroCajaSeccion() {
                     <td className="px-5 py-5">
                       <span className="rounded-full border border-border px-3 py-1.5 text-xs">{NOMBRE_MOVIMIENTO_CAJA[m.tipo]}</span>
                     </td>
-                    <td className="px-5 py-5 text-sm">{m.concepto}</td>
+                    <td className="px-5 py-5 text-sm">
+                      {m.concepto}
+                      {/* El rastro de la corrección, en el renglón: sin esto el libro
+                          muestra dos movimientos que se anulan y nadie sabe por qué. */}
+                      {m.reversado_por !== null && (
+                        <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                          Reversado
+                        </span>
+                      )}
+                      {m.motivo_reversa !== null && (
+                        <span className="mt-1 block text-xs text-muted-foreground">Motivo: {m.motivo_reversa}</span>
+                      )}
+                    </td>
                     {/* El saldo inicial no va en ninguna de las dos columnas:
                         no es plata que entró, es de dónde arrancó la caja. Si
                         fuera a "Entrada", la columna dejaría de sumar lo mismo
@@ -191,6 +237,19 @@ export function LibroCajaSeccion() {
                       {m.tipo === "EGRESO" ? formatCOP(Number(m.valor)) : ""}
                     </td>
                     <td className="px-5 py-5 text-right font-mono font-semibold">{formatCOP(Number(m.saldo_valor))}</td>
+                    <td className="px-3 py-5 text-right">
+                      {sePuedeReversar(m) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-10 rounded-xl px-3 text-muted-foreground"
+                          onClick={() => setPorReversar(m)}
+                        >
+                          <Undo2 className="size-4" />
+                          Reversar
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -212,6 +271,7 @@ export function LibroCajaSeccion() {
                     <td className="px-5 py-4 text-right font-mono font-bold">
                       {formatCOP(Number(resumen.saldo))}
                     </td>
+                    <td />
                   </tr>
                 </tfoot>
               )}
@@ -264,6 +324,60 @@ export function LibroCajaSeccion() {
             <Button type="submit" form={ID_FORMULARIO} className="h-12 rounded-xl px-6" disabled={registrar.isPending}>
               {registrar.isPending && <Loader2 className="size-4 animate-spin" />}
               Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={porReversar !== null}
+        onOpenChange={(a) => {
+          if (!a) {
+            setPorReversar(null);
+            setMotivo("");
+          }
+        }}
+      >
+        <DialogContent size="lg">
+          <DialogHeader>
+            <div>
+              <DialogTitle>Reversar movimiento</DialogTitle>
+              <DialogDescription>
+                Se registra el movimiento contrario por{" "}
+                <b className="font-mono">{formatCOP(Number(porReversar?.valor ?? 0))}</b>, con fecha de hoy y un
+                asiento que invierte el original. Los dos quedan en el libro.
+              </DialogDescription>
+            </div>
+            <DialogCloseIcon />
+          </DialogHeader>
+          <DialogBody className="flex flex-col gap-3">
+            <p className="rounded-2xl bg-muted p-4 text-sm">
+              {porReversar && NOMBRE_MOVIMIENTO_CAJA[porReversar.tipo]} del {porReversar && formatFecha(porReversar.fecha)}:{" "}
+              <span className="font-semibold">{porReversar?.concepto}</span>
+            </p>
+            <label htmlFor="motivo-reversa" className="text-sm font-semibold">
+              ¿Por qué se reversa? *
+            </label>
+            <Textarea
+              id="motivo-reversa"
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Se cargó dos veces, el valor era otro…"
+              className="min-h-20 rounded-xl px-4 py-3"
+            />
+          </DialogBody>
+          <DialogFooter>
+            <Button type="button" variant="outline" className="h-12 rounded-xl px-6" onClick={() => setPorReversar(null)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              className="h-12 rounded-xl px-6"
+              disabled={motivo.trim().length < 3 || reversar.isPending}
+              onClick={() => porReversar && reversar.mutate(porReversar)}
+            >
+              {reversar.isPending && <Loader2 className="size-4 animate-spin" />}
+              Reversar
             </Button>
           </DialogFooter>
         </DialogContent>

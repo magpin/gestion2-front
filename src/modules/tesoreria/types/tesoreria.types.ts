@@ -74,6 +74,13 @@ export interface MovimientoCajaResumen {
   saldo_valor: string;
   /** `null` solo en `SALDO_INICIAL`: esa carga no genera asiento. */
   asiento_id: string | null;
+  /** El movimiento que este corrige, si es una reversa. */
+  reversa_de: string | null;
+  motivo_reversa: string | null;
+  /** La reversa que corrigió a este, si ya la tiene. */
+  reversado_por: string | null;
+  /** El ajuste de un arqueo no se reversa: se corrige con otro arqueo. */
+  es_ajuste_arqueo: boolean;
 }
 
 export interface PaginaMovimientosCaja {
@@ -115,6 +122,15 @@ export interface ArqueoResumen {
   cerrado_por: string | null;
   nota: string | null;
   asiento_ajuste_id: string | null;
+  /** El conteo billete por billete; vacío si se cerró con el total a secas. */
+  denominaciones: DenominacionContada[];
+}
+
+export interface DenominacionContada {
+  tipo: "BILLETE" | "MONEDA";
+  denominacion: string;
+  cantidad: number;
+  subtotal: string;
 }
 
 export interface PaginaArqueos {
@@ -129,9 +145,20 @@ export interface AbrirArqueoInput {
   nota?: string;
 }
 
+/**
+ * Lo contado: el total, el conteo billete por billete, o los dos —y entonces
+ * tienen que coincidir—. Las cantidades en cero no hace falta mandarlas.
+ */
 export interface CerrarArqueoInput {
-  saldoContado: number;
+  saldoContado?: number;
+  denominaciones?: { tipo: "BILLETE" | "MONEDA"; denominacion: number; cantidad: number }[];
   nota?: string;
+}
+
+/** Reversar un ingreso o egreso manual: la fecha de la corrección y su porqué. */
+export interface ReversarMovimientoCajaInput {
+  fecha: string;
+  motivo: string;
 }
 
 /** `cuenta_diferencia_id` viene `null` si nadie la ha fijado todavía. */

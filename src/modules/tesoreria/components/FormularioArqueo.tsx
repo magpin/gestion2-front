@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,8 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { Aviso } from "@/components/shared/Aviso";
-import { formatCOP } from "@/lib/utils";
-import type { ArqueoResumen } from "../types/tesoreria.types";
+import { cn, formatCOP } from "@/lib/utils";
+import type {
+  ArqueoResumen,
+  CerrarArqueoInput,
+} from "../types/tesoreria.types";
 
 const CONTROL = "h-11 rounded-xl px-4";
 const hoy = () => new Date().toISOString().slice(0, 10);
@@ -46,17 +50,30 @@ export function FormularioAbrirArqueo({
   );
 }
 
-const esquemaCerrar = z.object({
-  saldoContado: z.number().min(0, "No puede ser negativo"),
-  nota: z.string().max(300).optional(),
-});
-export type DatosCerrarArqueo = z.infer<typeof esquemaCerrar>;
+/**
+ * Los billetes y monedas de peso colombiano. Espejo de `DENOMINACIONES_COP`
+ * del backend, que es quien valida: si el Banco de la República emite uno
+ * nuevo, se agrega en los dos lados.
+ */
+const DENOMINACIONES = {
+  BILLETE: [100_000, 50_000, 20_000, 10_000, 5_000, 2_000, 1_000],
+  MONEDA: [1_000, 500, 200, 100, 50],
+} as const;
+
+type TipoDenominacion = keyof typeof DENOMINACIONES;
+const clave = (tipo: TipoDenominacion, valor: number) => `${tipo}-${valor}`;
+
+export type DatosCerrarArqueo = CerrarArqueoInput;
 
 /**
  * Cierra el arqueo abierto de una caja. El saldo del sistema va en modo
  * lectura —lo congeló `abrir`, no se recalcula acá— y la diferencia se ve
  * en vivo a medida que se cuenta: positiva es sobrante, negativa es
  * faltante, mismo signo que `calcularDiferenciaArqueo` del backend.
+ *
+ * Se cuenta billete por billete por defecto: un total digitado no deja ver
+ * dónde estuvo el error, y el detalle queda guardado con el arqueo. El total
+ * a secas sigue disponible para quien ya contó en papel.
  */
 export function FormularioCerrarArqueo({
   id,
@@ -67,33 +84,136 @@ export function FormularioCerrarArqueo({
   arqueo: ArqueoResumen;
   alGuardar: (datos: DatosCerrarArqueo) => void;
 }) {
-  const form = useForm<DatosCerrarArqueo>({
-    resolver: zodResolver(esquemaCerrar),
-    defaultValues: { saldoContado: Number(arqueo.saldo_sistema), nota: "" },
-  });
-  const errores = form.formState.errors;
+  const [modo, setModo] = useState<"DENOMINACIONES" | "TOTAL">("DENOMINACIONES");
+  const [cantidades, setCantidades] = useState<Record<string, string>>({});
+  const [total, setTotal] = useState("");
+  const [nota, setNota] = useState("");
 
-  const saldoContado = form.watch("saldoContado");
-  const diferencia = (Number.isFinite(saldoContado) ? saldoContado : 0) - Number(arqueo.saldo_sistema);
+  const cantidadDe = (tipo: TipoDenominacion, valor: number) => {
+    const n = Number(cantidades[clave(tipo, valor)] || 0);
+    return Number.isInteger(n) && n >= 0 ? n : NaN;
+  };
+
+  const conteoInvalido = (Object.keys(DENOMINACIONES) as TipoDenominacion[]).some((tipo) =>
+    DENOMINACIONES[tipo].some((v) => Number.isNaN(cantidadDe(tipo, v))),
+  );
+  const sumaConteo = (Object.keys(DENOMINACIONES) as TipoDenominacion[]).reduce(
+    (t, tipo) =>
+      t + DENOMINACIONES[tipo].reduce((s, v) => s + v * (cantidadDe(tipo, v) || 0), 0),
+    0,
+  );
+
+  const contado = modo === "DENOMINACIONES" ? sumaConteo : Number(total || 0);
+  const diferencia = contado - Number(arqueo.saldo_sistema);
+  const totalInvalido = modo === "TOTAL" && (total.trim() === "" || !(Number(total) >= 0));
+
+  const enviar = (e: FormEvent) => {
+    e.preventDefault();
+    if (modo === "DENOMINACIONES") {
+      if (conteoInvalido) return;
+      alGuardar({
+        denominaciones: (Object.keys(DENOMINACIONES) as TipoDenominacion[]).flatMap((tipo) =>
+          DENOMINACIONES[tipo]
+            .map((v) => ({ tipo, denominacion: v, cantidad: cantidadDe(tipo, v) }))
+            .filter((d) => d.cantidad > 0),
+        ),
+        nota: nota || undefined,
+      });
+    } else {
+      if (totalInvalido) return;
+      alGuardar({ saldoContado: Number(total), nota: nota || undefined });
+    }
+  };
 
   return (
-    <form id={id} className="flex flex-col gap-5" onSubmit={form.handleSubmit(alGuardar)}>
+    <form id={id} className="flex flex-col gap-5" onSubmit={enviar}>
       <p className="rounded-2xl bg-muted p-4 text-sm">
         Saldo del sistema: <span className="font-mono font-semibold">{formatCOP(Number(arqueo.saldo_sistema))}</span>
       </p>
 
-      <Campo id="saldoContado" etiqueta="Saldo contado *" error={errores.saldoContado?.message} escala="grande">
-        <Input
-          id="saldoContado"
-          type="number"
-          min="0"
-          step="0.01"
-          className={CONTROL}
-          {...form.register("saldoContado", { valueAsNumber: true })}
-        />
-      </Campo>
+      <div className="inline-flex w-fit gap-1 rounded-2xl border border-border bg-muted p-1" role="radiogroup">
+        {(
+          [
+            ["DENOMINACIONES", "Billete por billete"],
+            ["TOTAL", "Solo el total"],
+          ] as const
+        ).map(([m, etiqueta]) => (
+          <button
+            key={m}
+            type="button"
+            role="radio"
+            aria-checked={modo === m}
+            onClick={() => setModo(m)}
+            className={cn(
+              "rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
+              modo === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent",
+            )}
+          >
+            {etiqueta}
+          </button>
+        ))}
+      </div>
 
-      {/* El resultado aparece mientras se digita, no al guardar: si alguien
+      {modo === "DENOMINACIONES" ? (
+        <div className="grid gap-6 sm:grid-cols-2">
+          {(Object.keys(DENOMINACIONES) as TipoDenominacion[]).map((tipo) => (
+            <fieldset key={tipo} className="flex flex-col gap-2">
+              <legend className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                {tipo === "BILLETE" ? "Billetes" : "Monedas"}
+              </legend>
+              {DENOMINACIONES[tipo].map((v) => {
+                const n = cantidadDe(tipo, v);
+                return (
+                  <div key={v} className="grid grid-cols-[90px_80px_1fr] items-center gap-3">
+                    <label htmlFor={clave(tipo, v)} className="font-mono text-sm font-semibold">
+                      {formatCOP(v)}
+                    </label>
+                    <Input
+                      id={clave(tipo, v)}
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={cantidades[clave(tipo, v)] ?? ""}
+                      onChange={(e) =>
+                        setCantidades((c) => ({ ...c, [clave(tipo, v)]: e.target.value }))
+                      }
+                      className={cn("h-10 rounded-xl px-3 text-right font-mono", Number.isNaN(n) && "border-danger")}
+                    />
+                    <span className="text-right font-mono text-sm text-muted-foreground">
+                      {n > 0 ? formatCOP(v * n) : ""}
+                    </span>
+                  </div>
+                );
+              })}
+            </fieldset>
+          ))}
+          <p className="flex items-center justify-between rounded-2xl border border-border p-4 sm:col-span-2">
+            <span className="text-sm font-semibold">Total contado</span>
+            <span className="font-mono text-lg font-bold">{formatCOP(sumaConteo)}</span>
+          </p>
+          {conteoInvalido && (
+            <p className="text-sm text-danger sm:col-span-2">
+              Las cantidades son enteras: se cuentan billetes y monedas, no partes.
+            </p>
+          )}
+        </div>
+      ) : (
+        <Campo id="saldoContado" etiqueta="Saldo contado *" escala="grande" error={totalInvalido && total !== "" ? "No puede ser negativo" : undefined}>
+          <Input
+            id="saldoContado"
+            type="number"
+            min="0"
+            step="0.01"
+            className={CONTROL}
+            value={total}
+            onChange={(e) => setTotal(e.target.value)}
+          />
+        </Campo>
+      )}
+
+      {/* El resultado aparece mientras se cuenta, no al guardar: si alguien
           contó mal, tiene que enterarse antes de cerrar y no después. */}
       <Aviso
         tono={diferencia === 0 ? "exito" : diferencia < 0 ? "error" : "alarma"}
@@ -112,7 +232,13 @@ export function FormularioCerrarArqueo({
       </Aviso>
 
       <Campo id="nota" etiqueta="Nota" escala="grande">
-        <Textarea id="nota" className="min-h-20 rounded-xl px-4 py-3" placeholder="Opcional" {...form.register("nota")} />
+        <Textarea
+          id="nota"
+          className="min-h-20 rounded-xl px-4 py-3"
+          placeholder="Opcional"
+          value={nota}
+          onChange={(e) => setNota(e.target.value)}
+        />
       </Campo>
     </form>
   );
