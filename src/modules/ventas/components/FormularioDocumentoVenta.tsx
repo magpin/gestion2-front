@@ -24,6 +24,13 @@ import {
   lineaVentaVacia,
   type LineaVentaBorrador,
 } from "./EditorLineasVenta";
+import { SelectorFormaPago } from "@/modules/tesoreria/components/SelectorFormaPago";
+import {
+  aFormaPago,
+  formaPagoVacia,
+  problemaFormaPago,
+  type FormaPagoInput,
+} from "@/modules/tesoreria/lib/formaPago";
 import type { CrearCotizacionInput } from "../types/ventas.types";
 
 /**
@@ -44,11 +51,13 @@ export function FormularioDocumentoVenta({
   etiquetaBoton,
   fechaDeHoy = false,
   precioEditable = false,
+  conFormaPago = false,
   inicial,
 }: {
   abierto: boolean;
   onCerrar: () => void;
-  onGuardar: (datos: CrearCotizacionInput) => void;
+  /** `formaPago` llega solo con `conFormaPago`. */
+  onGuardar: (datos: CrearCotizacionInput, formaPago?: FormaPagoInput) => void;
   guardando: boolean;
   titulo: string;
   descripcion: string;
@@ -64,6 +73,10 @@ export function FormularioDocumentoVenta({
    * precio de lista, en vez de trabarse. Ver `EditorLineasVenta`.
    */
   precioEditable?: boolean;
+  /**
+   * Solo la factura: pregunta cómo se paga. Una cotización no mueve plata.
+   */
+  conFormaPago?: boolean;
   /**
    * La cotización que se está corrigiendo, con su cliente y sus productos ya
    * resueltos. Sin esto, el formulario crea uno nuevo.
@@ -81,11 +94,13 @@ export function FormularioDocumentoVenta({
   const [lineas, setLineas] = useState<LineaVentaBorrador[]>(
     inicial?.lineas ?? [lineaVentaVacia()],
   );
+  const [formaPago, setFormaPago] = useState(formaPagoVacia);
 
   const limpiar = () => {
     setTercero(inicial?.tercero ?? null);
     setFecha(inicial?.fecha ?? hoyEnColombia());
     setLineas(inicial?.lineas ?? [lineaVentaVacia()]);
+    setFormaPago(formaPagoVacia());
   };
 
   const sinProducto = lineas
@@ -110,6 +125,7 @@ export function FormularioDocumentoVenta({
       return `Falta el producto en ${nombrar(sinProducto)}.`;
     if (sinCantidad.length > 0)
       return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;
+    if (conFormaPago) return problemaFormaPago(formaPago);
     return null;
   };
 
@@ -117,17 +133,20 @@ export function FormularioDocumentoVenta({
 
   const enviar = () => {
     if (problema !== null || tercero === null) return;
-    onGuardar({
-      terceroId: tercero.id,
-      fecha,
-      lineas: lineas.map((l) => ({
-        productoId: l.producto!.id,
-        cantidad: Number(l.cantidad),
-        // Solo viaja si se digitó: con precio de lista, el backend lo ignora.
-        precioUnitario:
-          l.precioUnitario === "" ? undefined : Number(l.precioUnitario),
-      })),
-    });
+    onGuardar(
+      {
+        terceroId: tercero.id,
+        fecha,
+        lineas: lineas.map((l) => ({
+          productoId: l.producto!.id,
+          cantidad: Number(l.cantidad),
+          // Solo viaja si se digitó: con precio de lista, el backend lo ignora.
+          precioUnitario:
+            l.precioUnitario === "" ? undefined : Number(l.precioUnitario),
+        })),
+      },
+      conFormaPago ? aFormaPago(formaPago) : undefined,
+    );
   };
 
   return (
@@ -189,6 +208,10 @@ export function FormularioDocumentoVenta({
             onCambiar={setLineas}
             precioEditable={precioEditable}
           />
+
+          {conFormaPago && (
+            <SelectorFormaPago valor={formaPago} onCambiar={setFormaPago} />
+          )}
         </DialogBody>
 
         <DialogFooter className="sm:justify-between">

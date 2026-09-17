@@ -1,4 +1,7 @@
-import type { MedioPagoInput } from "@/modules/tesoreria/types/tesoreria.types";
+import type {
+  MedioAlEmitirInput,
+  MedioPagoInput,
+} from "@/modules/tesoreria/types/tesoreria.types";
 
 // Espejo de `/cotizaciones`, `/facturas` y `/notas-credito`.
 //
@@ -140,6 +143,12 @@ export interface CrearFacturaInput {
    * autorizarla, y queda anotado en la línea quién lo hizo.
    */
   confirmaPrecioBajoCosto?: boolean;
+  /**
+   * Crédito, o contado con sus medios —el que venga sin valor se lleva lo que
+   * falte—. Ver `SelectorFormaPago`.
+   */
+  formaPago: "CREDITO" | "CONTADO";
+  pagos?: MedioAlEmitirInput[];
 }
 
 /**
@@ -192,6 +201,9 @@ export interface ConvertirCotizacionInput {
   confirmaSinExistencia?: boolean;
   /** Ver `CrearFacturaInput.confirmaPrecioBajoCosto`. */
   confirmaPrecioBajoCosto?: boolean;
+  /** Ver `CrearFacturaInput.formaPago`. */
+  formaPago: "CREDITO" | "CONTADO";
+  pagos?: MedioAlEmitirInput[];
 }
 
 /**

@@ -149,3 +149,13 @@ export type MedioPagoInput = { valor: number } & (
   | { medio: "CAJA"; cajaId: string }
   | { medio: "BANCO"; cuentaBancariaId: string }
 );
+
+/**
+ * Un medio al emitir una factura o registrar una compra de contado. El valor
+ * puede faltar: el backend le asigna lo que quede por cobrar o pagar, porque
+ * el total exacto —IVA, retenciones— lo calcula el servidor.
+ */
+export type MedioAlEmitirInput = { valor?: number } & (
+  | { medio: "CAJA"; cajaId: string }
+  | { medio: "BANCO"; cuentaBancariaId: string }
+);

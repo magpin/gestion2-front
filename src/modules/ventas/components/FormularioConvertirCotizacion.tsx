@@ -16,6 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { formatFecha, hoyEnColombia } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { SelectorFormaPago } from "@/modules/tesoreria/components/SelectorFormaPago";
+import {
+  aFormaPago,
+  formaPagoVacia,
+  problemaFormaPago,
+} from "@/modules/tesoreria/lib/formaPago";
 import type {
   ConvertirCotizacionInput,
   VentaDocumentoResumen,
@@ -39,6 +45,8 @@ export function FormularioConvertirCotizacion({
   guardando: boolean;
 }) {
   const [fecha, setFecha] = useState(hoyEnColombia());
+  const [formaPago, setFormaPago] = useState(formaPagoVacia);
+  const problema = problemaFormaPago(formaPago);
 
   return (
     <Dialog
@@ -47,6 +55,7 @@ export function FormularioConvertirCotizacion({
         if (!a) {
           onCerrar();
           setFecha(hoyEnColombia());
+          setFormaPago(formaPagoVacia());
         }
       }}
     >
@@ -67,7 +76,7 @@ export function FormularioConvertirCotizacion({
           <DialogCloseIcon />
         </DialogHeader>
 
-        <DialogBody>
+        <DialogBody className="flex flex-col gap-8">
           <Campo
             id="fecha"
             etiqueta="Fecha de la factura"
@@ -81,26 +90,34 @@ export function FormularioConvertirCotizacion({
               {formatFecha(fecha)}
             </p>
           </Campo>
+
+          <SelectorFormaPago valor={formaPago} onCambiar={setFormaPago} />
         </DialogBody>
 
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-12 rounded-xl px-6"
-            onClick={onCerrar}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            className="h-12 rounded-xl px-6"
-            disabled={fecha === "" || guardando}
-            onClick={() => onGuardar({ fecha })}
-          >
-            {guardando && <Loader2 className="size-4 animate-spin" />}
-            Emitir factura
-          </Button>
+        <DialogFooter className="sm:justify-between">
+          <p className="self-center text-sm text-muted-foreground">
+            {problema ?? "Listo para emitir."}
+          </p>
+
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 rounded-xl px-6"
+              onClick={onCerrar}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              className="h-12 rounded-xl px-6"
+              disabled={fecha === "" || problema !== null || guardando}
+              onClick={() => onGuardar({ fecha, ...aFormaPago(formaPago) })}
+            >
+              {guardando && <Loader2 className="size-4 animate-spin" />}
+              Emitir factura
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,7 @@
-import type { MedioPagoInput } from "@/modules/tesoreria/types/tesoreria.types";
+import type {
+  MedioAlEmitirInput,
+  MedioPagoInput,
+} from "@/modules/tesoreria/types/tesoreria.types";
 
 // Espejo de `/compras` y `/compras/notas`.
 //
@@ -137,6 +140,12 @@ export interface CrearCompraInput {
   numeroFacturaProveedor: string;
   lineas: LineaCompraInput[];
   retenciones?: RetencionCompraInput[];
+  /**
+   * Crédito, o contado con sus medios. Contado exige rol CAJA o DIRECTOR: el
+   * backend lo rechaza de cualquier otro.
+   */
+  formaPago: "CREDITO" | "CONTADO";
+  pagos?: MedioAlEmitirInput[];
 }
 
 /**

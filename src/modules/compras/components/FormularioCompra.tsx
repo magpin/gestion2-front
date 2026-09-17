@@ -27,6 +27,13 @@ import {
   EditorRetenciones,
   type RetencionBorrador,
 } from "./EditorRetenciones";
+import { useTieneRol } from "@/core/store/authStore";
+import { SelectorFormaPago } from "@/modules/tesoreria/components/SelectorFormaPago";
+import {
+  aFormaPago,
+  formaPagoVacia,
+  problemaFormaPago,
+} from "@/modules/tesoreria/lib/formaPago";
 import type { CrearCompraInput } from "../types/compras.types";
 
 const hoy = (): string => {
@@ -57,6 +64,10 @@ export function FormularioCompra({
     lineaCompraVacia(),
   ]);
   const [retenciones, setRetenciones] = useState<RetencionBorrador[]>([]);
+  const [formaPago, setFormaPago] = useState(formaPagoVacia);
+  // Pagar de contado saca plata de una caja o un banco: el backend lo rechaza
+  // de quien no tenga CAJA o DIRECTOR, así que acá ni se ofrece.
+  const puedePagar = useTieneRol("CAJA", "DIRECTOR");
 
   const limpiar = () => {
     setProveedor(null);
@@ -64,6 +75,7 @@ export function FormularioCompra({
     setNumeroFactura("");
     setLineas([lineaCompraVacia()]);
     setRetenciones([]);
+    setFormaPago(formaPagoVacia());
   };
 
   const sinProducto = lineas
@@ -106,7 +118,7 @@ export function FormularioCompra({
       return `El costo unitario tiene que ser válido en ${nombrar(sinCosto)}.`;
     if (retencionesIncompletas)
       return "Completá la base y el valor de cada retención, o quitala.";
-    return null;
+    return problemaFormaPago(formaPago);
   };
 
   const problema = impedimento();
@@ -130,6 +142,7 @@ export function FormularioCompra({
               conceptoId: r.conceptoId,
               base: Number(r.base),
             })),
+      ...aFormaPago(formaPago),
     });
   };
 
@@ -193,6 +206,13 @@ export function FormularioCompra({
             onCambiar={setRetenciones}
             fecha={fecha}
             declaranteRenta={proveedor?.declaranteRenta ?? true}
+          />
+
+          <SelectorFormaPago
+            valor={formaPago}
+            onCambiar={setFormaPago}
+            soloCredito={!puedePagar}
+            motivoSoloCredito="Pagar de contado lo hace alguien con rol Caja o Director. Registrala a crédito y que caja la pague."
           />
         </DialogBody>
 

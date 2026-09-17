@@ -340,12 +340,15 @@ export function FacturasSeccion({
       <FormularioDocumentoVenta
         abierto={creando}
         onCerrar={() => onCerrarCreacion()}
-        onGuardar={(datos) => crear.mutate(datos)}
+        onGuardar={(datos, formaPago) =>
+          crear.mutate({ ...datos, ...(formaPago ?? { formaPago: "CREDITO" }) })
+        }
         guardando={crear.isPending}
         titulo="Nueva factura"
         descripcion="Numera contra la resolución DIAN vigente, asienta y descuenta el kardex al guardar."
         etiquetaBoton="Emitir factura"
         fechaDeHoy
+        conFormaPago
       />
 
       <FormularioNotaCredito

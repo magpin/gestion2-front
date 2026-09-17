@@ -35,6 +35,7 @@ import { tercerosApi } from "@/modules/terceros/services/terceros.service";
 import { resumirTercero } from "@/modules/terceros/types/terceros.types";
 import { cotizacionesApi, facturasApi } from "../services/ventas.service";
 import type {
+  ConvertirCotizacionInput,
   CrearCotizacionInput,
   VentaDocumentoDetalle,
   VentaDocumentoResumen,
@@ -155,17 +156,11 @@ export function CotizacionesSeccion({
   });
 
   const convertir = useMutation({
-    mutationFn: (datos: {
-      cotizacionId: string;
-      fecha: string;
-      confirmaSinExistencia?: boolean;
-      confirmaPrecioBajoCosto?: boolean;
-    }) =>
-      facturasApi.convertirCotizacion(datos.cotizacionId, {
-        fecha: datos.fecha,
-        confirmaSinExistencia: datos.confirmaSinExistencia,
-        confirmaPrecioBajoCosto: datos.confirmaPrecioBajoCosto,
-      }),
+    mutationFn: ({
+      cotizacionId,
+      ...datos
+    }: ConvertirCotizacionInput & { cotizacionId: string }) =>
+      facturasApi.convertirCotizacion(cotizacionId, datos),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE });
       await queryClient.invalidateQueries({ queryKey: ["facturas"] });
@@ -426,10 +421,7 @@ export function CotizacionesSeccion({
         onCerrar={() => setConvirtiendo(null)}
         onGuardar={(datos) =>
           convirtiendo &&
-          convertir.mutate({
-            cotizacionId: convirtiendo.id,
-            fecha: datos.fecha,
-          })
+          convertir.mutate({ ...datos, cotizacionId: convirtiendo.id })
         }
         guardando={convertir.isPending}
       />
