@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha, hoyEnColombia } from "@/lib/utils";
@@ -81,7 +80,7 @@ export function CorteBancoSeccion() {
       setSaldoBanco("");
       setNota("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const corte = previo?.corte ?? null;
@@ -132,11 +131,11 @@ export function CorteBancoSeccion() {
           <CalendarCheck className="size-8 text-muted-foreground" />
           <p className="font-semibold">Elegí una cuenta para ver su día</p>
         </div>
-      ) : isLoading || !previo ? (
+      ) : isLoading ? (
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
-      ) : (
+      ) : !previo ? null : (
         <>
           {corte !== null && corte.cambios_posteriores > 0 && (
             <Aviso

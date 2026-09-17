@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { Campo } from "@/modules/configuracion/components/Campo";
@@ -38,7 +37,7 @@ export function ConfiguracionSeccion() {
       await queryClient.invalidateQueries({ queryKey: ["tesoreria", "configuracion"] });
       aviso.exito("Configuración guardada");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const configurado = configuracion?.cuenta_diferencia_id != null;

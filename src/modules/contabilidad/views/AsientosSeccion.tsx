@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleAsiento } from "../components/DetalleAsiento";
@@ -102,7 +101,7 @@ export function AsientosSeccion() {
       setPorAnular(null);
       setMotivo("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const asientos = resultado?.datos ?? [];

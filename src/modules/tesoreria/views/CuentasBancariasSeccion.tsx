@@ -16,7 +16,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { formatCOP, formatFecha } from "@/lib/utils";
@@ -55,7 +54,7 @@ export function CuentasBancariasSeccion() {
       aviso.exito("Cuenta bancaria desactivada");
       setConfirmando(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
   const activar = useMutation({
     mutationFn: (id: string) => cuentasBancariasApi.activar(id),
@@ -64,7 +63,7 @@ export function CuentasBancariasSeccion() {
       aviso.exito("Cuenta bancaria reactivada");
       setConfirmando(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   return (

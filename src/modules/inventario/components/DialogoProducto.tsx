@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
@@ -114,7 +113,7 @@ export function DialogoProducto({
       alGuardar?.(guardado);
       limpiar();
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   return (

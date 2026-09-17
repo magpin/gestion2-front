@@ -38,7 +38,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { DialogoTercero } from "../components/DialogoTercero";
 import { tercerosApi } from "../services/terceros.service";
@@ -120,7 +119,7 @@ export function TercerosView() {
       aviso.exito("Tercero desactivado");
       setPorDesactivar(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const datos = resultado?.datos ?? [];
@@ -130,7 +129,7 @@ export function TercerosView() {
       await refrescar();
       aviso.exito("Tercero reactivado");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const terceros =

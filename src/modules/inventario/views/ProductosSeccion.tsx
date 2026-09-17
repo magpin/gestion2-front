@@ -39,7 +39,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCOP, formatFecha } from "@/lib/utils";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
@@ -127,7 +126,7 @@ export function ProductosSeccion() {
       aviso.exito("Precio actualizado");
       setModal(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const desactivar = useMutation({
@@ -137,7 +136,7 @@ export function ProductosSeccion() {
       aviso.exito("Producto desactivado");
       setModal(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
   const activar = useMutation({
     mutationFn: (id: string) => productosApi.activar(id),
@@ -146,7 +145,7 @@ export function ProductosSeccion() {
       aviso.exito("Producto reactivado");
       setModal(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const productos = resultado?.datos ?? [];

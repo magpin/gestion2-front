@@ -2,6 +2,7 @@ import axios, { type AxiosError } from "axios";
 import { env } from "@/core/config/env";
 import { useAuthStore } from "@/core/store/authStore";
 import type { ApiError } from "@/core/types/api.types";
+import { mensajeDelServidor } from "@/lib/errores";
 
 export const api = axios.create({
   baseURL: env.apiUrl,
@@ -67,17 +68,12 @@ api.interceptors.response.use(
  * está registrada» en vez de «error inesperado».
  */
 export function mensajeDeError(error: unknown): string {
-  const e = error as AxiosError<ApiError>;
-  const cuerpo = e?.response?.data;
-  if (!cuerpo) return "No se pudo conectar con el servidor.";
-
-  if (Array.isArray(cuerpo.message)) return cuerpo.message.join(". ");
+  if (!(error as AxiosError<ApiError>)?.response?.data) return "No se pudo conectar con el servidor.";
   // Los errores traducidos de Postgres —duplicados, reglas de la base— no
   // traen `message`: traen `error` con el texto ya en lenguaje de la persona.
-  // Sin esta línea, "esa factura ya está registrada" salía como "Ocurrió un
-  // error", que es justo lo que el filtro del backend existe para evitar.
-  const texto = cuerpo.message ?? (typeof cuerpo.error === "string" ? cuerpo.error : undefined);
-  return texto ?? "Ocurrió un error.";
+  // `mensajeDelServidor` mira los dos; sin eso, "esa factura ya está
+  // registrada" salía como "Ocurrió un error".
+  return mensajeDelServidor(error) ?? "Ocurrió un error.";
 }
 
 /** La restricción de base que se rompió, para señalar el campo exacto. */

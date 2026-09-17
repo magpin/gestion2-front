@@ -9,7 +9,6 @@ import { useMutation } from "@tanstack/react-query";
 import { Loader2, Plus, Search, Sparkles } from "lucide-react";
 import { z } from "zod";
 
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +80,7 @@ export function PlanCuentasView() {
       formCuenta.reset();
       aviso.exito("Cuenta agregada");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const desactivar = useMutation({
@@ -90,7 +89,7 @@ export function PlanCuentasView() {
       await refrescar();
       aviso.exito("Cuenta desactivada");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const formCentro = useForm<z.infer<typeof esquemaCentro>>({
@@ -106,7 +105,7 @@ export function PlanCuentasView() {
       formCentro.reset();
       aviso.exito("Centro de costo agregado");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   return (

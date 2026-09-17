@@ -26,7 +26,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { mensajeDeError } from "@/core/api/api";
 import { formatCOP } from "@/lib/utils";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
@@ -109,7 +108,7 @@ export function TesoreriaView() {
       setCreandoCaja(false);
       setCuentaCaja(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const crearCuentaBancaria = useMutation({
@@ -120,7 +119,7 @@ export function TesoreriaView() {
       setCreandoCuentaBancaria(false);
       setCuentaContableBanco(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const mostrarNuevaCaja = grupo === "Caja" && seccionCaja === "Cajas";

@@ -2,6 +2,8 @@
 
 import Swal from "sweetalert2";
 
+import { explicarError, type MomentoDelError } from "./errores";
+
 // Avisos del sistema, en un solo lugar.
 //
 // Dos pesos distintos a propósito:
@@ -62,6 +64,32 @@ export const aviso = {
       title: mensaje,
       text: detalle,
       theme: "light",
+    });
+  },
+
+  /**
+   * Una operación que falló: qué pasó y qué hacer ahora, y no se va sola.
+   *
+   * Es la forma de avisar un error que vino del servidor. `error` a secas queda
+   * para lo que se detecta en la pantalla antes de mandar nada. La explicación
+   * —si se guardó algo, si conviene reintentar, a quién pedírselo— la arma
+   * `explicarError` según cómo falló, en un solo lugar para toda la app.
+   *
+   * `titleText` y no `title`: el título es el mensaje del servidor, que puede
+   * repetir algo que digitó una persona, y `title` lo interpretaría como HTML.
+   */
+  falla(error: unknown, momento: MomentoDelError = "guardar"): void {
+    const explicado = explicarError(error, momento);
+    if (explicado.silencioso) return;
+    void Swal.fire({
+      icon: "error",
+      titleText: explicado.titulo,
+      text: explicado.queHacer,
+      confirmButtonText: "Entendido",
+      allowOutsideClick: false,
+      theme: "light",
+      buttonsStyling: false,
+      customClass: { confirmButton: BOTON },
     });
   },
 

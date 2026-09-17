@@ -6,7 +6,6 @@ import { Loader2, Tags } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { categoriasApi } from "../services/inventario.service";
@@ -47,7 +46,7 @@ export function CategoriasSeccion() {
       aviso.exito("Categoría creada");
       setNombre("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const editar = useMutation({
@@ -62,7 +61,7 @@ export function CategoriasSeccion() {
       await refrescar();
       setEditandoId(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const guardarNombre = (c: CategoriaResumen) => {

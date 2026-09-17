@@ -16,7 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { formatCOP, formatFecha } from "@/lib/utils";
@@ -75,7 +74,7 @@ export function ArqueoSeccion() {
       aviso.exito("Arqueo abierto");
       setModal(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const cerrar = useMutation({
@@ -85,7 +84,7 @@ export function ArqueoSeccion() {
       aviso.exito("Arqueo cerrado");
       setModal(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   return (

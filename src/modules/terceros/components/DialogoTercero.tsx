@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { FormularioTercero, type DatosTercero } from "./FormularioTercero";
 import { tercerosApi } from "../services/terceros.service";
@@ -104,7 +103,7 @@ export function DialogoTercero({
       alGuardar?.(tercero);
       onCerrar();
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   return (

@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { digitoVerificacion } from "@/lib/nit";
 import { useElegirEmpresa } from "@/modules/auth/hooks/useAuth";
@@ -84,7 +83,7 @@ export function CrearEmpresaView() {
       queryClient.clear();
       elegir.mutate(empresa.id);
     } catch (error) {
-      aviso.error(mensajeDeError(error));
+      aviso.falla(error);
     }
   });
 

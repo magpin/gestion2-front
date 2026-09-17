@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, ChevronLeft, Loader2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import {
   Select,
@@ -43,7 +42,7 @@ export function DetalleCuentaView({ id }: { id: string }) {
       plataformaService.editarCuenta(id, datos),
     onMutate: () => setGuardando(true),
     onSuccess: (_datos, variables) => aviso.exito(variables.exito),
-    onError: (error: unknown) => aviso.error(mensajeDeError(error)),
+    onError: (error: unknown) => aviso.falla(error),
     onSettled: async () => {
       setGuardando(false);
       await queryClient.invalidateQueries({ queryKey: ["plataforma"] });

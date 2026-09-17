@@ -23,7 +23,7 @@ export function avisarErrorVenta(
     });
     return;
   }
-  aviso.error(mensaje);
+  aviso.falla(error);
 }
 
 /**

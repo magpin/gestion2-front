@@ -16,7 +16,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { cajasApi } from "../services/tesoreria.service";
@@ -57,7 +56,7 @@ export function CajasSeccion() {
       aviso.exito("Caja desactivada");
       setConfirmando(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
   const activar = useMutation({
     mutationFn: (id: string) => cajasApi.activar(id),
@@ -66,7 +65,7 @@ export function CajasSeccion() {
       aviso.exito("Caja reactivada");
       setConfirmando(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   return (

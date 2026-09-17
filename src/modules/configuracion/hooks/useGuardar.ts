@@ -2,7 +2,6 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { CLAVE_ESTADO } from "./useEstadoConfiguracion";
 
@@ -48,6 +47,6 @@ export function useGuardar<T>({
       aviso.exito(exito);
       alTerminar?.();
     },
-    onError: (error: unknown) => aviso.error(mensajeDeError(error)),
+    onError: (error: unknown) => aviso.falla(error),
   });
 }

@@ -27,7 +27,6 @@ import {
 } from "@/components/shared/AccionesDropdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
@@ -100,7 +99,7 @@ export function FacturasCompraSeccion({
       aviso.exito("Compra registrada");
       onCerrarCreacion();
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const anular = useMutation({
@@ -112,7 +111,7 @@ export function FacturasCompraSeccion({
       setPorAnular(null);
       setMotivo("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const pagar = useMutation({
@@ -123,7 +122,7 @@ export function FacturasCompraSeccion({
       aviso.exito("Pago registrado");
       setPagandoDe(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const crearNotaCredito = useMutation({
@@ -136,7 +135,7 @@ export function FacturasCompraSeccion({
       aviso.exito("Nota crédito registrada");
       setNotaCreditoDe(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const crearNotaDebito = useMutation({
@@ -149,7 +148,7 @@ export function FacturasCompraSeccion({
       aviso.exito("Nota débito registrada");
       setNotaDebitoDe(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   /** Lo mismo que en `FacturasSeccion` de ventas, y allá está el porqué. */

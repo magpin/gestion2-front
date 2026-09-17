@@ -21,5 +21,7 @@ export const useEstadoConfiguracion = () => {
     queryFn: configuracionService.estado,
     enabled: operando,
     staleTime: 0,
+    // `InicioView` ya muestra su propio error en la pantalla de inicio.
+    meta: { silencioso: true },
   });
 };

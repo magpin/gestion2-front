@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { formatCOP, formatFecha } from "@/lib/utils";
@@ -90,7 +89,7 @@ export function KardexSeccion() {
       aviso.exito("Movimiento registrado");
       setAbierto(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const existencia = movimientos?.datos[0]?.saldo_cantidad ?? null;

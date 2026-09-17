@@ -16,7 +16,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { periodosApi } from "../services/contabilidad.service";
 import type { Periodo } from "../types/contabilidad.types";
@@ -106,7 +105,7 @@ export function PeriodosSeccion() {
       );
       setConfirmar(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const porMes = new Map(periodos.map((p) => [p.mes, p]));

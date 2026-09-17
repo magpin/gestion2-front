@@ -71,6 +71,10 @@ export const useLogin = () => {
     },
     // El mensaje sale del intento de cliente y es el mismo en los dos casos:
     // decir "ese correo es de administración" delataría quién administra.
+    //
+    // `error` y no `falla`: acá un 401 es "clave mal escrita", no "la sesión se
+    // venció", y `falla` lo callaría —para él un 401 ya lo resolvió el
+    // interceptor mandando al login, que es justo donde se está—.
     onError: (error: unknown) => aviso.error(mensajeDeError(error)),
   });
 };
@@ -115,7 +119,7 @@ export const useElegirEmpresa = () => {
         router.push("/dashboard");
       }
     },
-    onError: (error: unknown) => aviso.error(mensajeDeError(error)),
+    onError: (error: unknown) => aviso.falla(error),
   });
 };
 

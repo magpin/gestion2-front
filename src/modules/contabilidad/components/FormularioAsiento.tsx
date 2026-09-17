@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import {
@@ -106,7 +105,7 @@ export function FormularioAsiento({
       limpiar();
       onCerrar();
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const cuadre = calcularCuadre(lineas);

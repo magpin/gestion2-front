@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { formatCOP } from "@/lib/utils";
@@ -76,7 +75,7 @@ export function RetencionesSeccion() {
       aviso.exito(`UVT del ${anio} guardada`);
       setValorUvt("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const crearConcepto = useMutation({
@@ -103,14 +102,14 @@ export function RetencionesSeccion() {
       setTarifaNoDeclarante("");
       setBaseMinimaUvt("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const archivar = useMutation({
     mutationFn: ({ id, activo }: { id: string; activo: boolean }) =>
       retencionesApi.editarConcepto(id, { activo }),
     onSuccess: refrescar,
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const faltaConcepto =

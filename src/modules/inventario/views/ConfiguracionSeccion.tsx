@@ -6,7 +6,6 @@ import { Loader2, Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { Campo } from "@/modules/configuracion/components/Campo";
@@ -44,7 +43,7 @@ export function ConfiguracionSeccion() {
       });
       aviso.exito("Configuración guardada");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const permitirDescubierto = useMutation({
@@ -60,7 +59,7 @@ export function ConfiguracionSeccion() {
           : "Facturar sin existencia queda bloqueado",
       );
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const configurado = configuracion?.cuenta_ajuste_id != null;

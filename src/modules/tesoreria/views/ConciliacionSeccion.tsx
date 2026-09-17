@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { cn, formatCOP, formatFecha } from "@/lib/utils";
@@ -72,7 +71,7 @@ export function ConciliacionSeccion() {
         `${resumen.pares} apareado${resumen.pares === 1 ? "" : "s"} · ${resumen.lineasSinAparear} línea${resumen.lineasSinAparear === 1 ? "" : "s"} y ${resumen.movimientosSinAparear} movimiento${resumen.movimientosSinAparear === 1 ? "" : "s"} siguen sueltos`,
       );
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const manual = useMutation({
@@ -85,7 +84,7 @@ export function ConciliacionSeccion() {
       await refrescar();
       aviso.exito("Apareados");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const cerrar = useMutation({
@@ -96,7 +95,7 @@ export function ConciliacionSeccion() {
       aviso.exito("Extracto conciliado");
       setExtractoId(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const movimientosDeLaCuenta = movimientos?.datos ?? [];

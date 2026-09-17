@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
@@ -94,7 +93,7 @@ export function NotasCompraSeccion({
       aviso.exito(`${que} registrada`);
       onCerrarCreacion();
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const crearCredito = useMutation({
@@ -116,7 +115,7 @@ export function NotasCompraSeccion({
       setPorAnular(null);
       setMotivo("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const notas = resultado?.datos ?? [];

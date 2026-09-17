@@ -22,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { Textarea } from "@/components/ui/textarea";
@@ -106,7 +105,7 @@ export function LibroCajaSeccion() {
       setAbierto(false);
       setContraCuenta(null);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const reversar = useMutation({
@@ -118,7 +117,7 @@ export function LibroCajaSeccion() {
       setPorReversar(null);
       setMotivo("");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   /**

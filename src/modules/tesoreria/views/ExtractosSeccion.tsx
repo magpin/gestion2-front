@@ -15,7 +15,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { formatCOP, formatFecha } from "@/lib/utils";
@@ -66,7 +65,7 @@ export function ExtractosSeccion() {
       aviso.exito("Extracto creado");
       setCreando(false);
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const agregarLinea = useMutation({
@@ -75,7 +74,7 @@ export function ExtractosSeccion() {
       await queryClient.invalidateQueries({ queryKey: ["extractos", "detalle", detalleId] });
       aviso.exito("Línea agregada");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   return (

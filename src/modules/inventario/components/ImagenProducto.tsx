@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { productosApi } from "../services/inventario.service";
 import type { ProductoResumen } from "../types/inventario.types";
@@ -37,7 +36,7 @@ export function ImagenProducto({ producto }: { producto: ProductoResumen }) {
       await refrescar();
       aviso.exito("Imagen guardada");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const quitar = useMutation({
@@ -46,7 +45,7 @@ export function ImagenProducto({ producto }: { producto: ProductoResumen }) {
       await refrescar();
       aviso.exito("Imagen quitada");
     },
-    onError: (e: unknown) => aviso.error(mensajeDeError(e)),
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const elegir = (archivo: File | undefined) => {

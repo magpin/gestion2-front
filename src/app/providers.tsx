@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+
+import { aviso } from "@/lib/avisos";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -12,6 +18,18 @@ export function Providers({ children }: ProvidersProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        // Una pantalla que no pudo cargar se veía igual que una vacía: "no hay
+        // facturas" cuando lo que había era un error. Eso engaña, y en un
+        // sistema contable engañar es peor que fallar. Cada consulta que falla
+        // —después de su reintento— avisa, sin que cada pantalla tenga que
+        // acordarse. La que ya muestra su propio error lo apaga con
+        // `meta: { silencioso: true }`.
+        queryCache: new QueryCache({
+          onError: (error, query) => {
+            if (query.meta?.silencioso === true) return;
+            aviso.falla(error, "cargar");
+          },
+        }),
         defaultOptions: {
           queries: {
             retry: 1,
