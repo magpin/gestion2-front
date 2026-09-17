@@ -3,6 +3,8 @@ import type { ResumenLibro } from "../types/tesoreria.types";
 import type {
   AgregarLineaExtractoInput,
   CargaInicialBancoInput,
+  CerrarCorteBancoInput,
+  CorteBancoResumen,
   ConciliarManualInput,
   CrearCuentaBancariaInput,
   CrearExtractoInput,
@@ -11,8 +13,10 @@ import type {
   ExtractoResumen,
   LineaExtractoResumen,
   MovimientoBancoResumen,
+  PaginaCortesBanco,
   PaginaExtractos,
   PaginaMovimientosBanco,
+  PrevioCorteBanco,
   RegistrarMovimientoBancoInput,
   ResumenConciliacionAutomatica,
 } from "../types/bancos.types";
@@ -117,4 +121,29 @@ export const extractosApi = {
   /** Exige que cuadren las dos cuentas de la conciliación; rechaza con el detalle si no. */
   cerrar: (id: string) =>
     api.post<ExtractoResumen>(`/extractos/${id}/cerrar`).then((r) => r.data),
+};
+
+/**
+ * El corte diario: el día congelado al cerrar. No se edita ni se rehace; lo
+ * que cambie después lo avisa `cambios_posteriores`.
+ */
+export const cortesBancoApi = {
+  listar: (cuentaBancariaId: string, pagina = 1) =>
+    api
+      .get<PaginaCortesBanco>(`/cuentas-bancarias/${cuentaBancariaId}/cortes`, {
+        params: { pagina, tamano: 30 },
+      })
+      .then((r) => r.data),
+
+  previo: (cuentaBancariaId: string, fecha: string) =>
+    api
+      .get<PrevioCorteBanco>(`/cuentas-bancarias/${cuentaBancariaId}/cortes/previo`, {
+        params: { fecha },
+      })
+      .then((r) => r.data),
+
+  cerrar: (cuentaBancariaId: string, datos: CerrarCorteBancoInput) =>
+    api
+      .post<CorteBancoResumen>(`/cuentas-bancarias/${cuentaBancariaId}/cortes`, datos)
+      .then((r) => r.data),
 };

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Banknote,
+  CalendarCheck,
   ClipboardCheck,
   FileText,
   GitCompareArrows,
@@ -41,6 +42,7 @@ import { NOMBRE_TIPO_CAJA } from "../types/tesoreria.types";
 import { ArqueoSeccion } from "./ArqueoSeccion";
 import { CajasSeccion } from "./CajasSeccion";
 import { ConciliacionSeccion } from "./ConciliacionSeccion";
+import { CorteBancoSeccion } from "./CorteBancoSeccion";
 import { ConfiguracionSeccion } from "./ConfiguracionSeccion";
 import { CuentasBancariasSeccion } from "./CuentasBancariasSeccion";
 import { ExtractosSeccion } from "./ExtractosSeccion";
@@ -49,7 +51,7 @@ import { LibroCajaSeccion } from "./LibroCajaSeccion";
 
 type Grupo = "Caja" | "Bancos";
 type SeccionCaja = "Cajas" | "Libro" | "Arqueo" | "Configuración";
-type SeccionBanco = "Cuentas" | "Libro" | "Extractos" | "Conciliación";
+type SeccionBanco = "Cuentas" | "Libro" | "Corte diario" | "Extractos" | "Conciliación";
 
 const SECCIONES_CAJA: Array<[SeccionCaja, typeof Landmark]> = [
   ["Cajas", Landmark],
@@ -61,6 +63,7 @@ const SECCIONES_CAJA: Array<[SeccionCaja, typeof Landmark]> = [
 const SECCIONES_BANCO: Array<[SeccionBanco, typeof Landmark]> = [
   ["Cuentas", Landmark],
   ["Libro", History],
+  ["Corte diario", CalendarCheck],
   ["Extractos", FileText],
   ["Conciliación", GitCompareArrows],
 ];
@@ -220,6 +223,7 @@ export function TesoreriaView() {
         <>
           {seccionBanco === "Cuentas" && <CuentasBancariasSeccion />}
           {seccionBanco === "Libro" && <LibroBancoSeccion />}
+          {seccionBanco === "Corte diario" && <CorteBancoSeccion />}
           {seccionBanco === "Extractos" && <ExtractosSeccion />}
           {seccionBanco === "Conciliación" && <ConciliacionSeccion />}
         </>

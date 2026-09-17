@@ -178,3 +178,51 @@ export interface ResumenConciliacionAutomatica {
   lineasSinAparear: number;
   movimientosSinAparear: number;
 }
+
+/**
+ * El corte de un día de una cuenta bancaria, congelado al cerrar. No bloquea
+ * el libro: `cambios_posteriores` cuenta lo que entró después con fecha de ese
+ * día o de uno anterior.
+ */
+export interface CorteBancoResumen {
+  id: string;
+  cuenta_bancaria_id: string;
+  fecha: string;
+  saldo_anterior: string;
+  entradas: string;
+  salidas: string;
+  saldo_final: string;
+  movimientos: number;
+  /** Lo que mostraba el portal del banco, si alguien lo leyó. */
+  saldo_banco: string | null;
+  /** Banco menos libro. */
+  diferencia: string | null;
+  nota: string | null;
+  cerrado_en: string;
+  cerrado_por: string;
+  cambios_posteriores: number;
+}
+
+export interface PaginaCortesBanco {
+  datos: CorteBancoResumen[];
+  pagina: number;
+  tamano: number;
+  total: number;
+}
+
+/** El día como está hoy en el libro. Los números llegan como `number`, calculados. */
+export interface PrevioCorteBanco {
+  fecha: string;
+  saldo_anterior: number;
+  entradas: number;
+  salidas: number;
+  saldo_final: number;
+  movimientos: MovimientoBancoResumen[];
+  corte: CorteBancoResumen | null;
+}
+
+export interface CerrarCorteBancoInput {
+  fecha: string;
+  saldoBanco?: number;
+  nota?: string;
+}
