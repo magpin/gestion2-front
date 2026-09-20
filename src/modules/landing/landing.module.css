@@ -1,0 +1,718 @@
+/* Animaciones de la landing.
+ *
+ * Van en CSS y no en Framer Motion a propósito: la página entera es un Server
+ * Component y no envía un solo byte de JavaScript al navegador. Una entrada
+ * orquestada de cuatro segundos hecha con `motion` obligaría a marcar cada
+ * pieza como `"use client"`, que es justo lo que no hace falta acá — nada de
+ * esto reacciona a nada, solo ocurre una vez al cargar.
+ *
+ * Los tiempos y las curvas son los del prototipo aprobado, al milisegundo.
+ * La secuencia cuenta algo y por eso el orden no se toca: la IA lee la factura
+ * (tarjeta 1), piensa (los cuatro chequeos, uno por uno), escribe el asiento
+ * (las filas, una por una) y aprueba (el sello, con rebote, a los 4,3 s).
+ */
+
+/* `:root` y no una clase del módulo: una clase de CSS Modules solo existe si
+   algún elemento la lleva. Estas curvas las usan todos los componentes de la
+   landing y ninguno sería el dueño natural de esa clase. */
+:root {
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-draw: cubic-bezier(0.6, 0, 0.2, 1);
+
+  /* La curva del revelado al bajar. Más blanda que `--ease-out-soft`: esa
+     arranca de golpe (0.2, 0.8) porque remata la entrada del hero, y repetida
+     quince veces bajando se siente nerviosa. Esta sale con menos ímpetu y
+     dedica la última parte del recorrido a posarse. */
+  --ease-entrada: cubic-bezier(0.33, 0.7, 0.3, 1);
+}
+
+/* --------------------------------------------------------------------------
+   Keyframes
+   -------------------------------------------------------------------------- */
+
+@keyframes navIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes drawX {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes drawY {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* La línea del titular sube desde debajo de su contenedor con `overflow:
+   hidden`. 105 % y no 100 %: las descendentes (la "y" de "Tú") asoman si el
+   desplazamiento es exacto. */
+@keyframes line {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes ink {
+  from {
+    stroke-dashoffset: 260;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes panel {
+  0% {
+    opacity: 0;
+    transform: perspective(1600px) rotateX(24deg) translateY(90px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(1600px) rotateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes glow {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes card {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes arrow {
+  from {
+    stroke-dashoffset: 40;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes row {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Las versiones de scroll de `up` y `row`, con la mitad de recorrido.
+ *
+ * Son aparte y no las mismas de la entrada del hero a propósito: el hero se
+ * mira una vez, quieto, y ahí 18px de viaje se leen como energía. Bajando, ese
+ * mismo viaje se repite quince veces y se lee como sacudida. Menos distancia,
+ * más suave, sin tocar la entrada que ya estaba aprobada. */
+@keyframes upScroll {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rowScroll {
+  from {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   La entrada del hero — una sola vez, al cargar
+   -------------------------------------------------------------------------- */
+
+.nav {
+  animation: navIn 700ms var(--ease-out-soft) both;
+}
+
+.rules {
+  transform-origin: left;
+  animation: drawX 1400ms var(--ease-draw) both;
+}
+
+.margin {
+  transform-origin: top;
+  animation: drawY 1200ms var(--ease-draw) 200ms both;
+}
+
+.drop {
+  animation: drop 700ms var(--ease-out-soft) 250ms both;
+}
+
+.line {
+  display: block;
+  animation: line 1000ms var(--ease-expo) both;
+}
+
+.l1 {
+  animation-delay: 380ms;
+}
+
+.l2 {
+  animation-delay: 520ms;
+}
+
+.ink {
+  stroke-dasharray: 260;
+  animation: ink 900ms var(--ease-draw) 1250ms both;
+}
+
+.up {
+  animation: up 800ms var(--ease-out-soft) both;
+}
+
+.u1 {
+  animation-delay: 800ms;
+}
+
+.u2 {
+  animation-delay: 950ms;
+}
+
+.glow {
+  animation: glow 1600ms var(--ease-out-soft) 1000ms both;
+}
+
+.panel {
+  transform-origin: center top;
+  animation: panel 1300ms var(--ease-expo) 1050ms both;
+}
+
+.card {
+  animation: card 600ms var(--ease-out-soft) both;
+}
+
+.c1 {
+  animation-delay: 1700ms;
+}
+
+.c2 {
+  animation-delay: 2150ms;
+}
+
+.c3 {
+  animation-delay: 2800ms;
+}
+
+.arrow {
+  stroke-dasharray: 40;
+  animation: arrow 500ms ease-out both;
+}
+
+.a1 {
+  animation-delay: 2000ms;
+}
+
+.a2 {
+  animation-delay: 2650ms;
+}
+
+.row {
+  animation: row 450ms var(--ease-out-soft) both;
+}
+
+.k1 {
+  animation-delay: 2300ms;
+}
+
+.k2 {
+  animation-delay: 2400ms;
+}
+
+.k3 {
+  animation-delay: 2500ms;
+}
+
+.k4 {
+  animation-delay: 2600ms;
+}
+
+.r1 {
+  animation-delay: 2950ms;
+}
+
+.r2 {
+  animation-delay: 3050ms;
+}
+
+.r3 {
+  animation-delay: 3150ms;
+}
+
+.r4 {
+  animation-delay: 3250ms;
+}
+
+.r5 {
+  animation-delay: 3350ms;
+}
+
+/* "Sumas" llega 150 ms después que la última cuenta, no 100: es el renglón que
+   cierra el asiento y el remate se nota. */
+.r6 {
+  animation-delay: 3500ms;
+}
+
+.pop {
+  animation: pop 550ms var(--ease-out-soft) 3750ms both;
+}
+
+.nota {
+  animation: up 800ms var(--ease-out-soft) 2000ms both;
+}
+
+/* --------------------------------------------------------------------------
+   La banda del PUC — el único movimiento continuo de la página
+   -------------------------------------------------------------------------- */
+
+.banda {
+  animation: fade 900ms ease-out 3200ms both;
+}
+
+/* Desplaza -50 %. La lista va duplicada dentro del contenedor, así que al
+   llegar al final la segunda copia ocupa exactamente el lugar de la primera y
+   el reinicio no se ve. */
+.marquee {
+  animation: marquee 48s linear infinite;
+}
+
+@media (max-width: 767px) {
+  .marquee {
+    animation-duration: 36s;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Revelado al hacer scroll
+   -------------------------------------------------------------------------- */
+
+/* Mejora progresiva: donde hay animaciones guiadas por scroll (Chrome, Edge),
+   cada bloque entra por su cuenta y el escalonado sale solo del recorrido.
+   Donde no las hay, el contenido se ve completo y quieto. Eso es aceptable y
+   es lo que evita cargar un IntersectionObserver —y con él, JavaScript— en una
+   página que si no, no lo necesita. */
+@supports (animation-timeline: view()) {
+  /* Tres cosas hacen que esto se sienta suave o brusco, y las tres están acá.
+   *
+   * 1. LA CURVA. Con `linear` el elemento sigue la rueda en lockstep: no frena
+   *    al llegar, y por eso se siente mecánico —es scroll disfrazado de
+   *    animación—. Con una curva de salida, el grueso del movimiento ocurre
+   *    temprano y el final se posa. Es la misma sensación de la entrada del
+   *    hero, que nadie pidió cambiar.
+   *
+   * 2. LA DISTANCIA. `upScroll` y `rowScroll` viajan la mitad que sus gemelas
+   *    del hero. Un gesto que se repite quince veces bajando tiene que ser más
+   *    chico que uno que se ve una sola vez.
+   *
+   * 3. CUÁNTO SCROLL TARDA. Los rangos pasaron de ~28% a ~42% del recorrido.
+   *    Más distancia para el mismo movimiento es, literalmente, más lento.
+   *
+   * Se escriben en forma larga y no con el atajo `animation:` porque el atajo
+   * reinicia `animation-timeline` a `auto`. Funciona igual si el timeline va
+   * después, pero entonces el orden de dos líneas sostiene toda la sección. */
+  .rv {
+    animation-name: upScroll;
+    animation-fill-mode: both;
+    animation-timing-function: var(--ease-entrada);
+    animation-timeline: view();
+    animation-range: entry 8% cover 42%;
+  }
+
+  .rvLine {
+    transform-origin: left;
+    animation-name: drawX;
+    animation-fill-mode: both;
+    animation-timing-function: var(--ease-entrada);
+    animation-timeline: view();
+    animation-range: entry 12% cover 44%;
+  }
+
+  /* El titular sale de debajo de su máscara, igual que el del hero. Es el
+     mismo `line` de arriba, movido al scroll: la diferencia entre un texto que
+     aparece y uno que se escribe.
+     Acá el recorrido no se puede acortar —menos de 100% y la máscara deja ver
+     el texto recortado a media altura—, así que lo que lo suaviza es el rango,
+     que es el más largo de todos. */
+  .rvEscribe {
+    display: block;
+    animation-name: line;
+    animation-fill-mode: both;
+    animation-timing-function: var(--ease-entrada);
+    animation-timeline: view();
+    animation-range: entry 14% cover 50%;
+  }
+
+  /* Los renglones de una tarjeta, llenándose de a uno mientras se sube. */
+  .rvFila {
+    animation-name: rowScroll;
+    animation-fill-mode: both;
+    animation-timing-function: var(--ease-entrada);
+    animation-timeline: view();
+    animation-range: entry 10% cover 40%;
+  }
+
+  /* El escalonado.
+   *
+   * Con `view()` cada elemento lleva su propio reloj y el orden lo pone el
+   * recorrido, no un `delay`. Eso sirve para lo que está en columna, pero en
+   * una rejilla los de la misma fila entran al mismo tiempo y el bloque se lee
+   * como un solo golpe. Correr el rango de cada uno los desfasa sin acelerar
+   * ni frenar el scroll: quien baja rápido los ve casi juntos, quien baja
+   * despacio los ve armarse en orden.
+   *
+   * El paso es de 4 puntos, y ahora cada rango dura ~40 en vez de ~21. Eso es
+   * lo que más suaviza el conjunto: los vecinos se superponen casi por
+   * completo, así que la rejilla se arma como una ola y no como seis golpes
+   * seguidos. El orden sigue siendo legible porque los arranques sí están
+   * separados. */
+  .e1 {
+    animation-range: entry 8% cover 40%;
+  }
+  .e2 {
+    animation-range: entry 12% cover 44%;
+  }
+  .e3 {
+    animation-range: entry 16% cover 48%;
+  }
+  .e4 {
+    animation-range: entry 20% cover 52%;
+  }
+  .e5 {
+    animation-range: entry 24% cover 56%;
+  }
+  .e6 {
+    animation-range: entry 28% cover 60%;
+  }
+}
+
+/* La máscara que recorta al titular mientras sube. El padding no es adorno:
+   sin él, la máscara le come las descendentes y la cursiva del final. */
+.escribeMascara {
+  display: block;
+  overflow: hidden;
+  padding: 0 0.1em 0.14em;
+}
+
+/* Destino de las anclas del nav. La navegación no va fija, así que no hay nada
+   que tape el título: los 24px son aire, para que la sección no arranque pegada
+   al borde de la ventana. */
+.ancla {
+  scroll-margin-top: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   Superficies: el papel contable
+   -------------------------------------------------------------------------- */
+
+/* La idea que ordena toda la página. Renglones horizontales finos y dos líneas
+   verticales de margen en naranja, como la hoja de un libro de contabilidad.
+   Viven acá y no en utilidades sueltas del JSX porque son gradientes largos:
+   escritos en línea serían ilegibles, y con `color-mix` sobre un rol siguen sin
+   tener un solo hex. */
+
+.papelHero {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 39px,
+    color-mix(in srgb, var(--foreground) 7%, transparent) 39px,
+    color-mix(in srgb, var(--foreground) 7%, transparent) 40px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 90%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 90%);
+}
+
+.papelFunciones {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 39px,
+    color-mix(in srgb, var(--foreground) 4.5%, transparent) 39px,
+    color-mix(in srgb, var(--foreground) 4.5%, transparent) 40px
+  );
+}
+
+.papelCierre {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 39px,
+    color-mix(in srgb, var(--rail-foreground) 5%, transparent) 39px,
+    color-mix(in srgb, var(--rail-foreground) 5%, transparent) 40px
+  );
+}
+
+/* Las dos líneas de margen. Se desvanecen desde el 60 % para que no corten la
+   página en seco donde termina el hero. */
+.margenBrand {
+  background: color-mix(in srgb, var(--brand) 45%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+
+.margenNeutro {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+
+.margenCierre {
+  background: color-mix(in srgb, var(--brand) 40%, transparent);
+}
+
+/* El resplandor detrás del panel. Es la única mancha grande de naranja de la
+   página, y está difuminada 30 px: no pinta una superficie, la insinúa. */
+.resplandorHero {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--brand) 22%, transparent),
+    color-mix(in srgb, var(--brand) 6%, transparent) 60%,
+    transparent
+  );
+  filter: blur(30px);
+}
+
+.resplandorCierre {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--brand) 22%, transparent),
+    transparent
+  );
+  filter: blur(40px);
+}
+
+/* Trama de puntos: la textura de toda superficie oscura del sistema. Dos
+   tamaños, según el tamaño de la pieza que cubre. */
+.trama {
+  background-color: var(--rail);
+  background-image: radial-gradient(var(--rail-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.tramaFina {
+  background-color: var(--rail);
+  background-image: radial-gradient(var(--rail-line) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.sombraPanel {
+  box-shadow:
+    0 40px 80px color-mix(in srgb, var(--foreground) 25%, transparent),
+    0 0 0 1px var(--rail-line);
+}
+
+.sombraTarjeta {
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+
+/* Los extremos de la banda se desvanecen: el carrusel no empieza ni termina,
+   solo pasa. */
+.mascaraBanda {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   Interacción
+   -------------------------------------------------------------------------- */
+
+/* El hover vive en un elemento interno y el revelado en el de afuera. Si
+   compartieran elemento, el `fill-mode: both` del revelado dejaría fijo
+   `transform: none` y en Chrome el levantamiento del hover no ocurriría nunca. */
+.tarjeta {
+  transition:
+    transform 250ms ease,
+    border-color 250ms ease,
+    box-shadow 250ms ease;
+}
+
+.tarjeta:hover {
+  transform: translateY(-4px);
+  border-color: var(--input);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.enlaceNav {
+  position: relative;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color 250ms ease;
+}
+
+.enlaceNav:hover {
+  color: var(--foreground);
+}
+
+.enlaceNav::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  background: var(--brand);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 250ms ease;
+}
+
+.enlaceNav:hover::after {
+  transform: scaleX(1);
+}
+
+.flecha svg {
+  transition: transform 200ms ease;
+}
+
+.flecha:hover svg {
+  transform: translateX(3px);
+}
+
+/* --------------------------------------------------------------------------
+   Movimiento reducido
+   -------------------------------------------------------------------------- */
+
+/* Con `animation: none` cada elemento muestra su estado base, que es el
+   visible: nada queda en `opacity: 0`. La banda del PUC se detiene donde está.
+   Esa es la razón de que las entradas usen `both` y no `forwards`. */
+@media (prefers-reduced-motion: reduce) {
+  .nav,
+  .rules,
+  .margin,
+  .drop,
+  .line,
+  .ink,
+  .up,
+  .glow,
+  .panel,
+  .card,
+  .arrow,
+  .row,
+  .pop,
+  .nota,
+  .banda,
+  .marquee,
+  .rv,
+  .rvLine,
+  .rvEscribe,
+  .rvFila {
+    animation: none !important;
+  }
+
+  /* La máscara sí se levanta. Con la animación apagada el titular se queda en
+     su sitio, pero `overflow: hidden` seguiría recortándole la cursiva del
+     final y el trazo de abajo. */
+  .escribeMascara {
+    overflow: visible;
+  }
+
+  .tarjeta,
+  .enlaceNav,
+  .enlaceNav::after,
+  .flecha svg {
+    transition: none !important;
+  }
+}

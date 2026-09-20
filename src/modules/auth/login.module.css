@@ -1,0 +1,232 @@
+/* Animaciones del login.
+ *
+ * Mismo criterio que la landing: CSS, no Framer Motion. El panel de marca es un
+ * Server Component y no manda JavaScript; el formulario ya es cliente por
+ * react-hook-form, pero su entrada tampoco necesita una librería para escalonar
+ * seis elementos.
+ *
+ * La secuencia del panel cuenta lo mismo que la landing en pequeño: el asiento
+ * se arma, se sella cuadrado, y el asistente reporta lo que hizo.
+ */
+
+/* En `:root`, no en una clase del módulo: una clase de CSS Modules solo existe
+   si algún elemento la lleva, y ninguno llevaba ésta. La variable quedaba sin
+   definir y las animaciones de abajo sobrevivían de prestado, tomando la
+   `--ease-out-soft` que la landing declara global. Con nombre propio y en
+   `:root`, cada módulo responde por su curva. */
+:root {
+  --ease-login: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes fxUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fxFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fxCardA {
+  from {
+    opacity: 0;
+    transform: translate(-16px, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fxCardB {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fxPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* El globo de "escribiendo" se va del todo —`visibility: hidden`— y no solo se
+   transparenta: si quedara, seguiría ocupando el lugar del mensaje. */
+@keyframes fxTyping {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes fxDot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.up {
+  animation: fxUp 600ms var(--ease-login) both;
+}
+
+.fade {
+  animation: fxFade 800ms ease-out both;
+}
+
+.d1 {
+  animation-delay: 150ms;
+}
+.d2 {
+  animation-delay: 250ms;
+}
+.d3 {
+  animation-delay: 350ms;
+}
+.d4 {
+  animation-delay: 450ms;
+}
+.d5 {
+  animation-delay: 550ms;
+}
+.d6 {
+  animation-delay: 650ms;
+}
+
+.cardA {
+  animation: fxCardA 800ms var(--ease-login) 200ms both;
+}
+
+.cardB {
+  animation: fxCardB 800ms var(--ease-login) 500ms both;
+}
+
+.cardC {
+  animation: fxCardB 800ms var(--ease-login) 1100ms both;
+}
+
+.row {
+  animation: fxFade 500ms ease-out both;
+}
+
+.r1 {
+  animation-delay: 600ms;
+}
+.r2 {
+  animation-delay: 720ms;
+}
+.r3 {
+  animation-delay: 840ms;
+}
+.r4 {
+  animation-delay: 960ms;
+}
+.r5 {
+  animation-delay: 1080ms;
+}
+
+.pop {
+  animation: fxPop 500ms var(--ease-login) 1300ms both;
+}
+
+.typing {
+  animation: fxTyping 1400ms ease-out 1700ms both;
+}
+
+.dot {
+  animation: fxDot 900ms ease-in-out infinite;
+}
+
+.dot2 {
+  animation-delay: 150ms;
+}
+
+.dot3 {
+  animation-delay: 300ms;
+}
+
+.msg {
+  animation: fxUp 500ms var(--ease-login) 3000ms both;
+}
+
+.msg2 {
+  animation: fxUp 500ms var(--ease-login) 3200ms both;
+}
+
+/* La trama de puntos del panel. Misma textura que el riel de la landing. */
+.trama {
+  background-color: var(--rail);
+  background-image: radial-gradient(var(--rail-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.sombraFlotante {
+  box-shadow: 0 24px 48px color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+
+.sombraFlotanteFuerte {
+  box-shadow: 0 24px 48px color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+
+/* Con movimiento reducido: todo visible y quieto. El globo de "escribiendo"
+   desaparece en vez de quedarse encima del mensaje, que es donde terminaría si
+   su animación se apagara a mitad de camino. */
+@media (prefers-reduced-motion: reduce) {
+  .up,
+  .fade,
+  .cardA,
+  .cardB,
+  .cardC,
+  .row,
+  .pop,
+  .dot,
+  .msg,
+  .msg2 {
+    animation: none !important;
+  }
+
+  .typing {
+    animation: none !important;
+    display: none;
+  }
+}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -11,6 +11,17 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+});
+
+// Instrument Serif viene en un solo peso, así que `weight` es obligatorio. La
+// itálica se carga aparte —no es una inclinación sintética, es otro dibujo— y
+// la landing la usa en la frase final de cada titular.
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +39,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${jetbrainsMono.variable} h-full`}>
+    <html
+      lang="es"
+      className={`${inter.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} h-full`}
+    >
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>
