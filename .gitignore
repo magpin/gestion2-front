@@ -43,3 +43,6 @@ next-env.d.ts
 # estado de herramientas locales
 .sdlc
 .claude/state
+
+# la plantilla del entorno sí se versiona
+!.env.example
