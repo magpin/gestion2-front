@@ -1,0 +1,124 @@
+/* Animaciones del asistente en chat.
+ *
+ * Son tres y todas dicen un hecho: un mensaje que entra, una lectura que está
+ * corriendo, y el destello del asistente mientras piensa. Ninguna es decorativa,
+ * y ninguna se mueve si no está pasando algo del otro lado.
+ *
+ * CSS y no Framer Motion, igual que el resto del sistema.
+ */
+
+@keyframes asistenteEntra {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.entra {
+  animation: asistenteEntra 450ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* El anillo que gira alrededor del avatar mientras el backend lee. Es cónico y
+   naranja: el acento señalando el único punto de la pantalla que está ocupado. */
+@keyframes asistenteGira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.anillo {
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+  background: conic-gradient(
+    from 0deg,
+    rgb(from var(--brand) r g b / 0) 0deg,
+    rgb(from var(--brand) r g b / 0) 200deg,
+    var(--brand) 360deg
+  );
+  animation: asistenteGira 1.1s linear infinite;
+}
+
+@keyframes asistenteRespira {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.78);
+    opacity: 0.7;
+  }
+}
+
+.respira {
+  animation: asistenteRespira 1.6s ease-in-out infinite;
+}
+
+/* La barra de una lectura en curso. Sin porcentaje: el modelo no dice cuánto le
+   falta, y fingirlo sería un temporizador disfrazado de progreso. */
+@keyframes asistenteIndeterminada {
+  from {
+    left: -40%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+.indeterminada {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  border-radius: 999px;
+  background: var(--primary);
+  animation: asistenteIndeterminada 1.2s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+
+/* El brillo que recorre el rótulo mientras el backend lee. Va sobre el texto del
+   propio evento: lo que se mueve es el brillo, no el mensaje. */
+@keyframes asistenteBrillo {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.pulso {
+  background: linear-gradient(
+    90deg,
+    var(--muted-foreground) 0%,
+    var(--muted-foreground) 35%,
+    var(--foreground) 50%,
+    var(--muted-foreground) 65%,
+    var(--muted-foreground) 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: asistenteBrillo 2.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entra,
+  .anillo,
+  .respira,
+  .indeterminada,
+  .pulso {
+    animation: none !important;
+  }
+
+  /* Sin animación el degradado dejaría el texto invisible. */
+  .pulso {
+    background: none;
+    color: var(--muted-foreground);
+  }
+}

@@ -14,6 +14,7 @@ import {
   Scale,
   Settings2,
   ShoppingCart,
+  Sparkle,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -47,6 +48,12 @@ interface Entrada {
    * mostrar una puerta que al abrirla da 403.
    */
   roles?: RolCodigo[];
+  /**
+   * El ícono va en naranja. Lo lleva **una sola entrada** —el asistente—, que es
+   * la excepción que el reglamento de color permite: el acento señala un punto,
+   * y si lo llevaran dos entradas dejaría de señalar ninguna.
+   */
+  acento?: boolean;
 }
 
 interface Grupo {
@@ -65,7 +72,21 @@ interface Grupo {
  */
 const GRUPOS: Grupo[] = [
   {
-    entradas: [{ href: "/dashboard", etiqueta: "Inicio", icono: Home }],
+    entradas: [
+      { href: "/dashboard", etiqueta: "Inicio", icono: Home },
+      {
+        // Arriba de todo y fuera de los grupos, como en el prototipo: no es un
+        // módulo del negocio, es otra manera de entrar a todos.
+        //
+        // Los mismos tres roles que «Configurar empresa», que son los que el
+        // backend exige para escribir: el asistente no amplía permisos.
+        href: "/dashboard/asistente",
+        etiqueta: "Asistente IA",
+        icono: Sparkle,
+        roles: ["ADMIN_TENANT", "DIRECTOR", "CONTADOR"],
+        acento: true,
+      },
+    ],
   },
   {
     etiqueta: "Operación",
@@ -217,7 +238,10 @@ export function BarraLateral() {
                         tooltip={entrada.etiqueta}
                         render={<Link href={entrada.href} onClick={cerrarEnMovil} />}
                       >
-                        <entrada.icono />
+                        <entrada.icono
+                          className={entrada.acento ? "text-brand" : undefined}
+                          fill={entrada.acento ? "currentColor" : "none"}
+                        />
                         <span>{entrada.etiqueta}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
