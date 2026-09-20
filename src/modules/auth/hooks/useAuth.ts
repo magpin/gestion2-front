@@ -106,12 +106,20 @@ export const useElegirEmpresa = () => {
       // muestra lo que falta —una resolución, típicamente— con su "Continuar",
       // y no se puede obligar a quien lleva meses trabajando a pasar por el
       // asistente cada vez que entra.
+      //
+      // Y con nada hecho no entra al primer paso sino a la **bienvenida**, que
+      // es donde se elige entre llenarlo a mano o dejárselo a la IA. Esa
+      // decisión se toma una sola vez y solo tiene sentido al principio:
+      // ofrecérsela a alguien que ya llenó dos pasos sería hacerle repetir algo
+      // que ya resolvió. Por eso la condición es `completados === 0` y no "está
+      // incompleta" —el enlace de la barra lateral y el «Continuar» del tablero
+      // siguen entrando directo al paso—.
       try {
         const estado = await configuracionService.estado();
         router.push(
           estado.completados > 0 || !estado.siguiente
             ? "/dashboard"
-            : `/configuracion/${estado.siguiente.toLowerCase()}`,
+            : "/configuracion/bienvenida",
         );
       } catch {
         // Si el estado no responde, el tablero igual lo vuelve a pedir y muestra

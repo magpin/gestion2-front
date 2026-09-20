@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Star } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { AsistenteShell } from "../components/AsistenteShell";
 import { Bloque, Registrada, Registradas } from "../components/Bloque";
 import { Campo } from "../components/Campo";
+import { CONTROL, EstadoVacio, Pildora } from "../components/Comunes";
 import { SelectorMunicipio } from "@/modules/catalogos/components/SelectorMunicipio";
 import { useGuardar } from "../hooks/useGuardar";
 import { empresaApi } from "../services/nucleo.service";
@@ -52,13 +53,9 @@ export function PasoSedes() {
   });
 
   const guardar = useGuardar<Datos>({
-    fn: (d) =>
-      empresaApi.crearSede({
-        ...d,
-        telefono: d.telefono || undefined,
-      }),
+    fn: (d) => empresaApi.crearSede({ ...d, telefono: d.telefono || undefined }),
     exito: "Sede registrada",
-    invalidar: [["sedes"]],
+    invalidar: [["sedes"], ["estado-configuracion"]],
     alTerminar: () => {
       form.reset({
         codigo: String(activas.length + 2).padStart(3, "0"),
@@ -74,36 +71,37 @@ export function PasoSedes() {
 
   const errores = form.formState.errors;
   const municipio = form.watch("municipioCodigo");
+  const mostrarFormulario = agregando || activas.length === 0;
 
   return (
-    <AsistenteShell
-      clave="SEDES"
-      titulo="Sedes"
-      etiquetaContinuar={activas.length > 0 ? "Continuar" : "Omitir"}
-    >
-      <div className="flex flex-col gap-8">
-        {activas.length > 0 && (
-          <Bloque
-            titulo={
-              activas.length === 1 ? "Sede registrada" : "Sedes registradas"
-            }
-            descripcion="El municipio de la principal decide la tarifa de ICA y viaja en cada factura."
-          >
+    <AsistenteShell clave="SEDES" titulo="Sedes">
+      <div className="flex flex-col gap-9">
+        <Bloque
+          titulo={activas.length === 1 ? "Sede registrada" : "Sedes registradas"}
+          descripcion="El municipio de la principal decide la tarifa de ICA y viaja en cada factura."
+          accion={
+            !mostrarFormulario ? (
+              <Button variant="outline" size="sm" onClick={() => setAgregando(true)}>
+                <Plus className="size-4" />
+                Agregar sede
+              </Button>
+            ) : undefined
+          }
+        >
+          {activas.length === 0 ? (
+            <EstadoVacio
+              titulo="Aún no hay sedes"
+              ayuda="La primera que registres será la principal."
+            />
+          ) : (
             <Registradas>
               {activas.map((sede) => (
                 <Registrada
                   key={sede.id}
-                  etiqueta={sede.es_principal ? "Principal" : "Sucursal"}
-                  accion={
-                    sede.es_principal ? (
-                      <Star className="size-3.5 text-brand" />
-                    ) : undefined
-                  }
+                  accion={sede.es_principal ? <Pildora destacada>Principal</Pildora> : undefined}
                 >
-                  <span className="flex items-baseline gap-2">
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {sede.codigo}
-                    </span>
+                  <span className="flex items-baseline gap-2.5">
+                    <span className="font-mono text-xs text-muted-foreground">{sede.codigo}</span>
                     <span className="font-medium">{sede.nombre}</span>
                   </span>
                   <span className="mt-0.5 block truncate text-xs text-muted-foreground">
@@ -112,31 +110,22 @@ export function PasoSedes() {
                 </Registrada>
               ))}
             </Registradas>
-          </Bloque>
-        )}
+          )}
+        </Bloque>
 
-        {agregando || activas.length === 0 ? (
-          <Bloque
-            titulo={activas.length === 0 ? "Primera sede" : "Nueva sede"}
-            descripcion={
-              activas.length === 0
-                ? "Dónde opera la empresa. Cada sede tiene su propia caja en el plan de cuentas."
-                : undefined
-            }
-          >
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <div className="grid gap-4 sm:grid-cols-[112px_1fr]">
+        {mostrarFormulario && (
+          <Bloque titulo={activas.length === 0 ? "Primera sede" : "Nueva sede"}>
+            <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+              <div className="flex flex-wrap items-start gap-4">
                 <Campo
                   id="codigo"
                   etiqueta="Código"
                   error={errores.codigo?.message}
+                  className="w-28"
                 >
                   <Input
                     id="codigo"
-                    className="font-mono"
+                    className={`${CONTROL} font-mono`}
                     {...form.register("codigo")}
                   />
                 </Campo>
@@ -144,87 +133,89 @@ export function PasoSedes() {
                   id="nombre"
                   etiqueta="Nombre"
                   error={errores.nombre?.message}
+                  className="min-w-56 flex-1"
                 >
                   <Input
                     id="nombre"
                     placeholder="Principal"
+                    className={CONTROL}
                     {...form.register("nombre")}
                   />
                 </Campo>
               </div>
 
-              <Campo
-                id="direccion"
-                etiqueta="Dirección"
-                error={errores.direccion?.message}
-              >
-                <Input id="direccion" {...form.register("direccion")} />
+              <Campo id="direccion" etiqueta="Dirección" error={errores.direccion?.message}>
+                <Input id="direccion" className={CONTROL} {...form.register("direccion")} />
               </Campo>
 
-              <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
+              <div className="flex flex-wrap items-start gap-4">
                 <Campo
                   id="municipioCodigo"
                   etiqueta="Municipio"
                   error={errores.municipioCodigo?.message}
                   ayuda="Define la tarifa de ICA y viaja en la factura"
+                  className="min-w-56 flex-1"
                 >
                   <SelectorMunicipio
+                    className={CONTROL}
                     id="municipioCodigo"
                     valor={municipio || null}
                     invalido={Boolean(errores.municipioCodigo)}
                     onCambio={(codigo) =>
-                      form.setValue("municipioCodigo", codigo, {
-                        shouldValidate: true,
-                      })
+                      form.setValue("municipioCodigo", codigo, { shouldValidate: true })
                     }
                   />
                 </Campo>
 
-                <Campo id="telefono" etiqueta="Teléfono">
+                <Campo id="telefono" etiqueta="Teléfono (opcional)" className="w-40">
                   <Input
                     id="telefono"
-                    className="font-mono"
+                    className={`${CONTROL} font-mono`}
                     {...form.register("telefono")}
                   />
                 </Campo>
               </div>
 
-              <label className="flex items-center gap-2.5 text-sm">
-                <Checkbox
-                  checked={form.watch("esPrincipal")}
-                  onCheckedChange={(v) =>
-                    form.setValue("esPrincipal", v === true)
-                  }
-                  disabled={!hayPrincipal}
-                />
-                Es la sede principal
-              </label>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={form.handleSubmit((d) => guardar.mutate(d))}
-                  disabled={guardar.isPending}
+              {/* Con la primera sede la casilla va marcada y sin poder tocarse.
+                  Dejarla libre ofrecería una decisión que no existe: si es la
+                  única, no hay otra que pueda ser la principal. */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="esPrincipal"
+                  className="flex min-h-11 items-center gap-2.5 text-sm"
                 >
-                  <Plus className="size-4" />
-                  Registrar sede
-                </Button>
+                  <Checkbox
+                    id="esPrincipal"
+                    checked={form.watch("esPrincipal")}
+                    onCheckedChange={(v) => form.setValue("esPrincipal", v === true)}
+                    disabled={!hayPrincipal}
+                    aria-describedby={hayPrincipal ? undefined : "esPrincipal-ayuda"}
+                  />
+                  Es la sede principal
+                </label>
+                {!hayPrincipal && (
+                  <span id="esPrincipal-ayuda" className="text-xs text-muted-foreground">
+                    La primera sede siempre es la principal: no hay otra que pueda serlo.
+                  </span>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2">
                 {activas.length > 0 && (
                   <Button variant="ghost" onClick={() => setAgregando(false)}>
                     Cancelar
                   </Button>
                 )}
+                <Button
+                  onClick={form.handleSubmit((d) => guardar.mutate(d))}
+                  disabled={guardar.isPending}
+                >
+                  {guardar.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                  Agregar sede
+                </Button>
               </div>
             </form>
           </Bloque>
-        ) : (
-          <Button
-            variant="outline"
-            className="self-start"
-            onClick={() => setAgregando(true)}
-          >
-            <Plus className="size-4" />
-            Agregar otra sede
-          </Button>
         )}
       </div>
     </AsistenteShell>

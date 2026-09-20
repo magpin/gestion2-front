@@ -1,0 +1,73 @@
+/* Animaciones del asistente de configuración.
+ *
+ * CSS y no Framer Motion, igual que la landing: son entradas de una sola vez y
+ * un latido. Nada de esto reacciona a nada.
+ */
+
+:root {
+  --ease-asistente: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes asistenteUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* El latido del paso actual. Es el único naranja del riel y la única cosa que
+   se mueve ahí: si el halo lo llevaran también los pasos listos, el panel
+   entero titilaría y el acento dejaría de señalar nada.
+   `rgb(from ...)` permite sacarle el alfa al rol sin escribir el hex. */
+@keyframes asistenteHalo {
+  0% {
+    box-shadow: 0 0 0 0 rgb(from var(--brand) r g b / 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgb(from var(--brand) r g b / 0);
+  }
+}
+
+.up {
+  animation: asistenteUp 500ms var(--ease-asistente) both;
+}
+
+.d1 {
+  animation-delay: 120ms;
+}
+.d2 {
+  animation-delay: 220ms;
+}
+.d3 {
+  animation-delay: 320ms;
+}
+
+.halo {
+  animation: asistenteHalo 1.6s ease-out infinite;
+}
+
+/* La trama de puntos del riel. 22px, más apretada que la de la landing: el
+   riel mide 400px y con 24px la trama se lee como rayas. */
+.trama {
+  background-color: var(--rail);
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--rail-foreground) 10%, var(--rail)) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}
+
+.sombraTarjeta {
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .up,
+  .halo {
+    animation: none !important;
+  }
+}

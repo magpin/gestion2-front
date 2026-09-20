@@ -8,6 +8,11 @@ interface Props {
   descripcion?: string;
   /** Marca el bloque cuando el paso está esperando ese dato. */
   pendiente?: boolean;
+  /**
+   * Una píldora al lado del título: "Persona jurídica", "Opcional". Dice bajo
+   * qué condición existe el bloque, que es distinto de qué resuelve.
+   */
+  etiqueta?: string;
   /** Algo que va a la derecha del título: un contador, un botón chico. */
   accion?: ReactNode;
   children: ReactNode;
@@ -28,23 +33,28 @@ export function Bloque({
   titulo,
   descripcion,
   pendiente,
+  etiqueta,
   accion,
   children,
 }: Props) {
   return (
-    <section className="flex min-w-0 flex-col gap-4 border-t border-border pt-6 first:border-t-0 first:pt-0">
-      <header className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-            {titulo}
-            {pendiente && <span className="size-1.5 rounded-full bg-warning" />}
-          </h2>
-          {descripcion && (
-            <p className="mt-1.5 text-[13px] text-muted-foreground">
-              {descripcion}
-            </p>
+    <section className="flex min-w-0 flex-col gap-5">
+      {/* La línea va debajo del encabezado, no encima del bloque. Es la misma
+          diferencia que entre subrayar un título y separar dos párrafos: acá
+          la raya pertenece al título y anuncia lo que sigue. */}
+      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border pb-3">
+        <h2 className="m-0 flex items-center gap-2 text-[15px] font-semibold">
+          {titulo}
+          {etiqueta && (
+            <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-normal text-muted-foreground">
+              {etiqueta}
+            </span>
           )}
-        </div>
+          {pendiente && <span className="size-1.5 rounded-full bg-warning" />}
+        </h2>
+        {descripcion && (
+          <p className="m-0 max-w-[420px] text-xs text-muted-foreground">{descripcion}</p>
+        )}
         {accion && <div className="shrink-0">{accion}</div>}
       </header>
 
@@ -75,8 +85,14 @@ export function Registrada({
   children,
   accion,
 }: {
-  /** El papel de la fila: "Principal", "Secundaria", el tipo de documento. */
-  etiqueta?: string;
+  /**
+   * El papel de la fila: "Principal", "Secundaria", el tipo de documento.
+   *
+   * Acepta un nodo y no solo texto porque algunas filas lo muestran como
+   * píldora —la actividad principal— y otras como rótulo suelto. Obligarlo a
+   * ser `string` hacía que quien necesitara la píldora tuviera que castear.
+   */
+  etiqueta?: ReactNode;
   /** true cuando la etiqueta es un número —un código— y no una palabra. */
   mono?: boolean;
   children: ReactNode;
@@ -90,9 +106,7 @@ export function Registrada({
             {etiqueta}
           </span>
         ) : (
-          <span className="w-24 shrink-0 pt-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {etiqueta}
-          </span>
+          <span className="w-24 shrink-0 pt-0.5 text-muted-foreground">{etiqueta}</span>
         ))}
       <span className="min-w-0 flex-1 overflow-hidden">{children}</span>
       {accion && <span className="shrink-0 pt-0.5">{accion}</span>}

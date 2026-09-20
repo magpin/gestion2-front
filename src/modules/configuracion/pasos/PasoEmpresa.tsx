@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock } from "lucide-react";
 import { z } from "zod";
 
 import { Input } from "@/components/ui/input";
@@ -17,9 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AsistenteShell, RUTA_PASO } from "../components/AsistenteShell";
-import { SelectorSectores } from "@/modules/catalogos/components/SelectorSectores";
+import { SECTORES } from "@/modules/catalogos/components/SelectorSectores";
 import { Bloque } from "../components/Bloque";
 import { Campo } from "../components/Campo";
+import { Chips, CONTROL, CONTROL_SELECT, SoloLectura } from "../components/Comunes";
 import { useGuardar } from "../hooks/useGuardar";
 import { empresaApi } from "../services/nucleo.service";
 
@@ -33,6 +33,8 @@ const esquema = z.object({
 });
 
 type Datos = z.infer<typeof esquema>;
+
+const OPCIONES_SECTOR = SECTORES.map((s) => ({ valor: s.codigo, etiqueta: s.nombre }));
 
 export function PasoEmpresa() {
   const router = useRouter();
@@ -87,11 +89,12 @@ export function PasoEmpresa() {
       });
     },
     exito: "Empresa guardada",
-    invalidar: [["empresa"], ["configuracion-contable"]],
+    invalidar: [["empresa"], ["configuracion-contable"], ["estado-configuracion"]],
     alTerminar: () => router.push(RUTA_PASO.SEDES),
   });
 
   const errores = form.formState.errors;
+  const sectores = form.watch("sectores");
 
   return (
     <AsistenteShell
@@ -100,105 +103,107 @@ export function PasoEmpresa() {
       guardando={guardar.isPending}
       alContinuar={form.handleSubmit((d) => guardar.mutate(d))}
     >
-      <form
-        className="flex flex-col gap-8"
-        onSubmit={(e) => e.preventDefault()}
-      >
+      <form className="flex flex-col gap-9" onSubmit={(e) => e.preventDefault()}>
         <Bloque
           titulo="Identificación"
-          descripcion="Cómo se llama la empresa y con qué número la conoce la DIAN."
+          descripcion="El NIT y el tipo de persona no cambian: otro NIT es otra empresa."
         >
-          <div className="grid gap-4 sm:grid-cols-2">
+          {/* Lo que no se puede tocar va primero. Es el marco dentro del cual
+              se llena el resto, y ponerlo al final obligaría a leer el
+              formulario entero para descubrir qué no era editable. */}
+          <div className="flex flex-wrap items-start gap-4">
+            <Campo id="tipoPersona" etiqueta="Tipo de persona" className="w-44">
+              <SoloLectura
+                valor={empresa?.tipoPersona === "NATURAL" ? "Natural" : "Jurídica"}
+              />
+            </Campo>
+            <Campo id="nit" etiqueta="NIT" className="w-40">
+              <SoloLectura valor={empresa?.nit ?? ""} mono />
+            </Campo>
+            <Campo id="dv" etiqueta="DV" className="w-18">
+              <SoloLectura valor={empresa?.dv ?? ""} mono />
+            </Campo>
+          </div>
+
+          {/* `flex-1` y no dos columnas de grid: es lo que hace el diseño, y la
+              diferencia se nota cuando la fila comparte espacio con un campo de
+              ancho fijo — el grid le daría media fila igual. */}
+          <div className="flex flex-wrap items-start gap-4">
             <Campo
               id="razonSocial"
               etiqueta="Razón social"
               error={errores.razonSocial?.message}
+              className="min-w-56 flex-1"
             >
-              <Input id="razonSocial" {...form.register("razonSocial")} />
+              <Input
+                id="razonSocial"
+                className={`${CONTROL} w-full`}
+                {...form.register("razonSocial")}
+              />
             </Campo>
 
-            <Campo id="nombreComercial" etiqueta="Nombre comercial">
+            <Campo
+              id="nombreComercial"
+              etiqueta="Nombre comercial (opcional)"
+              className="min-w-56 flex-1"
+            >
               <Input
                 id="nombreComercial"
+                className={`${CONTROL} w-full`}
                 {...form.register("nombreComercial")}
               />
             </Campo>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-[160px_176px_1fr]">
-            <Campo id="nit" etiqueta="NIT" ayuda="No editable">
-              <Input
-                id="nit"
-                readOnly
-                className="bg-muted font-mono text-muted-foreground"
-                value={empresa ? `${empresa.nit}-${empresa.dv}` : ""}
-              />
-            </Campo>
-
-            <Campo
-              id="tipoPersona"
-              etiqueta="Tipo de persona"
-              ayuda="No editable"
-            >
-              <Input
-                id="tipoPersona"
-                readOnly
-                className="bg-muted text-muted-foreground"
-                value={
-                  empresa?.tipoPersona === "NATURAL" ? "Natural" : "Jurídica"
-                }
-              />
-            </Campo>
-          </div>
-
+          {/* Píldoras y no las tarjetas de `SelectorSectores`: acá la empresa ya
+              existe y quien llega sabe a qué se dedica; lo que importa es ver
+              de un golpe cuáles quedaron marcados. En `empresa-nueva`, donde
+              alguien elige esto por primera vez, siguen las tarjetas con su
+              explicación al lado. */}
           <Campo
             id="sectores"
             etiqueta="¿A qué se dedica?"
-            ayuda="Suma cuentas al catálogo filtrado; nunca esconde las que respalda tu RUT."
+            ayuda="Suman cuentas al catálogo. Nunca esconden las que respalda el RUT."
           >
-            <SelectorSectores
-              valor={form.watch("sectores")}
-              onCambio={(v) =>
-                form.setValue("sectores", v as Datos["sectores"])
+            <Chips
+              etiquetaGrupo="Sectores de la empresa"
+              opciones={OPCIONES_SECTOR}
+              elegidos={sectores}
+              onAlternar={(valor) =>
+                form.setValue(
+                  "sectores",
+                  (sectores.includes(valor as Datos["sectores"][number])
+                    ? sectores.filter((s) => s !== valor)
+                    : [...sectores, valor]) as Datos["sectores"],
+                )
               }
             />
           </Campo>
-
-          <p className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2.5 text-xs text-muted-foreground">
-            <Lock className="size-3.5 shrink-0" />
-            Cambiar de NIT es otra persona jurídica, con otra contabilidad y
-            otra numeración.
-          </p>
         </Bloque>
 
         <Bloque
-          titulo="Configuración contable"
-          descripcion="Las políticas con las que lleva sus libros. El módulo contable las consulta antes de permitir un asiento."
+          titulo="Políticas contables"
+          descripcion="El módulo contable las consulta antes de permitir un asiento."
         >
-          <div className="grid gap-4 sm:grid-cols-[1fr_112px_176px]">
+          <div className="flex flex-wrap items-start gap-4">
             <Campo
               id="grupoNiif"
               etiqueta="Grupo NIIF"
               ayuda="Grupo 2 es lo habitual"
               error={errores.grupoNiif?.message}
+              className="w-44"
             >
               <Select
                 value={form.watch("grupoNiif")}
-                onValueChange={(v) =>
-                  form.setValue("grupoNiif", v as Datos["grupoNiif"])
-                }
+                onValueChange={(v) => form.setValue("grupoNiif", v as Datos["grupoNiif"])}
               >
-                <SelectTrigger id="grupoNiif">
+                <SelectTrigger id="grupoNiif" className={CONTROL_SELECT}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="GRUPO_1">Grupo 1 · NIIF plenas</SelectItem>
-                  <SelectItem value="GRUPO_2">
-                    Grupo 2 · NIIF para pymes
-                  </SelectItem>
-                  <SelectItem value="GRUPO_3">
-                    Grupo 3 · Microempresas
-                  </SelectItem>
+                  <SelectItem value="GRUPO_2">Grupo 2 · NIIF para pymes</SelectItem>
+                  <SelectItem value="GRUPO_3">Grupo 3 · Microempresas</SelectItem>
                 </SelectContent>
               </Select>
             </Campo>
@@ -207,13 +212,14 @@ export function PasoEmpresa() {
               id="mesCierreFiscal"
               etiqueta="Mes de cierre"
               error={errores.mesCierreFiscal?.message}
+              className="w-28"
             >
               <Input
                 id="mesCierreFiscal"
                 type="number"
                 min={1}
                 max={12}
-                className="font-mono"
+                className={`${CONTROL} font-mono`}
                 {...form.register("mesCierreFiscal", { valueAsNumber: true })}
               />
             </Campo>
@@ -221,6 +227,7 @@ export function PasoEmpresa() {
             <Campo
               id="metodoValoracionInventario"
               etiqueta="Valoración de inventario"
+              className="w-44"
             >
               <Select
                 value={form.watch("metodoValoracionInventario")}
@@ -231,13 +238,11 @@ export function PasoEmpresa() {
                   )
                 }
               >
-                <SelectTrigger id="metodoValoracionInventario">
+                <SelectTrigger id="metodoValoracionInventario" className={CONTROL_SELECT}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PROMEDIO_PONDERADO">
-                    Promedio ponderado
-                  </SelectItem>
+                  <SelectItem value="PROMEDIO_PONDERADO">Promedio ponderado</SelectItem>
                   <SelectItem value="PEPS">PEPS</SelectItem>
                 </SelectContent>
               </Select>

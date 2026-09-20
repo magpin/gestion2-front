@@ -5,20 +5,21 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, Check, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { AsistenteShell } from "../components/AsistenteShell";
 import { Bloque, Registrada, Registradas } from "../components/Bloque";
+import {
+  CONTROL,
+  FilaVigencia,
+  ListaVigencia,
+  NotaInformativa,
+  Pildora,
+  SegmentadoSiNo,
+} from "../components/Comunes";
 import { Campo } from "../components/Campo";
 import { SelectorCiiu } from "@/modules/catalogos/components/SelectorCiiu";
 import { SelectorResponsabilidadRut } from "@/modules/catalogos/components/SelectorResponsabilidadRut";
@@ -91,19 +92,24 @@ export function PasoSituacionLegal() {
     paso?.faltantes.some((f) => f.campo === campo) ?? false;
 
   return (
-    <AsistenteShell
-      clave="SITUACION_LEGAL"
-      titulo="Situación legal"
-      etiquetaContinuar={paso?.estado === "LISTO" ? "Continuar" : "Omitir"}
-    >
-      <div className="flex flex-col gap-7">
+    <AsistenteShell clave="SITUACION_LEGAL" titulo="Situación legal">
+      <div className="flex flex-col gap-9">
+        {/* Este paso no se guarda de una vez, y conviene decirlo antes de que
+            alguien llene los cinco bloques esperando un botón al final. */}
+        <NotaInformativa>
+          Cada bloque se guarda por separado. Son hechos con vigencia: no se borran, se{" "}
+          <span className="font-medium text-foreground">cierran</span> con fecha.
+        </NotaInformativa>
+
         <BloqueResponsabilidades pendiente={falta("tipoRegimen")} />
+        <BloqueAgenteIca />
+        {/* Una persona natural no tiene representante legal: el bloque no se
+            deshabilita, no se renderiza. Un formulario gris que no se puede
+            llenar es una pregunta sin respuesta posible. */}
         {empresa?.tipoPersona === "JURIDICA" && (
           <BloqueRepresentante pendiente={falta("representante")} />
         )}
-        <BloqueActividad
-          pendiente={falta("codigoCiiu") || falta("tarifaIcaPorMil")}
-        />
+        <BloqueActividad pendiente={falta("codigoCiiu") || falta("tarifaIcaPorMil")} />
         <BloqueMatricula />
       </div>
     </AsistenteShell>
@@ -161,7 +167,14 @@ function ActividadesVigentes({
       {ordenadas.map((f, i) => (
         <Registrada
           key={String(f.id)}
-          etiqueta={papel(i, f.es_principal === true)}
+          /* La principal lleva píldora rellena y las demás, borde: de las
+             varias que declara el RUT solo una decide la cuenta de ingresos y
+             la tarifa de ICA, y esa jerarquía tiene que verse antes de leer. */
+          etiqueta={
+            <Pildora destacada={f.es_principal === true}>
+              {papel(i, f.es_principal === true)}
+            </Pildora>
+          }
           accion={
             /* La principal no se quita desde acá: dejar la empresa sin principal
                deja al plan de cuentas sin cuenta de ingresos. Cambiarla es cerrar
@@ -220,50 +233,31 @@ function ResponsabilidadesVigentes({
   if (filas.length === 0) return null;
 
   return (
-    <Registradas>
+    <ListaVigencia>
       {filas.map((f) => {
         const suprimido = f.codigo_vigente === false;
         const reemplazo = f.codigo_reemplazo as number | null;
         const fe = f.codigo_dian_fe as string | null;
 
         return (
-          <Registrada
+          <FilaVigencia
             key={String(f.id)}
-            etiqueta={String(f.codigo)}
-            mono
-            accion={
+            codigo={String(f.codigo)}
+            nombre={String(f.descripcion ?? "")}
+            /* El tachado y el "usa el código X" los pone `FilaVigencia`: el
+               código sigue ahí porque el RUT lo dice, pero el motor trata el
+               reemplazo, y verlo tachado es lo que evita buscar IVA en una
+               lista donde el IVA está bajo otro número. */
+            suprimida={suprimido && reemplazo !== null ? String(reemplazo) : undefined}
+            etiquetas={
               /* Solo seis de las 48 viajan en el XML de la factura. Verlo acá
                  ahorra ir a buscarlo al anexo técnico. */
-              fe ? (
-                <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                  {fe}
-                </span>
-              ) : undefined
+              fe ? <Pildora>Va en la factura · {fe}</Pildora> : undefined
             }
-          >
-            <span className="flex items-start gap-1.5">
-              {/* El color va en el icono, nunca en el texto pequeño: `warning`
-                  (#B26A00) da 4.2:1 sobre blanco y el reglamento exige 4.5:1
-                  para texto normal. Como gráfico el umbral es 3:1 y pasa. */}
-              {suprimido && (
-                <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" />
-              )}
-              <span className="min-w-0">
-                <span className="block text-[13px]">
-                  {String(f.descripcion ?? "")}
-                </span>
-                {suprimido && reemplazo !== null && (
-                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                    Código suprimido por la DIAN. Hoy es el {reemplazo} ·{" "}
-                    {String(f.descripcion_reemplazo ?? "")}
-                  </span>
-                )}
-              </span>
-            </span>
-          </Registrada>
+          />
         );
       })}
-    </Registradas>
+    </ListaVigencia>
   );
 }
 
@@ -307,6 +301,7 @@ function BloqueResponsabilidades({ pendiente }: { pendiente: boolean }) {
           error={errores.codigo?.message}
         >
           <SelectorResponsabilidadRut
+            className={CONTROL}
             id="responsabilidad"
             valor={codigo ?? null}
             invalido={Boolean(errores.codigo)}
@@ -350,7 +345,7 @@ function BloqueResponsabilidades({ pendiente }: { pendiente: boolean }) {
  * condición tributaria que se sigue declarando a mano, y sin ella la cuenta de
  * ICA retenido no se propone nunca.
  */
-function AgenteIca() {
+function BloqueAgenteIca() {
   const { data: filas = [] } = useQuery({
     queryKey: ["regimenes"],
     queryFn: legalApi.regimenes,
@@ -379,36 +374,28 @@ function AgenteIca() {
   const trabajando = abrir.isPending || cerrar.isPending;
 
   return (
-    <button
-      type="button"
-      aria-pressed={marcado}
-      disabled={trabajando}
-      onClick={() =>
-        marcado ? cerrar.mutate(String(vigente.id)) : abrir.mutate(undefined)
-      }
-      className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors disabled:opacity-60 ${
-        marcado ? "border-input bg-muted" : "border-border hover:bg-accent"
-      }`}
+    <Bloque
+      titulo="Agente retenedor de ICA"
+      descripcion="No sale del RUT: lo define el acuerdo del municipio de la sede principal."
     >
-      <span
-        className={`grid size-5 shrink-0 place-items-center rounded-full border transition-colors ${
-          marcado
-            ? "border-primary bg-primary text-primary-foreground"
-            : "border-input"
-        }`}
-      >
-        {marcado && <Check className="size-3" strokeWidth={3} />}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-[13px] font-semibold">
-          El municipio la designó agente retenedor de ICA
+      {/* Segmentado y no un interruptor: acá "no marcado" y "dijo que no" son
+          cosas distintas —la primera es que nadie contestó— y un interruptor
+          las representa igual. Con Sí y No a la vista, la respuesta existe. */}
+      <div className="flex flex-col gap-2">
+        <SegmentadoSiNo
+          etiquetaGrupo="¿El municipio la designó agente retenedor de ICA?"
+          valor={marcado}
+          deshabilitado={trabajando}
+          onCambio={(v) =>
+            v ? abrir.mutate(undefined) : vigente && cerrar.mutate(String(vigente.id))
+          }
+        />
+        <span className="text-xs text-muted-foreground">
+          Marcarlo agrega la cuenta de ICA retenido al plan. La tarifa por mil se carga con
+          cada actividad económica, porque depende del municipio donde se ejerce.
         </span>
-        <span className="mt-0.5 block text-[11px] text-muted-foreground">
-          No sale del RUT: lo define el acuerdo municipal. Agrega la cuenta de
-          ICA retenido.
-        </span>
-      </span>
-    </button>
+      </div>
+    </Bloque>
   );
 }
 
@@ -454,6 +441,7 @@ function BloqueRepresentante({ pendiente }: { pendiente: boolean }) {
   return (
     <Bloque
       titulo="Representante legal"
+      etiqueta="Persona jurídica"
       descripcion="Quien firma por la empresa. Sale del certificado de existencia y representación."
       pendiente={pendiente}
     >
@@ -498,6 +486,7 @@ function BloqueRepresentante({ pendiente }: { pendiente: boolean }) {
         <div className="grid grid-cols-[176px_160px] gap-3">
           <Campo id="repTipoDoc" etiqueta="Tipo">
             <SelectorTipoDocumento
+              className={CONTROL}
               id="repTipoDoc"
               valor={form.watch("tipoDocumento")}
               aplicaPersona="NATURAL"
@@ -601,6 +590,7 @@ function BloqueMatricula() {
   return (
     <Bloque
       titulo="Matrícula mercantil"
+      etiqueta="Opcional"
       descripcion="El registro ante la cámara de comercio. No decide ninguna cuenta del plan; se guarda para tenerlo a mano."
     >
       {vigente && (
@@ -767,8 +757,6 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
         quitando={quitar.isPending}
       />
 
-      {vigentes.length > 0 && <AgenteIca />}
-
       {!abierto && (
         <Button
           variant="outline"
@@ -801,6 +789,7 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
             }
           >
             <SelectorCiiu
+              className={CONTROL}
               id="ciiu"
               valor={form.watch("codigoCiiu") || null}
               invalido={Boolean(errores.codigoCiiu)}
@@ -818,6 +807,7 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
               error={errores.municipioCodigo?.message}
             >
               <SelectorMunicipio
+                className={CONTROL}
                 id="ciiuMunicipio"
                 valor={municipio || null}
                 invalido={Boolean(errores.municipioCodigo)}

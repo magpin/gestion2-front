@@ -4,9 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Check, Loader2 } from "lucide-react";
+import { Check, Loader2, TriangleAlert } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { ArbolPlan } from "@/modules/plan-cuentas/components/ArbolPlan";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
 import type {
@@ -16,19 +15,20 @@ import type {
 import type { ClavePaso } from "@/modules/configuracion/types/configuracion.types";
 import { AsistenteShell, RUTA_PASO } from "../components/AsistenteShell";
 import { Bloque } from "../components/Bloque";
+import { AvisoFaltante, EstadoVacio, NotaInformativa } from "../components/Comunes";
 import { HechosOperativos } from "../components/HechosOperativos";
+import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
 import { useGuardar } from "../hooks/useGuardar";
+import styles from "../asistente.module.css";
 
 const CLAVE_SUGERENCIA = ["plan-cuentas", "sugerencia"];
+const CLAVE_PLAN = ["plan-cuentas"];
+
+/** Cuántas cuentas se muestran antes de colapsar el resto del bloque. */
+const TOPE_VISIBLE = 6;
 
 /** De lo que no depende de nada a lo que depende de una respuesta puntual. */
-const ORDEN_BLOQUES: ClaveBloque[] = [
-  "BASE",
-  "PATRIMONIO",
-  "IMPUESTOS",
-  "GIRO",
-  "OPERACION",
-];
+const ORDEN_BLOQUES: ClaveBloque[] = ["BASE", "PATRIMONIO", "IMPUESTOS", "GIRO", "OPERACION"];
 
 const NOMBRE_BLOQUE: Record<ClaveBloque, string> = {
   BASE: "Lo que usa toda contabilidad",
@@ -48,7 +48,6 @@ const MOTIVO_BLOQUE: Record<ClaveBloque, string> = {
   OPERACION:
     "Sale de lo que declaraste sobre tu operación: empleados, activos, crédito, caja menor.",
 };
-const CLAVE_PLAN = ["plan-cuentas"];
 
 /**
  * Paso 4 — el plan de cuentas.
@@ -59,17 +58,27 @@ const CLAVE_PLAN = ["plan-cuentas"];
  * diciendo cuál. Lo que no se puede deducir no se inventa: aparece como dato
  * faltante, con el paso que lo resuelve.
  *
- * Todo llega marcado y nada se crea hasta que la persona confirma. Un plan
- * sembrado a ciegas obliga después a borrar la mitad, y en contabilidad borrar
- * cuentas con movimiento no es una opción.
+ * Todo llega marcado y **nada se crea hasta que la persona confirma**. Por eso
+ * el botón de avanzar de este paso no dice «Continuar» sino «Crear las cuentas
+ * marcadas y continuar»: confirmar la propuesta *es* la acción del paso, no un
+ * trámite previo a irse.
  */
 export function PasoPlanCuentas() {
   const router = useRouter();
   const [descartadas, setDescartadas] = useState<Set<string>>(new Set());
+  const [bloquesQuitados, setBloquesQuitados] = useState<Set<ClaveBloque>>(new Set());
+  const [expandidos, setExpandidos] = useState<Set<ClaveBloque>>(new Set());
+
+  const { data: estado } = useEstadoConfiguracion();
+  const paso = estado?.pasos.find((p) => p.clave === "PLAN_CUENTAS");
 
   const { data: sugerencia, isLoading } = useQuery({
     queryKey: CLAVE_SUGERENCIA,
     queryFn: planCuentasApi.sugerencia,
+    // Bloqueado significa que la situación legal todavía no da para proponer
+    // nada. Pedir la sugerencia igual devolvería una lista vacía que se lee
+    // como "no hay nada que agregar", que es lo contrario de lo que pasa.
+    enabled: paso?.estado !== "BLOQUEADO",
   });
 
   const { data: plan = [] } = useQuery({
@@ -92,16 +101,20 @@ export function PasoPlanCuentas() {
     for (const c of propuestas) grupos[c.bloque]?.push(c);
     return grupos;
   }, [propuestas]);
+
   const elegidas = useMemo(
     () =>
-      propuestas.filter((c) => !descartadas.has(c.codigo)).map((c) => c.codigo),
-    [propuestas, descartadas],
+      propuestas
+        .filter((c) => !descartadas.has(c.codigo) && !bloquesQuitados.has(c.bloque))
+        .map((c) => c.codigo),
+    [propuestas, descartadas, bloquesQuitados],
   );
 
   const guardar = useGuardar<string[]>({
     fn: (codigos) => planCuentasApi.aplicar(codigos),
     exito: "Cuentas agregadas al plan",
-    invalidar: [CLAVE_PLAN, CLAVE_SUGERENCIA],
+    invalidar: [CLAVE_PLAN, CLAVE_SUGERENCIA, ["estado-configuracion"]],
+    alTerminar: () => router.push(RUTA_PASO.RESOLUCIONES),
   });
 
   const alternar = (codigo: string) =>
@@ -112,138 +125,176 @@ export function PasoPlanCuentas() {
       return nuevas;
     });
 
+  const alternarBloque = (b: ClaveBloque) =>
+    setBloquesQuitados((previos) => {
+      const nuevos = new Set(previos);
+      if (nuevos.has(b)) nuevos.delete(b);
+      else nuevos.add(b);
+      return nuevos;
+    });
+
+  // Llegar acá con el paso bloqueado solo pasa por URL: el recorrido no lo
+  // enlaza. Decir por qué y a dónde ir es más útil que un 404.
+  if (paso?.estado === "BLOQUEADO") {
+    return (
+      <AsistenteShell clave="PLAN_CUENTAS" titulo="Plan de cuentas">
+        <AvisoFaltante accion={{ texto: "Ir a situación legal", href: RUTA_PASO.SITUACION_LEGAL }}>
+          Todavía no se puede proponer un plan: las cuentas se desprenden de lo que diga el RUT,
+          y la situación legal está sin completar.
+        </AvisoFaltante>
+      </AsistenteShell>
+    );
+  }
+
   return (
-    <AsistenteShell clave="PLAN_CUENTAS" titulo="Plan de cuentas">
+    <AsistenteShell
+      clave="PLAN_CUENTAS"
+      titulo="Plan de cuentas"
+      guardando={guardar.isPending}
+      etiquetaContinuar={
+        elegidas.length > 0
+          ? `Crear ${elegidas.length} cuenta${elegidas.length === 1 ? "" : "s"} y continuar`
+          : undefined
+      }
+      alContinuar={
+        elegidas.length > 0 ? () => guardar.mutate(elegidas) : undefined
+      }
+    >
       {isLoading ? (
         <div className="flex justify-center py-10 text-muted-foreground">
           <Loader2 className="size-5 animate-spin" />
         </div>
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-9">
           {/* Va antes que la propuesta porque la cambia: responder que hay
-              empleados suma quince cuentas ahí abajo, y verlo aparecer es lo que
+              empleados suma cuentas ahí abajo, y verlas aparecer es lo que
               explica para qué sirvió la pregunta. */}
           <HechosOperativos />
 
           {/* Lo que no se pudo deducir, y por qué. Resolverlo cambia la
               sugerencia entera, así que atenderlo después obliga a rehacer. */}
           {(sugerencia?.faltantes ?? []).map((f) => (
-            <div
+            <AvisoFaltante
               key={f.hecho}
-              className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/5 p-3"
+              accion={{
+                texto: `Ir a ${f.paso === "SITUACION_LEGAL" ? "situación legal" : "resolverlo"}`,
+                href: RUTA_PASO[f.paso as ClavePaso],
+              }}
             >
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-              <div className="flex-1 text-sm">
-                <p className="font-medium">Falta {f.etiqueta.toLowerCase()}</p>
-                <p className="text-muted-foreground">{f.impide}</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push(RUTA_PASO[f.paso as ClavePaso])}
-              >
-                Cargarlo
-                <ArrowRight className="size-3.5" />
-              </Button>
-            </div>
+              {f.impide}
+            </AvisoFaltante>
           ))}
 
           {propuestas.length > 0 && (
-            <section className="flex flex-col gap-8">
+            <>
+              <NotaInformativa>
+                No se crea ninguna cuenta hasta que confirmes. En contabilidad, borrar una cuenta
+                con movimiento no es una opción.
+              </NotaInformativa>
+
               {/* Agrupadas por origen y no en una lista de cuarenta y cinco: así
                   se ve de dónde sale cada grupo, y descartar uno entero —"no
                   tengo empleados"— deja de ser cliquear quince veces. */}
-              {ORDEN_BLOQUES.filter((b) => porBloque[b].length > 0).map((b) => (
-                <Bloque
-                  key={b}
-                  titulo={NOMBRE_BLOQUE[b]}
-                  descripcion={MOTIVO_BLOQUE[b]}
-                  accion={
-                    <span className="font-mono text-xs text-muted-foreground">
-                      {porBloque[b].length}
-                    </span>
-                  }
-                >
-                  {/* Una lista con separadores y no una tarjeta con borde por
-                      cuenta: quince bordes compiten entre sí y ninguno destaca.
+              {ORDEN_BLOQUES.filter((b) => porBloque[b].length > 0).map((b) => {
+                const quitado = bloquesQuitados.has(b);
+                const cuentas = porBloque[b];
+                const expandido = expandidos.has(b) || cuentas.length <= TOPE_VISIBLE;
+                const visibles = expandido ? cuentas : cuentas.slice(0, TOPE_VISIBLE);
 
-                      El scroll lo lleva el cuerpo del paso, no cada bloque:
-                      scrolls anidados hacen que la rueda mueva algo distinto
-                      según dónde esté el puntero. */}
-                  <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-                    {porBloque[b].map((c) => (
-                      <FilaSugerida
-                        key={c.codigo}
-                        cuenta={c}
-                        elegida={!descartadas.has(c.codigo)}
-                        onAlternar={() => alternar(c.codigo)}
-                      />
-                    ))}
-                  </ul>
-                </Bloque>
-              ))}
+                return (
+                  <div key={b} className={`${styles.up} ${quitado ? "opacity-55" : ""}`}>
+                    <Bloque
+                      titulo={NOMBRE_BLOQUE[b]}
+                      etiqueta={b.toLowerCase()}
+                      accion={
+                        <button
+                          type="button"
+                          onClick={() => alternarBloque(b)}
+                          className="text-[13px] font-medium text-brand-text hover:text-brand-hover"
+                        >
+                          {quitado ? "Volver a incluir" : "Quitar bloque"}
+                        </button>
+                      }
+                    >
+                      <p className="m-0 -mt-1 text-[13px] text-muted-foreground">
+                        <span className="font-medium text-foreground">Porque:</span>{" "}
+                        {MOTIVO_BLOQUE[b]}
+                      </p>
 
-              <div className="flex items-center gap-3 border-t border-border pt-6">
-                <Button
-                  onClick={() => guardar.mutate(elegidas)}
-                  disabled={elegidas.length === 0 || guardar.isPending}
-                >
-                  {guardar.isPending && (
-                    <Loader2 className="size-4 animate-spin" />
-                  )}
-                  Agregar {elegidas.length} cuenta
-                  {elegidas.length === 1 ? "" : "s"}
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {descartadas.size > 0 &&
-                    `${descartadas.size} descartada${descartadas.size === 1 ? "" : "s"}`}
-                </span>
-              </div>
-            </section>
+                      {!quitado && (
+                        <>
+                          <ul className="m-0 flex list-none flex-col divide-y divide-secondary p-0">
+                            {visibles.map((c) => (
+                              <FilaSugerida
+                                key={c.codigo}
+                                cuenta={c}
+                                elegida={!descartadas.has(c.codigo)}
+                                onAlternar={() => alternar(c.codigo)}
+                              />
+                            ))}
+                          </ul>
+                          {!expandido && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandidos((p) => new Set(p).add(b))
+                              }
+                              className="self-start text-[13px] font-medium text-brand-text hover:text-brand-hover"
+                            >
+                              Ver todas las cuentas del bloque ({cuentas.length})
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </Bloque>
+                  </div>
+                );
+              })}
+            </>
           )}
 
-          {propuestas.length === 0 &&
-            (sugerencia?.faltantes.length ?? 0) === 0 && (
-              <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-                No queda nada por proponer: tu plan ya cubre lo que se desprende
-                de los datos de la empresa. Podés agregar cuentas propias desde
-                Plan de cuentas.
-              </p>
-            )}
+          {propuestas.length === 0 && (sugerencia?.faltantes.length ?? 0) === 0 && (
+            <EstadoVacio
+              titulo="No queda nada por proponer"
+              ayuda="Tu plan ya cubre lo que se desprende de los datos de la empresa."
+            />
+          )}
 
           {/* La sugerencia cubre lo que se desprende de los datos de la empresa.
               Lo que falte se agrega del catálogo, y eso vive en su propia
               pantalla: acá el foco es confirmar lo propuesto. */}
-          <p className="text-xs text-muted-foreground">
+          <p className="m-0 text-xs text-muted-foreground">
             ¿Te falta alguna?{" "}
             <Link
               href="/dashboard/plan-cuentas"
-              className="underline underline-offset-2"
+              className="text-brand-text underline underline-offset-2 hover:text-brand-hover"
             >
               Buscala en el catálogo del Decreto 2650
             </Link>
             .
           </p>
 
-          {plan.length > 0 && (
-            <section className="flex flex-col gap-2">
-              <h2 className="text-sm font-semibold">
-                Tu plan ·{" "}
-                <span className="text-brand-text">
-                  {plan.length} cuenta{plan.length === 1 ? "" : "s"}
-                </span>
-              </h2>
-              {/* El mismo árbol de /dashboard/plan-cuentas, de solo lectura: dos
-                  pantallas mostrando lo mismo de dos formas distintas hacían
-                  parecer que los auxiliares no colgaban de su cuenta madre.
+          <Bloque
+            titulo="Plan actual"
+            descripcion={`${plan.length} cuenta${plan.length === 1 ? "" : "s"} creadas`}
+          >
+            {plan.length === 0 ? (
+              <EstadoVacio
+                titulo="El plan todavía está vacío"
+                ayuda="Las cuentas que confirmes arriba aparecerán acá."
+              />
+            ) : (
+              /* El mismo árbol de /dashboard/plan-cuentas, de solo lectura: dos
+                 pantallas mostrando lo mismo de dos formas distintas hacían
+                 parecer que los auxiliares no colgaban de su cuenta madre.
 
-                  Con tope: son treinta y tres cuentas y creciendo, y es material
-                  de consulta, no lo que hay que resolver en este paso. */}
-              <div className="max-h-96 overflow-y-auto overscroll-contain rounded-xl border border-border p-1">
+                 Con tope: son decenas de cuentas y creciendo, y es material de
+                 consulta, no lo que hay que resolver en este paso. */
+              <div className="max-h-96 overflow-y-auto overscroll-contain rounded-lg border border-border p-1">
                 <ArbolPlan cuentas={plan} />
               </div>
-            </section>
-          )}
+            )}
+          </Bloque>
         </div>
       )}
     </AsistenteShell>
@@ -265,18 +316,16 @@ function FilaSugerida({
         type="button"
         onClick={onAlternar}
         aria-pressed={elegida}
-        className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-accent ${
+        className={`flex w-full items-start gap-3 py-2.5 text-left transition-colors ${
           elegida ? "" : "opacity-55"
         }`}
       >
         <span
           className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border ${
-            elegida
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border"
+            elegida ? "border-primary bg-primary text-primary-foreground" : "border-input"
           }`}
         >
-          {elegida && <Check className="size-3" />}
+          {elegida && <Check className="size-3" strokeWidth={3} />}
         </span>
 
         <span className="min-w-0 flex-1">
@@ -284,9 +333,7 @@ function FilaSugerida({
             <span className="w-24 shrink-0 font-mono text-xs text-muted-foreground">
               {cuenta.codigo}
             </span>
-            <span className="min-w-0 flex-1 truncate text-sm font-medium">
-              {cuenta.nombre}
-            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">{cuenta.nombre}</span>
           </span>
 
           {/* El motivo va sangrado bajo el nombre y en gris: es la razón por la
@@ -298,35 +345,23 @@ function FilaSugerida({
         </span>
 
         <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-          {cuenta.requiereEleccion && (
-            <Etiqueta tono="aviso">elegí la subcuenta</Etiqueta>
-          )}
+          {cuenta.requiereEleccion && <Etiqueta tono="aviso">elegí la subcuenta</Etiqueta>}
           {cuenta.exigeTercero && <Etiqueta>tercero</Etiqueta>}
           {/* El decreto deja libre este tramo: el número es propuesta, no norma. */}
-          {cuenta.sugerido && (
-            <Etiqueta>{cuenta.rango ?? "numeración libre"}</Etiqueta>
-          )}
+          {cuenta.sugerido && <Etiqueta>{cuenta.rango ?? "numeración libre"}</Etiqueta>}
         </span>
       </button>
     </li>
   );
 }
 
-function Etiqueta({
-  children,
-  tono,
-}: {
-  children: React.ReactNode;
-  tono?: "aviso";
-}) {
+function Etiqueta({ children, tono }: { children: React.ReactNode; tono?: "aviso" }) {
   return (
-    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-      {/* El color va en el icono y no en el texto: `warning` (#B26A00) da 4.2:1
-          sobre blanco y el reglamento pide 4.5:1 para texto normal. Como
-          elemento gráfico el umbral es 3:1 y pasa de sobra. */}
-      {tono === "aviso" && (
-        <AlertTriangle className="size-2.5 shrink-0 text-warning" />
-      )}
+    <span className="inline-flex items-center gap-1 rounded bg-secondary px-1.5 py-0.5 text-[10px] whitespace-nowrap text-muted-foreground">
+      {/* El color va en el ícono y no en el texto: `warning` da 4.2:1 sobre
+          blanco y el reglamento pide 4.5:1 para texto normal. Como elemento
+          gráfico el umbral es 3:1 y pasa de sobra. */}
+      {tono === "aviso" && <TriangleAlert className="size-2.5 shrink-0 text-warning" />}
       {children}
     </span>
   );

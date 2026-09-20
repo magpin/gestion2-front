@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +22,8 @@ interface Props {
    */
   origen?: "DANE" | "DIAN";
   invalido?: boolean;
+  /** La escala la decide la pantalla: el asistente mide 44px, el resto no. */
+  className?: string;
 }
 
 /**
@@ -34,7 +37,7 @@ interface Props {
  * La búsqueda va al servidor y mira nombre y código a la vez: quien tiene el RUT
  * delante escribe "4741", y quien no, escribe "computadores". Ignora tildes.
  */
-export function SelectorCiiu({ id, valor, onCambio, origen, invalido }: Props) {
+export function SelectorCiiu({ id, valor, onCambio, origen, invalido, className }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
 
@@ -60,7 +63,7 @@ export function SelectorCiiu({ id, valor, onCambio, origen, invalido }: Props) {
         render={<Button type="button" variant="outline" />}
         id={id}
         aria-invalid={invalido || undefined}
-        className="w-full justify-between font-normal aria-invalid:border-danger"
+        className={cn("w-full justify-between font-normal aria-invalid:border-danger", className)}
       >
         <span className={`truncate ${valor ? "" : "text-muted-foreground"}`}>
           {elegida ? (

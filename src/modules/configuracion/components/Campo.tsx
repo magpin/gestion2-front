@@ -46,7 +46,13 @@ interface CampoProps {
  *   152px   una fecha — `2026-08-28`, siempre diez caracteres
  *   160px   hasta doce — NIT, número de documento, rango de facturación
  *   176px   un enum del catálogo — el más largo es `PATRIMONIO_AUTONOMO`
+ *   176px   hasta catorce — el número de resolución de la DIAN
  *     1fr   texto libre — nombres, direcciones, razón social
+ *
+ * El número de resolución comparte medida con los enums, pero es su propia
+ * fila: tiene catorce dígitos y en 160px se corta. Coinciden por casualidad,
+ * no por parecido, y juntarlos haría que el día que un enum crezca alguien
+ * ensanche también el número de resolución sin motivo.
  *
  * Al agregar un campo se toma la medida de esta lista. Si ninguna sirve, es que
  * falta un caso: se agrega acá y se usa, no se inventa un número suelto.
@@ -66,7 +72,7 @@ export function Campo({
     <div className={cn("flex flex-col", grande ? "gap-2" : "gap-1.5", className)}>
       <label
         htmlFor={id}
-        className={cn("font-medium", grande ? "text-sm" : "text-xs")}
+        className={cn("font-medium", grande ? "text-sm" : "text-[13px]")}
       >
         {etiqueta}
       </label>

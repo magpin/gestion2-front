@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -16,6 +17,8 @@ interface Props {
   /** Códigos ya registrados: se marcan y no se dejan elegir dos veces. */
   yaRegistrados?: number[];
   invalido?: boolean;
+  /** La escala la decide la pantalla: el asistente mide 44px, el resto no. */
+  className?: string;
 }
 
 /**
@@ -37,6 +40,7 @@ export function SelectorResponsabilidadRut({
   onCambio,
   yaRegistrados = [],
   invalido,
+  className,
 }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -63,7 +67,7 @@ export function SelectorResponsabilidadRut({
         render={<Button type="button" variant="outline" />}
         id={id}
         aria-invalid={invalido || undefined}
-        className="w-full justify-between font-normal aria-invalid:border-danger"
+        className={cn("w-full justify-between font-normal aria-invalid:border-danger", className)}
       >
         <span className={`truncate ${elegida ? "" : "text-muted-foreground"}`}>
           {elegida ? (
