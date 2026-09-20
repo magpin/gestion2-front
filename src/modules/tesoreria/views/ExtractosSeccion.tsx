@@ -228,7 +228,7 @@ export function ExtractosSeccion() {
                           <td className="px-4 py-3 font-mono">{formatCOP(Number(l.valor))}</td>
                           <td className="px-4 py-3">{l.tipo === "CREDITO" ? "Crédito" : "Débito"}</td>
                           <td className="px-4 py-3">
-                            {l.banco_movimiento_id ? (
+                            {l.grupo_id ? (
                               <span className="text-xs font-semibold text-success">Sí</span>
                             ) : (
                               <span className="text-xs text-muted-foreground">No</span>

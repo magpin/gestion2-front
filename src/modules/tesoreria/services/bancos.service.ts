@@ -4,8 +4,8 @@ import type {
   AgregarLineaExtractoInput,
   CargaInicialBancoInput,
   CerrarCorteBancoInput,
+  ConciliarInput,
   CorteBancoResumen,
-  ConciliarManualInput,
   CrearCuentaBancariaInput,
   CrearExtractoInput,
   CuentaBancariaResumen,
@@ -17,8 +17,8 @@ import type {
   PaginaExtractos,
   PaginaMovimientosBanco,
   PrevioCorteBanco,
+  PropuestasExtracto,
   RegistrarMovimientoBancoInput,
-  ResumenConciliacionAutomatica,
 } from "../types/bancos.types";
 
 /**
@@ -108,15 +108,24 @@ export const extractosApi = {
       .post<LineaExtractoResumen>(`/extractos/${id}/lineas`, datos)
       .then((r) => r.data),
 
-  /** Aparea por (fecha, valor) exacto; deja sin tocar el caso ambiguo. */
-  conciliarAutomatico: (id: string) =>
+  /**
+   * Qué cruza con qué, calculado en el momento. **No escribe nada**: el
+   * sistema propone y una persona confirma.
+   */
+  propuestas: (id: string) =>
     api
-      .post<ResumenConciliacionAutomatica>(`/extractos/${id}/conciliar-automatico`)
+      .get<PropuestasExtracto>(`/extractos/${id}/propuestas`)
       .then((r) => r.data),
 
-  /** Aparea a mano lo que el automático dejó sin tocar. */
-  conciliarManual: (id: string, datos: ConciliarManualInput) =>
-    api.post(`/extractos/${id}/conciliar-manual`, datos).then(() => undefined),
+  /** Confirma uno o varios cruces que cuadran al centavo. Todos o ninguno. */
+  conciliar: (id: string, datos: ConciliarInput) =>
+    api.post(`/extractos/${id}/conciliar`, datos).then(() => undefined),
+
+  /** Deshace un cruce. Sin esto, apareado mal es apareado para siempre. */
+  deshacer: (id: string, grupoId: string) =>
+    api
+      .post(`/extractos/${id}/grupos/${grupoId}/deshacer`)
+      .then(() => undefined),
 
   /** Exige que cuadren las dos cuentas de la conciliación; rechaza con el detalle si no. */
   cerrar: (id: string) =>

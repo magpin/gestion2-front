@@ -127,6 +127,7 @@ export interface ExtractoResumen {
   estado: EstadoExtracto;
   conciliado_en: string | null;
   conciliado_por: string | null;
+  archivo_nombre: string | null;
 }
 
 export const TIPOS_LINEA_EXTRACTO = ["DEBITO", "CREDITO"] as const;
@@ -137,14 +138,47 @@ export interface LineaExtractoResumen {
   extracto_id: string;
   fecha: string;
   descripcion: string;
+  referencia: string | null;
   valor: string;
   tipo: TipoLineaExtracto;
-  /** El movimiento del libro con el que ya se apareó, o `null` si sigue suelta. */
-  banco_movimiento_id: string | null;
+  origen: "MANUAL" | "IMPORTADA";
+  fila_archivo: number | null;
+  /** Error del banco: por qué esta línea no se cruza. */
+  nota: string | null;
+  /** El cruce vigente en que está, o `null` si sigue suelta. */
+  grupo_id: string | null;
+}
+
+/**
+ * Por qué se cruzó. Los tres primeros los propone el sistema; `MANUAL` lo
+ * eligió una persona, `REGISTRADA` nació de registrar lo que el banco cobró
+ * solo, y `ANTERIOR` viene de una conciliación previa.
+ */
+export type CriterioGrupo =
+  | "REFERENCIA"
+  | "MISMA_FECHA"
+  | "FECHA_CERCANA"
+  | "MANUAL"
+  | "REGISTRADA"
+  | "ANTERIOR";
+
+/**
+ * Un cruce. No es «una línea con un movimiento»: son unas líneas del extracto
+ * con unos movimientos del libro cuyas sumas con signo son iguales. Un renglón
+ * del banco puede corresponder a dos hechos del libro, o al revés.
+ */
+export interface GrupoResumen {
+  id: string;
+  criterio: CriterioGrupo;
+  creado_en: string;
+  creado_por: string | null;
+  linea_ids: string[];
+  movimiento_ids: string[];
 }
 
 export interface ExtractoDetalle extends ExtractoResumen {
   lineas: LineaExtractoResumen[];
+  grupos: GrupoResumen[];
 }
 
 export interface PaginaExtractos {
@@ -168,15 +202,52 @@ export interface AgregarLineaExtractoInput {
   tipo: TipoLineaExtracto;
 }
 
-export interface ConciliarManualInput {
-  lineaId: string;
-  movimientoId: string;
+/** El criterio que puede mandar el frontend al confirmar: no `REGISTRADA` ni `ANTERIOR`. */
+export type CriterioConciliacion =
+  | "REFERENCIA"
+  | "MISMA_FECHA"
+  | "FECHA_CERCANA"
+  | "MANUAL";
+
+export interface GrupoConciliacionInput {
+  lineaIds: string[];
+  movimientoIds: string[];
+  criterio: CriterioConciliacion;
 }
 
-export interface ResumenConciliacionAutomatica {
-  pares: number;
-  lineasSinAparear: number;
-  movimientosSinAparear: number;
+/** Uno o varios cruces, todos o ninguno. */
+export interface ConciliarInput {
+  grupos: GrupoConciliacionInput[];
+}
+
+/**
+ * Lo que el sistema propone, calculado en el momento. No escribe nada: hasta
+ * que una persona no confirme, acá no pasó nada.
+ */
+export interface PropuestasExtracto {
+  propuestas: Array<{
+    lineaId: string;
+    movimientoId: string;
+    criterio: "REFERENCIA" | "MISMA_FECHA" | "FECHA_CERCANA";
+    /** Días del banco respecto al libro: positivo si el banco lo registró después. */
+    dias: number;
+    /** El número que coincidió, si el criterio es `REFERENCIA`. */
+    referencia: string | null;
+    motivo: string;
+  }>;
+  /** Líneas con más de un candidato igual de bueno: elige una persona. */
+  ambiguas: Array<{ lineaId: string; candidatos: string[] }>;
+  /** Líneas sueltas que reconoce una regla: «Registrar las 23 líneas de 4×1000». */
+  porRegla: Array<{
+    reglaId: string;
+    nombre: string;
+    contraCuentaId: string;
+    concepto: string;
+    lineaIds: string[];
+    total: string;
+  }>;
+  lineasSueltas: string[];
+  movimientosSueltos: string[];
 }
 
 /**
