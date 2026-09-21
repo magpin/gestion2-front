@@ -5,7 +5,9 @@ import type {
   ConversacionCompleta,
   ConversacionEnLista,
   ConversacionVigente,
+  CuerpoDePago,
   EventoConversacion,
+  PropuestaConversacion,
 } from "../types/conversacion.types";
 
 /** Un turno que el backend no aceptó: el límite, el tope, otra respuesta en curso. */
@@ -38,6 +40,24 @@ export const conversacionService = {
 
   una: (id: string) =>
     api.get<ConversacionCompleta>(`/conversacion/${id}`).then((r) => r.data),
+
+  /**
+   * Confirmar lo que propuso el asistente. El backend mira los roles del
+   * cobro o el pago y lo registra con el mismo código que la pantalla.
+   * `correccion`: lo que la persona cambió en la tarjeta.
+   */
+  confirmarPropuesta: (id: string, correccion?: CuerpoDePago) =>
+    api
+      .post<PropuestaConversacion>(
+        `/conversacion/propuestas/${id}/confirmar`,
+        correccion === undefined ? {} : { correccion },
+      )
+      .then((r) => r.data),
+
+  descartarPropuesta: (id: string) =>
+    api
+      .post<PropuestaConversacion>(`/conversacion/propuestas/${id}/descartar`)
+      .then((r) => r.data),
 
   /** «Nueva conversación»: archiva la vigente. */
   nueva: () => api.post<void>("/conversacion/nueva").then(() => undefined),

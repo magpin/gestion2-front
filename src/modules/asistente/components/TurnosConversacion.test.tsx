@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render as renderizar, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 
 import type { TurnoConversacion } from "../types/conversacion.types";
 import { TurnoGuardado, TurnoRespondiendo, textoDeConsulta } from "./TurnosConversacion";
@@ -13,8 +15,13 @@ const turno = (e: Partial<TurnoConversacion>): TurnoConversacion => ({
   motivo: null,
   creado_en: "2026-09-21T15:00:00Z",
   fuentes: [],
+  propuestas: [],
   ...e,
 });
+
+/** Con React Query: la tarjeta de una propuesta confirma con una mutación. */
+const render = (ui: ReactElement) =>
+  renderizar(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
 
 describe("TurnoGuardado — las fuentes", () => {
   it("una respuesta con consultas dice de dónde salieron las cifras", () => {

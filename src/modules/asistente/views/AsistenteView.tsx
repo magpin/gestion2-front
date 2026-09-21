@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { aviso } from "@/lib/avisos";
+import { formatCOP } from "@/lib/utils";
 import { BurbujaLectura } from "../components/BurbujaLectura";
 import { Compositor } from "../components/Compositor";
 import { ListaConversaciones } from "../components/ListaConversaciones";
@@ -35,6 +36,7 @@ import {
   useNuevaConversacion,
   usePreguntar,
 } from "../hooks/useConversacion";
+import { useResumenDelDia } from "../hooks/useAutonomia";
 import { useProgreso } from "../hooks/useProgreso";
 import { aplicarEvento, type LecturasEnVivo } from "../lib/lecturaEnVivo";
 import {
@@ -94,6 +96,8 @@ export function AsistenteView() {
   /** La lista en el celular: ahí no entra al costado, se abre encima. */
   const [listaAbierta, setListaAbierta] = useState(false);
   const cuerpo = useRef<HTMLDivElement>(null);
+  /** Lo que el asistente registró solo hoy (paso 8): no puede pasar desapercibido. */
+  const { data: resumen } = useResumenDelDia(conversa);
 
   /** Los archivos que se subieron en esta sesión: el nombre solo lo sabe el navegador. */
   const [subidos, setSubidos] = useState<Record<string, string>>({});
@@ -355,6 +359,7 @@ export function AsistenteView() {
     lista,
     listaAbierta,
     alAlternarLista: setListaAbierta,
+    conAutonomia: conversa,
   };
 
   // Una archivada: se lee, no se escribe.
@@ -407,6 +412,16 @@ export function AsistenteView() {
             />
           }
         />
+
+        {resumen !== undefined && resumen.registradas.length > 0 && (
+          <Link
+            href="/dashboard/asistente/autonomia"
+            className="self-center rounded-full bg-muted px-3.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Hoy el asistente registró {resumen.registradas.length} sin preguntar, por{" "}
+            {formatCOP(resumen.registradas.reduce((s, r) => s + r.valor, 0))}. Ver
+          </Link>
+        )}
 
         {linea.map((item) => (
           <div key={item.clave} className="contents">
@@ -480,6 +495,7 @@ function Pantalla({
   lista = null,
   listaAbierta = false,
   alAlternarLista,
+  conAutonomia = false,
 }: {
   children: React.ReactNode;
   pensando?: boolean;
@@ -487,6 +503,8 @@ function Pantalla({
   lista?: React.ReactNode;
   listaAbierta?: boolean;
   alAlternarLista?: (abierta: boolean) => void;
+  /** El enlace a «Hasta dónde llega» (paso 8), si se puede conversar. */
+  conAutonomia?: boolean;
 }) {
   return (
     <div className="relative -mx-4 -my-7 flex h-[calc(100dvh-3.5rem)] min-h-0 md:-mx-10 lg:-mx-14">
@@ -529,6 +547,14 @@ function Pantalla({
             <span className="hidden sm:inline-flex">
               <Pildora tono="HECHO">Lee y propone</Pildora>
             </span>
+            {conAutonomia && (
+              <Link
+                href="/dashboard/asistente/autonomia"
+                className="hidden h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap md:inline-flex"
+              >
+                Hasta dónde llega
+              </Link>
+            )}
             <Link
               href="/configuracion/empresa"
               className="inline-flex h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap"

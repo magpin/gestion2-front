@@ -1,9 +1,13 @@
+import { mensajeDeError } from "@/core/api/api";
+import { aviso } from "@/lib/avisos";
 import { cn } from "@/lib/utils";
+import { useResolverPropuesta } from "../hooks/useConversacion";
 import type { TurnoEnVivo } from "../hooks/useConversacion";
 import type { TurnoConversacion } from "../types/conversacion.types";
 import styles from "../asistente.module.css";
 import { Turno } from "./Mensajes";
 import { TextoRico } from "./Piezas";
+import { TarjetaPropuesta } from "./TarjetaPropuesta";
 import { TarjetaFalla } from "./Tarjetas";
 
 /**
@@ -23,7 +27,12 @@ export function TurnoGuardado({ turno }: { turno: TurnoConversacion }) {
       return (
         <Turno
           turno={{ id: turno.id, autor: "ASISTENTE", texto: turno.texto }}
-          tarjeta={<Fuentes fuentes={turno.fuentes} />}
+          tarjeta={
+            <>
+              <Fuentes fuentes={turno.fuentes} />
+              <Propuestas propuestas={turno.propuestas} />
+            </>
+          }
         />
       );
     case "CORTADO":
@@ -81,9 +90,47 @@ function Fuentes({ fuentes }: { fuentes: readonly string[] }) {
   );
 }
 
+/**
+ * Las propuestas de una respuesta (paso 7): una tarjeta por cobro o pago, cada
+ * una con su botón. Un error al confirmar se avisa y queda escrito en la
+ * tarjeta, porque la propuesta sigue pendiente.
+ */
+function Propuestas({ propuestas }: { propuestas: TurnoConversacion["propuestas"] }) {
+  const { confirmar, descartar } = useResolverPropuesta();
+  if (propuestas.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-3">
+      {propuestas.map((p) => (
+        <TarjetaPropuesta
+          key={p.id}
+          propuesta={p}
+          confirmando={confirmar.isPending && confirmar.variables?.id === p.id}
+          descartando={descartar.isPending && descartar.variables === p.id}
+          alConfirmar={(correccion) =>
+            confirmar.mutate(
+              { id: p.id, correccion },
+              {
+                onSuccess: () => aviso.exito(p.accion === "COBRO" ? "Cobro registrado" : "Pago registrado"),
+                onError: (e) => aviso.error("No se registró", mensajeDeError(e)),
+              },
+            )
+          }
+          alDescartar={() =>
+            descartar.mutate(p.id, {
+              onError: (e) => aviso.error("No se pudo descartar", mensajeDeError(e)),
+            })
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 /** Lo que dice la burbuja mientras se consulta: con palabras de la aplicación. */
 export function textoDeConsulta(etiqueta: string): string {
   if (etiqueta === "Búsqueda") return "Buscando cómo está escrito…";
+  // Proponer un cobro o un pago lo verifica en seco (paso 7): la burbuja lo dice así.
+  if (etiqueta.startsWith("Verificando")) return `${etiqueta}…`;
   return `Consultando ${etiqueta.toLowerCase()}…`;
 }
 

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { conversacionService, TurnoRechazado } from "../services/conversacion.service";
+import type { CuerpoDePago } from "../types/conversacion.types";
 
 export const CLAVE_CONVERSACION = ["conversacion"] as const;
 const CLAVE_VIGENTE = [...CLAVE_CONVERSACION, "vigente"] as const;
@@ -64,6 +65,26 @@ export const useNuevaConversacion = () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE_CONVERSACION });
     },
   });
+};
+
+/**
+ * Confirmar o descartar una propuesta del asistente. Pase lo que pase se
+ * relee la conversación: la propuesta cambia de estado —o guarda por qué no se
+ * pudo— y la tarjeta tiene que decirlo.
+ */
+export const useResolverPropuesta = () => {
+  const queryClient = useQueryClient();
+  const releer = () => queryClient.invalidateQueries({ queryKey: CLAVE_CONVERSACION });
+  const confirmar = useMutation({
+    mutationFn: ({ id, correccion }: { id: string; correccion?: CuerpoDePago }) =>
+      conversacionService.confirmarPropuesta(id, correccion),
+    onSettled: releer,
+  });
+  const descartar = useMutation({
+    mutationFn: (id: string) => conversacionService.descartarPropuesta(id),
+    onSettled: releer,
+  });
+  return { confirmar, descartar };
 };
 
 /** El turno que se está contestando, mientras llega. */
