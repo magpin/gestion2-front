@@ -3,12 +3,8 @@
 import { Paperclip } from "lucide-react";
 import { useRef, useState } from "react";
 
-import {
-  DOCUMENTOS,
-  TIPOS_ACEPTADOS,
-  TITULO_DOCUMENTO,
-  type TipoDocumento,
-} from "../types/asistente.types";
+import { TIPOS_ACEPTADOS, type TipoDocumento } from "../types/asistente.types";
+import { MenuAgregar } from "./MenuAgregar";
 
 /**
  * El pie del chat: adjuntar un documento.
@@ -29,8 +25,9 @@ import {
  * backend necesita saber si un PDF es un RUT o una Cámara de Comercio —lee
  * distinto según el caso— y adivinarlo por el nombre del archivo sería inventar.
  * Por eso lo que se suelta cae como **RUT**, que es el documento con el que
- * empieza el noventa por ciento de las configuraciones; para los otros dos
- * están las píldoras de arriba.
+ * empieza el noventa por ciento de las configuraciones; para elegir cualquiera
+ * de los tres está el menú **+** a la izquierda (paso 3 de
+ * `asistente-conversacion.md`), que reemplazó a las tres píldoras de arriba.
  */
 export function Compositor({
   subiendo,
@@ -59,19 +56,9 @@ export function Compositor({
   };
 
   return (
-    <div className="flex shrink-0 flex-col gap-2.5 border-t border-muted px-7 pt-3 pb-4.5">
-      <div className="flex flex-wrap gap-2">
-        {DOCUMENTOS.map((tipo) => (
-          <button
-            key={tipo}
-            type="button"
-            disabled={subiendo}
-            onClick={() => elegirArchivo(tipo)}
-            className="h-[30px] rounded-full border border-border bg-card px-3 text-xs text-muted-foreground transition-colors hover:border-foreground disabled:opacity-50"
-          >
-            Subir {TITULO_DOCUMENTO[tipo]}
-          </button>
-        ))}
+    <div className="flex shrink-0 items-stretch gap-2.5 border-t border-muted px-7 pt-3 pb-4.5">
+      <div className="flex items-end">
+        <MenuAgregar deshabilitado={subiendo} alElegir={elegirArchivo} />
       </div>
 
       <input
@@ -98,7 +85,7 @@ export function Compositor({
         }}
         onDragLeave={() => setEncima(false)}
         onDrop={alSoltar}
-        className={`flex w-full items-center justify-center gap-2.5 rounded-lg border border-dashed px-3 py-4 text-sm transition-colors disabled:opacity-50 ${
+        className={`flex min-w-0 grow items-center justify-center gap-2.5 rounded-lg border border-dashed px-3 py-4 text-sm transition-colors disabled:opacity-50 ${
           encima
             ? "border-foreground bg-muted text-foreground"
             : "border-input text-muted-foreground hover:border-foreground"
