@@ -17,6 +17,8 @@ const esquema = z.object({
   fecha: z.string().min(1, "Requerido"),
   valor: z.number().positive("Tiene que ser mayor a cero"),
   concepto: z.string().min(3, "Contá de qué se trata").max(300),
+  // Vacía se manda como `undefined`: el backend exige de 1 a 100 si viene.
+  referencia: z.string().trim().max(100, "Hasta 100 caracteres"),
 });
 
 export type DatosMovimientoBanco = z.infer<typeof esquema> & {
@@ -63,7 +65,7 @@ export function FormularioMovimientoBanco({
 
   const form = useForm<z.infer<typeof esquema>>({
     resolver: zodResolver(esquema),
-    defaultValues: { fecha: hoy(), valor: 0, concepto: "" },
+    defaultValues: { fecha: hoy(), valor: 0, concepto: "", referencia: "" },
   });
   const errores = form.formState.errors;
 
@@ -123,6 +125,19 @@ export function FormularioMovimientoBanco({
             onElegir={onContraCuenta}
             invalido={Boolean(form.formState.errors.root)}
           />
+        </Campo>
+      )}
+
+      {/* El saldo inicial no se concilia contra nada: no lleva referencia. */}
+      {requiereContraCuenta && (
+        <Campo
+          id="referencia"
+          etiqueta="Referencia"
+          ayuda="El número de cheque o de la transferencia. Con él la conciliación cruza sola por referencia, que es su criterio más seguro."
+          error={errores.referencia?.message}
+          escala="grande"
+        >
+          <Input id="referencia" maxLength={100} className={CONTROL} {...form.register("referencia")} />
         </Campo>
       )}
 

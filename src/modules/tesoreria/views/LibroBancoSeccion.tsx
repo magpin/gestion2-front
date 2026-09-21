@@ -97,6 +97,7 @@ export function LibroBancoSeccion() {
         valor: d.valor,
         concepto: d.concepto,
         contraCuentaId: d.contraCuentaId!,
+        referencia: d.referencia || undefined,
       });
     },
     onSuccess: async () => {
