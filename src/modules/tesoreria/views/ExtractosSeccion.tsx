@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, FileUp, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,7 @@ import {
   FormularioLineaExtracto,
   type DatosLineaExtracto,
 } from "../components/FormularioLineaExtracto";
+import { DialogoImportarExtracto } from "../components/DialogoImportarExtracto";
 import { SelectorCuentaBancaria } from "../components/SelectorCuentaBancaria";
 import { extractosApi } from "../services/bancos.service";
 import type { CuentaBancariaResumen } from "../types/bancos.types";
@@ -33,9 +34,10 @@ import type { CuentaBancariaResumen } from "../types/bancos.types";
 const ID_FORMULARIO = "formulario-nuevo-extracto";
 
 /**
- * Los extractos de una cuenta bancaria: crearlos y cargarles las líneas
- * una por una. Conciliarlos es de `ConciliacionSeccion` — acá solo se
- * arma el material con el que esa pantalla va a trabajar.
+ * Los extractos de una cuenta bancaria: subirlos desde el archivo del banco,
+ * o crearlos y cargarles las líneas una por una. Conciliarlos es de
+ * `ConciliacionSeccion` — acá solo se arma el material con el que esa
+ * pantalla va a trabajar.
  */
 export function ExtractosSeccion() {
   const queryClient = useQueryClient();
@@ -43,6 +45,7 @@ export function ExtractosSeccion() {
 
   const [cuenta, setCuenta] = useState<CuentaBancariaResumen | null>(null);
   const [creando, setCreando] = useState(false);
+  const [importando, setImportando] = useState(false);
   const [detalleId, setDetalleId] = useState<string | null>(null);
 
   const claveExtractos = ["extractos", cuenta?.id];
@@ -85,15 +88,31 @@ export function ExtractosSeccion() {
           <SelectorCuentaBancaria valor={cuenta} onElegir={setCuenta} />
         </div>
 
-        <Button
-          type="button"
-          disabled={!cuenta || !puedeOperar}
-          onClick={() => setCreando(true)}
-          className="h-auto min-h-12 rounded-2xl px-5 text-sm font-semibold"
-        >
-          Nuevo extracto
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!cuenta || !puedeOperar}
+            onClick={() => setCreando(true)}
+            className="h-auto min-h-12 rounded-2xl px-5 text-sm font-semibold"
+          >
+            Digitar extracto
+          </Button>
+          <Button
+            type="button"
+            disabled={!cuenta || !puedeOperar}
+            onClick={() => setImportando(true)}
+            className="h-auto min-h-12 gap-2 rounded-2xl px-5 text-sm font-semibold"
+          >
+            <FileUp className="size-4" />
+            Subir extracto
+          </Button>
+        </div>
       </section>
+
+      {importando && cuenta && (
+        <DialogoImportarExtracto cuenta={cuenta} onCerrar={() => setImportando(false)} />
+      )}
 
       <section className="overflow-hidden rounded-3xl border border-border bg-card">
         <div className="border-b border-border p-6">
@@ -156,7 +175,7 @@ export function ExtractosSeccion() {
           <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
             <FileText className="size-8 text-muted-foreground" />
             <p className="font-semibold">Esta cuenta todavía no tiene extractos</p>
-            <p className="max-w-md text-sm text-muted-foreground">Creá el primero con el botón de arriba.</p>
+            <p className="max-w-md text-sm text-muted-foreground">Subí el archivo del banco o digitalo, con los botones de arriba.</p>
           </div>
         )}
       </section>
