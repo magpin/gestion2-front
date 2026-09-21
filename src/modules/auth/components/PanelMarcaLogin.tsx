@@ -84,9 +84,13 @@ export function PanelMarcaLogin() {
           </div>
         </div>
 
-        {/* Los ingresos del mes, a la derecha y encima */}
+        {/* Los ingresos del mes, a la derecha y debajo del asiento. Antes iba
+            encima (`top-[150px]`) y tapaba la columna Haber justo donde están
+            los números —van alineados a la derecha—, y como las tarjetas son
+            translúcidas se leían a través: «Ingresos por mes» sobre «190.000».
+            El asiento termina en 255 px: esta arranca después. */}
         <div
-          className={`${styles.cardB} ${styles.sombraFlotante} absolute top-[150px] right-0 flex w-[250px] flex-col gap-4 rounded-lg border border-rail-line bg-rail-foreground/5 p-4.5`}
+          className={`${styles.cardB} ${styles.sombraFlotante} absolute top-[266px] right-0 flex w-[250px] flex-col gap-4 rounded-lg border border-rail-line bg-rail-foreground/5 p-4.5`}
         >
           <span className="text-xs text-rail-muted">Ingresos por mes</span>
           <div className="flex h-24 items-end gap-2.5">
@@ -102,9 +106,11 @@ export function PanelMarcaLogin() {
           </div>
         </div>
 
-        {/* El asistente, abajo: escribe y después reporta */}
+        {/* El asistente, abajo: escribe y después reporta. 276 px y no 310:
+            con 310 llegaba a x 334 y se montaba sobre los ingresos, que
+            empiezan en x 310. */}
         <div
-          className={`${styles.cardC} ${styles.sombraFlotanteFuerte} absolute bottom-0 left-6 flex w-[310px] flex-col gap-3 rounded-lg border border-rail-line bg-rail-foreground/5 px-4.5 py-4`}
+          className={`${styles.cardC} ${styles.sombraFlotanteFuerte} absolute bottom-0 left-6 flex w-[276px] flex-col gap-3 rounded-lg border border-rail-line bg-rail-foreground/5 px-4.5 py-4`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
