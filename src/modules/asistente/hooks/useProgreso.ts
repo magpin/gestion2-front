@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { env } from "@/core/config/env";
 import { useAuthStore } from "@/core/store/authStore";
@@ -22,13 +22,18 @@ const REINTENTO_MS = 3000;
  *
  * `alEvento` se guarda en una referencia para que cambiar el callback no reabra
  * la conexión en cada render.
+ *
+ * Devuelve si el flujo está abierto ahora. Es lo único que puede sostener el
+ * sello «EN VIVO» de la burbuja de carga: con el flujo cortado, lo que se ve es
+ * lo último que llegó, no lo que está pasando.
  */
 export function useProgreso(
   activo: boolean,
   alEvento: (evento: EventoProgreso) => void,
-) {
+): boolean {
   const token = useAuthStore((s) => s.token);
   const manejador = useRef(alEvento);
+  const [conectado, setConectado] = useState(false);
 
   // La referencia se actualiza en un efecto y no durante el render: escribirla
   // mientras React dibuja es lo que la regla `react-hooks/refs` prohíbe, y con
@@ -58,6 +63,7 @@ export function useProgreso(
           return;
         }
         if (respuesta.body === null) return;
+        setConectado(true);
 
         const lector = respuesta.body.getReader();
         const decodificador = new TextDecoder();
@@ -92,6 +98,7 @@ export function useProgreso(
       } catch {
         // Incluye el aborto al desmontar, que no es un error.
       }
+      setConectado(false);
 
       if (vivo && !corte.signal.aborted) {
         reintento = setTimeout(() => void escuchar(), REINTENTO_MS);
@@ -104,6 +111,9 @@ export function useProgreso(
       vivo = false;
       if (reintento !== undefined) clearTimeout(reintento);
       corte.abort();
+      setConectado(false);
     };
   }, [activo, token]);
+
+  return conectado;
 }

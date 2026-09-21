@@ -2,9 +2,10 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { aviso } from "@/lib/avisos";
+import { BurbujaLectura } from "../components/BurbujaLectura";
 import { Compositor } from "../components/Compositor";
 import { Turno } from "../components/Mensajes";
 import { AvatarAsistente, Pildora } from "../components/Piezas";
@@ -24,12 +25,12 @@ import {
   useSubirDocumento,
 } from "../hooks/useAsistente";
 import { useProgreso } from "../hooks/useProgreso";
+import { aplicarEvento, type LecturasEnVivo } from "../lib/lecturaEnVivo";
 import {
   NOMBRE_DOCUMENTO,
   type ResultadoConfirmacion,
   type TipoDocumento,
 } from "../types/asistente.types";
-import styles from "../asistente.module.css";
 
 /**
  * El asistente: subí un documento, mirá lo que encontró, confirmá lo que sirve.
@@ -57,8 +58,10 @@ export function AsistenteView() {
   const [confirmaciones, setConfirmaciones] = useState<
     Array<{ id: string; resultado: ResultadoConfirmacion }>
   >([]);
-  /** Lo último que dijo el backend mientras lee. Es el rótulo de «pensando». */
-  const [enVivo, setEnVivo] = useState<string | null>(null);
+  /** Lo que llegó por el flujo de cada lectura en curso: rótulo y datos. */
+  const [lecturas, setLecturas] = useState<LecturasEnVivo>({});
+  /** El reloj del tiempo transcurrido. Solo corre mientras algo se lee. */
+  const [ahora, setAhora] = useState(() => Date.now());
 
   /**
    * Los documentos que ya se confirmaron en esta sesión.
@@ -74,19 +77,24 @@ export function AsistenteView() {
     [confirmaciones],
   );
 
-  const leyendo = documentos.some(
-    (d) => d.estado === "EN_COLA" || d.estado === "LEYENDO",
-  );
+  const enCurso = documentos
+    .filter((d) => d.estado === "EN_COLA" || d.estado === "LEYENDO")
+    .sort((a, b) => a.creadoEn.localeCompare(b.creadoEn));
+  const leyendo = enCurso.length > 0;
+
+  useEffect(() => {
+    if (!leyendo) return;
+    const reloj = setInterval(() => setAhora(Date.now()), 1000);
+    return () => clearInterval(reloj);
+  }, [leyendo]);
 
   // Cada evento refresca el estado de los documentos: la tarjeta y los turnos
   // cuentan lo mismo porque leen la misma consulta.
-  useProgreso(
+  const conectado = useProgreso(
     disponible === true,
     useCallback(
       (evento) => {
-        setEnVivo(
-          evento.etapa === "LISTO" || evento.etapa === "ERROR" ? null : evento.mensaje,
-        );
+        setLecturas((previas) => aplicarEvento(previas, evento));
         void queryClient.invalidateQueries({ queryKey: CLAVE_DOCUMENTOS });
       },
       [queryClient],
@@ -185,7 +193,6 @@ export function AsistenteView() {
               documentos={documentos}
               subiendo={subir.isPending ? subir.variables?.tipo : undefined}
               alSubir={alSubir}
-              alDetener={alDetener}
             />
           }
         />
@@ -257,26 +264,30 @@ export function AsistenteView() {
           />
         ))}
 
-        {/* El rótulo de «pensando» dice lo que el backend está haciendo, palabra
-            por palabra. Si no hay evento todavía, no se inventa uno. */}
-        {leyendo && (
+        {/* Una burbuja por lectura en curso. Dice lo que el backend está
+            haciendo, palabra por palabra, y lo que va encontrando; si no hay
+            evento todavía, no se inventa uno. */}
+        {enCurso.map((documento) => (
           <Turno
+            key={`en-vivo-${documento.id}`}
             turno={{
-              id: "en-vivo",
+              id: `en-vivo-${documento.id}`,
               autor: "ASISTENTE",
               texto: undefined,
             }}
             pensando
             tarjeta={
-              <span
-                className={`${styles.pulso} text-[15px] text-muted-foreground`}
-                aria-live="polite"
-              >
-                {enVivo ?? "Leyendo el documento…"}
-              </span>
+              <BurbujaLectura
+                documento={documento}
+                lectura={lecturas[documento.id]}
+                enVivo={conectado}
+                ahora={ahora}
+                deteniendo={detener.isPending && detener.variables === documento.id}
+                alDetener={alDetener}
+              />
             }
           />
-        )}
+        ))}
       </div>
 
       <Compositor subiendo={subir.isPending} alSubir={alSubir} />

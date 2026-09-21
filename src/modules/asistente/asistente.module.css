@@ -1,8 +1,9 @@
 /* Animaciones del asistente en chat.
  *
- * Son tres y todas dicen un hecho: un mensaje que entra, una lectura que está
- * corriendo, y el destello del asistente mientras piensa. Ninguna es decorativa,
- * y ninguna se mueve si no está pasando algo del otro lado.
+ * Las primeras tres dicen un hecho: un mensaje que entra, una lectura que está
+ * corriendo, y el destello del asistente mientras piensa. Las de la burbuja de
+ * carga, más abajo, sí adornan —el barrido, el haz—, pero ninguna afirma algo
+ * que nadie midió. Y ninguna se mueve si no está pasando algo del otro lado.
  *
  * CSS y no Framer Motion, igual que el resto del sistema.
  */
@@ -59,27 +60,6 @@
   animation: asistenteRespira 1.6s ease-in-out infinite;
 }
 
-/* La barra de una lectura en curso. Sin porcentaje: el modelo no dice cuánto le
-   falta, y fingirlo sería un temporizador disfrazado de progreso. */
-@keyframes asistenteIndeterminada {
-  from {
-    left: -40%;
-  }
-  to {
-    left: 100%;
-  }
-}
-
-.indeterminada {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 40%;
-  border-radius: 999px;
-  background: var(--primary);
-  animation: asistenteIndeterminada 1.2s cubic-bezier(0.6, 0, 0.4, 1) infinite;
-}
-
 /* El brillo que recorre el rótulo mientras el backend lee. Va sobre el texto del
    propio evento: lo que se mueve es el brillo, no el mensaje. */
 @keyframes asistenteBrillo {
@@ -107,13 +87,200 @@
   animation: asistenteBrillo 2.2s linear infinite;
 }
 
+/* ------------------------------------------------------------------------
+   La burbuja de carga (paso 2 de asistente-conversacion.md), del prototipo
+   docs/componentes-asistente/Carga.dc.html. Lo que se mueve acá es movimiento,
+   no información: el barrido del borde, el ecualizador, el haz sobre el
+   documento. Lo que informa —el rótulo, los campos, el tiempo— sale de los
+   eventos del backend.
+   ------------------------------------------------------------------------ */
+
+/* El borde con barrido: un gradiente cónico gira detrás de un marco de 1 px. */
+.barrido {
+  position: absolute;
+  inset: -60%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 250deg,
+    rgb(from var(--brand) r g b / 0.9) 330deg,
+    transparent 360deg
+  );
+  animation: asistenteGira 3.2s linear infinite;
+}
+
+/* El ecualizador junto al rótulo: cinco barras, la última naranja. */
+@keyframes asistenteEcualiza {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.ecualizador {
+  transform-origin: bottom;
+  animation: asistenteEcualiza 900ms ease-in-out infinite;
+}
+
+/* El haz que recorre el documento en miniatura. Decorativo: no afirma nada. */
+@keyframes asistenteEscanea {
+  from {
+    top: -24px;
+  }
+  to {
+    top: 152px;
+  }
+}
+
+.haz {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: linear-gradient(to bottom, rgb(from var(--brand) r g b / 0), rgb(from var(--brand) r g b / 0.14));
+  border-bottom: 2px solid var(--brand);
+  animation: asistenteEscanea 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Un campo que llega se escribe una vez, de izquierda a derecha. No se repite:
+   se escribió porque llegó, no para entretener. */
+@keyframes asistenteEscribe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.escribe {
+  animation: asistenteEscribe 700ms steps(24, end) both;
+}
+
+@keyframes asistenteParpadea {
+  50% {
+    opacity: 0;
+  }
+}
+
+.cursor {
+  display: inline-block;
+  width: 6px;
+  height: 12px;
+  margin-left: 2px;
+  vertical-align: -1px;
+  background: var(--brand);
+  animation: asistenteParpadea 0.9s steps(1) infinite;
+}
+
+/* El renglón del campo que todavía no llegó: brilla mientras se sigue leyendo. */
+@keyframes asistenteEsqueleto {
+  from {
+    background-position: -300px 0;
+  }
+  to {
+    background-position: 300px 0;
+  }
+}
+
+.esqueleto {
+  background: linear-gradient(90deg, var(--muted) 0px, var(--card) 80px, var(--muted) 160px);
+  background-size: 600px 100%;
+  animation: asistenteEsqueleto 1.4s linear infinite;
+}
+
+/* El punto del sello «EN VIVO». Solo late mientras el flujo está abierto. */
+@keyframes asistenteLate {
+  from {
+    box-shadow: 0 0 0 0 rgb(from var(--brand) r g b / 0.55);
+  }
+  to {
+    box-shadow: 0 0 0 7px rgb(from var(--brand) r g b / 0);
+  }
+}
+
+.late {
+  animation: asistenteLate 1.4s ease-out infinite;
+}
+
+/* ------------------------------------------------------------------------
+   El menú + (paso 3 de asistente-conversacion.md), del prototipo
+   docs/componentes-asistente/MenuAgregar.dc.html: abre hacia arriba desde el
+   botón, las opciones entran escalonadas y el + gira 45°.
+   ------------------------------------------------------------------------ */
+
+@keyframes asistenteMenuAbre {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.menuAbre {
+  transform-origin: bottom left;
+  animation: asistenteMenuAbre 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes asistenteOpcionEntra {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* El retraso de cada opción lo pone el componente: 20 ms por lugar. */
+.opcionEntra {
+  animation: asistenteOpcionEntra 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.mas svg {
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.masAbierto svg {
+  transform: rotate(45deg);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .entra,
   .anillo,
   .respira,
-  .indeterminada,
-  .pulso {
+  .pulso,
+  .barrido,
+  .ecualizador,
+  .haz,
+  .escribe,
+  .cursor,
+  .esqueleto,
+  .late,
+  .menuAbre,
+  .opcionEntra {
     animation: none !important;
+  }
+
+  .mas svg {
+    transition: none;
+  }
+
+  /* Quieto, todo queda visible: el campo escrito entero, el ecualizador a media
+     altura, y sin el haz, que solo tiene sentido moviéndose. */
+  .ecualizador {
+    transform: scaleY(0.6);
+  }
+
+  .haz {
+    display: none;
   }
 
   /* Sin animación el degradado dejaría el texto invisible. */

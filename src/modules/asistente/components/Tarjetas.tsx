@@ -17,11 +17,7 @@ import {
   TITULO_DOCUMENTO,
   TIPOS_ACEPTADOS,
 } from "../types/asistente.types";
-import {
-  BarraIndeterminada,
-  BotonTarjeta,
-  Pildora,
-} from "./Piezas";
+import { BotonTarjeta, Pildora } from "./Piezas";
 
 /**
  * Las tarjetas del asistente. Cada una dibuja algo que el backend devolvió: el
@@ -55,18 +51,20 @@ function Cabecera({ titulo, resumen }: { titulo: string; resumen?: string }) {
  * Una fila por tipo y no una por archivo subido: la configuración se resuelve con
  * un RUT, una Cámara y una resolución, y si alguien sube el RUT dos veces lo que
  * importa es el último intento. Eso es también lo que devuelve el backend.
+ *
+ * Una lectura en curso se cuenta abajo, en su burbuja de carga, con el botón
+ * Detener. Acá la fila solo dice que está en curso: repetir la barra en dos
+ * lugares sería contar lo mismo dos veces.
  */
 export function TarjetaDocumentos({
   documentos,
   subiendo,
   alSubir,
-  alDetener,
 }: {
   documentos: Documento[];
   /** El tipo que se está subiendo ahora, para apagar su botón. */
   subiendo?: TipoDocumento;
   alSubir: (tipo: TipoDocumento, archivo: File) => void;
-  alDetener: (id: string) => void;
 }) {
   const leidos = documentos.filter((d) => d.estado === "LEIDO").length;
 
@@ -83,7 +81,6 @@ export function TarjetaDocumentos({
           documento={documentos.find((d) => d.tipo === tipo)}
           subiendo={subiendo === tipo}
           alSubir={alSubir}
-          alDetener={alDetener}
         />
       ))}
     </Marco>
@@ -95,13 +92,11 @@ function FilaDocumento({
   documento,
   subiendo,
   alSubir,
-  alDetener,
 }: {
   tipo: TipoDocumento;
   documento?: Documento;
   subiendo: boolean;
   alSubir: (tipo: TipoDocumento, archivo: File) => void;
-  alDetener: (id: string) => void;
 }) {
   const campo = useRef<HTMLInputElement>(null);
   const estado = documento?.estado;
@@ -119,16 +114,16 @@ function FilaDocumento({
       </span>
 
       <span className="flex items-center gap-2">
-        {estado === "LEYENDO" && <BarraIndeterminada />}
+        {estado === "LEYENDO" && <Pildora tono="PENDIENTE">Leyendo</Pildora>}
         {estado === "EN_COLA" && (
           <span className="text-xs text-muted-foreground">En cola</span>
         )}
         {estado === "LEIDO" && <Pildora tono="HECHO">Leído</Pildora>}
         {estado === "FALLO" && <Pildora tono="PENDIENTE">No se pudo leer</Pildora>}
 
-        {enCurso && documento !== undefined ? (
-          <BotonTarjeta onClick={() => alDetener(documento.id)}>Detener</BotonTarjeta>
-        ) : (
+        {/* Mientras se lee no se ofrece subir otro: el botón Detener está en la
+            burbuja de carga, abajo. */}
+        {enCurso ? null : (
           <>
             {/* El archivo no pasa por la API: este `input` es solo para elegirlo;
                 sube directo al bucket con una URL firmada. */}
@@ -288,7 +283,7 @@ function FilaDato({ dato, atenuada }: { dato: DatoExtraido; atenuada?: boolean }
 }
 
 /** Un valor leído, para mostrarlo. Las listas —la casilla 53— van separadas por coma. */
-function comoTexto(valor: unknown): string {
+export function comoTexto(valor: unknown): string {
   if (Array.isArray(valor)) return valor.map((v) => String(v)).join(", ");
   if (typeof valor === "boolean") return valor ? "Sí" : "No";
   return String(valor);

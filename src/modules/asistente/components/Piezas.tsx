@@ -85,21 +85,6 @@ export function ChipArchivo({ nombre }: { nombre: string }) {
   );
 }
 
-/**
- * La barra de una lectura en curso.
- *
- * Indeterminada a propósito: el backend no manda porcentaje porque no lo sabe
- * —el modelo no dice cuánto le falta—, y una barra que avanza sola sería un
- * temporizador disfrazado de progreso.
- */
-export function BarraIndeterminada() {
-  return (
-    <span className="relative block h-1 w-[110px] overflow-hidden rounded-full bg-muted">
-      <span className={styles.indeterminada} />
-    </span>
-  );
-}
-
 /** Texto con `**negrita**`: el asistente resalta la cifra que importa, y nada más. */
 export function TextoRico({ texto }: { texto: string }) {
   return (
