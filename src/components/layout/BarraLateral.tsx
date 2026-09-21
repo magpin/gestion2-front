@@ -6,6 +6,7 @@ import { useSyncExternalStore } from "react";
 import {
   BookOpen,
   Briefcase,
+  ChartColumn,
   Home,
   Landmark,
   Library,
@@ -136,6 +137,19 @@ const GRUPOS: Grupo[] = [
         etiqueta: "Terceros",
         icono: Users,
         roles: ["DIRECTOR", "CONTADOR", "VENTAS", "COMPRAS"],
+      },
+    ],
+  },
+  {
+    // Lo que se saca de todo lo anterior. Los roles son la unión de los de
+    // cada reporte: quien no puede correr ninguno no ve la puerta.
+    etiqueta: "Análisis",
+    entradas: [
+      {
+        href: "/dashboard/reportes",
+        etiqueta: "Reportes",
+        icono: ChartColumn,
+        roles: ["DIRECTOR", "CONTADOR", "VENTAS", "CAJA", "CONSULTA"],
       },
     ],
   },
