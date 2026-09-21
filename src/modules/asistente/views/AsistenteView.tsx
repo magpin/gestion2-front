@@ -1,12 +1,14 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { MessagesSquare, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { aviso } from "@/lib/avisos";
 import { BurbujaLectura } from "../components/BurbujaLectura";
 import { Compositor } from "../components/Compositor";
+import { ListaConversaciones } from "../components/ListaConversaciones";
 import { Turno } from "../components/Mensajes";
 import { AvatarAsistente, Pildora } from "../components/Piezas";
 import {
@@ -15,6 +17,7 @@ import {
   TarjetaExtraido,
   TarjetaFalla,
 } from "../components/Tarjetas";
+import { TurnoGuardado, TurnoRespondiendo } from "../components/TurnosConversacion";
 import {
   CLAVE_DOCUMENTOS,
   mensajeDeError,
@@ -24,26 +27,53 @@ import {
   useDocumentos,
   useSubirDocumento,
 } from "../hooks/useAsistente";
+import {
+  useConversacionArchivada,
+  useConversacionDisponible,
+  useConversacionVigente,
+  useListaConversaciones,
+  useNuevaConversacion,
+  usePreguntar,
+} from "../hooks/useConversacion";
 import { useProgreso } from "../hooks/useProgreso";
 import { aplicarEvento, type LecturasEnVivo } from "../lib/lecturaEnVivo";
 import {
   NOMBRE_DOCUMENTO,
+  type Documento,
   type ResultadoConfirmacion,
   type TipoDocumento,
 } from "../types/asistente.types";
 
 /**
+ * Para arrancar, si no se sabe qué preguntar. Son preguntas que el asistente
+ * contesta con el mapa de la aplicación que lleva en sus instrucciones.
+ */
+const PREGUNTAS_SUGERIDAS = [
+  "¿Cómo registro una compra a un proveedor?",
+  "¿Cómo le cobro una factura a un cliente?",
+  "¿Dónde concilio el extracto del banco?",
+  "¿Cómo creo un producto nuevo?",
+  "¿Quién puede cerrar un período?",
+] as const;
+
+/**
  * El asistente: subí un documento, mirá lo que encontró, confirmá lo que sirve.
+ * Y desde el paso 5 de `asistente-conversacion.md`, preguntale cómo hacer algo
+ * en el sistema.
  *
- * La conversación **no se inventa y no se guarda**: se arma con lo que devuelven
- * los endpoints de `/configuracion/ia`. Cada documento leído es un turno, cada
- * lectura que falló es otro, y el progreso llega por el flujo de eventos del
- * backend —no hay temporizadores acá—. Al recargar la página vuelve a aparecer lo
- * mismo, porque el estado vive en la base y no en esta pantalla.
+ * **La lectura no se inventa y no se guarda acá**: se arma con lo que devuelven
+ * los endpoints de `/configuracion/ia`, y el progreso llega por el flujo de
+ * eventos del backend —no hay temporizadores—.
  *
- * Lo que el diseño muestra y todavía no existe —asentar solo, el pago propuesto,
- * la lista de conversaciones— no está dibujado. Una tarjeta con datos de mentira
- * es peor que una pantalla que hace menos.
+ * **La conversación sí se guarda**, en el backend (`/conversacion`). A la
+ * izquierda está la lista de todas las de quien pregunta; se escribe solo en
+ * la vigente, y las archivadas se abren para leerlas. En la vigente, los
+ * documentos y las preguntas van mezclados en el orden en que pasaron; los
+ * documentos de antes de la conversación quedan en la tarjeta del saludo.
+ *
+ * Lo que el diseño muestra y todavía no existe —asentar solo, el pago
+ * propuesto— no está dibujado. Una tarjeta con datos de mentira es peor que
+ * una pantalla que hace menos.
  */
 export function AsistenteView() {
   const queryClient = useQueryClient();
@@ -52,6 +82,18 @@ export function AsistenteView() {
   const subir = useSubirDocumento();
   const confirmar = useConfirmar();
   const detener = useDetener();
+
+  const { data: conversa = false } = useConversacionDisponible();
+  const { data: vigente } = useConversacionVigente(conversa);
+  const { data: conversaciones = [] } = useListaConversaciones(conversa);
+  /** La conversación abierta. `null` es la vigente, donde se escribe. */
+  const [seleccionada, setSeleccionada] = useState<string | null>(null);
+  const { data: archivada } = useConversacionArchivada(seleccionada);
+  const nueva = useNuevaConversacion();
+  const { enviar, enVivo, respondiendo } = usePreguntar();
+  /** La lista en el celular: ahí no entra al costado, se abre encima. */
+  const [listaAbierta, setListaAbierta] = useState(false);
+  const cuerpo = useRef<HTMLDivElement>(null);
 
   /** Los archivos que se subieron en esta sesión: el nombre solo lo sabe el navegador. */
   const [subidos, setSubidos] = useState<Record<string, string>>({});
@@ -101,6 +143,15 @@ export function AsistenteView() {
     ),
   );
 
+  // Lo nuevo aparece abajo —la respuesta que llega, el turno guardado, la
+  // conversación que se abrió— y el cuerpo baja con eso.
+  const turnosVisibles =
+    seleccionada === null ? (vigente?.turnos.length ?? 0) : (archivada?.turnos.length ?? 0);
+  useEffect(() => {
+    const el = cuerpo.current;
+    if (el !== null) el.scrollTop = el.scrollHeight;
+  }, [turnosVisibles, enVivo?.texto, enVivo?.pregunta, seleccionada, documentos.length]);
+
   const alSubir = (tipo: TipoDocumento, archivo: File) => {
     subir.mutate(
       { tipo, archivo },
@@ -143,6 +194,19 @@ export function AsistenteView() {
     });
   };
 
+  const alNueva = () => {
+    nueva.mutate(undefined, {
+      onSuccess: () => setSeleccionada(null),
+      onError: (error) =>
+        aviso.error("No se pudo empezar otra conversación", mensajeDeError(error)),
+    });
+  };
+
+  const alElegirConversacion = (id: string | null) => {
+    setSeleccionada(id);
+    setListaAbierta(false);
+  };
+
   if (consultandoModo) {
     return <Pantalla>{null}</Pantalla>;
   }
@@ -174,19 +238,166 @@ export function AsistenteView() {
     );
   }
 
-  const ordenados = [...documentos].sort((a, b) =>
-    a.creadoEn.localeCompare(b.creadoEn),
+  const renderDocumento = (documento: Documento) => (
+    <div className="flex flex-col gap-[22px]">
+      {subidos[documento.id] !== undefined && (
+        <Turno
+          turno={{
+            id: `subida-${documento.id}`,
+            autor: "PERSONA",
+            archivo: subidos[documento.id],
+            texto: `Leé esto como ${NOMBRE_DOCUMENTO[documento.tipo]}.`,
+          }}
+        />
+      )}
+
+      {documento.estado === "LEIDO" && documento.datos.length > 0 && (
+        <Turno
+          turno={{
+            id: `leido-${documento.id}`,
+            autor: "ASISTENTE",
+            texto: `Leí ${NOMBRE_DOCUMENTO[documento.tipo]}: **${documento.datos.length}** ${
+              documento.datos.length === 1 ? "dato" : "datos"
+            }. Nada está guardado todavía.`,
+          }}
+          tarjeta={
+            <TarjetaExtraido
+              documento={documento}
+              confirmando={confirmar.isPending && confirmar.variables?.id === documento.id}
+              yaConfirmado={confirmados.has(documento.id)}
+              alConfirmar={alConfirmar}
+            />
+          }
+        />
+      )}
+
+      {documento.estado === "FALLO" && (
+        <Turno
+          turno={{ id: `fallo-${documento.id}`, autor: "ASISTENTE" }}
+          tarjeta={
+            <TarjetaFalla
+              titulo={`No pude leer ${NOMBRE_DOCUMENTO[documento.tipo]}`}
+              detalle={
+                documento.error ?? "La lectura terminó sin resultado. Probá con otro archivo."
+              }
+            />
+          }
+        />
+      )}
+
+      {confirmaciones
+        .filter((c) => c.id === documento.id)
+        .map(({ resultado }, i) => (
+          <Turno
+            key={`confirmado-${documento.id}-${i}`}
+            turno={{
+              id: `confirmado-${documento.id}-${i}`,
+              autor: "ASISTENTE",
+              texto:
+                resultado.sinAplicar.length === 0
+                  ? "Guardado. Podés seguir con el paso que sigue."
+                  : "Guardé lo que se podía aplicar. Esto quedó pendiente:",
+            }}
+            tarjeta={<TarjetaConfirmado resultado={resultado} />}
+          />
+        ))}
+    </div>
   );
 
+  // Los documentos leídos durante la conversación vigente van entre sus turnos;
+  // los de antes —de una conversación ya archivada— quedan solo en la tarjeta
+  // del saludo, que dice el estado de los tres. «Antes» es cuando se archivó la
+  // última. Las lecturas en curso van en su burbuja, abajo de todo.
+  const inicioVigente = conversaciones.reduce<number | null>((max, c) => {
+    if (c.archivada_en === null) return max;
+    const fecha = new Date(c.archivada_en).getTime();
+    return max === null || fecha > max ? fecha : max;
+  }, null);
+  const linea = [
+    ...documentos
+      .filter(
+        (d) =>
+          d.estado !== "EN_COLA" &&
+          d.estado !== "LEYENDO" &&
+          (inicioVigente === null || new Date(d.creadoEn).getTime() >= inicioVigente),
+      )
+      .map((documento) => ({
+        fecha: new Date(documento.creadoEn).getTime(),
+        clave: `documento-${documento.id}`,
+        nodo: renderDocumento(documento),
+      })),
+    ...(vigente?.turnos ?? []).map((turno) => ({
+      fecha: new Date(turno.creado_en).getTime(),
+      clave: `turno-${turno.id}`,
+      nodo: <TurnoGuardado turno={turno} />,
+    })),
+  ].sort((a, b) => a.fecha - b.fecha);
+
+  const lista = conversa ? (
+    <ListaConversaciones
+      conversaciones={conversaciones}
+      seleccionada={seleccionada}
+      ahora={new Date(ahora)}
+      nuevaDeshabilitada={nueva.isPending || respondiendo || !vigente?.id}
+      alElegir={alElegirConversacion}
+      alNueva={alNueva}
+      className="h-full"
+    />
+  ) : null;
+
+  const marco = {
+    pensando: leyendo || respondiendo,
+    subtitulo: respondiendo
+      ? "Escribiendo…"
+      : leyendo
+        ? "Leyendo tus documentos…"
+        : "Nada se guarda sin tu confirmación",
+    lista,
+    listaAbierta,
+    alAlternarLista: setListaAbierta,
+  };
+
+  // Una archivada: se lee, no se escribe.
+  if (seleccionada !== null) {
+    return (
+      <Pantalla {...marco}>
+        <div
+          ref={cuerpo}
+          className="flex min-h-0 flex-grow flex-col gap-[22px] overflow-auto px-4 py-6 md:px-7"
+        >
+          {(archivada?.turnos ?? []).map((turno) => (
+            <TurnoGuardado key={turno.id} turno={turno} />
+          ))}
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-muted px-4 py-4 text-[13px] md:px-7">
+          <span className="text-muted-foreground">
+            Esta conversación está cerrada: se puede leer, no seguir.
+          </span>
+          <button
+            type="button"
+            onClick={() => setSeleccionada(null)}
+            className="font-medium text-brand-text hover:text-brand-hover"
+          >
+            Volver a la actual
+          </button>
+        </div>
+      </Pantalla>
+    );
+  }
+
   return (
-    <Pantalla pensando={leyendo}>
-      <div className="flex min-h-0 flex-grow flex-col gap-[22px] overflow-auto px-7 py-6">
+    <Pantalla {...marco}>
+      <div
+        ref={cuerpo}
+        className="flex min-h-0 flex-grow flex-col gap-[22px] overflow-auto px-4 py-6 md:px-7"
+      >
         <Turno
           turno={{
             id: "saludo",
             autor: "ASISTENTE",
-            texto:
-              "Subí el RUT, el certificado de Cámara de Comercio o la resolución de la DIAN. Leo lo que diga y te lo muestro antes de guardar nada.",
+            texto: conversa
+              ? "Subí el RUT, el certificado de Cámara de Comercio o la resolución de la DIAN y te muestro lo que diga antes de guardar nada. O preguntame cómo hacer algo en el sistema."
+              : "Subí el RUT, el certificado de Cámara de Comercio o la resolución de la DIAN. Leo lo que diga y te lo muestro antes de guardar nada.",
           }}
           tarjeta={
             <TarjetaDocumentos
@@ -197,71 +408,10 @@ export function AsistenteView() {
           }
         />
 
-        {ordenados.map((documento) => (
-          <div key={documento.id} className="flex flex-col gap-[22px]">
-            {subidos[documento.id] !== undefined && (
-              <Turno
-                turno={{
-                  id: `subida-${documento.id}`,
-                  autor: "PERSONA",
-                  archivo: subidos[documento.id],
-                  texto: `Leé esto como ${NOMBRE_DOCUMENTO[documento.tipo]}.`,
-                }}
-              />
-            )}
-
-            {documento.estado === "LEIDO" && documento.datos.length > 0 && (
-              <Turno
-                turno={{
-                  id: `leido-${documento.id}`,
-                  autor: "ASISTENTE",
-                  texto: `Leí ${NOMBRE_DOCUMENTO[documento.tipo]}: **${documento.datos.length}** ${
-                    documento.datos.length === 1 ? "dato" : "datos"
-                  }. Nada está guardado todavía.`,
-                }}
-                tarjeta={
-                  <TarjetaExtraido
-                    documento={documento}
-                    confirmando={
-                      confirmar.isPending && confirmar.variables?.id === documento.id
-                    }
-                    yaConfirmado={confirmados.has(documento.id)}
-                    alConfirmar={alConfirmar}
-                  />
-                }
-              />
-            )}
-
-            {documento.estado === "FALLO" && (
-              <Turno
-                turno={{ id: `fallo-${documento.id}`, autor: "ASISTENTE" }}
-                tarjeta={
-                  <TarjetaFalla
-                    titulo={`No pude leer ${NOMBRE_DOCUMENTO[documento.tipo]}`}
-                    detalle={
-                      documento.error ??
-                      "La lectura terminó sin resultado. Probá con otro archivo."
-                    }
-                  />
-                }
-              />
-            )}
+        {linea.map((item) => (
+          <div key={item.clave} className="contents">
+            {item.nodo}
           </div>
-        ))}
-
-        {confirmaciones.map(({ id, resultado }, i) => (
-          <Turno
-            key={`confirmado-${id}-${i}`}
-            turno={{
-              id: `confirmado-${id}-${i}`,
-              autor: "ASISTENTE",
-              texto:
-                resultado.sinAplicar.length === 0
-                  ? "Guardado. Podés seguir con el paso que sigue."
-                  : "Guardé lo que se podía aplicar. Esto quedó pendiente:",
-            }}
-            tarjeta={<TarjetaConfirmado resultado={resultado} />}
-          />
         ))}
 
         {/* Una burbuja por lectura en curso. Dice lo que el backend está
@@ -288,47 +438,97 @@ export function AsistenteView() {
             }
           />
         ))}
+
+        {enVivo !== null && <TurnoRespondiendo enVivo={enVivo} />}
       </div>
 
-      <Compositor subiendo={subir.isPending} alSubir={alSubir} />
+      <Compositor
+        subiendo={subir.isPending}
+        alSubir={alSubir}
+        conversacion={
+          conversa
+            ? {
+                alEnviar: enviar,
+                respondiendo,
+                superaTope: vigente?.superaTope ?? false,
+                preguntas: PREGUNTAS_SUGERIDAS,
+                alNueva,
+                nuevaDeshabilitada: nueva.isPending || respondiendo || !vigente?.id,
+              }
+            : undefined
+        }
+      />
     </Pantalla>
   );
 }
 
 /**
- * El marco: encabezado y cuerpo, a sangre.
+ * El marco: la lista de conversaciones a la izquierda, y el chat con su
+ * encabezado. A sangre.
  *
  * Los márgenes negativos cancelan el relleno del área de trabajo y el alto se
  * calcula contra la barra superior (`h-14`): el chat tiene su propio
  * desplazamiento adentro y no es un documento centrado como el resto.
+ *
+ * En el celular la lista no entra al costado: se abre encima con el botón
+ * «Conversaciones» del encabezado.
  */
 function Pantalla({
   children,
   pensando = false,
+  subtitulo = "Nada se guarda sin tu confirmación",
+  lista = null,
+  listaAbierta = false,
+  alAlternarLista,
 }: {
   children: React.ReactNode;
   pensando?: boolean;
+  subtitulo?: string;
+  lista?: React.ReactNode;
+  listaAbierta?: boolean;
+  alAlternarLista?: (abierta: boolean) => void;
 }) {
   return (
-    <div className="-mx-4 -my-7 flex h-[calc(100dvh-3.5rem)] min-h-0 md:-mx-10 lg:-mx-14">
-      <section
-        aria-label="Asistente"
-        className="flex min-w-0 flex-grow flex-col bg-card"
-      >
-        <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-muted px-7">
-          <div className="flex items-center gap-3">
+    <div className="relative -mx-4 -my-7 flex h-[calc(100dvh-3.5rem)] min-h-0 md:-mx-10 lg:-mx-14">
+      {lista !== null && <div className="hidden md:flex">{lista}</div>}
+
+      {lista !== null && listaAbierta && (
+        <div className="absolute inset-0 z-30 flex md:hidden">
+          <div className="flex h-full">{lista}</div>
+          <button
+            type="button"
+            aria-label="Cerrar la lista de conversaciones"
+            onClick={() => alAlternarLista?.(false)}
+            className="flex grow items-start justify-end bg-foreground/20 p-3"
+          >
+            <X className="size-5 text-background" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      <section aria-label="Asistente" className="flex min-w-0 flex-grow flex-col bg-card">
+        <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-muted px-4 md:px-7">
+          <div className="flex min-w-0 items-center gap-3">
+            {lista !== null && (
+              <button
+                type="button"
+                aria-label="Conversaciones"
+                onClick={() => alAlternarLista?.(!listaAbierta)}
+                className="flex size-9 shrink-0 items-center justify-center rounded-md border border-input md:hidden"
+              >
+                <MessagesSquare className="size-4" aria-hidden="true" />
+              </button>
+            )}
             <AvatarAsistente size={30} pensando={pensando} />
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">Asistente de configuración</span>
-              <span className="text-xs text-muted-foreground">
-                {pensando
-                  ? "Leyendo tus documentos…"
-                  : "Nada se guarda sin tu confirmación"}
-              </span>
+            <div className="flex min-w-0 flex-col">
+              <span className="text-sm font-semibold">Asistente</span>
+              <span className="truncate text-xs text-muted-foreground">{subtitulo}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Pildora tono="HECHO">Lee y propone</Pildora>
+            <span className="hidden sm:inline-flex">
+              <Pildora tono="HECHO">Lee y propone</Pildora>
+            </span>
             <Link
               href="/configuracion/empresa"
               className="inline-flex h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap"
@@ -342,4 +542,3 @@ function Pantalla({
     </div>
   );
 }
-

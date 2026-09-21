@@ -34,7 +34,7 @@ export function Turno({
           </div>
         )}
         {/* La esquina de abajo a la derecha es la chica: apunta a quien escribió. */}
-        <div className="max-w-[420px] rounded-xl rounded-br-[0.3rem] bg-primary px-4 py-2.5 text-sm leading-normal text-primary-foreground">
+        <div className="max-w-[420px] rounded-xl rounded-br-[0.3rem] bg-primary px-4 py-2.5 text-sm leading-normal break-words whitespace-pre-line text-primary-foreground">
           {turno.texto}
         </div>
       </div>
@@ -46,7 +46,7 @@ export function Turno({
       <AvatarAsistente pensando={pensando} />
       <div className="flex min-w-0 flex-grow flex-col gap-3 pt-1">
         {turno.texto !== undefined && (
-          <p className="m-0 text-[15px] leading-relaxed">
+          <p className="m-0 text-[15px] leading-relaxed break-words whitespace-pre-line">
             <TextoRico texto={turno.texto} />
           </p>
         )}

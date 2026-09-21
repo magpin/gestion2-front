@@ -1,7 +1,16 @@
 "use client";
 
-import { FileText, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  FileUp,
+  MessageCircleQuestion,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { DOCUMENTOS, TITULO_DOCUMENTO, type TipoDocumento } from "../types/asistente.types";
@@ -18,45 +27,86 @@ const PARA_QUE: Record<TipoDocumento, string> = {
   RESOLUCION_DIAN: "Prefijo, rango y vigencia de la numeración",
 };
 
+/** De dónde sale el archivo: el selector de siempre o la cámara del celular. */
+export type FuenteArchivo = "ARCHIVO" | "CAMARA";
+
+type Vista = "INICIO" | "PREGUNTAS" | { subir: FuenteArchivo };
+
 /**
- * El menú **+** del pie del chat. Paso 3 de
+ * Un celular o una tableta: puntero grueso. Ahí «Tomar foto» abre la cámara; en
+ * una computadora abriría el mismo selector de archivos que «Subir documento»,
+ * y dos opciones que hacen lo mismo es una que sobra.
+ */
+function usePunteroGrueso(): boolean {
+  return useSyncExternalStore(
+    (avisar) => {
+      if (typeof window.matchMedia !== "function") return () => {};
+      const consulta = window.matchMedia("(pointer: coarse)");
+      consulta.addEventListener("change", avisar);
+      return () => consulta.removeEventListener("change", avisar);
+    },
+    () => typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches,
+    () => false,
+  );
+}
+
+/**
+ * El menú **+** del pie del chat. Pasos 3 y 5 de
  * `docs/planes/asistente-conversacion.md`, sobre el prototipo
  * `docs/componentes-asistente/MenuAgregar.dc.html`.
  *
- * **Una sola sección, «Subir documentos»**, con los tres que el asistente sabe
- * leer. El prototipo trae además «Tomar foto», «Adjuntar del sistema»,
- * «Recientes», «Pedirle que haga» y el interruptor «Asentar sin preguntar».
- * Ninguno existe hoy, y **no están ni ocultos ni deshabilitados: no están en
- * el marcado.** Un menú de una sección es exactamente lo que el asistente sabe
- * hacer, y crece cuando crezca.
+ * **Todo lo que aparece funciona.** Dos secciones:
+ * - **Subir**: «Subir documento» y, en el celular, «Tomar foto». Las dos
+ *   preguntan después qué documento es, porque el backend lee distinto un RUT
+ *   que una Cámara de Comercio.
+ * - **Conversación**, si se puede conversar: «Preguntas sugeridas», que llenan
+ *   el campo sin mandarlo, y «Nueva conversación».
  *
- * La interacción sí va entera, porque es la del menú de verdad:
+ * Del prototipo quedan afuera «Adjuntar del sistema», «Recientes», «Pedirle que
+ * haga» y el interruptor «Asentar sin preguntar»: no existen, y **no están ni
+ * ocultos ni deshabilitados, no están en el marcado.**
+ *
+ * Las opciones con **›** abren una segunda lista en el mismo lugar, con
+ * «Volver» arriba. La interacción es la del menú de verdad:
  * - abre hacia arriba desde el botón, y las opciones entran escalonadas;
  * - el + gira 45° mientras está abierto;
  * - se cierra con Escape, con el mismo botón, con clic afuera o al elegir;
- * - al abrir, el foco va a la primera opción; las flechas, Inicio y Fin se
- *   mueven entre ellas; al cerrar con Escape vuelve al +.
- *
- * Roles de un botón de menú: `aria-haspopup` y `aria-expanded` en el +,
- * `menu` y `menuitem` en la lista.
+ * - al abrir o cambiar de lista, el foco va a la primera opción; las flechas,
+ *   Inicio y Fin se mueven entre ellas; al cerrar con Escape vuelve al +.
  */
 export function MenuAgregar({
   deshabilitado,
-  alElegir,
+  alSubir,
+  preguntas,
+  alPreguntar,
+  alNueva,
+  nuevaDeshabilitada = false,
+  conCamara,
 }: {
   deshabilitado: boolean;
-  alElegir: (tipo: TipoDocumento) => void;
+  alSubir: (tipo: TipoDocumento, fuente: FuenteArchivo) => void;
+  /** Sin esto no hay sección «Conversación»: el asistente no puede conversar. */
+  preguntas?: readonly string[];
+  alPreguntar?: (texto: string) => void;
+  alNueva?: () => void;
+  nuevaDeshabilitada?: boolean;
+  /** Fuerza mostrar u ocultar «Tomar foto». Sin esto, se decide por el puntero. */
+  conCamara?: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
+  const [vista, setVista] = useState<Vista>("INICIO");
   const boton = useRef<HTMLButtonElement>(null);
   const contenedor = useRef<HTMLDivElement>(null);
-  const opciones = useRef<Array<HTMLButtonElement | null>>([]);
+  const lista = useRef<HTMLDivElement>(null);
+  const punteroGrueso = usePunteroGrueso();
+  const camara = conCamara ?? punteroGrueso;
+  const conversa = preguntas !== undefined && alPreguntar !== undefined;
 
-  // Al abrir, el foco va a la primera opción: es lo que espera quien llegó con
-  // el teclado, y con el mouse no molesta.
+  // Al abrir o cambiar de lista, el foco va a la primera opción: es lo que
+  // espera quien llegó con el teclado, y con el mouse no molesta.
   useEffect(() => {
-    if (abierto) opciones.current[0]?.focus();
-  }, [abierto]);
+    if (abierto) lista.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+  }, [abierto, vista]);
 
   // Clic afuera cierra. Se escucha en el documento solo mientras está abierto.
   useEffect(() => {
@@ -74,11 +124,13 @@ export function MenuAgregar({
   };
 
   const alTeclear = (e: React.KeyboardEvent) => {
-    const lista = opciones.current.filter((o): o is HTMLButtonElement => o !== null);
-    const actual = lista.indexOf(document.activeElement as HTMLButtonElement);
+    const opciones = Array.from(
+      lista.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [],
+    );
+    const actual = opciones.indexOf(document.activeElement as HTMLButtonElement);
     const ir = (i: number) => {
       e.preventDefault();
-      lista[(i + lista.length) % lista.length]?.focus();
+      opciones[(i + opciones.length) % opciones.length]?.focus();
     };
     if (e.key === "Escape") {
       e.preventDefault();
@@ -86,57 +138,129 @@ export function MenuAgregar({
     } else if (e.key === "ArrowDown") ir(actual + 1);
     else if (e.key === "ArrowUp") ir(actual - 1);
     else if (e.key === "Home") ir(0);
-    else if (e.key === "End") ir(lista.length - 1);
+    else if (e.key === "End") ir(opciones.length - 1);
     else if (e.key === "Tab") cerrar(false);
   };
+
+  const elegir = (accion: Accion) => {
+    if (accion.tipo === "VISTA") {
+      setVista(accion.vista);
+      return;
+    }
+    cerrar(false);
+    if (accion.tipo === "NUEVA") alNueva?.();
+    else if (accion.tipo === "PREGUNTA") alPreguntar?.(accion.texto);
+    else alSubir(accion.documento, accion.fuente);
+  };
+
+  const icono = (Icono: typeof FileText) => (
+    <Icono className="size-[17px]" strokeWidth={1.8} aria-hidden="true" />
+  );
+  const volver: Elemento = {
+    clave: "volver",
+    icono: icono(ChevronLeft),
+    titulo: "Volver",
+    compacta: true,
+    accion: { tipo: "VISTA", vista: "INICIO" },
+  };
+
+  // Cada lista es un arreglo de rótulos y opciones: el retraso escalonado de la
+  // entrada se cuenta por posición.
+  let elementos: Array<Elemento | string>;
+  if (vista === "INICIO") {
+    elementos = [
+      "Subir",
+      {
+        clave: "subir",
+        icono: icono(FileUp),
+        titulo: "Subir documento",
+        detalle: "RUT, Cámara de Comercio o Resolución DIAN",
+        siguiente: true,
+        accion: { tipo: "VISTA", vista: { subir: "ARCHIVO" } },
+      },
+    ];
+    if (camara) {
+      elementos.push({
+        clave: "foto",
+        icono: icono(Camera),
+        titulo: "Tomar foto",
+        detalle: "Del documento en papel, con la cámara",
+        siguiente: true,
+        accion: { tipo: "VISTA", vista: { subir: "CAMARA" } },
+      });
+    }
+    if (conversa) {
+      elementos.push("Conversación", {
+        clave: "preguntas",
+        icono: icono(MessageCircleQuestion),
+        titulo: "Preguntas sugeridas",
+        detalle: "Para arrancar, si no sabés qué preguntar",
+        siguiente: true,
+        accion: { tipo: "VISTA", vista: "PREGUNTAS" },
+      });
+      if (alNueva !== undefined) {
+        elementos.push({
+          clave: "nueva",
+          icono: icono(RotateCcw),
+          titulo: "Nueva conversación",
+          detalle: "La actual queda guardada en la lista",
+          deshabilitada: nuevaDeshabilitada,
+          accion: { tipo: "NUEVA" },
+        });
+      }
+    }
+  } else if (vista === "PREGUNTAS") {
+    elementos = [
+      volver,
+      "Preguntas sugeridas",
+      ...(preguntas ?? []).map((pregunta): Elemento => ({
+        clave: pregunta,
+        icono: icono(MessageCircleQuestion),
+        titulo: pregunta,
+        accion: { tipo: "PREGUNTA", texto: pregunta },
+      })),
+    ];
+  } else {
+    const fuente = vista.subir;
+    elementos = [
+      volver,
+      "¿Qué documento es?",
+      ...DOCUMENTOS.map((tipo): Elemento => ({
+        clave: tipo,
+        icono: icono(FileText),
+        titulo: TITULO_DOCUMENTO[tipo],
+        detalle: PARA_QUE[tipo],
+        accion: { tipo: "DOCUMENTO", documento: tipo, fuente },
+      })),
+    ];
+  }
 
   return (
     <div ref={contenedor} className="relative shrink-0">
       {abierto && (
         <div
+          ref={lista}
+          key={typeof vista === "string" ? vista : vista.subir}
           role="menu"
           aria-label="Agregar al mensaje"
           onKeyDown={alTeclear}
           className={cn(
             styles.menuAbre,
-            "absolute bottom-[calc(100%+8px)] left-0 z-20 w-[324px] rounded-[1.05rem] border border-border bg-card p-1.5 shadow-[0_18px_50px_rgb(23_23_23/0.14),0_2px_6px_rgb(23_23_23/0.06)]",
+            "absolute bottom-[calc(100%+8px)] left-0 z-20 w-[324px] max-w-[calc(100vw-32px)] rounded-[1.05rem] border border-border bg-card p-1.5 shadow-[0_18px_50px_rgb(23_23_23/0.14),0_2px_6px_rgb(23_23_23/0.06)]",
           )}
         >
-          <span
-            className={cn(
-              styles.opcionEntra,
-              "block px-3 pt-2.5 pb-1 font-mono text-[10px] tracking-[1.2px] text-muted-foreground uppercase",
-            )}
-          >
-            Subir documentos
-          </span>
-          {DOCUMENTOS.map((tipo, i) => (
-            <button
-              key={tipo}
-              ref={(el) => {
-                opciones.current[i] = el;
-              }}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                cerrar(false);
-                alElegir(tipo);
-              }}
-              style={{ animationDelay: `${(i + 1) * 20}ms` }}
-              className={cn(
-                styles.opcionEntra,
-                "flex min-h-11 w-full items-center gap-3 rounded-[0.6rem] px-2.5 py-1.5 text-left transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none",
-              )}
-            >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-[0.45rem] border border-muted bg-muted">
-                <FileText className="size-[17px]" strokeWidth={1.8} aria-hidden="true" />
-              </span>
-              <span className="flex min-w-0 grow flex-col gap-px">
-                <span className="text-sm font-medium">{TITULO_DOCUMENTO[tipo]}</span>
-                <span className="text-xs leading-[1.35] text-muted-foreground">{PARA_QUE[tipo]}</span>
-              </span>
-            </button>
-          ))}
+          {elementos.map((e, i) =>
+            typeof e === "string" ? (
+              <Rotulo key={e}>{e}</Rotulo>
+            ) : (
+              <Opcion
+                key={e.clave}
+                {...e}
+                orden={i + 1}
+                alElegir={() => elegir(e.accion)}
+              />
+            ),
+          )}
         </div>
       )}
 
@@ -147,7 +271,10 @@ export function MenuAgregar({
         aria-haspopup="menu"
         aria-expanded={abierto}
         disabled={deshabilitado}
-        onClick={() => setAbierto((a) => !a)}
+        onClick={() => {
+          setVista("INICIO");
+          setAbierto((a) => !a);
+        }}
         className={cn(
           styles.mas,
           abierto && styles.masAbierto,
@@ -158,5 +285,81 @@ export function MenuAgregar({
         <Plus className="size-5" strokeWidth={2} aria-hidden="true" />
       </button>
     </div>
+  );
+}
+
+/** Lo que hace una opción. Datos, no funciones: el menú los ejecuta al elegir. */
+type Accion =
+  | { tipo: "VISTA"; vista: Vista }
+  | { tipo: "NUEVA" }
+  | { tipo: "PREGUNTA"; texto: string }
+  | { tipo: "DOCUMENTO"; documento: TipoDocumento; fuente: FuenteArchivo };
+
+interface Elemento {
+  clave: string;
+  icono: ReactNode;
+  titulo: string;
+  detalle?: string;
+  /** Abre otra lista: lleva la flecha. */
+  siguiente?: boolean;
+  compacta?: boolean;
+  deshabilitada?: boolean;
+  accion: Accion;
+}
+
+function Rotulo({ children }: { children: ReactNode }) {
+  return (
+    <span
+      className={cn(
+        styles.opcionEntra,
+        "block px-3 pt-2.5 pb-1 font-mono text-[10px] tracking-[1.2px] text-muted-foreground uppercase",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Opcion({
+  icono,
+  titulo,
+  detalle,
+  siguiente = false,
+  compacta = false,
+  deshabilitada = false,
+  orden,
+  alElegir,
+}: Omit<Elemento, "clave" | "accion"> & { orden: number; alElegir: () => void }) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={deshabilitada}
+      onClick={alElegir}
+      style={{ animationDelay: `${orden * 20}ms` }}
+      className={cn(
+        styles.opcionEntra,
+        "flex w-full items-center gap-3 rounded-[0.6rem] px-2.5 py-1.5 text-left transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none disabled:opacity-50 disabled:hover:bg-transparent",
+        compacta ? "min-h-9" : "min-h-11",
+      )}
+    >
+      <span
+        className={cn(
+          "flex shrink-0 items-center justify-center rounded-[0.45rem] border border-muted bg-muted",
+          compacta ? "size-7" : "size-8",
+        )}
+      >
+        {icono}
+      </span>
+      <span className="flex min-w-0 grow flex-col gap-px">
+        <span className="text-sm font-medium">{titulo}</span>
+        {detalle !== undefined && (
+          <span className="text-xs leading-[1.35] text-muted-foreground">{detalle}</span>
+        )}
+      </span>
+      {siguiente && (
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+      )}
+    </button>
   );
 }

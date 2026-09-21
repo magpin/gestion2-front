@@ -289,3 +289,41 @@
     color: var(--muted-foreground);
   }
 }
+
+/* ------------------------------------------------------------------------
+   La conversación (paso 5 de asistente-conversacion.md).
+   ------------------------------------------------------------------------ */
+
+/* «Pensando»: tres puntos mientras el modelo todavía no escribió nada. Se van
+   apenas llega el primer pedazo; no hay un mínimo de tiempo para lucirlos. */
+@keyframes asistentePunto {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.punto {
+  animation: asistentePunto 1.2s ease-in-out infinite;
+}
+
+.punto:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.punto:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punto {
+    animation: none;
+    opacity: 0.6;
+  }
+}
