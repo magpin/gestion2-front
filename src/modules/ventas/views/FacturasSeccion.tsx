@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Banknote, FileMinus, FilePlus, Loader2, Trash2 } from "lucide-react";
+import { Banknote, FileMinus, FilePlus, Loader2, Trash2, Undo2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -81,6 +81,8 @@ export function FacturasSeccion({
   const [cobrandoDe, setCobrandoDe] = useState<VentaDocumentoResumen | null>(
     null,
   );
+  const [devolviendoDe, setDevolviendoDe] =
+    useState<VentaDocumentoResumen | null>(null);
 
   const { data: resultado, isLoading } = useQuery({
     queryKey: [...CLAVE, pagina],
@@ -183,6 +185,17 @@ export function FacturasSeccion({
     onError: (e: unknown) => avisarErrorVenta(e, router.push),
   });
 
+  const devolverCobro = useMutation({
+    mutationFn: ({ id, datos }: { id: string; datos: CobrarInput }) =>
+      facturasApi.devolverCobro(id, datos),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CLAVE });
+      aviso.exito("Devolución registrada");
+      setDevolviendoDe(null);
+    },
+    onError: (e: unknown) => avisarErrorVenta(e, router.push),
+  });
+
   /**
    * Lo que se puede hacer con una factura, según su estado y quién mira.
    * Va al menú de tres puntos y no a la fila: eran cinco botones de texto y
@@ -200,6 +213,15 @@ export function FacturasSeccion({
         label: "Cobrar",
         icon: Banknote,
         onSelect: () => setCobrandoDe(f),
+      });
+    }
+    // Solo si algo se cobró: no se devuelve plata que no entró. Con saldo a
+    // favor —cobrada entera y con nota crédito después— es la salida natural.
+    if (puedeCobrar && Number(f.monto_pagado) > 0) {
+      acciones.push({
+        label: Number(f.saldo_a_favor) > 0 ? "Devolver saldo a favor" : "Devolver cobro",
+        icon: Undo2,
+        onSelect: () => setDevolviendoDe(f),
       });
     }
     if (puedeCrear) {
@@ -374,6 +396,16 @@ export function FacturasSeccion({
           cobrandoDe && cobrar.mutate({ id: cobrandoDe.id, datos })
         }
         guardando={cobrar.isPending}
+      />
+
+      <FormularioCobro
+        modo="DEVOLVER"
+        factura={devolviendoDe}
+        onCerrar={() => setDevolviendoDe(null)}
+        onGuardar={(datos) =>
+          devolviendoDe && devolverCobro.mutate({ id: devolviendoDe.id, datos })
+        }
+        guardando={devolverCobro.isPending}
       />
 
       <DetalleVenta

@@ -85,6 +85,16 @@ export const facturasApi = {
     api
       .post<VentaDocumentoResumen>(`/facturas/${id}/cobrar`, datos)
       .then((r) => r.data),
+
+  /**
+   * Le devuelve plata al cliente sobre una factura que sigue valiendo lo
+   * mismo. No es una nota crédito: esa baja lo que la factura vale; esto
+   * solo mueve la caja o el banco. Misma forma que `cobrar`, al revés.
+   */
+  devolverCobro: (id: string, datos: CobrarInput) =>
+    api
+      .post<VentaDocumentoResumen>(`/facturas/${id}/devolver-cobro`, datos)
+      .then((r) => r.data),
 };
 
 /**

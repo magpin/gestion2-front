@@ -42,6 +42,15 @@ export const comprasApi = {
     api
       .post<CompraDocumentoResumen>(`/compras/${id}/pagar`, datos)
       .then((r) => r.data),
+
+  /**
+   * El proveedor nos devuelve plata sobre una compra que sigue valiendo lo
+   * mismo: entra a la caja o al banco. Espejo de `facturasApi.devolverCobro`.
+   */
+  devolverPago: (id: string, datos: PagarInput) =>
+    api
+      .post<CompraDocumentoResumen>(`/compras/${id}/devolver-pago`, datos)
+      .then((r) => r.data),
 };
 
 /**

@@ -48,7 +48,7 @@ export function sumaDe(renglones: readonly RenglonPagoBorrador[]): number {
 export function problemaDe(
   renglones: readonly RenglonPagoBorrador[],
   tope: number,
-  verbo: "cobrar" | "pagar",
+  verbo: "cobrar" | "pagar" | "devolver",
 ): string | null {
   for (const r of renglones) {
     if (r.medio === "CAJA" && r.caja === null)
@@ -60,7 +60,9 @@ export function problemaDe(
   }
   const suma = sumaDe(renglones);
   if (suma > tope)
-    return `Estás repartiendo ${formatCOP(suma - tope)} de más: no se puede ${verbo} más de lo que falta.`;
+    return verbo === "devolver"
+      ? `Estás devolviendo ${formatCOP(suma - tope)} de más: no se puede devolver más de lo que entró.`
+      : `Estás repartiendo ${formatCOP(suma - tope)} de más: no se puede ${verbo} más de lo que falta.`;
   return null;
 }
 
@@ -95,11 +97,17 @@ export function EditorMediosPago({
   renglones,
   onCambiar,
   tope,
+  soloExceso = false,
 }: {
   renglones: RenglonPagoBorrador[];
   onCambiar: (renglones: RenglonPagoBorrador[]) => void;
   /** Cuánto falta en total: lo que queda por repartir se mide contra esto. */
   tope: number;
+  /**
+   * Avisar solo si se pasa del tope, no cuánto falta. Al devolver, el tope es
+   * lo cobrado y no hay que devolverlo todo: «falta repartir» sería falso.
+   */
+  soloExceso?: boolean;
 }) {
   const actualizar = (clave: number, cambio: Partial<RenglonPagoBorrador>) =>
     onCambiar(
@@ -191,7 +199,7 @@ export function EditorMediosPago({
 
         {/* Cuánto falta repartir: es la pregunta que se hace quien divide un
             pago, y hacerla a mano contra el saldo es donde se equivoca. */}
-        {falta !== 0 && (
+        {falta !== 0 && !(soloExceso && falta > 0) && (
           <p
             className={cn(
               "text-sm font-medium",

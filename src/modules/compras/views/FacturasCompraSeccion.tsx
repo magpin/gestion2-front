@@ -8,6 +8,7 @@ import {
   FilePlus,
   Loader2,
   Trash2,
+  Undo2,
 } from "lucide-react";
 
 import {
@@ -76,6 +77,8 @@ export function FacturasCompraSeccion({
   const [pagandoDe, setPagandoDe] = useState<CompraDocumentoResumen | null>(
     null,
   );
+  const [devolucionDe, setDevolucionDe] =
+    useState<CompraDocumentoResumen | null>(null);
   const [notaCreditoDe, setNotaCreditoDe] =
     useState<CompraDocumentoResumen | null>(null);
   const [notaDebitoDe, setNotaDebitoDe] =
@@ -125,6 +128,17 @@ export function FacturasCompraSeccion({
     onError: (e: unknown) => aviso.falla(e),
   });
 
+  const devolverPago = useMutation({
+    mutationFn: ({ id, datos }: { id: string; datos: PagarInput }) =>
+      comprasApi.devolverPago(id, datos),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: CLAVE });
+      aviso.exito("Devolución del proveedor registrada");
+      setDevolucionDe(null);
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
   const crearNotaCredito = useMutation({
     mutationFn: notasCompraApi.crearCredito,
     onSuccess: async () => {
@@ -161,6 +175,14 @@ export function FacturasCompraSeccion({
         label: "Pagar",
         icon: Banknote,
         onSelect: () => setPagandoDe(c),
+      });
+    }
+    // Solo si algo se pagó: el proveedor no devuelve plata que no recibió.
+    if (puedePagar && Number(c.monto_pagado) > 0) {
+      acciones.push({
+        label: Number(c.saldo_a_favor) > 0 ? "Recibir saldo a favor" : "Devolución del proveedor",
+        icon: Undo2,
+        onSelect: () => setDevolucionDe(c),
       });
     }
     if (puedeCrear) {
@@ -336,6 +358,16 @@ export function FacturasCompraSeccion({
           pagandoDe && pagar.mutate({ id: pagandoDe.id, datos })
         }
         guardando={pagar.isPending}
+      />
+
+      <FormularioPago
+        modo="DEVOLVER"
+        compra={devolucionDe}
+        onCerrar={() => setDevolucionDe(null)}
+        onGuardar={(datos) =>
+          devolucionDe && devolverPago.mutate({ id: devolucionDe.id, datos })
+        }
+        guardando={devolverPago.isPending}
       />
 
       <AlertDialog

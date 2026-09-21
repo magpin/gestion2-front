@@ -26,6 +26,9 @@ import {
 import { formatCOP } from "@/lib/utils";
 import type { CompraDocumentoResumen, PagarInput } from "../types/compras.types";
 
+/** Pagar lo que se debe, o registrar lo que el proveedor nos devuelve. */
+export type ModoPago = "PAGAR" | "DEVOLVER";
+
 const hoy = (): string => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -37,17 +40,22 @@ const hoy = (): string => {
  * renglón arranca con el `pendiente` que manda la API —el neto efectivo menos
  * lo pagado—, editable para dejar un abono.
  *
+ * Con `modo="DEVOLVER"` el proveedor nos devuelve plata: entra a la caja o al
+ * banco y la compra sigue valiendo lo mismo. Espejo de `FormularioCobro`.
+ *
  * Mismo patrón que `FormularioCobro` de Ventas: `Contenido` monta con
  * `key={compra.id}` para que el estado arranque de cero en cada compra, sin
  * un efecto que sincronice nada.
  */
 export function FormularioPago({
   compra,
+  modo = "PAGAR",
   onCerrar,
   onGuardar,
   guardando,
 }: {
   compra: CompraDocumentoResumen | null;
+  modo?: ModoPago;
   onCerrar: () => void;
   onGuardar: (datos: PagarInput) => void;
   guardando: boolean;
@@ -57,8 +65,9 @@ export function FormularioPago({
       <DialogContent size="lg">
         {compra && (
           <Contenido
-            key={compra.id}
+            key={`${modo}-${compra.id}`}
             compra={compra}
+            modo={modo}
             onCerrar={onCerrar}
             onGuardar={onGuardar}
             guardando={guardando}
@@ -71,11 +80,13 @@ export function FormularioPago({
 
 function Contenido({
   compra,
+  modo,
   onCerrar,
   onGuardar,
   guardando,
 }: {
   compra: CompraDocumentoResumen;
+  modo: ModoPago;
   onCerrar: () => void;
   onGuardar: (datos: PagarInput) => void;
   guardando: boolean;
@@ -83,16 +94,21 @@ function Contenido({
   // Lo calcula la API, igual que en el cobro: las notas del proveedor mueven
   // lo que se le debe.
   const saldoPendiente = Number(compra.pendiente);
+  const devolver = modo === "DEVOLVER";
+  const pagado = Number(compra.monto_pagado);
+  const aFavor = Number(compra.saldo_a_favor);
+  // Contra lo pagado, no contra el saldo: mismo criterio que la devolución de un cobro.
+  const tope = devolver ? pagado : saldoPendiente;
 
   const [fecha, setFecha] = useState(hoy());
   const [renglones, setRenglones] = useState<RenglonPagoBorrador[]>([
-    renglonPagoVacio(String(saldoPendiente)),
+    renglonPagoVacio(devolver ? (aFavor > 0 ? String(aFavor) : "") : String(saldoPendiente)),
   ]);
 
   const problema =
     fecha === ""
       ? "Elegí la fecha."
-      : problemaDe(renglones, saldoPendiente, "pagar");
+      : problemaDe(renglones, tope, devolver ? "devolver" : "pagar");
 
   const enviar = () => {
     if (problema !== null) return;
@@ -103,18 +119,42 @@ function Contenido({
     <>
       <DialogHeader>
         <div>
-          <DialogTitle>Pagar</DialogTitle>
+          <DialogTitle>{devolver ? "Devolución del proveedor" : "Pagar"}</DialogTitle>
           <DialogDescription>
-            {compra.numero_factura_proveedor} · Saldo pendiente:{" "}
-            <span className="font-mono font-semibold">
-              {formatCOP(saldoPendiente)}
-            </span>
+            {compra.numero_factura_proveedor} ·{" "}
+            {devolver ? (
+              <>
+                Pagado:{" "}
+                <span className="font-mono font-semibold">{formatCOP(pagado)}</span>
+                {aFavor > 0 && (
+                  <>
+                    {" "}· Saldo a nuestro favor:{" "}
+                    <span className="font-mono font-semibold">{formatCOP(aFavor)}</span>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                Saldo pendiente:{" "}
+                <span className="font-mono font-semibold">
+                  {formatCOP(saldoPendiente)}
+                </span>
+              </>
+            )}
           </DialogDescription>
         </div>
         <DialogCloseIcon />
       </DialogHeader>
 
       <DialogBody className="flex flex-col gap-5">
+        {devolver && (
+          <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
+            La plata que devuelve el proveedor entra a la caja o al banco, y la compra sigue
+            valiendo lo mismo. Si devolvimos mercancía o hay que bajarle el valor, lo que va
+            es una nota crédito de compra.
+          </p>
+        )}
+
         <Campo id="fecha" etiqueta="Fecha *" escala="grande">
           <Input
             id="fecha"
@@ -128,13 +168,14 @@ function Contenido({
         <EditorMediosPago
           renglones={renglones}
           onCambiar={setRenglones}
-          tope={saldoPendiente}
+          tope={tope}
+          soloExceso={devolver}
         />
       </DialogBody>
 
       <DialogFooter className="sm:justify-between">
         <p className="self-center text-sm text-muted-foreground">
-          {problema ?? "Listo para pagar."}
+          {problema ?? (devolver ? "Listo para registrar la devolución." : "Listo para pagar.")}
         </p>
         <div className="flex gap-3">
           <Button
@@ -152,7 +193,7 @@ function Contenido({
             onClick={enviar}
           >
             {guardando && <Loader2 className="size-4 animate-spin" />}
-            Pagar
+            {devolver ? "Registrar devolución" : "Pagar"}
           </Button>
         </div>
       </DialogFooter>
