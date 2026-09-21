@@ -185,10 +185,13 @@ function textoDeEstado(estado?: Documento["estado"]): string {
 export function TarjetaExtraido({
   documento,
   confirmando,
+  yaConfirmado,
   alConfirmar,
 }: {
   documento: Documento;
   confirmando: boolean;
+  /** Ya se confirmó en esta sesión: la tarjeta deja de ofrecer guardarlo. */
+  yaConfirmado: boolean;
   alConfirmar: (id: string) => void;
 }) {
   const seguros = documento.datos.filter((d) => d.confianza === "ALTA");
@@ -223,11 +226,16 @@ export function TarjetaExtraido({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
         <span className="text-xs text-muted-foreground">
-          Nada se guarda hasta que confirmes.
+          {yaConfirmado
+            ? "Ya lo confirmaste. Abajo está lo que se guardó y lo que quedó pendiente."
+            : "Nada se guarda hasta que confirmes."}
         </span>
         <span className="flex gap-2">
           {/* Un enlace, no un botón: lleva al paso manual con la pantalla de
-              siempre. Envolverlo en un `button` anidaría dos controles. */}
+              siempre. Envolverlo en un `button` anidaría dos controles.
+
+              Queda también después de confirmar: lo que quedó pendiente se
+              arregla justamente ahí. */}
           {primerPaso !== undefined && (
             <Link
               href={RUTA_PASO[primerPaso]}
@@ -236,13 +244,20 @@ export function TarjetaExtraido({
               Corregir algo
             </Link>
           )}
-          <BotonTarjeta
-            principal
-            disabled={confirmando || seguros.length === 0}
-            onClick={() => alConfirmar(documento.id)}
-          >
-            {confirmando ? "Guardando…" : "Todo correcto"}
-          </BotonTarjeta>
+          {/* «Todo correcto» desaparece una vez confirmado, no se deshabilita:
+              un botón apagado invita a preguntarse por qué, y la respuesta
+              —«porque ya lo hiciste»— la da mejor el texto de la izquierda.
+              Volver a apretarlo sacaba un segundo resumen que contradecía al
+              primero. */}
+          {!yaConfirmado && (
+            <BotonTarjeta
+              principal
+              disabled={confirmando || seguros.length === 0}
+              onClick={() => alConfirmar(documento.id)}
+            >
+              {confirmando ? "Guardando…" : "Todo correcto"}
+            </BotonTarjeta>
+          )}
         </span>
       </div>
     </Marco>

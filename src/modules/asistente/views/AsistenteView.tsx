@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { aviso } from "@/lib/avisos";
 import { Compositor } from "../components/Compositor";
@@ -59,6 +59,20 @@ export function AsistenteView() {
   >([]);
   /** Lo último que dijo el backend mientras lee. Es el rótulo de «pensando». */
   const [enVivo, setEnVivo] = useState<string | null>(null);
+
+  /**
+   * Los documentos que ya se confirmaron en esta sesión.
+   *
+   * Sin esto, «Todo correcto» seguía activo después de confirmar y se podía
+   * volver a apretar: salía un segundo resumen que contradecía al primero
+   * —«0 datos guardados» donde el anterior decía uno— porque la segunda vez ya
+   * no quedaba nada por aplicar. La base nunca se ensució, la restricción de
+   * vigencia frena el duplicado; lo que se rompía era lo que la persona leía.
+   */
+  const confirmados = useMemo(
+    () => new Set(confirmaciones.map((c) => c.id)),
+    [confirmaciones],
+  );
 
   const leyendo = documentos.some(
     (d) => d.estado === "EN_COLA" || d.estado === "LEYENDO",
@@ -204,6 +218,7 @@ export function AsistenteView() {
                     confirmando={
                       confirmar.isPending && confirmar.variables?.id === documento.id
                     }
+                    yaConfirmado={confirmados.has(documento.id)}
                     alConfirmar={alConfirmar}
                   />
                 }
