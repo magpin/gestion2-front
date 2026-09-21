@@ -20,7 +20,12 @@ export function TurnoGuardado({ turno }: { turno: TurnoConversacion }) {
 
   switch (turno.estado) {
     case "COMPLETO":
-      return <Turno turno={{ id: turno.id, autor: "ASISTENTE", texto: turno.texto }} />;
+      return (
+        <Turno
+          turno={{ id: turno.id, autor: "ASISTENTE", texto: turno.texto }}
+          tarjeta={<Fuentes fuentes={turno.fuentes} />}
+        />
+      );
     case "CORTADO":
       return (
         <Turno
@@ -64,12 +69,33 @@ export function TurnoGuardado({ turno }: { turno: TurnoConversacion }) {
 }
 
 /**
+ * De dónde salieron las cifras de la respuesta, debajo de ella: «Según:
+ * Cartera · Saldos de caja y bancos». Sin consultas, nada.
+ */
+function Fuentes({ fuentes }: { fuentes: readonly string[] }) {
+  if (fuentes.length === 0) return null;
+  return (
+    <span className="text-xs text-muted-foreground">
+      Según: {fuentes.join(" · ")}
+    </span>
+  );
+}
+
+/** Lo que dice la burbuja mientras se consulta: con palabras de la aplicación. */
+export function textoDeConsulta(etiqueta: string): string {
+  if (etiqueta === "Búsqueda") return "Buscando cómo está escrito…";
+  return `Consultando ${etiqueta.toLowerCase()}…`;
+}
+
+/**
  * La pregunta recién mandada y su respuesta mientras llega.
  *
- * Dos momentos, y cada uno dice lo que pasa de verdad: **pensando** son tres
- * puntos hasta que llega el primer pedazo; **escribiendo** es el texto con el
- * cursor al final. No hay un mínimo de tiempo para los puntos: si la respuesta
- * ya empezó, se muestra.
+ * Tres momentos, y cada uno dice lo que pasa de verdad: **pensando** son tres
+ * puntos hasta que llega el primer pedazo; **consultando** dice qué datos está
+ * mirando —«Consultando cartera…»—, porque una consulta tarda segundos y una
+ * pantalla quieta parece colgada; **escribiendo** es el texto con el cursor al
+ * final. No hay un mínimo de tiempo para ninguno: si la respuesta ya empezó,
+ * se muestra.
  */
 export function TurnoRespondiendo({ enVivo }: { enVivo: TurnoEnVivo }) {
   return (
@@ -79,7 +105,22 @@ export function TurnoRespondiendo({ enVivo }: { enVivo: TurnoEnVivo }) {
         turno={{ id: "respuesta-en-vivo", autor: "ASISTENTE" }}
         pensando
         tarjeta={
-          enVivo.texto === "" ? (
+          enVivo.consultando !== null ? (
+            <div className="flex flex-col gap-2">
+              {enVivo.texto !== "" && (
+                <p className="m-0 text-[15px] leading-relaxed break-words whitespace-pre-line">
+                  <TextoRico texto={enVivo.texto} />
+                </p>
+              )}
+              <span
+                role="status"
+                className="flex items-center gap-2 text-[13px] text-muted-foreground"
+              >
+                <span className={cn(styles.late, "size-1.5 rounded-full bg-brand")} />
+                {textoDeConsulta(enVivo.consultando)}
+              </span>
+            </div>
+          ) : enVivo.texto === "" ? (
             <span
               role="status"
               aria-label="Pensando"

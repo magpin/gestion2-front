@@ -15,6 +15,11 @@ export interface TurnoConversacion {
   estado: EstadoTurno;
   motivo: string | null;
   creado_en: string;
+  /**
+   * De dónde salieron las cifras: «Cartera», «Saldos de caja y bancos». Vacío
+   * si se contestó sin consultar datos (paso 6).
+   */
+  fuentes: string[];
 }
 
 /** La conversación en la que se escribe. `id` nulo: todavía no hay. */
@@ -48,6 +53,7 @@ export interface ConversacionEnLista {
 /** Lo que llega por el flujo de `POST /conversacion/turnos`. */
 export type EventoConversacion =
   | { tipo: "PREGUNTA"; turno: TurnoConversacion }
+  | { tipo: "CONSULTA"; etiqueta: string }
   | { tipo: "TROZO"; texto: string }
   | { tipo: "FIN"; turno: TurnoConversacion }
   | { tipo: "ERROR"; motivo: string };

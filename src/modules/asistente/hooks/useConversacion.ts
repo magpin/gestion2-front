@@ -72,6 +72,11 @@ export interface TurnoEnVivo {
   pregunta: string;
   /** La respuesta hasta acá. Vacía mientras el modelo piensa. */
   texto: string;
+  /**
+   * Lo que se está consultando ahora —«Cartera»—, o `null`. Se va cuando
+   * vuelve a llegar texto: la consulta terminó.
+   */
+  consultando: string | null;
 }
 
 /**
@@ -100,7 +105,7 @@ export function usePreguntar() {
       if (token === null || corte.current !== null) return false;
       const controlador = new AbortController();
       corte.current = controlador;
-      setEnVivo({ pregunta: texto, texto: "" });
+      setEnVivo({ pregunta: texto, texto: "", consultando: null });
 
       let aceptada = true;
       try {
@@ -109,7 +114,11 @@ export function usePreguntar() {
           corte: controlador.signal,
           alEvento: (evento) => {
             if (evento.tipo === "TROZO") {
-              setEnVivo((v) => (v === null ? v : { ...v, texto: v.texto + evento.texto }));
+              setEnVivo((v) =>
+                v === null ? v : { ...v, texto: v.texto + evento.texto, consultando: null },
+              );
+            } else if (evento.tipo === "CONSULTA") {
+              setEnVivo((v) => (v === null ? v : { ...v, consultando: evento.etiqueta }));
             } else if (evento.tipo === "ERROR") {
               aviso.error("No se guardó la respuesta", evento.motivo);
             }
