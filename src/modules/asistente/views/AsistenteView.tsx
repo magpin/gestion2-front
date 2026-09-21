@@ -41,6 +41,7 @@ import { useProgreso } from "../hooks/useProgreso";
 import { aplicarEvento, type LecturasEnVivo } from "../lib/lecturaEnVivo";
 import {
   NOMBRE_DOCUMENTO,
+  TIPOS_ACEPTADOS,
   type Documento,
   type ResultadoConfirmacion,
   type TipoDocumento,
@@ -101,6 +102,11 @@ export function AsistenteView() {
 
   /** Los archivos que se subieron en esta sesión: el nombre solo lo sabe el navegador. */
   const [subidos, setSubidos] = useState<Record<string, string>>({});
+  // Lo que se subió desde el pie sin decir qué es, y lo que el asistente dijo.
+  const [analizados, setAnalizados] = useState<
+    { id: string; nombre: string; clase: string; resumen: string; leyendo: boolean }[]
+  >([]);
+  const analizando = subir.isPending && subir.variables?.tipo === undefined;
   const [confirmaciones, setConfirmaciones] = useState<
     Array<{ id: string; resultado: ResultadoConfirmacion }>
   >([]);
@@ -154,14 +160,44 @@ export function AsistenteView() {
   useEffect(() => {
     const el = cuerpo.current;
     if (el !== null) el.scrollTop = el.scrollHeight;
-  }, [turnosVisibles, enVivo?.texto, enVivo?.pregunta, seleccionada, documentos.length]);
+  }, [
+    turnosVisibles,
+    enVivo?.texto,
+    enVivo?.pregunta,
+    seleccionada,
+    documentos.length,
+    analizados.length,
+    analizando,
+  ]);
 
-  const alSubir = (tipo: TipoDocumento, archivo: File) => {
+  /**
+   * Sin `tipo` —el pie del chat— se sube cualquier archivo y el servidor dice
+   * qué es; si es RUT, Cámara o Resolución, además lo lee.
+   */
+  const alSubir = (tipo: TipoDocumento | undefined, archivo: File) => {
+    // Desde una tarjeta el tipo ya está dicho, y ahí se lee solo PDF o foto.
+    if (tipo !== undefined && !(TIPOS_ACEPTADOS as readonly string[]).includes(archivo.type)) {
+      aviso.error("Ese archivo no se puede leer", "Subí un PDF o una foto (JPG, PNG o WEBP).");
+      return;
+    }
     subir.mutate(
       { tipo, archivo },
       {
-        onSuccess: (documento) => {
-          setSubidos((previos) => ({ ...previos, [documento.id]: archivo.name }));
+        onSuccess: ({ documento, clase, resumen }) => {
+          if (tipo === undefined) {
+            setAnalizados((previos) => [
+              ...previos,
+              {
+                id: `${Date.now()}-${archivo.name}`,
+                nombre: archivo.name,
+                clase,
+                resumen,
+                leyendo: documento !== null,
+              },
+            ]);
+          } else if (documento !== null) {
+            setSubidos((previos) => ({ ...previos, [documento.id]: archivo.name }));
+          }
         },
         onError: (error) => {
           aviso.error("No se pudo subir el documento", mensajeDeError(error));
@@ -429,6 +465,45 @@ export function AsistenteView() {
           </div>
         ))}
 
+        {analizados.map((a) => (
+          <div key={a.id} className="contents">
+            <Turno
+              turno={{
+                id: `archivo-${a.id}`,
+                autor: "PERSONA",
+                archivo: a.nombre,
+                texto: "¿Qué es esto?",
+              }}
+            />
+            <Turno
+              turno={{
+                id: `analisis-${a.id}`,
+                autor: "ASISTENTE",
+                texto: `**${a.clase}.** ${a.resumen}${
+                  a.leyendo ? "\n\nLo estoy leyendo para llevar sus datos a la configuración." : ""
+                }`,
+              }}
+            />
+          </div>
+        ))}
+
+        {analizando && subir.variables !== undefined && (
+          <div className="contents">
+            <Turno
+              turno={{
+                id: "archivo-pendiente",
+                autor: "PERSONA",
+                archivo: subir.variables.archivo.name,
+                texto: "¿Qué es esto?",
+              }}
+            />
+            <Turno
+              turno={{ id: "analisis-pendiente", autor: "ASISTENTE", texto: "Mirando el archivo…" }}
+              pensando
+            />
+          </div>
+        )}
+
         {/* Una burbuja por lectura en curso. Dice lo que el backend está
             haciendo, palabra por palabra, y lo que va encontrando; si no hay
             evento todavía, no se inventa uno. */}
@@ -459,7 +534,7 @@ export function AsistenteView() {
 
       <Compositor
         subiendo={subir.isPending}
-        alSubir={alSubir}
+        alSubir={(archivo) => alSubir(undefined, archivo)}
         conversacion={
           conversa
             ? {

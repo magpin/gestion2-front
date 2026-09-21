@@ -6,7 +6,12 @@ import { mensajeDeError } from "@/core/api/api";
 import { useAuthStore } from "@/core/store/authStore";
 import { CLAVE_ESTADO } from "@/modules/configuracion/hooks/useEstadoConfiguracion";
 import { asistenteService } from "../services/asistente.service";
-import type { ResultadoConfirmacion, TipoDocumento } from "../types/asistente.types";
+import {
+  tipoMimeDe,
+  type ResultadoAnalisis,
+  type ResultadoConfirmacion,
+  type TipoDocumento,
+} from "../types/asistente.types";
 
 // `useDisponible` vive en `configuracion`: las dos entradas al modo IA son de
 // esa carpeta y el endpoint se llama `/configuracion/ia/disponible`. Se
@@ -51,12 +56,17 @@ export const useSubirDocumento = () => {
       tipo,
       archivo,
     }: {
-      tipo: TipoDocumento;
+      /** Sin tipo, lo reconoce el servidor. */
+      tipo?: TipoDocumento;
       archivo: File;
-    }) => {
-      const { url, clave } = await asistenteService.urlDeCarga(tipo, archivo.type);
-      await asistenteService.subirAlBucket(url, archivo);
-      return asistenteService.registrar(tipo, clave);
+    }): Promise<ResultadoAnalisis> => {
+      const tipoMime = tipo === undefined ? tipoMimeDe(archivo) : archivo.type;
+      const { url, clave } = await asistenteService.urlDeCarga(tipo, tipoMime);
+      await asistenteService.subirAlBucket(url, archivo, tipoMime);
+      // Sin tipo, el servidor mira el archivo y dice qué es.
+      if (tipo === undefined) return asistenteService.analizar(clave);
+      const documento = await asistenteService.registrar(tipo, clave);
+      return { documento, clase: "", resumen: "" };
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: CLAVE_DOCUMENTOS });

@@ -69,24 +69,21 @@ describe("MenuAgregar", () => {
     expect(titulos()).toEqual(["Subir documento"]);
   });
 
-  it("«Tomar foto» aparece solo donde hay cámara, y pide el documento con la cámara", async () => {
+  it("«Tomar foto» aparece solo donde hay cámara, y abre la cámara sin preguntar nada", async () => {
     const { mas, titulos, alSubir } = mostrar({ conCamara: true });
     await userEvent.click(mas);
     expect(titulos()).toContain("Tomar foto");
     await userEvent.click(screen.getByRole("menuitem", { name: /Tomar foto/ }));
-    await userEvent.click(screen.getByRole("menuitem", { name: /Cámara de Comercio/ }));
-    expect(alSubir).toHaveBeenCalledWith("CAMARA_COMERCIO", "CAMARA");
+    expect(alSubir).toHaveBeenCalledWith("CAMARA");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it("«Subir documento» abre los tres documentos; elegir cierra y pide ese", async () => {
-    const { mas, titulos, alSubir } = mostrar();
+  it("«Subir documento» abre directo el selector: no pregunta qué documento es", async () => {
+    const { mas, alSubir } = mostrar();
     await userEvent.click(mas);
     await userEvent.click(screen.getByRole("menuitem", { name: /Subir documento/ }));
-    expect(screen.getByText("¿Qué documento es?")).toBeInTheDocument();
-    expect(titulos()).toEqual(["Volver", "RUT", "Cámara de Comercio", "Resolución DIAN"]);
-    expect(screen.getByRole("menuitem", { name: "Volver" })).toHaveFocus();
-    await userEvent.click(screen.getByRole("menuitem", { name: /Resolución DIAN/ }));
-    expect(alSubir).toHaveBeenCalledWith("RESOLUCION_DIAN", "ARCHIVO");
+    expect(alSubir).toHaveBeenCalledWith("ARCHIVO");
+    expect(screen.queryByText("¿Qué documento es?")).not.toBeInTheDocument();
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 

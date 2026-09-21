@@ -4,7 +4,6 @@ import { ArrowUp, Paperclip } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { TIPOS_ACEPTADOS, type TipoDocumento } from "../types/asistente.types";
 import { MenuAgregar, type FuenteArchivo } from "./MenuAgregar";
 
 /** El tope de la pregunta, el mismo que valida el backend (`TurnoDto`). */
@@ -32,9 +31,9 @@ export interface ConversacionDelPie {
  * conversación —falta la clave del modelo— el pie vuelve a ser eso.
  *
  * Con conversación, soltar un archivo sigue funcionando sobre todo el pie: el
- * borde se vuelve punteado mientras el archivo está encima, y cae como **RUT**,
- * que es el documento con el que empieza casi toda configuración. Para elegir
- * otro, o sacar una foto, está el menú **+**.
+ * borde se vuelve punteado mientras el archivo está encima. **Nunca se pregunta
+ * qué documento es**: el servidor lo reconoce al recibirlo. El selector acepta
+ * cualquier archivo; lo que todavía no se lee se dice después de elegirlo.
  *
  * Enter manda; Shift+Enter baja de renglón.
  */
@@ -44,19 +43,17 @@ export function Compositor({
   conversacion,
 }: {
   subiendo: boolean;
-  alSubir: (tipo: TipoDocumento, archivo: File) => void;
+  alSubir: (archivo: File) => void;
   conversacion?: ConversacionDelPie;
 }) {
   const archivo = useRef<HTMLInputElement>(null);
   const campo = useRef<HTMLTextAreaElement>(null);
-  const elegido = useRef<TipoDocumento>("RUT");
   const [encima, setEncima] = useState(false);
   const [texto, setTexto] = useState("");
 
-  const elegirArchivo = (tipo: TipoDocumento, fuente: FuenteArchivo = "ARCHIVO") => {
+  const elegirArchivo = (fuente: FuenteArchivo = "ARCHIVO") => {
     const entrada = archivo.current;
     if (entrada === null) return;
-    elegido.current = tipo;
     // La cámara se pide con `capture`, y solo acepta imágenes: un PDF no se
     // fotografía.
     if (fuente === "CAMARA") {
@@ -64,7 +61,7 @@ export function Compositor({
       entrada.accept = "image/*";
     } else {
       entrada.removeAttribute("capture");
-      entrada.accept = TIPOS_ACEPTADOS.join(",");
+      entrada.removeAttribute("accept");
     }
     entrada.click();
   };
@@ -74,7 +71,7 @@ export function Compositor({
     setEncima(false);
     if (subiendo) return;
     const soltado = e.dataTransfer.files?.[0];
-    if (soltado !== undefined) alSubir("RUT", soltado);
+    if (soltado !== undefined) alSubir(soltado);
   };
 
   const soltable = {
@@ -90,11 +87,10 @@ export function Compositor({
     <input
       ref={archivo}
       type="file"
-      accept={TIPOS_ACEPTADOS.join(",")}
       className="hidden"
       onChange={(e) => {
         const elegidoArchivo = e.target.files?.[0];
-        if (elegidoArchivo !== undefined) alSubir(elegido.current, elegidoArchivo);
+        if (elegidoArchivo !== undefined) alSubir(elegidoArchivo);
         e.target.value = "";
       }}
     />
@@ -112,7 +108,7 @@ export function Compositor({
         <button
           type="button"
           disabled={subiendo}
-          onClick={() => elegirArchivo("RUT")}
+          onClick={() => elegirArchivo()}
           {...soltable}
           className={cn(
             "flex min-w-0 grow items-center justify-center gap-2.5 rounded-lg border border-dashed px-3 py-4 text-sm transition-colors disabled:opacity-50",
@@ -126,7 +122,7 @@ export function Compositor({
             {subiendo
               ? "Subiendo el archivo…"
               : encima
-                ? "Soltá el archivo para leerlo como RUT"
+                ? "Soltá el archivo para leerlo"
                 : "Arrastrá un documento acá, o hacé clic para elegirlo. PDF, JPG o PNG."}
           </span>
         </button>
@@ -206,7 +202,7 @@ export function Compositor({
             }}
             placeholder={
               encima
-                ? "Soltá el archivo para leerlo como RUT"
+                ? "Soltá el archivo para leerlo"
                 : subiendo
                   ? "Subiendo el archivo…"
                   : "Preguntá cómo hacer algo en el sistema, o arrastrá un documento acá"

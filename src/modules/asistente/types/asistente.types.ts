@@ -88,7 +88,43 @@ export const DOCUMENTOS: TipoDocumento[] = [
   "RESOLUCION_DIAN",
 ];
 
-/** Lo que el bucket acepta. El backend rechaza lo demás antes de firmar. */
+/**
+ * Lo que se sube desde el pie del chat, sin decir qué es. El mismo juego que
+ * `TIPOS_SUBIBLES` del backend (`lectura-documentos/reglas/contenido.ts`). Lo
+ * que no está acá viaja como `application/octet-stream`: el servidor igual lo
+ * mira y dice qué es, o que no lo puede abrir.
+ */
+export const TIPOS_SUBIBLES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/csv",
+  "text/plain",
+  "application/xml",
+  "text/xml",
+  "application/json",
+] as const;
+
+/** El tipo con el que se firma y se sube un archivo del pie del chat. */
+export const tipoMimeDe = (archivo: File): string =>
+  (TIPOS_SUBIBLES as readonly string[]).includes(archivo.type)
+    ? archivo.type
+    : "application/octet-stream";
+
+/** Lo que dice el asistente de un archivo que se subió sin decir qué es. */
+export interface ResultadoAnalisis {
+  /** La lectura que arrancó, si era RUT, Cámara o Resolución; si no, `null`. */
+  documento: Documento | null;
+  clase: string;
+  resumen: string;
+}
+
+/** Lo que el bucket acepta para los tres documentos. El backend rechaza lo demás antes de firmar. */
 export const TIPOS_ACEPTADOS = [
   "application/pdf",
   "image/jpeg",

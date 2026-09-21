@@ -1,6 +1,7 @@
 import { api } from "@/core/api/api";
 import type {
   Documento,
+  ResultadoAnalisis,
   ResultadoConfirmacion,
   TipoDocumento,
   UrlDeCarga,
@@ -22,7 +23,7 @@ export const asistenteService = {
     api.get<Documento[]>("/configuracion/ia/documentos").then((r) => r.data),
 
   /** La URL firmada. La llave la decide el servidor, no el navegador. */
-  urlDeCarga: (tipo: TipoDocumento, tipoMime: string) =>
+  urlDeCarga: (tipo: TipoDocumento | undefined, tipoMime: string) =>
     api
       .post<UrlDeCarga>("/configuracion/ia/documentos/carga", {
         tipo,
@@ -38,10 +39,11 @@ export const asistenteService = {
    * servicio de almacenamiento —que además ya viene autorizado en la firma de la
    * URL— sería regalarlo sin necesidad.
    */
-  subirAlBucket: async (url: string, archivo: File) => {
+  subirAlBucket: async (url: string, archivo: File, tipoMime: string) => {
+    // El mismo tipo con el que se firmó: si no coincide, el bucket lo rechaza.
     const respuesta = await fetch(url, {
       method: "PUT",
-      headers: { "Content-Type": archivo.type },
+      headers: { "Content-Type": tipoMime },
       body: archivo,
     });
     if (!respuesta.ok) {
@@ -52,9 +54,19 @@ export const asistenteService = {
   },
 
   /** Registra el archivo ya subido y lo encola. Contesta sin esperar la lectura. */
-  registrar: (tipo: TipoDocumento, clave: string) =>
+  /** Sin `tipo`, el servidor mira el archivo y reconoce qué documento es. */
+  registrar: (tipo: TipoDocumento | undefined, clave: string) =>
     api
       .post<Documento>("/configuracion/ia/documentos", { tipo, clave })
+      .then((r) => r.data),
+
+  /**
+   * Un archivo subido sin decir qué es: el servidor lo mira y contesta qué es.
+   * Si es RUT, Cámara o Resolución, la lectura ya arrancó y viene el documento.
+   */
+  analizar: (clave: string) =>
+    api
+      .post<ResultadoAnalisis>("/configuracion/ia/documentos/analizar", { clave })
       .then((r) => r.data),
 
   /** Corta una lectura en curso. */

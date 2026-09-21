@@ -4,7 +4,6 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
-  FileText,
   FileUp,
   MessageCircleQuestion,
   Plus,
@@ -13,24 +12,12 @@ import {
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { DOCUMENTOS, TITULO_DOCUMENTO, type TipoDocumento } from "../types/asistente.types";
 import styles from "../asistente.module.css";
-
-/**
- * Lo que cada documento aporta, en una línea: es lo que decide cuál subir.
- * Sale del catálogo de campos del backend (`documento.reglas.ts`), no de lo
- * que uno supondría: el RUT, por ejemplo, no da el NIT —la empresa ya lo tiene—.
- */
-const PARA_QUE: Record<TipoDocumento, string> = {
-  RUT: "Razón social, dirección, actividad y responsabilidades",
-  CAMARA_COMERCIO: "Representante legal y matrícula mercantil",
-  RESOLUCION_DIAN: "Prefijo, rango y vigencia de la numeración",
-};
 
 /** De dónde sale el archivo: el selector de siempre o la cámara del celular. */
 export type FuenteArchivo = "ARCHIVO" | "CAMARA";
 
-type Vista = "INICIO" | "PREGUNTAS" | { subir: FuenteArchivo };
+type Vista = "INICIO" | "PREGUNTAS";
 
 /**
  * Un celular o una tableta: puntero grueso. Ahí «Tomar foto» abre la cámara; en
@@ -56,9 +43,9 @@ function usePunteroGrueso(): boolean {
  * `docs/componentes-asistente/MenuAgregar.dc.html`.
  *
  * **Todo lo que aparece funciona.** Dos secciones:
- * - **Subir**: «Subir documento» y, en el celular, «Tomar foto». Las dos
- *   preguntan después qué documento es, porque el backend lee distinto un RUT
- *   que una Cámara de Comercio.
+ * - **Subir**: «Subir documento» y, en el celular, «Tomar foto». Las dos abren
+ *   directo el selector de archivos o la cámara: **no se pregunta qué
+ *   documento es**, lo reconoce el servidor al recibirlo.
  * - **Conversación**, si se puede conversar: «Preguntas sugeridas», que llenan
  *   el campo sin mandarlo, y «Nueva conversación».
  *
@@ -84,7 +71,7 @@ export function MenuAgregar({
   conCamara,
 }: {
   deshabilitado: boolean;
-  alSubir: (tipo: TipoDocumento, fuente: FuenteArchivo) => void;
+  alSubir: (fuente: FuenteArchivo) => void;
   /** Sin esto no hay sección «Conversación»: el asistente no puede conversar. */
   preguntas?: readonly string[];
   alPreguntar?: (texto: string) => void;
@@ -150,10 +137,10 @@ export function MenuAgregar({
     cerrar(false);
     if (accion.tipo === "NUEVA") alNueva?.();
     else if (accion.tipo === "PREGUNTA") alPreguntar?.(accion.texto);
-    else alSubir(accion.documento, accion.fuente);
+    else alSubir(accion.fuente);
   };
 
-  const icono = (Icono: typeof FileText) => (
+  const icono = (Icono: typeof FileUp) => (
     <Icono className="size-[17px]" strokeWidth={1.8} aria-hidden="true" />
   );
   const volver: Elemento = {
@@ -174,9 +161,8 @@ export function MenuAgregar({
         clave: "subir",
         icono: icono(FileUp),
         titulo: "Subir documento",
-        detalle: "RUT, Cámara de Comercio o Resolución DIAN",
-        siguiente: true,
-        accion: { tipo: "VISTA", vista: { subir: "ARCHIVO" } },
+        detalle: "Elegí el archivo: el asistente reconoce qué es",
+        accion: { tipo: "SUBIR", fuente: "ARCHIVO" },
       },
     ];
     if (camara) {
@@ -185,8 +171,7 @@ export function MenuAgregar({
         icono: icono(Camera),
         titulo: "Tomar foto",
         detalle: "Del documento en papel, con la cámara",
-        siguiente: true,
-        accion: { tipo: "VISTA", vista: { subir: "CAMARA" } },
+        accion: { tipo: "SUBIR", fuente: "CAMARA" },
       });
     }
     if (conversa) {
@@ -209,7 +194,7 @@ export function MenuAgregar({
         });
       }
     }
-  } else if (vista === "PREGUNTAS") {
+  } else {
     elementos = [
       volver,
       "Preguntas sugeridas",
@@ -220,19 +205,6 @@ export function MenuAgregar({
         accion: { tipo: "PREGUNTA", texto: pregunta },
       })),
     ];
-  } else {
-    const fuente = vista.subir;
-    elementos = [
-      volver,
-      "¿Qué documento es?",
-      ...DOCUMENTOS.map((tipo): Elemento => ({
-        clave: tipo,
-        icono: icono(FileText),
-        titulo: TITULO_DOCUMENTO[tipo],
-        detalle: PARA_QUE[tipo],
-        accion: { tipo: "DOCUMENTO", documento: tipo, fuente },
-      })),
-    ];
   }
 
   return (
@@ -240,7 +212,7 @@ export function MenuAgregar({
       {abierto && (
         <div
           ref={lista}
-          key={typeof vista === "string" ? vista : vista.subir}
+          key={vista}
           role="menu"
           aria-label="Agregar al mensaje"
           onKeyDown={alTeclear}
@@ -293,7 +265,7 @@ type Accion =
   | { tipo: "VISTA"; vista: Vista }
   | { tipo: "NUEVA" }
   | { tipo: "PREGUNTA"; texto: string }
-  | { tipo: "DOCUMENTO"; documento: TipoDocumento; fuente: FuenteArchivo };
+  | { tipo: "SUBIR"; fuente: FuenteArchivo };
 
 interface Elemento {
   clave: string;
