@@ -1,16 +1,20 @@
 import { api } from "@/core/api/api";
 import type { ResumenLibro } from "../types/tesoreria.types";
 import type {
+  ActualizarReglaExtractoInput,
   AgregarLineaExtractoInput,
   CargaInicialBancoInput,
   CerrarCorteBancoInput,
+  CompletarGrupoInput,
   ConciliarInput,
   CorteBancoResumen,
   CrearCuentaBancariaInput,
   CrearExtractoInput,
+  CrearReglaExtractoInput,
   CuentaBancariaResumen,
   ExtractoDetalle,
   ExtractoResumen,
+  ImportarExtractoInput,
   LineaExtractoResumen,
   MovimientoBancoResumen,
   PaginaCortesBanco,
@@ -18,6 +22,8 @@ import type {
   PaginaMovimientosBanco,
   PrevioCorteBanco,
   PropuestasExtracto,
+  RegistrarDesdeExtractoInput,
+  ReglaExtractoResumen,
   RegistrarMovimientoBancoInput,
 } from "../types/bancos.types";
 
@@ -66,6 +72,18 @@ export const movimientosBancoApi = {
       })
       .then((r) => r.data),
 
+  /**
+   * Lo que queda por conciliar: sin cruce y sin el saldo inicial. Es lo que
+   * necesita la conciliación, y no la última página del libro: un cheque
+   * viejo sin cobrar quedaba fuera de los 50 más recientes.
+   */
+  porConciliar: (cuentaBancariaId: string) =>
+    api
+      .get<PaginaMovimientosBanco>(`/cuentas-bancarias/${cuentaBancariaId}/movimientos`, {
+        params: { sinConciliar: "true", tamano: 200 },
+      })
+      .then((r) => r.data),
+
   /** Solo una vez por cuenta: el saldo con el que arranca. No genera asiento. */
   saldoInicial: (cuentaBancariaId: string, datos: CargaInicialBancoInput) =>
     api
@@ -101,6 +119,16 @@ export const extractosApi = {
       .post<ExtractoResumen>(`/cuentas-bancarias/${cuentaBancariaId}/extractos`, datos)
       .then((r) => r.data),
 
+  /**
+   * El extracto leído de un archivo: cabecera, líneas y mapeo en una sola
+   * transacción. El backend rechaza fechas fuera del rango, un extracto que no
+   * cuadra consigo mismo y un archivo que ya se subió.
+   */
+  importar: (cuentaBancariaId: string, datos: ImportarExtractoInput) =>
+    api
+      .post<ExtractoResumen>(`/cuentas-bancarias/${cuentaBancariaId}/extractos/importar`, datos)
+      .then((r) => r.data),
+
   porId: (id: string) => api.get<ExtractoDetalle>(`/extractos/${id}`).then((r) => r.data),
 
   agregarLinea: (id: string, datos: AgregarLineaExtractoInput) =>
@@ -127,7 +155,35 @@ export const extractosApi = {
       .post(`/extractos/${id}/grupos/${grupoId}/deshacer`)
       .then(() => undefined),
 
-  /** Exige que cuadren las dos cuentas de la conciliación; rechaza con el detalle si no. */
+  /**
+   * Registra en el libro lo que el banco hizo solo —4×1000, comisiones,
+   * intereses—: una nota por línea, con la fecha y el valor del banco, cada
+   * una cruzada con su línea.
+   */
+  registrar: (id: string, datos: RegistrarDesdeExtractoInput) =>
+    api
+      .post<{ registradas: number }>(`/extractos/${id}/registrar`, datos)
+      .then((r) => r.data),
+
+  /**
+   * Un cruce que no cuadra: registra la nota por la diferencia —cargo o abono
+   * del banco, o la corrección de un error nuestro— y cruza todo junto.
+   */
+  completar: (id: string, datos: CompletarGrupoInput) =>
+    api
+      .post<{ movimientoId: string; diferencia: number }>(`/extractos/${id}/completar`, datos)
+      .then((r) => r.data),
+
+  /**
+   * Error del banco: la línea queda sin cruzar, con el porqué, y se le
+   * reclama. El libro no se toca. `null` quita la nota.
+   */
+  anotarLinea: (id: string, lineaId: string, nota: string | null) =>
+    api
+      .post(`/extractos/${id}/lineas/${lineaId}/nota`, { nota })
+      .then(() => undefined),
+
+  /** Exige que toda línea esté explicada y que cuadren las dos cuentas; rechaza con el detalle si no. */
   cerrar: (id: string) =>
     api.post<ExtractoResumen>(`/extractos/${id}/cerrar`).then((r) => r.data),
 };
@@ -154,5 +210,23 @@ export const cortesBancoApi = {
   cerrar: (cuentaBancariaId: string, datos: CerrarCorteBancoInput) =>
     api
       .post<CorteBancoResumen>(`/cuentas-bancarias/${cuentaBancariaId}/cortes`, datos)
+      .then((r) => r.data),
+};
+
+/**
+ * Las reglas que reconocen en el extracto el 4×1000, las comisiones y la cuota
+ * de manejo. Reconocen; registrar lo confirma una persona. No se borran: se
+ * desactivan.
+ */
+export const reglasExtractoApi = {
+  listar: () =>
+    api.get<ReglaExtractoResumen[]>("/extracto-reglas").then((r) => r.data),
+
+  crear: (datos: CrearReglaExtractoInput) =>
+    api.post<ReglaExtractoResumen>("/extracto-reglas", datos).then((r) => r.data),
+
+  actualizar: (id: string, datos: ActualizarReglaExtractoInput) =>
+    api
+      .patch<ReglaExtractoResumen>(`/extracto-reglas/${id}`, datos)
       .then((r) => r.data),
 };

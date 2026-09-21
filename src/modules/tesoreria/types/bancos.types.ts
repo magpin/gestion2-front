@@ -23,6 +23,11 @@ export interface CuentaBancariaResumen {
   saldo: string;
   /** El día del último movimiento, o `null` si nunca se movió. */
   ultimo_movimiento: string | null;
+  /**
+   * El mapeo de columnas del último extracto subido, o `null` si nunca se
+   * subió uno. Su forma la decide la pantalla de importar.
+   */
+  formato_extracto: Record<string, unknown> | null;
 }
 
 export interface CrearCuentaBancariaInput {
@@ -112,6 +117,8 @@ export interface RegistrarMovimientoBancoInput {
   valor: number;
   concepto: string;
   contraCuentaId: string;
+  /** Número de cheque o de la transferencia: con él la conciliación cruza por referencia. */
+  referencia?: string;
 }
 
 /** El cuadre diario no existe en Bancos: esto es la conciliación por extracto. */
@@ -221,6 +228,23 @@ export interface ConciliarInput {
 }
 
 /**
+ * Registrar en el libro lo que el banco hizo solo: una nota por línea, con la
+ * fecha y el valor del banco, ya cruzada con su línea.
+ */
+export interface RegistrarDesdeExtractoInput {
+  lineaIds: string[];
+  contraCuentaId: string;
+  concepto: string;
+  /** Solo si la contra cuenta exige tercero. */
+  terceroId?: string;
+}
+
+/** Un cruce al que le falta la diferencia: se registra la nota y se cruza todo junto. */
+export interface CompletarGrupoInput extends RegistrarDesdeExtractoInput {
+  movimientoIds: string[];
+}
+
+/**
  * Lo que el sistema propone, calculado en el momento. No escribe nada: hasta
  * que una persona no confirme, acá no pasó nada.
  */
@@ -296,4 +320,64 @@ export interface CerrarCorteBancoInput {
   fecha: string;
   saldoBanco?: number;
   nota?: string;
+}
+
+// -----------------------------------------------------------------------------
+// Reglas del extracto
+// -----------------------------------------------------------------------------
+
+/**
+ * «Las líneas débito que dicen GMF son 4×1000 y van contra tal cuenta».
+ * Reconocen y proponen; registrar lo confirma una persona. No se borran: se
+ * desactivan.
+ */
+export interface ReglaExtractoResumen {
+  id: string;
+  /** `null`: vale para todas las cuentas bancarias de la empresa. */
+  cuenta_bancaria_id: string | null;
+  nombre: string;
+  palabras: string[];
+  tipo_linea: TipoLineaExtracto;
+  contra_cuenta_id: string;
+  concepto: string;
+  activa: boolean;
+}
+
+export interface CrearReglaExtractoInput {
+  cuentaBancariaId?: string;
+  nombre: string;
+  palabras: string[];
+  tipoLinea: TipoLineaExtracto;
+  contraCuentaId: string;
+  concepto: string;
+}
+
+/** El tipo de línea y la cuenta bancaria no se cambian: eso es otra regla. */
+export interface ActualizarReglaExtractoInput {
+  nombre?: string;
+  palabras?: string[];
+  contraCuentaId?: string;
+  concepto?: string;
+  activa?: boolean;
+}
+
+/**
+ * El extracto leído de un archivo en el navegador, de una vez: la cabecera,
+ * las líneas, la huella del archivo y el mapeo que se usó, que queda
+ * recordado en la cuenta.
+ */
+export interface ImportarExtractoInput extends CrearExtractoInput {
+  archivoNombre: string;
+  /** SHA-256 en hexadecimal: el mismo archivo no se sube dos veces. */
+  archivoHuella: string;
+  /** Lo interpreta el frontend (`lib/extractoArchivo.ts`); el backend solo lo guarda. */
+  formato: Record<string, unknown>;
+  lineas: Array<{
+    fila: number;
+    fecha: string;
+    descripcion: string;
+    referencia?: string;
+    valor: number;
+    tipo: TipoLineaExtracto;
+  }>;
 }
