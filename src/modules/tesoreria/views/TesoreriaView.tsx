@@ -10,6 +10,7 @@ import {
   GitCompareArrows,
   History,
   Landmark,
+  ListFilter,
   Loader2,
   Settings2,
 } from "lucide-react";
@@ -47,10 +48,17 @@ import { CuentasBancariasSeccion } from "./CuentasBancariasSeccion";
 import { ExtractosSeccion } from "./ExtractosSeccion";
 import { LibroBancoSeccion } from "./LibroBancoSeccion";
 import { LibroCajaSeccion } from "./LibroCajaSeccion";
+import { ReglasExtractoSeccion } from "./ReglasExtractoSeccion";
 
 type Grupo = "Caja" | "Bancos";
 type SeccionCaja = "Cajas" | "Libro" | "Arqueo" | "Configuración";
-type SeccionBanco = "Cuentas" | "Libro" | "Corte diario" | "Extractos" | "Conciliación";
+type SeccionBanco =
+  | "Cuentas"
+  | "Libro"
+  | "Corte diario"
+  | "Extractos"
+  | "Conciliación"
+  | "Reglas";
 
 const SECCIONES_CAJA: Array<[SeccionCaja, typeof Landmark]> = [
   ["Cajas", Landmark],
@@ -65,6 +73,7 @@ const SECCIONES_BANCO: Array<[SeccionBanco, typeof Landmark]> = [
   ["Corte diario", CalendarCheck],
   ["Extractos", FileText],
   ["Conciliación", GitCompareArrows],
+  ["Reglas", ListFilter],
 ];
 
 const ID_FORMULARIO_CAJA = "formulario-nueva-caja";
@@ -225,6 +234,7 @@ export function TesoreriaView() {
           {seccionBanco === "Corte diario" && <CorteBancoSeccion />}
           {seccionBanco === "Extractos" && <ExtractosSeccion />}
           {seccionBanco === "Conciliación" && <ConciliacionSeccion />}
+          {seccionBanco === "Reglas" && <ReglasExtractoSeccion />}
         </>
       )}
 
