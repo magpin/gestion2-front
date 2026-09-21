@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
+import { useDisponible } from "../hooks/useModoIa";
 import type { ClavePaso } from "../types/configuracion.types";
 import { Recorrido } from "./Recorrido";
 import { RUTA_PASO } from "./rutas";
@@ -16,13 +17,19 @@ import styles from "../asistente.module.css";
 export { RUTA_PASO };
 
 /**
- * El modo IA todavía no tiene backend: los endpoints de extracción no existen.
+ * Dónde vive el modo IA. **No es un paso de este asistente**: es un módulo del
+ * área de trabajo, con su propia entrada en la barra lateral.
  *
- * La píldora «Llenar con IA» está construida y en su sitio, pero apagada hasta
- * que haya algo real detrás. Un atajo que lleva a una pantalla que no puede
- * leer un documento es peor que no ofrecerlo.
+ * Acá estaba `MODO_IA_DISPONIBLE = false`, una constante que apagaba las dos
+ * entradas mientras el backend no existiera, y que apuntaba a
+ * `/configuracion/ia` —una ruta que nunca se construyó—. El backend existe
+ * desde el 20 de septiembre, así que las entradas se encienden; pero el
+ * encendido **no vuelve a ser una constante**: sale de
+ * `GET configuracion/ia/disponible`, que es lo que ya mira la pantalla del
+ * asistente. Si mañana falta la clave del modelo o el bucket, la entrada se
+ * apaga sola en vez de llevar a una pantalla que dice «no disponible».
  */
-export const MODO_IA_DISPONIBLE = false;
+export const RUTA_MODO_IA = "/dashboard/asistente";
 
 /**
  * Una línea por paso, para el encabezado.
@@ -126,11 +133,7 @@ export function AsistenteShell({
         />
 
         <section className="flex min-w-0 grow flex-col">
-          <BarraSuperior
-            indice={indice}
-            total={data.pasos.length}
-            rutaSiguiente={siguiente ? RUTA_PASO[siguiente.clave] : RUTA_PASO[clave]}
-          />
+          <BarraSuperior indice={indice} total={data.pasos.length} />
 
           {/* La única región que scrollea. `overscroll-contain` evita que al
               llegar al final la rueda siga moviendo lo de atrás. */}
@@ -205,15 +208,11 @@ export function AsistenteShell({
  * Cambiar de modo no pierde nada —lo guardado ya está en el backend— y por eso
  * el atajo está siempre visible en vez de esconderse en la bienvenida.
  */
-function BarraSuperior({
-  indice,
-  total,
-  rutaSiguiente,
-}: {
-  indice: number;
-  total: number;
-  rutaSiguiente: string;
-}) {
+function BarraSuperior({ indice, total }: { indice: number; total: number }) {
+  // `undefined` mientras se pregunta: la píldora no aparece y después entra, en
+  // vez de aparecer y desaparecer si el modo no estuviera disponible.
+  const { data: modoIa } = useDisponible();
+
   return (
     <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6 sm:px-10">
       <span className="font-mono text-xs text-muted-foreground">
@@ -221,9 +220,12 @@ function BarraSuperior({
       </span>
       <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
         <span className="hidden sm:inline">Modo manual</span>
-        {MODO_IA_DISPONIBLE && (
+        {modoIa === true && (
+          // Sin `?volver=`: lo llevaba y nadie lo leía nunca del otro lado. Un
+          // parámetro que no hace nada promete un regreso que no existe. Del
+          // modo IA se vuelve por «Pasar a manual», que está en su pantalla.
           <Link
-            href={`/configuracion/ia?volver=${encodeURIComponent(rutaSiguiente)}`}
+            href={RUTA_MODO_IA}
             className="flex h-[34px] items-center gap-2 rounded-full border border-border px-3 font-medium text-foreground no-underline hover:bg-secondary"
           >
             <Destello size={13} className="text-brand" />

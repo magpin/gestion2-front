@@ -6,10 +6,11 @@ import type { ReactNode } from "react";
 
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
-import { MODO_IA_DISPONIBLE } from "../components/AsistenteShell";
+import { RUTA_MODO_IA } from "../components/AsistenteShell";
 import { Recorrido } from "../components/Recorrido";
 import { RUTA_PASO } from "../components/rutas";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
+import { useDisponible } from "../hooks/useModoIa";
 import styles from "../asistente.module.css";
 
 /**
@@ -45,6 +46,7 @@ const DOCUMENTOS = [
 
 export function BienvenidaView() {
   const { data, isLoading } = useEstadoConfiguracion();
+  const { data: modoIa } = useDisponible();
   const empresas = useAuthStore((s) => s.empresas);
   const empresaId = useAuthStore((s) => s.empresaId);
   const empresa = empresas.find((e) => e.id === empresaId);
@@ -97,14 +99,16 @@ export function BienvenidaView() {
               insignia="Recomendado"
               titulo="Con "
               tituloCursiva="IA"
-              texto="Sube tus documentos y conversa. La IA lee, llena los pasos y te pregunta solo lo que los papeles no dicen."
+              texto="Sube tus documentos. La IA lee, llena los pasos y te pregunta solo lo que los papeles no dicen."
               puntos={PUNTOS_IA}
               accion="Empezar con IA"
-              href="/configuracion/ia"
-              /* El modo IA se enciende cuando exista su backend. Hasta entonces
-                 la tarjeta se muestra —es la mitad de la decisión que esta
-                 pantalla explica— pero no promete un clic que no funciona. */
-              deshabilitado={!MODO_IA_DISPONIBLE}
+              href={RUTA_MODO_IA}
+              /* La tarjeta se muestra siempre —es la mitad de la decisión que
+                 esta pantalla explica— pero solo se puede apretar si el
+                 servidor dice que el modo está disponible. Mientras se
+                 pregunta, `undefined`: se queda deshabilitada, que es lo
+                 conservador. */
+              deshabilitado={modoIa !== true}
             />
 
             <TarjetaModo

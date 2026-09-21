@@ -8,21 +8,16 @@ import { CLAVE_ESTADO } from "@/modules/configuracion/hooks/useEstadoConfiguraci
 import { asistenteService } from "../services/asistente.service";
 import type { ResultadoConfirmacion, TipoDocumento } from "../types/asistente.types";
 
-export const CLAVE_DISPONIBLE = ["asistente", "disponible"] as const;
+// `useDisponible` vive en `configuracion`: las dos entradas al modo IA son de
+// esa carpeta y el endpoint se llama `/configuracion/ia/disponible`. Se
+// reexporta acá porque esta pantalla también lo necesita y así no hay dos
+// caminos para importar lo mismo.
+export {
+  CLAVE_DISPONIBLE,
+  useDisponible,
+} from "@/modules/configuracion/hooks/useModoIa";
+
 export const CLAVE_DOCUMENTOS = ["asistente", "documentos"] as const;
-
-/** Si el modo se ofrece. Se pregunta una vez: depende del servidor, no de la sesión. */
-export const useDisponible = () => {
-  const operando = useAuthStore((s) => s.operando);
-
-  return useQuery({
-    queryKey: CLAVE_DISPONIBLE,
-    queryFn: asistenteService.disponible,
-    enabled: operando,
-    staleTime: Infinity,
-    meta: { silencioso: true },
-  });
-};
 
 /**
  * El estado de cada documento. `staleTime` en cero: el progreso en vivo llega

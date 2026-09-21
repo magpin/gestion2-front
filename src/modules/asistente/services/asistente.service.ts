@@ -13,11 +13,9 @@ import type {
  * documento y **propone** hechos; aplicar es otra llamada, y la hace una persona.
  */
 export const asistenteService = {
-  /** Si el modo se puede ofrecer: sin clave del modelo o sin bucket, no. */
-  disponible: () =>
-    api
-      .get<{ disponible: boolean }>("/configuracion/ia/disponible")
-      .then((r) => r.data.disponible),
+  // `disponible` no está acá: lo pide `configuracion/hooks/useModoIa`, porque
+  // quien primero necesita saberlo es la pantalla que ofrece entrar al modo IA,
+  // no la que ya está adentro.
 
   /** El último intento de cada tipo de documento. */
   documentos: () =>
