@@ -34,3 +34,14 @@ export const nitDePrueba = (): { nit: string; dv: string } => {
   const nit = String(800_000_000 + Math.floor(Math.random() * 99_999_999));
   return { nit, dv: digitoVerificacion(nit) };
 };
+
+/**
+ * Una pausa para mirar, solo cuando la corrida es para mirar.
+ *
+ * Con `E2E_LENTO` puesto —que es como se corre con ventana abierta— se queda
+ * quieta unos segundos sobre lo que acaba de verificar. En la corrida normal
+ * no espera nada: las pruebas no se pagan con tiempo de nadie.
+ */
+export const mirar = async (page: { waitForTimeout: (ms: number) => Promise<void> }, segundos = 4) => {
+  if (Number(process.env.E2E_LENTO ?? 0) > 0) await page.waitForTimeout(segundos * 1000);
+};
