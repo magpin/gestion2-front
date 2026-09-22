@@ -1,5 +1,5 @@
-import { CuentasView } from "@/modules/plataforma/views/CuentasView";
+import { InicioView } from "@/modules/plataforma/views/InicioView";
 
 export default function PlataformaPage() {
-  return <CuentasView />;
+  return <InicioView />;
 }

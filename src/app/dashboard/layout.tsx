@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { AnunciosPlataforma } from "@/components/layout/AnunciosPlataforma";
 import { BarraLateral } from "@/components/layout/BarraLateral";
 import { BarraSuperior } from "@/components/layout/BarraSuperior";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -27,6 +28,7 @@ export default async function DashboardLayout({
       <BarraLateral />
       <SidebarInset className="min-w-0">
         <BarraSuperior />
+        <AnunciosPlataforma />
         <div className="min-w-0 flex-1 px-4 py-7 md:px-10 lg:px-14">
           <div className="mx-auto max-w-7xl">{children}</div>
         </div>
