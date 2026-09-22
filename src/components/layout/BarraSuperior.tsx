@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Building2, ChevronsUpDown, LogOut } from "lucide-react";
 
+import { BotonTema } from "@/components/shared/BotonTema";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -55,6 +56,7 @@ export function BarraSuperior() {
       </Link>
 
       <div className="ml-auto flex items-center gap-3">
+        <BotonTema />
         {roles.length > 0 && (
           <span className="hidden rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold sm:inline">
             {NOMBRE_ROL[roles[0]]}

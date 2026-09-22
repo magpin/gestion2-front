@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { BotonTema } from "@/components/shared/BotonTema";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { plataformaService, sesionPlataforma } from "../services/plataforma.service";
@@ -200,13 +201,16 @@ function Riel({
 
       <div className="mt-auto flex flex-col gap-2.5 border-t border-rail-line px-2 pt-4">
         {email && <span className="truncate text-[13px] text-rail-muted">{email}</span>}
-        <button
-          type="button"
-          onClick={alSalir}
-          className="h-8 self-start rounded-lg border border-rail-line px-3 text-[13px] text-rail-foreground hover:bg-white/10"
-        >
-          Cerrar sesión
-        </button>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={alSalir}
+            className="h-8 rounded-lg border border-rail-line px-3 text-[13px] text-rail-foreground hover:bg-white/10"
+          >
+            Cerrar sesión
+          </button>
+          <BotonTema variante="riel" />
+        </div>
       </div>
     </nav>
   );

@@ -13,17 +13,34 @@ function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
+/**
+ * Un desplegable se despliega **hacia abajo**.
+ *
+ * Sin esto, cuando el contenido no cabe bajo el campo —un buscador de
+ * productos dentro de un diálogo, por ejemplo— el posicionador lo tiraba al
+ * lado, tapando media pantalla y lejos del campo que lo abrió. Con `shift` se
+ * se queda donde se pidió —abajo— y solo se corre de lado a lado para caber
+ * en la pantalla. Lo que no quepa lo resuelve el alto: el contenido se limita
+ * con `--available-height` y su lista rueda.
+ */
+const SIEMPRE_ABAJO = {
+  side: "none",
+  align: "shift",
+  fallbackAxisSide: "none",
+} as const;
+
 function PopoverContent({
   className,
   align = "center",
   alignOffset = 0,
   side = "bottom",
   sideOffset = 4,
+  collisionAvoidance = SIEMPRE_ABAJO,
   ...props
 }: PopoverPrimitive.Popup.Props &
   Pick<
     PopoverPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
+    "align" | "alignOffset" | "side" | "sideOffset" | "collisionAvoidance"
   >) {
   return (
     <PopoverPrimitive.Portal>
@@ -32,6 +49,7 @@ function PopoverContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
+        collisionAvoidance={collisionAvoidance}
         className="isolate z-50"
       >
         <PopoverPrimitive.Popup

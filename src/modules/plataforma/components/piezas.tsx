@@ -140,6 +140,9 @@ export function EstadoCuentaBadge({ estado }: { estado: EstadoCuenta }) {
   const t = TONO_ESTADO[estado];
   return (
     <span
+      // Con nombre: quien usa lector de pantalla oye «Estado: suspendida», y
+      // no una palabra suelta que también es una opción de un menú.
+      aria-label={`Estado: ${NOMBRE_ESTADO[estado]}`}
       className={cn(
         "inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap rounded-full border px-2 text-xs font-medium text-foreground",
         t.fondo,
@@ -152,17 +155,21 @@ export function EstadoCuentaBadge({ estado }: { estado: EstadoCuenta }) {
 }
 
 export function PlanBadge({ plan }: { plan: Plan }) {
-  return <Pastilla>{NOMBRE_PLAN[plan]}</Pastilla>;
+  // Con nombre, como el estado: «Plan: Profesional» se lee solo.
+  return <Pastilla etiqueta={"Plan: " + NOMBRE_PLAN[plan]}>{NOMBRE_PLAN[plan]}</Pastilla>;
 }
 
 export function Pastilla({
   children,
   tono = "neutro",
   className,
+  etiqueta,
 }: {
   children: React.ReactNode;
   tono?: "neutro" | "exito" | "advertencia" | "peligro" | "info";
   className?: string;
+  /** Un nombre accesible cuando la palabra sola se repite en la pantalla. */
+  etiqueta?: string;
 }) {
   const clases = {
     neutro: "border-border bg-background",
@@ -173,6 +180,7 @@ export function Pastilla({
   }[tono];
   return (
     <span
+      aria-label={etiqueta}
       className={cn(
         "inline-flex h-[22px] items-center gap-1.5 self-start whitespace-nowrap rounded-full border px-2 text-xs font-medium text-foreground",
         clases,

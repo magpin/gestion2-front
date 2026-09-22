@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { SincronizarTema } from "@/components/shared/SincronizarTema";
+import { COOKIE_EFECTIVO } from "@/lib/tema.constantes";
 import { Providers } from "./providers";
 
 const inter = Inter({
@@ -29,21 +32,35 @@ export const metadata: Metadata = {
   description: "Sistema de gestión integral",
 };
 
-// El sistema es de tema claro y nada más: no hay clase `dark`, ni conmutador,
-// ni script anti-parpadeo. Un solo tema es un solo juego de contrastes que
-// verificar, y en una pantalla que se mira ocho horas seguidas eso vale más que
-// la opción.
-export default function RootLayout({
+// Claro, oscuro o el del sistema.
+//
+// El tema vive en `data-theme` del `<html>` —es lo que leen los roles de
+// color— y se arma **en el servidor**, con la cookie que deja el botón. Así la
+// página nace del color correcto: con la preferencia guardada solo en el
+// navegador, el servidor no podría saberla y quien usa oscuro vería un
+// destello blanco en cada carga.
+//
+// Hasta el 22 de septiembre de 2026 el sistema era de tema claro y nada más.
+// Cambió porque el diseño llegó en los dos modos y los roles de color ya los
+// tenían: mantener el CSS oscuro sin forma de encenderlo era lo peor de las
+// dos opciones.
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Sin cookie se manda claro, y `SincronizarTema` lo corrige una sola vez
+  // en quien tiene el sistema operativo en oscuro.
+  const tema = (await cookies()).get(COOKIE_EFECTIVO)?.value === "dark" ? "dark" : "light";
+
   return (
     <html
       lang="es"
       className={`${inter.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} h-full`}
+      data-theme={tema}
     >
       <body className="min-h-full">
+        <SincronizarTema />
         <Providers>{children}</Providers>
       </body>
     </html>

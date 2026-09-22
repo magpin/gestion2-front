@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
+    "e2e:ver": "playwright test -c e2e/playwright.config.ts --headed",
+    "e2e:ui": "playwright test -c e2e/playwright.config.ts --ui",
+    "e2e:lento": "playwright test -c e2e/playwright.config.ts --headed --workers=1"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -38,6 +42,7 @@
   },
   "devDependencies": {
     "@next/swc-wasm-nodejs": "16.2.9",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",

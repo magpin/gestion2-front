@@ -140,7 +140,7 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
               texto={`El primero se genera el ${dia(s.proximoCobro)}.`}
             />
           ) : (
-            <div className="-mx-3 overflow-x-auto">
+            <div className="-mx-3 hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[440px] border-collapse">
                 <thead>
                   <tr>
@@ -179,6 +179,22 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
               </table>
             </div>
           )}
+
+          {/* En celular, una línea por período. */}
+          <ul className="m-0 flex list-none flex-col divide-y divide-border p-0 sm:hidden">
+            {e.cargos.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+                <span className="flex flex-col">
+                  <span className="text-[13px]">{periodo(c.periodo)}</span>
+                  <span className="text-xs text-muted-foreground">Vence {dia(c.venceEn)}</span>
+                </span>
+                <span className="flex flex-col items-end gap-1">
+                  <Mono className="text-[13px]">{pesos(c.monto)}</Mono>
+                  <Pastilla tono={TONO_CARGO[c.estado].tono}>{TONO_CARGO[c.estado].texto}</Pastilla>
+                </span>
+              </li>
+            ))}
+          </ul>
         </Tarjeta>
 
         <Tarjeta
@@ -192,7 +208,7 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
           {s.pagos.length === 0 ? (
             <Vacio titulo="Todavía no hay pagos registrados." />
           ) : (
-            <div className="-mx-3 overflow-x-auto">
+            <div className="-mx-3 hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[440px] border-collapse">
                 <thead>
                   <tr>
@@ -222,6 +238,22 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
               </table>
             </div>
           )}
+
+          {/* En celular, una línea por pago. */}
+          <ul className="m-0 flex list-none flex-col divide-y divide-border p-0 sm:hidden">
+            {s.pagos.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+                <span className="flex flex-col">
+                  <Mono className="text-[13px]">{dia(p.fecha)}</Mono>
+                  <span className="text-xs text-muted-foreground">
+                    {MEDIOS_PAGO[p.medio] ?? p.medio}
+                    {p.referencia ? `, ${p.referencia}` : ""}
+                  </span>
+                </span>
+                <Mono className="text-[13px]">{pesos(p.monto)}</Mono>
+              </li>
+            ))}
+          </ul>
           <p className="m-0 text-xs text-muted-foreground">
             Los pagos cubren los cargos del más viejo al más nuevo. No se editan ni se borran: uno mal
             registrado se compensa con otro.

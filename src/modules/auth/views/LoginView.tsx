@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +35,16 @@ const HORAS_DE_SESION = 8;
 export function LoginView() {
   const login = useLogin();
   const router = useRouter();
+
+  // Hasta que el navegador termine de preparar la página, el botón queda
+  // apagado. Si no, un clic apurado manda el formulario por la vía del
+  // navegador —un GET— y la contraseña termina en la URL, o sea en el
+  // historial y en los registros del servidor.
+  const listo = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   // El proxy no puede saberlo: la sesión de plataforma vive en localStorage y él
   // solo ve cookies. Sin esto, un administrador que vuelve tendría que escribir
@@ -124,7 +134,7 @@ export function LoginView() {
             <Button
               type="submit"
               size="lg"
-              disabled={login.isPending}
+              disabled={login.isPending || !listo}
               className={`${styles.up} ${styles.d5} mt-3.5 h-11 w-full rounded-[0.6rem]`}
             >
               {login.isPending ? <Loader2 className="size-4 animate-spin" /> : "Ingresar"}

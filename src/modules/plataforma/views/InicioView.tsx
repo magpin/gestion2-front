@@ -465,7 +465,7 @@ export function InicioView() {
               Ninguna empresa usó la IA este mes.
             </p>
           ) : (
-            <div className="-mx-3 overflow-x-auto">
+            <div className="-mx-3 hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[520px] border-collapse">
                 <thead>
                   <tr>
@@ -521,6 +521,41 @@ export function InicioView() {
               </table>
             </div>
           )}
+
+          {/* En celular la tabla no cabe: cada empresa es una tarjeta. */}
+          <ul className="m-0 flex list-none flex-col divide-y divide-border p-0 sm:hidden">
+            {d.topIa.map((e) => (
+              <li key={e.empresaId} className="flex flex-col gap-1 py-3 first:pt-0">
+                <Link
+                  href={`/plataforma/cuentas/${e.cuentaId}`}
+                  className="font-medium hover:underline"
+                >
+                  {e.empresa}
+                </Link>
+                <span className="text-xs text-muted-foreground">
+                  Cuenta {e.cuenta}
+                  {e.planNombre && `, ${e.planNombre}`}
+                </span>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-[13px]">
+                  <Mono>
+                    {dolares(e.costoUsd)} · {pesos(e.costoUsd * tasa)}
+                  </Mono>
+                  {e.pagaMensual ? (
+                    <span className="flex items-center gap-2">
+                      {e.costoUsd * tasa > e.pagaMensual && (
+                        <Pastilla tono="peligro">Cuesta más de lo que paga</Pastilla>
+                      )}
+                      <Mono className="text-muted-foreground">
+                        {porciento((e.costoUsd * tasa) / e.pagaMensual)} de {pesos(e.pagaMensual)}
+                      </Mono>
+                    </span>
+                  ) : (
+                    <SinConfigurar texto="Sin precio" />
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
         </Tarjeta>
 
         <Tarjeta titulo="Actividad" className="gap-0">

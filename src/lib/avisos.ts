@@ -2,6 +2,11 @@
 
 import Swal from "sweetalert2";
 
+import { temaActual } from "./tema";
+
+/** El tema de sweetalert2, tomado de la pantalla que está detrás. */
+const tema = (): "light" | "dark" => (temaActual() === "oscuro" ? "dark" : "light");
+
 import { explicarError, type MomentoDelError } from "./errores";
 
 // Avisos del sistema, en un solo lugar.
@@ -17,9 +22,9 @@ import { explicarError, type MomentoDelError } from "./errores";
 // sweetalert2 inyecta su propio CSS desde el paquete (entrada sweetalert2.all.js),
 // así que globals.css no se toca.
 
-// El sistema es de tema claro y nada más: los avisos se fijan ahí en vez de
-// mirar la preferencia del sistema operativo con theme: "auto", que devolvería
-// oscuro en media empresa y no coincidiría con la pantalla de atrás.
+// Los avisos siguen el tema de la pantalla, no el del sistema operativo: con
+// theme: "auto" un aviso saldría oscuro sobre una pantalla clara en quien puso
+// el sistema en oscuro y el sistema en claro.
 
 // buttonsStyling: false apaga los botones propios de sweetalert2 para que el
 // botón use el mismo índigo que el resto del sistema.
@@ -54,7 +59,7 @@ export const aviso = {
       icon: "success",
       title: mensaje,
       text: detalle,
-      theme: "light",
+      theme: tema(),
     });
   },
 
@@ -63,7 +68,7 @@ export const aviso = {
       icon: "info",
       title: mensaje,
       text: detalle,
-      theme: "light",
+      theme: tema(),
     });
   },
 
@@ -87,7 +92,7 @@ export const aviso = {
       text: explicado.queHacer,
       confirmButtonText: "Entendido",
       allowOutsideClick: false,
-      theme: "light",
+      theme: tema(),
       buttonsStyling: false,
       customClass: { confirmButton: BOTON },
     });
@@ -100,7 +105,7 @@ export const aviso = {
       title: mensaje,
       text: detalle,
       confirmButtonText: "Entendido",
-      theme: "light",
+      theme: tema(),
       buttonsStyling: false,
       customClass: { confirmButton: BOTON },
     });
@@ -124,7 +129,7 @@ export const aviso = {
       showCancelButton: true,
       confirmButtonText: salida.etiqueta,
       cancelButtonText: "Entendido",
-      theme: "light",
+      theme: tema(),
       buttonsStyling: false,
       customClass: { confirmButton: BOTON, cancelButton: BOTON_SECUNDARIO },
     }).then((r) => {
@@ -150,7 +155,7 @@ export const aviso = {
       showCancelButton: true,
       confirmButtonText: etiquetaConfirmar,
       cancelButtonText: "Cancelar",
-      theme: "light",
+      theme: tema(),
       buttonsStyling: false,
       customClass: { confirmButton: BOTON, cancelButton: BOTON_SECUNDARIO },
     });
@@ -163,7 +168,7 @@ export const aviso = {
       title: mensaje,
       text: detalle,
       confirmButtonText: "Entendido",
-      theme: "light",
+      theme: tema(),
       buttonsStyling: false,
       customClass: { confirmButton: BOTON },
     });

@@ -71,7 +71,7 @@ export function SelectorTercero({
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-(--anchor-width) min-w-96 p-0"
+          className="flex max-h-(--available-height) w-(--anchor-width) min-w-96 flex-col p-0"
           align="start"
         >
           <div className="border-b border-border p-3">
@@ -85,7 +85,7 @@ export function SelectorTercero({
             />
           </div>
 
-          <div className="max-h-72 overflow-y-auto p-2">
+          <div className="min-h-0 flex-1 overflow-y-auto p-2">
             {isFetching && (
               <div className="flex justify-center py-8 text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" />

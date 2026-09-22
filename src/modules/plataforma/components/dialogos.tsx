@@ -217,14 +217,22 @@ export function DialogoEstado({
                 Qué pasa al {estado === "CANCELADO" ? "cancelar" : "suspender"}
               </span>
               <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
-                {estado === "CANCELADO" ? (
-                  <li>Sus {plural(cuenta.usuarios, "usuario")} no pueden entrar desde que confirme.</li>
-                ) : (
+                <li>
+                  {cuenta.usuarios === 1 ? "Su único usuario" : `Sus ${cuenta.usuarios} usuarios`}{" "}
+                  {estado === "CANCELADO"
+                    ? cuenta.usuarios === 1
+                      ? "no podrá entrar desde que confirme."
+                      : "no podrán entrar desde que confirme."
+                    : cuenta.usuarios === 1
+                      ? "podrá consultar, pero no emitir documentos."
+                      : "podrán consultar, pero no emitir documentos."}
+                </li>
+                {cuenta.empresas > 0 && (
                   <li>
-                    Sus {plural(cuenta.usuarios, "usuario")} pueden consultar, pero no emitir documentos.
+                    Los datos de {cuenta.empresas === 1 ? "su empresa" : `sus ${cuenta.empresas} empresas`}{" "}
+                    se conservan completos.
                   </li>
                 )}
-                <li>Los datos de sus {plural(cuenta.empresas, "empresa")} se conservan completos.</li>
                 <li>Se puede reactivar desde «Cambiar estado» cuando se resuelva.</li>
               </ul>
             </div>
