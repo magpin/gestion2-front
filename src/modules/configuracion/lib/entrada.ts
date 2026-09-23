@@ -15,8 +15,12 @@ import type { EstadoConfiguracion } from "../types/configuracion.types";
  * tablero le dice qué falta —obligarlo a volver a elegir sería hacerle repetir
  * una decisión que ya tomó—.
  */
-export function destinoAlEntrar(estado: EstadoConfiguracion): "/dashboard" | "/configuracion/bienvenida" {
+export function destinoAlEntrar(
+  estado: EstadoConfiguracion,
+): "/dashboard" | "/configuracion/bienvenida" | "/configuracion/ia" {
   if (estado.siguiente === null) return "/dashboard";
+  // Quien eligió IA vuelve a IA hasta terminar: es donde quedó su recorrido.
+  if (estado.modo === "IA") return "/configuracion/ia";
   const sinTocar = estado.pasos
     .filter((p) => p.clave !== "EMPRESA")
     .every((p) => p.estado === "PENDIENTE" || p.estado === "BLOQUEADO");

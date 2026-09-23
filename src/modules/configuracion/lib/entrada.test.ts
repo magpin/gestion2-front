@@ -24,6 +24,7 @@ const estado = (
   porcentaje: 0,
   completa: siguiente === null,
   siguiente,
+  modo: null,
 });
 
 describe("destinoAlEntrar", () => {

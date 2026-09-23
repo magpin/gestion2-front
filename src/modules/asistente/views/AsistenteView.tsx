@@ -434,7 +434,7 @@ export function AsistenteView({
             <TarjetaExtraido
               documento={documento}
               confirmando={confirmar.isPending && confirmar.variables?.id === documento.id}
-              yaConfirmado={confirmados.has(documento.id)}
+              yaConfirmado={confirmados.has(documento.id) || documento.confirmadoEn != null}
               alConfirmar={alConfirmar}
             />
           }

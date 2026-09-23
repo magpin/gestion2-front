@@ -39,4 +39,6 @@ export interface EstadoConfiguracion {
   porcentaje: number;
   completa: boolean;
   siguiente: ClavePaso | null;
+  /** Con qué modo se configura (0068). IA se mantiene hasta terminar. */
+  modo: "IA" | "MANUAL" | null;
 }

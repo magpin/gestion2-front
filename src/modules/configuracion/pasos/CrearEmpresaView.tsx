@@ -31,6 +31,7 @@ import { RUTA_MODO_IA } from "../components/AsistenteShell";
 import { Campo } from "../components/Campo";
 import { Recorrido } from "../components/Recorrido";
 import { RUTA_PASO } from "../components/rutas";
+import { configuracionService } from "../services/configuracion.service";
 import { empresaApi } from "../services/nucleo.service";
 import type { ClavePaso, Paso } from "../types/configuracion.types";
 import { PUNTOS_IA, PUNTOS_MANUAL, TarjetaModo } from "./BienvenidaView";
@@ -121,13 +122,17 @@ export function CrearEmpresaView() {
           // Ya dentro de la empresa, el RUT entra por el camino de siempre y
           // se lee entero: lo que falta de los otros pasos sale de ahí.
           despues: async () => {
+            await configuracionService.elegirModo("IA");
             if (rut === null) return;
             const { url, clave } = await asistenteService.urlDeCarga("RUT", rut.type);
             await asistenteService.subirAlBucket(url, rut, rut.type);
             await asistenteService.registrar("RUT", clave);
           },
         }
-      : { destino: RUTA_PASO.SEDES },
+      : {
+          destino: RUTA_PASO.SEDES,
+          despues: () => configuracionService.elegirModo("MANUAL"),
+        },
   );
 
   const form = useForm<Datos>({

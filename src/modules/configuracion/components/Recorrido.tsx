@@ -233,9 +233,15 @@ function FilaRecorrido({
   return (
     <li className={clases} {...(esActual ? { "aria-current": "step" as const } : {})}>
       {columnaMarca}
-      <Link href={RUTA_PASO[paso.clave]} className="no-underline">
-        {contenido}
-      </Link>
+      {/* En modo IA los pasos no se abren: entrar a uno sacaba del modo, y al
+          volver pedía confirmar otra vez lo ya guardado. */}
+      {modoIA ? (
+        <span>{contenido}</span>
+      ) : (
+        <Link href={RUTA_PASO[paso.clave]} className="no-underline">
+          {contenido}
+        </Link>
+      )}
     </li>
   );
 }

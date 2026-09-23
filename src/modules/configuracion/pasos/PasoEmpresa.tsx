@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEmbebido } from "../components/ModoEmbebido";
 import { AsistenteShell, RUTA_PASO } from "../components/AsistenteShell";
 import { SECTORES } from "@/modules/catalogos/components/SelectorSectores";
 import { Bloque } from "../components/Bloque";
@@ -38,6 +39,7 @@ const OPCIONES_SECTOR = SECTORES.map((s) => ({ valor: s.codigo, etiqueta: s.nomb
 
 export function PasoEmpresa() {
   const router = useRouter();
+  const embebido = useEmbebido();
 
   const { data: empresa } = useQuery({
     queryKey: ["empresa"],
@@ -90,7 +92,10 @@ export function PasoEmpresa() {
     },
     exito: "Empresa guardada",
     invalidar: [["empresa"], ["configuracion-contable"], ["estado-configuracion"]],
-    alTerminar: () => router.push(RUTA_PASO.SEDES),
+    // Dentro del chat de IA no se navega: eso sacaba del modo.
+    alTerminar: () => {
+      if (!embebido) router.push(RUTA_PASO.SEDES);
+    },
   });
 
   const errores = form.formState.errors;

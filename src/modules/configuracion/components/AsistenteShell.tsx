@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Loader2, TriangleAlert } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
 import { useDisponible } from "../hooks/useModoIa";
 import type { ClavePaso } from "../types/configuracion.types";
+import { configuracionService } from "../services/configuracion.service";
+import { useEmbebido } from "./ModoEmbebido";
 import { Recorrido } from "./Recorrido";
 import { RUTA_PASO } from "./rutas";
 import styles from "../asistente.module.css";
@@ -83,8 +85,35 @@ export function AsistenteShell({
   const empresas = useAuthStore((s) => s.empresas);
   const empresaId = useAuthStore((s) => s.empresaId);
   const empresa = empresas.find((e) => e.id === empresaId);
+  const embebido = useEmbebido();
 
-  if (isLoading || !data) {
+  // Quien eligió IA no entra a los pasos sueltos hasta terminar: salir del modo
+  // y volver era lo que lo metía en un bucle.
+  const enIa = data?.modo === "IA" && !data.completa;
+  useEffect(() => {
+    if (!embebido && enIa) router.replace(RUTA_MODO_IA);
+  }, [embebido, enIa, router]);
+
+  if (embebido) {
+    return (
+      <div className="flex flex-col gap-6">
+        {children}
+        {alContinuar !== undefined && (
+          <button
+            type="button"
+            onClick={alContinuar}
+            disabled={guardando}
+            className="flex h-11 w-fit items-center gap-2.5 rounded-[0.6rem] bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+          >
+            {guardando && <Loader2 className="size-4 animate-spin" />}
+            {etiquetaContinuar ?? "Guardar"}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (isLoading || !data || enIa) {
     return (
       <div className="flex min-h-dvh items-center justify-center text-muted-foreground">
         <Loader2 className="size-5 animate-spin" />
@@ -208,6 +237,7 @@ function BarraSuperior({ indice, total }: { indice: number; total: number }) {
   // `undefined` mientras se pregunta: la píldora no aparece y después entra, en
   // vez de aparecer y desaparecer si el modo no estuviera disponible.
   const { data: modoIa } = useDisponible();
+  const router = useRouter();
 
   return (
     <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6 sm:px-10">
@@ -220,13 +250,20 @@ function BarraSuperior({ indice, total }: { indice: number; total: number }) {
           // Sin `?volver=`: lo llevaba y nadie lo leía nunca del otro lado. Un
           // parámetro que no hace nada promete un regreso que no existe. Del
           // modo IA se vuelve por «Pasar a manual», que está en su pantalla.
-          <Link
-            href={RUTA_MODO_IA}
-            className="flex h-[34px] items-center gap-2 rounded-full border border-border px-3 font-medium text-foreground no-underline hover:bg-secondary"
+          // Pasar a IA queda elegido: desde ahí se termina en IA.
+          <button
+            type="button"
+            onClick={() => {
+              void configuracionService
+                .elegirModo("IA")
+                .catch(() => undefined)
+                .then(() => router.push(RUTA_MODO_IA));
+            }}
+            className="flex h-[34px] items-center gap-2 rounded-full border border-border px-3 font-medium text-foreground hover:bg-secondary"
           >
             <Destello size={13} className="text-brand" />
             Llenar con IA
-          </Link>
+          </button>
         )}
       </div>
     </div>

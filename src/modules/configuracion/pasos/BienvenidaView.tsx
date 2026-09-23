@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Check, FileText, Loader2, Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -11,6 +12,7 @@ import { Recorrido } from "../components/Recorrido";
 import { RUTA_PASO } from "../components/rutas";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
 import { useDisponible } from "../hooks/useModoIa";
+import { configuracionService } from "../services/configuracion.service";
 import styles from "../asistente.module.css";
 
 /**
@@ -21,9 +23,9 @@ import styles from "../asistente.module.css";
  * una decisión que ya tomó—, y por eso el enlace fijo de la barra lateral y el
  * «Continuar» del tablero no pasan por acá.
  *
- * Las dos tarjetas son **enlaces, no opciones de un formulario**. No hay que
- * elegir y después confirmar: un clic lleva al modo. Y ninguno de los dos es
- * irreversible, que es lo que dice la línea del final.
+ * Las dos tarjetas llevan al modo en un clic, y **el modo queda guardado**
+ * (0068): quien elige IA termina en IA —salir a los pasos sueltos lo metía en
+ * un bucle—; quien elige a mano puede pasarse a la IA cuando quiera.
  */
 
 export const PUNTOS_IA = [
@@ -47,6 +49,7 @@ const DOCUMENTOS = [
 export function BienvenidaView() {
   const { data, isLoading } = useEstadoConfiguracion();
   const { data: modoIa } = useDisponible();
+  const router = useRouter();
   const empresas = useAuthStore((s) => s.empresas);
   const empresaId = useAuthStore((s) => s.empresaId);
   const empresa = empresas.find((e) => e.id === empresaId);
@@ -60,6 +63,13 @@ export function BienvenidaView() {
   }
 
   const rutaManual = data.siguiente ? RUTA_PASO[data.siguiente] : RUTA_PASO.EMPRESA;
+  // El modo elegido queda guardado (0068): con IA se termina en IA.
+  const elegir = (modo: "IA" | "MANUAL", destino: string) => {
+    void configuracionService
+      .elegirModo(modo)
+      .catch(() => undefined)
+      .then(() => router.push(destino));
+  };
 
   return (
     <main className="flex h-dvh items-center justify-center overflow-hidden bg-background p-3 sm:p-6 lg:p-8">
@@ -102,7 +112,7 @@ export function BienvenidaView() {
               texto="Subí tus documentos. La IA lee, llena los pasos y te pregunta solo lo que los papeles no dicen."
               puntos={PUNTOS_IA}
               accion="Empezar con IA"
-              href={RUTA_MODO_IA}
+              alElegir={() => elegir("IA", RUTA_MODO_IA)}
               /* La tarjeta se muestra siempre —es la mitad de la decisión que
                  esta pantalla explica— pero solo se puede apretar si el
                  servidor dice que el modo está disponible. Mientras se
@@ -119,7 +129,7 @@ export function BienvenidaView() {
               texto="Llená cada paso vos mismo, con los formularios de siempre. Ideal si ya tenés los datos a mano."
               puntos={PUNTOS_MANUAL}
               accion="Configurar a mano"
-              href={rutaManual}
+              alElegir={() => elegir("MANUAL", rutaManual)}
             />
           </div>
 
@@ -137,7 +147,8 @@ export function BienvenidaView() {
               ))}
             </div>
             <p className="m-0 text-[13px] text-muted-foreground">
-              Podés cambiar de modo cuando quieras. Lo que ya guardaste se conserva.
+              Con IA se termina en IA; a mano, podés pasarte a la IA cuando quieras. Lo que ya
+              guardaste se conserva.
             </p>
           </div>
         </section>

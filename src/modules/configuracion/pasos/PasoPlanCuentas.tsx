@@ -13,6 +13,7 @@ import type {
   CuentaSugerida,
 } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 import type { ClavePaso } from "@/modules/configuracion/types/configuracion.types";
+import { useEmbebido } from "../components/ModoEmbebido";
 import { AsistenteShell, RUTA_PASO } from "../components/AsistenteShell";
 import { Bloque } from "../components/Bloque";
 import { AvisoFaltante, EstadoVacio, NotaInformativa } from "../components/Comunes";
@@ -65,6 +66,7 @@ const MOTIVO_BLOQUE: Record<ClaveBloque, string> = {
  */
 export function PasoPlanCuentas() {
   const router = useRouter();
+  const embebido = useEmbebido();
   const [descartadas, setDescartadas] = useState<Set<string>>(new Set());
   const [bloquesQuitados, setBloquesQuitados] = useState<Set<ClaveBloque>>(new Set());
   const [expandidos, setExpandidos] = useState<Set<ClaveBloque>>(new Set());
@@ -114,7 +116,10 @@ export function PasoPlanCuentas() {
     fn: (codigos) => planCuentasApi.aplicar(codigos),
     exito: "Cuentas agregadas al plan",
     invalidar: [CLAVE_PLAN, CLAVE_SUGERENCIA, ["estado-configuracion"]],
-    alTerminar: () => router.push(RUTA_PASO.RESOLUCIONES),
+    // Dentro del chat de IA no se navega: eso sacaba del modo.
+    alTerminar: () => {
+      if (!embebido) router.push(RUTA_PASO.RESOLUCIONES);
+    },
   });
 
   const alternar = (codigo: string) =>

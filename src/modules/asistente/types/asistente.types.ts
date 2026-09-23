@@ -44,6 +44,9 @@ export interface Documento {
   error: string | null;
   creadoEn: string;
   leidoEn: string | null;
+  /** Cuándo una persona confirmó lo leído (0068). Con esto no se vuelve a pedir. */
+  confirmadoEn?: string | null;
+  confirmacion?: ResultadoConfirmacion | null;
 }
 
 /** Un evento del flujo `GET /configuracion/ia/progreso`. */
