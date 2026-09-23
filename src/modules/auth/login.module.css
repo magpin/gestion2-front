@@ -200,12 +200,15 @@
   background-size: 24px 24px;
 }
 
+/* Sombra negra fija, no del color del texto: el panel es oscuro en los dos
+   temas, y en modo oscuro el texto es casi blanco —la sombra salía como un
+   resplandor blanco alrededor de las tarjetas—. */
 .sombraFlotante {
-  box-shadow: 0 24px 48px color-mix(in srgb, var(--foreground) 45%, transparent);
+  box-shadow: 0 24px 48px rgb(0 0 0 / 45%);
 }
 
 .sombraFlotanteFuerte {
-  box-shadow: 0 24px 48px color-mix(in srgb, var(--foreground) 50%, transparent);
+  box-shadow: 0 24px 48px rgb(0 0 0 / 50%);
 }
 
 /* Con movimiento reducido: todo visible y quieto. El globo de "escribiendo"

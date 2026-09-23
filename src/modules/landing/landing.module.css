@@ -605,7 +605,7 @@
 }
 
 .sombraTarjeta {
-  box-shadow: 0 24px 60px color-mix(in srgb, var(--foreground) 12%, transparent);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 12%);
 }
 
 /* Los extremos de la banda se desvanecen: el carrusel no empieza ni termina,
@@ -632,7 +632,7 @@
 .tarjeta:hover {
   transform: translateY(-4px);
   border-color: var(--input);
-  box-shadow: 0 18px 40px color-mix(in srgb, var(--foreground) 8%, transparent);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 8%);
 }
 
 .enlaceNav {

@@ -1,4 +1,5 @@
-import { Destello, Marca, Visto } from "@/modules/landing/components/Marca";
+import { Maria } from "@/modules/asistente/components/Maria";
+import { Marca, Visto } from "@/modules/landing/components/Marca";
 import styles from "../login.module.css";
 
 /**
@@ -114,8 +115,10 @@ export function PanelMarcaLogin() {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Destello size={16} className="text-brand" />
-              <span className="text-xs font-medium text-rail-foreground">Asistente IA</span>
+              {/* Su cara y su nombre, como en el producto: invertida, porque el
+                  panel es oscuro en los dos temas. */}
+              <Maria estado="reposo" tamano={20} invertida />
+              <span className="text-xs font-medium text-rail-foreground">María</span>
             </div>
             <span className="text-[11px] text-rail-muted">ahora</span>
           </div>
@@ -136,7 +139,7 @@ export function PanelMarcaLogin() {
             </p>
           </div>
           <div className={`${styles.msg2} flex gap-2`}>
-            <span className="rounded-[0.45rem] bg-secondary px-3 py-1.5 text-xs font-medium text-rail">
+            <span className="rounded-[0.45rem] bg-rail-foreground px-3 py-1.5 text-xs font-medium text-rail">
               Revisar
             </span>
             <span className="rounded-[0.45rem] border border-rail-line px-3 py-1.5 text-xs font-medium text-rail-muted">
@@ -155,8 +158,8 @@ export function PanelMarcaLogin() {
           Cada asiento, cuadrado.
         </h2>
         <p className="m-0 max-w-[420px] text-[15px] leading-relaxed text-rail-muted">
-          Contabilidad, facturación e impuestos, con un asistente de IA que concilia, clasifica
-          y te avisa lo que necesita tu ojo.
+          Contabilidad, facturación e impuestos, con María: la asistente de IA que concilia,
+          clasifica y te avisa lo que necesita tu ojo.
         </p>
       </div>
     </section>
