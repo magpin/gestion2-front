@@ -79,11 +79,12 @@ export const asistenteService = {
    * Aplica lo aprobado. **No manda valores**: manda los campos, y el valor sale
    * de lo que el backend guardó al leer el documento.
    */
-  confirmar: (id: string, campos?: string[]) =>
+  /** `correcciones`: lo que la persona cambió de lo leído, campo por valor. */
+  confirmar: (id: string, campos?: string[], correcciones?: Record<string, string>) =>
     api
-      .post<ResultadoConfirmacion>(
-        `/configuracion/ia/documentos/${id}/confirmar`,
-        campos === undefined ? {} : { campos },
-      )
+      .post<ResultadoConfirmacion>(`/configuracion/ia/documentos/${id}/confirmar`, {
+        ...(campos !== undefined && { campos }),
+        ...(correcciones !== undefined && { correcciones }),
+      })
       .then((r) => r.data),
 };

@@ -9,11 +9,7 @@ import { useAuthStore } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { BurbujaLectura } from "@/modules/asistente/components/BurbujaLectura";
 import { Turno } from "@/modules/asistente/components/Mensajes";
-import {
-  TarjetaConfirmado,
-  TarjetaExtraido,
-  TarjetaFalla,
-} from "@/modules/asistente/components/Tarjetas";
+import { TarjetaFalla } from "@/modules/asistente/components/Tarjetas";
 import {
   CLAVE_DOCUMENTOS,
   mensajeDeError,
@@ -27,11 +23,13 @@ import { aplicarEvento, type LecturasEnVivo } from "@/modules/asistente/lib/lect
 import {
   NOMBRE_DOCUMENTO,
   TIPOS_ACEPTADOS,
+  type DatoExtraido,
   type Documento,
   type ResultadoConfirmacion,
   type TipoDocumento,
 } from "@/modules/asistente/types/asistente.types";
 import { ModoEmbebidoProvider } from "../components/ModoEmbebido";
+import { RevisarLeido, type DatoARevisar } from "../components/RevisarLeido";
 import { Recorrido } from "../components/Recorrido";
 import { useDisponible } from "../hooks/useModoIa";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
@@ -160,9 +158,9 @@ export function ModoIaView() {
     );
   };
 
-  const alConfirmar = (id: string) => {
+  const alConfirmar = (id: string, campos?: string[], correcciones?: Record<string, string>) => {
     confirmar.mutate(
-      { id },
+      { id, campos, correcciones },
       {
         onSuccess: () => void queryClient.invalidateQueries({ queryKey: CLAVE_DOCUMENTOS }),
         onError: (error) => aviso.error("No se pudo guardar", mensajeDeError(error)),
@@ -194,7 +192,16 @@ export function ModoIaView() {
     const confirmado = documento?.estado === "LEIDO" && documento.confirmadoEn != null;
 
     if (confirmado) {
-      turnos.push(<DocumentoGuardado key={tipo} documento={documento} />);
+      turnos.push(
+        <DocumentoGuardado
+          key={tipo}
+          documento={documento}
+          guardando={confirmar.isPending && confirmar.variables?.id === documento.id}
+          alGuardarPendiente={(campos, correcciones) =>
+            alConfirmar(documento.id, campos, correcciones)
+          }
+        />,
+      );
       continue;
     }
     if (omitidos.includes(tipo) && documento === undefined) {
@@ -256,14 +263,14 @@ export function ModoIaView() {
             autor: "ASISTENTE",
             texto: `Leí ${NOMBRE_DOCUMENTO[tipo]}: **${documento.datos.length}** ${
               documento.datos.length === 1 ? "dato" : "datos"
-            }. Revisá que esté bien y guardalo.`,
+            }. Revisalo: podés corregir cualquiera, y lo que marqué en ámbar no lo leí con seguridad.`,
           }}
           tarjeta={
-            <TarjetaExtraido
-              documento={documento}
-              confirmando={confirmar.isPending && confirmar.variables?.id === documento.id}
-              yaConfirmado={false}
-              alConfirmar={alConfirmar}
+            <RevisarLeido
+              key={documento.id}
+              datos={documento.datos.map(aRevisar)}
+              guardando={confirmar.isPending && confirmar.variables?.id === documento.id}
+              alGuardar={(campos, correcciones) => alConfirmar(documento.id, campos, correcciones)}
             />
           }
         />,
@@ -348,28 +355,79 @@ export function ModoIaView() {
   );
 }
 
-/** Un documento ya leído y guardado: lo que se guardó y lo que quedó para después. */
-function DocumentoGuardado({ documento }: { documento: Documento }) {
+/**
+ * Un documento ya leído y guardado. Si algo quedó pendiente, se muestra con el
+ * valor que leyó María y por qué no se guardó, y se puede guardar ahí mismo:
+ * lo dudoso lo confirma la persona que lo está viendo.
+ */
+function DocumentoGuardado({
+  documento,
+  guardando,
+  alGuardarPendiente,
+}: {
+  documento: Documento;
+  guardando: boolean;
+  alGuardarPendiente: (campos: string[], correcciones: Record<string, string>) => void;
+}) {
   const resultado: ResultadoConfirmacion | null = documento.confirmacion ?? null;
+  const nombre = NOMBRE_DOCUMENTO[documento.tipo];
+  const pendientes = resultado?.sinAplicar ?? [];
+  const titulo = `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)}`;
+
   return (
     <Turno
       turno={{
         id: `guardado-${documento.id}`,
         autor: "ASISTENTE",
-        texto: `${NOMBRE_DOCUMENTO[documento.tipo].charAt(0).toUpperCase()}${NOMBRE_DOCUMENTO[documento.tipo].slice(1)}: guardado.`,
+        texto:
+          pendientes.length === 0
+            ? `${titulo}: guardado.`
+            : `De ${nombre} guardé **${resultado?.aplicados.length ?? 0}** datos. Esto quedó pendiente: corregilo si hace falta y decidí qué se guarda.`,
       }}
       tarjeta={
-        resultado !== null && resultado.sinAplicar.length > 0 ? (
-          <TarjetaConfirmado resultado={resultado} />
-        ) : (
+        pendientes.length === 0 ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-success/35 bg-success/12 px-2.5 py-[3px] text-xs font-medium">
             <Check className="size-3.5" />
             {resultado === null ? "Confirmado" : `${resultado.aplicados.length} datos guardados`}
           </span>
+        ) : (
+          <RevisarLeido
+            key={`${documento.id}-${documento.confirmadoEn ?? ""}`}
+            datos={pendientes.map((p) => {
+              const dato = documento.datos.find((d) => d.campo === p.campo);
+              return {
+                ...(dato === undefined
+                  ? { campo: p.campo, etiqueta: p.etiqueta, valor: "", dudoso: true }
+                  : aRevisar(dato)),
+                dudoso: true,
+                motivo: p.motivo,
+              };
+            })}
+            guardando={guardando}
+            alGuardar={alGuardarPendiente}
+          />
         )
       }
     />
   );
+}
+
+/** Un dato leído, listo para revisar: el valor como texto y de dónde salió. */
+function aRevisar(dato: DatoExtraido): DatoARevisar {
+  return {
+    campo: dato.campo,
+    etiqueta: dato.etiqueta,
+    valor: Array.isArray(dato.valor)
+      ? dato.valor.join(", ")
+      : dato.valor === null || dato.valor === undefined
+        ? ""
+        : String(dato.valor),
+    dudoso: dato.confianza !== "ALTA",
+    fuente:
+      dato.fuente.casilla === undefined
+        ? undefined
+        : `casilla ${dato.fuente.casilla}`,
+  };
 }
 
 /** María pide un documento: subirlo o decir que no se tiene. */

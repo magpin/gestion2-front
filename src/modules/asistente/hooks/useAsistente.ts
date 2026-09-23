@@ -86,9 +86,14 @@ export const useSubirDocumento = () => {
 export const useConfirmar = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<ResultadoConfirmacion, unknown, { id: string; campos?: string[] }>({
+  return useMutation<
+    ResultadoConfirmacion,
+    unknown,
+    { id: string; campos?: string[]; correcciones?: Record<string, string> }
+  >({
     mutationKey: LLAVE_APROBAR,
-    mutationFn: ({ id, campos }) => asistenteService.confirmar(id, campos),
+    mutationFn: ({ id, campos, correcciones }) =>
+      asistenteService.confirmar(id, campos, correcciones),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: CLAVE_ESTADO }),
