@@ -1,23 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { FileMinus, FilePlus, ReceiptText } from "lucide-react";
+import { FileMinus, FilePlus, ReceiptText, ScanLine } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { useTieneRol } from "@/core/store/authStore";
 import { FacturasCompraSeccion } from "./FacturasCompraSeccion";
+import { LecturasSeccion } from "./LecturasSeccion";
 import { NotasCompraSeccion } from "./NotasCompraSeccion";
 
-type Seccion = "Facturas" | "Notas crédito" | "Notas débito";
+type Seccion = "Facturas" | "Notas crédito" | "Notas débito" | "Leídas";
 
 const SECCIONES: Array<[Seccion, typeof ReceiptText]> = [
   ["Facturas", ReceiptText],
   ["Notas crédito", FileMinus],
   ["Notas débito", FilePlus],
+  ["Leídas", ScanLine],
 ];
 
-/** Qué crea el botón de la cabecera en cada pestaña. */
-const ETIQUETA_NUEVO: Record<Seccion, string> = {
+/**
+ * Qué crea el botón de la cabecera en cada pestaña.
+ *
+ * `Leídas` no está: ahí no se crea nada. Lo que hay son propuestas —lo que
+ * María entendió de una factura— y se registran una por una, después de
+ * mirarlas. Un «nuevo» en esa pestaña prometería otra cosa.
+ */
+const ETIQUETA_NUEVO: Partial<Record<Seccion, string>> = {
   Facturas: "Nueva compra",
   "Notas crédito": "Nueva nota crédito",
   "Notas débito": "Nueva nota débito",
@@ -59,7 +67,7 @@ export function ComprasView() {
           </p>
         </div>
 
-        {puedeCrear && (
+        {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
           <BotonNuevo
             etiqueta={ETIQUETA_NUEVO[seccion]}
             onClick={() => setCreando(true)}
@@ -109,6 +117,7 @@ export function ComprasView() {
           onCerrarCreacion={cerrarCreacion}
         />
       )}
+      {seccion === "Leídas" && <LecturasSeccion />}
     </div>
   );
 }
