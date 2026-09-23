@@ -90,3 +90,30 @@ describe("Maria", () => {
     expect(derecha.container.innerHTML).toContain("translate(4.5px, 1.9px)");
   });
 });
+
+describe("Maria — los gestos de la lámina Cara", () => {
+  /** Las manos son las piezas con la clase de su animación. */
+  const conClase = (html: string, clase: string) => new RegExp(`class="[^"]*${clase}`).test(html);
+
+  it("«te llama»: la mano levantada por encima de la cabeza", () => {
+    const { container } = render(<Maria estado="espera" tamano={64} llama />);
+    // −8 px sobre 64: 64 × −0,125.
+    const mano = [...container.querySelectorAll<HTMLElement>("span")].find(
+      (s) => s.style.top === "-8px",
+    );
+    expect(mano).toBeDefined();
+    expect(mano!.className).toMatch(/levanta/);
+  });
+
+  it("«aprobado»: la mano aparece a media altura, una sola vez", () => {
+    const { container } = render(<Maria estado="lista" tamano={64} aprueba />);
+    expect(conClase(container.innerHTML, "aparece")).toBe(true);
+  });
+
+  it("debajo de 44 px no hay manos: serían dos manchas", () => {
+    const { container } = render(<Maria estado="espera" tamano={34} llama aprueba saluda />);
+    expect(conClase(container.innerHTML, "levanta")).toBe(false);
+    expect(conClase(container.innerHTML, "aparece")).toBe(false);
+    expect(conClase(container.innerHTML, "saluda")).toBe(false);
+  });
+});

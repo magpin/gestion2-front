@@ -30,10 +30,11 @@ export interface ConversacionDelPie {
  * punteado, porque un campo sin respuesta detrás era una promesa falsa. Sin
  * conversación —falta la clave del modelo— el pie vuelve a ser eso.
  *
- * Con conversación, soltar un archivo sigue funcionando sobre todo el pie: el
- * borde se vuelve punteado mientras el archivo está encima. **Nunca se pregunta
- * qué documento es**: el servidor lo reconoce al recibirlo. El selector acepta
- * cualquier archivo; lo que todavía no se lee se dice después de elegirlo.
+ * Con conversación, soltar archivos sigue funcionando sobre todo el pie: el
+ * borde se vuelve punteado mientras están encima. **Nunca se pregunta qué
+ * documento es**: el servidor lo reconoce al recibirlo. El selector acepta
+ * cualquier archivo, **y varios de una** (tanda 3: el lote); lo que no se lee
+ * se dice después, archivo por archivo.
  *
  * Enter manda; Shift+Enter baja de renglón.
  */
@@ -42,9 +43,11 @@ export function Compositor({
   alSubir,
   conversacion,
   alMirar,
+  textoInicial = "",
 }: {
   subiendo: boolean;
-  alSubir: (archivo: File) => void;
+  /** Uno o varios: los que se soltaron o eligieron juntos van juntos. */
+  alSubir: (archivos: File[]) => void;
   conversacion?: ConversacionDelPie;
   /**
    * Qué está pasando acá abajo, para que la cara del encabezado lo mire.
@@ -53,11 +56,13 @@ export function Compositor({
    * lo único que hay para mirar. Con `null` vuelve a la mirada suelta.
    */
   alMirar?: (que: "arrastrando" | "escribiendo" | null) => void;
+  /** Lo que el campo trae escrito al abrir, sin mandarlo. */
+  textoInicial?: string;
 }) {
   const archivo = useRef<HTMLInputElement>(null);
   const campo = useRef<HTMLTextAreaElement>(null);
   const [encima, setEncima] = useState(false);
-  const [texto, setTexto] = useState("");
+  const [texto, setTexto] = useState(textoInicial);
 
   const elegirArchivo = (fuente: FuenteArchivo = "ARCHIVO") => {
     const entrada = archivo.current;
@@ -79,8 +84,8 @@ export function Compositor({
     setEncima(false);
     alMirar?.(null);
     if (subiendo) return;
-    const soltado = e.dataTransfer.files?.[0];
-    if (soltado !== undefined) alSubir(soltado);
+    const soltados = Array.from(e.dataTransfer.files ?? []);
+    if (soltados.length > 0) alSubir(soltados);
   };
 
   const soltable = {
@@ -101,10 +106,11 @@ export function Compositor({
     <input
       ref={archivo}
       type="file"
+      multiple
       className="hidden"
       onChange={(e) => {
-        const elegidoArchivo = e.target.files?.[0];
-        if (elegidoArchivo !== undefined) alSubir(elegidoArchivo);
+        const elegidos = Array.from(e.target.files ?? []);
+        if (elegidos.length > 0) alSubir(elegidos);
         e.target.value = "";
       }}
     />
@@ -134,10 +140,10 @@ export function Compositor({
           <Paperclip className="size-[19px] shrink-0" strokeWidth={1.8} />
           <span>
             {subiendo
-              ? "Subiendo el archivo…"
+              ? "Subiendo…"
               : encima
-                ? "Soltá el archivo para leerlo"
-                : "Arrastrá un documento acá, o hacé clic para elegirlo. PDF, JPG o PNG."}
+                ? "Soltá los archivos para leerlos"
+                : "Arrastrá documentos acá —uno o varios—, o hacé clic para elegirlos."}
           </span>
         </button>
       </div>
@@ -218,10 +224,10 @@ export function Compositor({
             }}
             placeholder={
               encima
-                ? "Soltá el archivo para leerlo"
+                ? "Soltá los archivos para leerlos"
                 : subiendo
-                  ? "Subiendo el archivo…"
-                  : "Preguntá cómo hacer algo en el sistema, o arrastrá un documento acá"
+                  ? "Subiendo…"
+                  : "Preguntá cómo hacer algo, o arrastrá acá facturas, pedidos o el RUT"
             }
             className="max-h-40 min-h-8 grow resize-none bg-transparent py-1.5 text-sm leading-normal outline-none [field-sizing:content] placeholder:text-muted-foreground disabled:opacity-50"
           />

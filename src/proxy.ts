@@ -10,7 +10,7 @@ const COOKIE_EMPRESA = "empresa";
 /**
  * Tres niveles de acceso, no dos.
  *
- * Sin token, solo `/login`. Con token de sesión, el selector de empresa. Con
+ * Sin token, solo `/login`. Con token de sesión, `/empresa` (entra sola a una empresa). Con
  * empresa elegida, todo lo demás.
  *
  * El nivel intermedio existe porque el token de sesión no puede leer datos
@@ -37,8 +37,8 @@ export function proxy(request: NextRequest) {
   }
 
   // Crear la primera empresa ocurre, por definicion, sin empresa elegida. Exigir
-  // la cookie aca dejaba al director dando vueltas: el selector le ofrecia crear
-  // una y el proxy lo devolvia al selector.
+  // la cookie aca dejaba al director dando vueltas: `/empresa` lo mandaba a crear
+  // una y el proxy lo devolvia a `/empresa`.
   const esAltaDeEmpresa = pathname.startsWith("/configuracion/empresa-nueva");
 
   if (esSelector || esAltaDeEmpresa) {

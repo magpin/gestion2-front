@@ -7,6 +7,8 @@ import { Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
+  DialogCloseIcon,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -165,21 +167,26 @@ export function LecturasSeccion() {
       >
         {/* `size` y no una clase de ancho: el `max-w` del componente va después
             en la cascada y le gana a cualquiera que se le pase por `className`. */}
-        <DialogContent size="lg" className="overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
-            <DialogTitle>Lo que leí de esta factura</DialogTitle>
-            <DialogDescription>
-              {enPantalla?.compra == null
-                ? "Nada de esto está registrado todavía."
-                : "Así quedó cuando se registró."}
-            </DialogDescription>
+            <div>
+              <DialogTitle>Lo que leí de esta factura</DialogTitle>
+              <DialogDescription>
+                {enPantalla?.compra == null
+                  ? "Nada de esto está registrado todavía."
+                  : "Así quedó cuando se registró."}
+              </DialogDescription>
+            </div>
+            <DialogCloseIcon />
           </DialogHeader>
-          {enPantalla !== null && (
-            <DetalleFacturaLeida
-              lectura={enPantalla}
-              onRegistrada={() => setAbierta(null)}
-            />
-          )}
+          <DialogBody>
+            {enPantalla !== null && (
+              <DetalleFacturaLeida
+                lectura={enPantalla}
+                onRegistrada={() => setAbierta(null)}
+              />
+            )}
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </div>
@@ -245,7 +252,7 @@ function Fila({
  * pantalla para descubrir cuál de los dos es.
  */
 function estadoDe(lectura: LecturaFactura): {
-  cara: "leyendo" | "noPude" | "espera" | "lista";
+  cara: "leyendo" | "noPude" | "espera" | "lista" | "reposo";
   texto: string;
 } {
   if (lectura.estado === "EN_COLA" || lectura.estado === "LEYENDO") {
@@ -263,6 +270,9 @@ function estadoDe(lectura: LecturaFactura): {
   }
   if (lectura.estado === "FALLO") {
     return { cara: "noPude", texto: lectura.error ?? "No la pude leer." };
+  }
+  if (lectura.estado === "DESCARTADO") {
+    return { cara: "reposo", texto: `Descartada: ${lectura.motivoDescarte ?? "sin motivo"}` };
   }
 
   const cruzada = lectura.extraido;

@@ -5,7 +5,7 @@ import { LandingView } from "@/modules/landing/views/LandingView";
 //
 // Queda fuera del `matcher` del proxy a propósito (`proxy.ts`), así que se ve
 // con sesión y sin ella. Quien ya entró y vuelve acá tiene el botón "Iniciar
-// sesión" del nav, y el proxy lo manda al dashboard o al selector de empresa
+// sesión" del nav, y el proxy lo manda al dashboard o a `/empresa`, que entra solo
 // según le corresponda: la decisión de a dónde va alguien con sesión vive en un
 // solo sitio, y no se duplica acá.
 export const metadata: Metadata = {

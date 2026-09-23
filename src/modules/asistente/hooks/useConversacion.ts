@@ -7,6 +7,7 @@ import { useAuthStore } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { conversacionService, TurnoRechazado } from "../services/conversacion.service";
 import type { CuerpoDePago } from "../types/conversacion.types";
+import { LLAVE_APROBAR } from "./usePendientes";
 
 export const CLAVE_CONVERSACION = ["conversacion"] as const;
 const CLAVE_VIGENTE = [...CLAVE_CONVERSACION, "vigente"] as const;
@@ -76,6 +77,7 @@ export const useResolverPropuesta = () => {
   const queryClient = useQueryClient();
   const releer = () => queryClient.invalidateQueries({ queryKey: CLAVE_CONVERSACION });
   const confirmar = useMutation({
+    mutationKey: LLAVE_APROBAR,
     mutationFn: ({ id, correccion }: { id: string; correccion?: CuerpoDePago }) =>
       conversacionService.confirmarPropuesta(id, correccion),
     onSettled: releer,

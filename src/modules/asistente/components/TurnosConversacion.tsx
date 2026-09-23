@@ -1,3 +1,6 @@
+import { isAxiosError } from "axios";
+import { useState } from "react";
+
 import { mensajeDeError } from "@/core/api/api";
 import { aviso } from "@/lib/avisos";
 import { cn } from "@/lib/utils";
@@ -91,6 +94,13 @@ function Fuentes({ fuentes }: { fuentes: readonly string[] }) {
  */
 function Propuestas({ propuestas }: { propuestas: TurnoConversacion["propuestas"] }) {
   const { confirmar, descartar } = useResolverPropuesta();
+  /**
+   * Las que el servidor rechazó porque el rol no alcanza, con su mensaje. Eso
+   * no queda guardado en la propuesta —es de quien confirma, no de ella—, así
+   * que vive acá: la tarjeta lo dice con la cara de «sin permiso» y no con un
+   * aviso que se va a los cinco segundos.
+   */
+  const [sinPermiso, setSinPermiso] = useState<Record<string, string>>({});
   if (propuestas.length === 0) return null;
   return (
     <div className="flex flex-col gap-3">
@@ -100,12 +110,19 @@ function Propuestas({ propuestas }: { propuestas: TurnoConversacion["propuestas"
           propuesta={p}
           confirmando={confirmar.isPending && confirmar.variables?.id === p.id}
           descartando={descartar.isPending && descartar.variables === p.id}
+          sinPermiso={sinPermiso[p.id] ?? null}
           alConfirmar={(correccion) =>
             confirmar.mutate(
               { id: p.id, correccion },
               {
                 onSuccess: () => aviso.exito(p.accion === "COBRO" ? "Cobro registrado" : "Pago registrado"),
-                onError: (e) => aviso.error("No se registró", mensajeDeError(e)),
+                onError: (e) => {
+                  if (isAxiosError(e) && e.response?.status === 403) {
+                    setSinPermiso((previo) => ({ ...previo, [p.id]: mensajeDeError(e) }));
+                    return;
+                  }
+                  aviso.error("No se registró", mensajeDeError(e));
+                },
               },
             )
           }

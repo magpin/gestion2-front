@@ -140,6 +140,72 @@ export function PasoSituacionLegal() {
  * El nombre sale de la posición, no de una columna: la base solo distingue
  * `es_principal`, y agregar un "orden" sería guardar algo que ya se sabe.
  */
+/**
+ * La tarifa de ICA que le falta a la actividad principal. Sin ella el paso no
+ * queda listo y el plan de cuentas no se desbloquea, así que va resaltada en
+ * ámbar —fondo y borde, texto neutro— justo debajo de la actividad.
+ */
+function CompletarTarifaIca({
+  actividadId,
+  actual,
+}: {
+  actividadId: string;
+  /** La que quedó guardada, si es imposible: más de 30 por mil. */
+  actual: number | null;
+}) {
+  const [tarifa, setTarifa] = useState("");
+  const guardar = useGuardar<number>({
+    fn: (valor) => legalApi.completarTarifaIca(actividadId, valor),
+    exito: "Tarifa de ICA guardada",
+    invalidar: [["actividades"], ["plan-cuentas", "sugerencia"]],
+  });
+  const valor = Number(tarifa.replace(",", "."));
+  // Por mil: ninguna tarifa municipal se acerca a 30. Un 8000 es alguien que
+  // escribió «8.000» queriendo decir 8.
+  const valida = tarifa.trim() !== "" && Number.isFinite(valor) && valor >= 0 && valor <= 30;
+
+  return (
+    <span className="mt-2 flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3">
+      <span className="text-xs leading-normal">
+        {actual === null ? (
+          <>
+            <span className="font-semibold">Falta la tarifa de ICA.</span> El RUT no la trae: la
+            fija el acuerdo del municipio, por mil. Sin ella no se puede seguir al plan de cuentas.
+          </>
+        ) : (
+          <>
+            <span className="font-semibold">
+              La tarifa de ICA quedó en {actual} por mil, y eso no puede ser.
+            </span>{" "}
+            Va por mil y ninguna pasa de 30: si es 8 por mil, escribí 8.
+          </>
+        )}
+        {tarifa.trim() !== "" && !valida && (
+          <span className="mt-1 block font-medium">Tiene que ser un número entre 0 y 30.</span>
+        )}
+      </span>
+      <span className="flex flex-wrap items-center gap-2">
+        <Input
+          aria-label="Tarifa de ICA por mil"
+          inputMode="decimal"
+          placeholder="Ej. 9.66"
+          value={tarifa}
+          onChange={(e) => setTarifa(e.target.value)}
+          className="h-9 w-32 font-mono"
+        />
+        <span className="text-xs text-muted-foreground">por mil</span>
+        <Button
+          size="sm"
+          disabled={!valida || guardar.isPending}
+          onClick={() => guardar.mutate(valor)}
+        >
+          Guardar tarifa
+        </Button>
+      </span>
+    </span>
+  );
+}
+
 function ActividadesVigentes({
   filas,
   onQuitar,
@@ -203,12 +269,24 @@ function ActividadesVigentes({
           </span>
           {/* La tarifa solo tiene sentido en la principal: es la que liquida el
               ICA. En las demás se registra, pero no se cobra por ella. */}
-          {f.es_principal === true && f.tarifa_ica_por_mil !== null && (
+          {f.es_principal === true &&
+            f.tarifa_ica_por_mil !== null &&
+            Number(f.tarifa_ica_por_mil) <= 30 && (
             <span className="mt-1 block font-mono text-[11px] text-muted-foreground">
               ICA {String(f.tarifa_ica_por_mil)} por mil ·{" "}
               {String(f.municipio_nombre ?? "")}
             </span>
           )}
+          {/* Registrada sin tarifa —la lectura del RUT no la trae— y es lo que
+              deja el paso a medias. Se completa acá mismo: antes no había dónde,
+              y el paso se veía lleno sin estarlo. */}
+          {f.es_principal === true &&
+            (f.tarifa_ica_por_mil === null || Number(f.tarifa_ica_por_mil) > 30) && (
+              <CompletarTarifaIca
+                actividadId={String(f.id)}
+                actual={f.tarifa_ica_por_mil === null ? null : Number(f.tarifa_ica_por_mil)}
+              />
+            )}
         </Registrada>
       ))}
     </Registradas>

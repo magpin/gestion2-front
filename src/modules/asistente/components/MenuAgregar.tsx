@@ -180,7 +180,7 @@ export function MenuAgregar({
         clave: "preguntas",
         // Su cara y no un ícono de interrogación: es la única fila del menú
         // que lleva a hablar con ella, y conviene que se vea quién contesta.
-        icono: <Maria estado="reposo" tamano={20} />,
+        icono: <Maria estado="reposo" tamano={22} />,
         titulo: "Pedirle algo a María",
         detalle: "Preguntas sugeridas, para arrancar",
         siguiente: true,

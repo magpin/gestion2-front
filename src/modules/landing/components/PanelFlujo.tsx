@@ -92,7 +92,7 @@ export function PanelFlujo() {
           <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[1px] text-rail-muted">
             <Destello className="text-brand" />2 · La IA analiza
           </span>
-          <div className="flex flex-col gap-2.5 text-[13px] text-secondary">
+          <div className="flex flex-col gap-2.5 text-[13px] text-rail-foreground">
             {CHEQUEOS.map(({ texto, retraso }) => (
               <div key={texto} className={`${styles.row} ${retraso} flex items-start gap-2.5`}>
                 <Visto
@@ -117,13 +117,13 @@ export function PanelFlujo() {
               3 · Asiento
             </span>
             <span
-              className={`${styles.pop} flex items-center gap-1.5 rounded-full border border-success/40 bg-success/15 px-2.5 py-0.5 font-sans text-xs font-medium text-secondary`}
+              className={`${styles.pop} flex items-center gap-1.5 rounded-full border border-success/40 bg-success/15 px-2.5 py-0.5 font-sans text-xs font-medium text-rail-foreground`}
             >
               <Visto size={11} strokeWidth={2.6} />
               Auditado
             </span>
           </div>
-          <div className="flex flex-col text-secondary">
+          <div className="flex flex-col text-rail-foreground">
             <div
               className={`${styles.row} ${styles.r1} grid grid-cols-[1.3fr_1fr_1fr] border-b border-rail-line pb-2 text-[10px] uppercase tracking-[0.8px] text-rail-muted`}
             >

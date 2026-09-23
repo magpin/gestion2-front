@@ -3,7 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Banknote, FileMinus, FilePlus, Loader2, Trash2, Undo2 } from "lucide-react";
+import {
+  Banknote,
+  FileMinus,
+  FilePlus,
+  Loader2,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 
 import {
   AlertDialog,
@@ -22,20 +29,17 @@ import {
 } from "@/components/shared/AccionesDropdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/core/api/api";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
-import {
-  avisarErrorVenta,
-  esFaltaDeExistencia,
-  esPrecioBajoCosto,
-} from "../lib/errores";
+import { avisarErrorVenta } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
+import { VacioConMaria } from "@/modules/asistente/components/VacioConMaria";
 import { DetalleVenta } from "../components/DetalleVenta";
 import { FormularioCobro } from "../components/FormularioCobro";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
 import { FormularioNotaCredito } from "../components/FormularioNotaCredito";
 import { FormularioNotaDebito } from "../components/FormularioNotaDebito";
+import { useEmitirFactura } from "../hooks/useEmitirFactura";
 import {
   facturasApi,
   notasCreditoApi,
@@ -95,49 +99,10 @@ export function FacturasSeccion({
     enabled: detalleId !== null,
   });
 
-  const crear = useMutation({
-    mutationFn: facturasApi.crear,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: CLAVE });
-      aviso.exito("Factura creada");
-      onCerrarCreacion();
-    },
-    /**
-     * Falta de existencia no es un "no": es un "¿seguro?". El cliente está
-     * esperando y la mercancía puede haber llegado sin registrarse, así que
-     * se pregunta y, si confirma, se reintenta con `confirmaSinExistencia`.
-     * El backend sigue teniendo la última palabra: si la empresa no habilitó
-     * el descubierto, o el producto nunca tuvo una entrada, ese segundo
-     * intento también se rechaza —y ahí el mensaje explica qué falta—.
-     */
-    onError: async (e: unknown, datos) => {
-      // Vender con pérdida: mismo patrón que la falta de existencia —se
-      // pregunta y se reintenta—, pero el backend solo lo acepta de un
-      // DIRECTOR y deja anotado en la línea quién lo autorizó.
-      if (esPrecioBajoCosto(e) && datos.confirmaPrecioBajoCosto !== true) {
-        const seguir = await aviso.confirmar(
-          mensajeDeError(e),
-          "Emitirla igual deja la venta con pérdida y anota en la línea quién lo autorizó. Solo un DIRECTOR puede hacerlo.",
-          "Emitir con pérdida",
-        );
-        if (seguir) {
-          crear.mutate({ ...datos, confirmaPrecioBajoCosto: true });
-        }
-        return;
-      }
-      if (!esFaltaDeExistencia(e) || datos.confirmaSinExistencia === true) {
-        avisarErrorVenta(e, router.push);
-        return;
-      }
-      const seguir = await aviso.confirmar(
-        mensajeDeError(e),
-        "Si emitís la factura igual, el inventario de ese producto queda en negativo y lo que falte queda anotado en la lista de compras pendientes, con la factura que lo sacó.",
-        "Emitir igual",
-      );
-      if (seguir) {
-        crear.mutate({ ...datos, confirmaSinExistencia: true });
-      }
-    },
+  const crear = useEmitirFactura(facturasApi.crear, async () => {
+    await queryClient.invalidateQueries({ queryKey: CLAVE });
+    aviso.exito("Factura creada");
+    onCerrarCreacion();
   });
 
   const anular = useMutation({
@@ -219,12 +184,17 @@ export function FacturasSeccion({
     // favor —cobrada entera y con nota crédito después— es la salida natural.
     if (puedeCobrar && Number(f.monto_pagado) > 0) {
       acciones.push({
-        label: Number(f.saldo_a_favor) > 0 ? "Devolver saldo a favor" : "Devolver cobro",
+        label:
+          Number(f.saldo_a_favor) > 0
+            ? "Devolver saldo a favor"
+            : "Devolver cobro",
         icon: Undo2,
         onSelect: () => setDevolviendoDe(f),
       });
     }
-    if (puedeCrear) {
+    // Una histórica no lleva notas: lo que vendió está en los saldos
+    // iniciales, no en un asiento, y la nota va en el sistema donde se emitió.
+    if (puedeCrear && !f.historica) {
       acciones.push(
         {
           label: "Nota crédito",
@@ -259,13 +229,12 @@ export function FacturasSeccion({
           <Loader2 className="size-6 animate-spin" />
         </div>
       ) : facturas.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <p className="text-lg font-semibold">Todavía no hay facturas</p>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Al emitir una factura se asienta y se descuenta el kardex, todo
-            junto.
-          </p>
-        </div>
+        <VacioConMaria
+          titulo="Todavía no hay facturas"
+          invitacion="Mandame el pedido de un cliente y te armo la factura para que la emitas."
+          roles={["DIRECTOR"]}
+          sinMaria="Al emitir una factura se asienta y se descuenta el kardex, todo junto."
+        />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
@@ -298,6 +267,14 @@ export function FacturasSeccion({
                     <td className="px-5 py-5 font-mono text-sm font-bold">
                       {f.prefijo ?? ""}
                       {f.consecutivo}
+                      {f.historica && (
+                        <span
+                          className="ml-2 rounded-full bg-muted px-2 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                          title="Emitida antes de usar el sistema: sin asiento ni kardex"
+                        >
+                          Histórica
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-5 text-sm text-muted-foreground">
                       {formatFecha(f.fecha)}
@@ -411,6 +388,14 @@ export function FacturasSeccion({
       <DetalleVenta
         documento={(detalle ?? null) as VentaDocumentoDetalle | null}
         onCerrar={() => setDetalleId(null)}
+        alCobrar={
+          puedeCobrar
+            ? (f) => {
+                setDetalleId(null);
+                setCobrandoDe(f);
+              }
+            : undefined
+        }
       />
 
       <AlertDialog

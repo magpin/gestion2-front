@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
+import { VacioConMaria } from "@/modules/asistente/components/VacioConMaria";
 import { DetalleCompra } from "../components/DetalleCompra";
 import { FormularioCompra } from "../components/FormularioCompra";
 import { FormularioNotaCreditoCompra } from "../components/FormularioNotaCreditoCompra";
@@ -220,13 +221,11 @@ export function FacturasCompraSeccion({
           <Loader2 className="size-6 animate-spin" />
         </div>
       ) : compras.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <p className="text-lg font-semibold">Todavía no hay compras</p>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Acá van las facturas de los proveedores, con el costo que
-            alimenta el kardex.
-          </p>
-        </div>
+        <VacioConMaria
+          titulo="Todavía no hay compras"
+          invitacion="Subime la primera factura de un proveedor y te la dejo lista para que la apruebes."
+          sinMaria="Acá van las facturas de los proveedores, con el costo que alimenta el kardex."
+        />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">

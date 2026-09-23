@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { AnunciosPlataforma } from "@/components/layout/AnunciosPlataforma";
 import { BarraLateral } from "@/components/layout/BarraLateral";
 import { BarraSuperior } from "@/components/layout/BarraSuperior";
+import { FaviconConEstado } from "@/components/layout/FaviconConEstado";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 /**
@@ -25,6 +26,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen={abierta}>
+      <FaviconConEstado />
       <BarraLateral />
       <SidebarInset className="min-w-0">
         <BarraSuperior />

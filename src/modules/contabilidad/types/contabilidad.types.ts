@@ -195,3 +195,66 @@ export interface BalancePrueba {
   periodo: { id: string; anio: number; mes: number; estado: EstadoPeriodo };
   filas: FilaBalance[];
 }
+
+// ── Revisión (`GET /revision`) ──────────────────────────────────────────────
+// Espejo de `revision.reglas.ts` y `criterio.reglas.ts`. Un hallazgo es un hecho
+// comprobado —fase 7— o algo que pide criterio —fase 9—, y `certeza` dice cuál.
+
+export type GrupoHallazgo =
+  | "DESCUADRE"
+  | "DUPLICADO"
+  | "FECHAS"
+  | "FALTANTE"
+  | "CLASIFICACION";
+
+/**
+ * Qué tan seguro es. `AFIRMADO` es una comparación exacta; `VISTA` es un hecho
+ * claro que pide criterio para saber si es un error; `DEDUCIDA` es una
+ * inferencia. Los dos últimos se dicen con «me parece», nunca «está mal».
+ */
+export type Certeza = "AFIRMADO" | "VISTA" | "DEDUCIDA";
+
+export interface Hallazgo {
+  tipo: string;
+  grupo: GrupoHallazgo;
+  certeza: Certeza;
+  titulo: string;
+  detalle: string;
+  /** Cuando es una diferencia: lo que dice cada lado. */
+  cifras?: { uno: number; otro: number; diferencia: number };
+  referencias: Array<{ tipo: string; id: string; etiqueta: string }>;
+}
+
+/** Un paso del historial de un asiento (`GET /asientos/:id/trazabilidad`). */
+export interface PasoTrazabilidad {
+  clave:
+    | "RECIBIDO"
+    | "LEIDO"
+    | "VERIFICADO"
+    | "PROPUESTO"
+    | "APROBADO"
+    | "REGISTRADO"
+    | "CONTABILIZADO"
+    | "ANULADO";
+  cuando: string;
+  /** Lo hizo María: la fila lleva su cara. */
+  deMaria: boolean;
+  persona: { nombre: string; iniciales: string } | null;
+  titulo: string;
+  detalle: string;
+  /** Una comprobación no dio y una persona igual siguió. */
+  aviso?: true;
+}
+
+export interface Trazabilidad {
+  pasos: PasoTrazabilidad[];
+  /** El archivo que María leyó. `null` si el asiento no salió de un documento. */
+  documento: {
+    id: string;
+    nombre: string;
+    /** sha256 en hexadecimal; `null` si el archivo ya no está. */
+    huella: string | null;
+    /** Firmada y con vencimiento: se pide de nuevo al abrir el detalle. */
+    url: string | null;
+  } | null;
+}

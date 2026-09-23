@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { mensajeDeError } from "@/core/api/api";
 import { useAuthStore } from "@/core/store/authStore";
 import { CLAVE_ESTADO } from "@/modules/configuracion/hooks/useEstadoConfiguracion";
+import { LLAVE_APROBAR } from "./usePendientes";
 import { asistenteService } from "../services/asistente.service";
 import {
   tipoMimeDe,
@@ -86,6 +87,7 @@ export const useConfirmar = () => {
   const queryClient = useQueryClient();
 
   return useMutation<ResultadoConfirmacion, unknown, { id: string; campos?: string[] }>({
+    mutationKey: LLAVE_APROBAR,
     mutationFn: ({ id, campos }) => asistenteService.confirmar(id, campos),
     onSuccess: async () => {
       await Promise.all([

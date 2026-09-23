@@ -16,6 +16,7 @@ import {
 import { Maria } from "@/modules/asistente/components/Maria";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { asientosApi } from "../services/contabilidad.service";
+import { DocumentoSoporte, HistorialAsiento } from "./HistorialAsiento";
 
 /**
  * Las líneas de un asiento: cuenta, tercero, débito y crédito.
@@ -38,6 +39,17 @@ export function DetalleAsiento({
     queryFn: () => asientosApi.porId(asientoId!),
     enabled: asientoId !== null,
   });
+  // Aparte: el historial cruza cinco tablas y firma la URL del documento, y
+  // el asiento no tiene por qué esperarlo para mostrarse.
+  const { data: historial } = useQuery({
+    queryKey: ["asientos", "trazabilidad", asientoId],
+    queryFn: () => asientosApi.trazabilidad(asientoId!),
+    enabled: asientoId !== null,
+    // La URL del documento caduca en una hora: más que eso no se guarda.
+    staleTime: 30 * 60_000,
+  });
+  const conMaria =
+    data?.propuesta_id != null || (historial?.pasos.some((p) => p.deMaria) ?? false);
 
   return (
     <Dialog open={asientoId !== null} onOpenChange={(a) => !a && onCerrar()}>
@@ -57,7 +69,7 @@ export function DetalleAsiento({
                   {data.estado === "ANULADO" && (
                     <Badge variant="destructive">Anulado</Badge>
                   )}
-                  {data.propuesta_id !== null && <ChipDeMaria />}
+                  {conMaria && <ChipDeMaria />}
                 </DialogTitle>
                 <DialogDescription>
                   {formatFecha(data.fecha)} · {data.glosa}
@@ -131,6 +143,8 @@ export function DetalleAsiento({
                   {data.motivo_anulacion}
                 </p>
               )}
+              {historial?.documento && <DocumentoSoporte documento={historial.documento} />}
+              {historial && <HistorialAsiento pasos={historial.pasos} />}
             </DialogBody>
           </>
         )}
@@ -146,8 +160,10 @@ export function DetalleAsiento({
  * confunda con una persona llamada María**: la cara con el punto naranja es lo
  * que la distingue de unas iniciales.
  *
- * Solo aparece cuando la base lo dice (`propuesta_id`). No se deduce de la
- * glosa ni de la hora: un asiento mal atribuido es peor que uno sin atribuir.
+ * Solo aparece cuando la base lo dice: el asiento salió de una propuesta suya
+ * (`propuesta_id`) o de un documento que ella leyó (la trazabilidad). No se
+ * deduce de la glosa ni de la hora: un asiento mal atribuido es peor que uno
+ * sin atribuir.
  */
 function ChipDeMaria() {
   return (

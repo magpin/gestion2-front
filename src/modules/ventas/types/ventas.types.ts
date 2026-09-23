@@ -61,6 +61,11 @@ export interface VentaDocumentoResumen {
    */
   saldo_a_favor: string;
   asiento_id: string | null;
+  /**
+   * Emitida antes de usar el sistema y cargada con su número original. Sin
+   * asiento ni kardex: se consulta y se cobra, pero no lleva notas.
+   */
+  historica: boolean;
 }
 
 export interface VentaDocumentoLineaResumen {

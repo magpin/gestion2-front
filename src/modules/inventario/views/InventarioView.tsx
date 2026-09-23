@@ -72,9 +72,9 @@ export function InventarioView() {
         <Button
           onClick={() => setCreando(true)}
           disabled={!puedeCrear}
-          className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-brand hover:text-white"
+          className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-primary/90"
         >
-          <span className="flex size-7 items-center justify-center rounded-full bg-white/15">
+          <span className="flex size-7 items-center justify-center rounded-full bg-primary-foreground/15">
             <Plus className="size-4" />
           </span>
           Nuevo producto

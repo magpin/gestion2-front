@@ -82,7 +82,8 @@ export function FormularioDocumentoVenta({
    * resueltos. Sin esto, el formulario crea uno nuevo.
    */
   inicial?: {
-    tercero: TerceroResumen;
+    /** `null` cuando el borrador no trae un cliente reconocido: se elige acá. */
+    tercero: TerceroResumen | null;
     fecha: string;
     lineas: LineaVentaBorrador[];
   };

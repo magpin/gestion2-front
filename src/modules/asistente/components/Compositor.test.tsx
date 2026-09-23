@@ -36,7 +36,7 @@ describe("Compositor", () => {
   it("sin conversación no hay campo de texto: solo la zona para soltar", () => {
     mostrar(null);
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.getByText(/Arrastrá un documento acá/)).toBeInTheDocument();
+    expect(screen.getByText(/Arrastrá documentos acá/)).toBeInTheDocument();
   });
 
   it("Enter manda la pregunta sin espacios de más y vacía el campo", async () => {

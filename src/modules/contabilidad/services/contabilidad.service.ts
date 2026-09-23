@@ -6,10 +6,12 @@ import type {
   BalancePrueba,
   ComprobanteTipo,
   FiltroAsientos,
+  Hallazgo,
   Mayor,
   MovimientoAuxiliar,
   PaginaAsientos,
   Periodo,
+  Trazabilidad,
 } from "../types/contabilidad.types";
 
 /**
@@ -93,6 +95,10 @@ export const asientosApi = {
   porId: (id: string) =>
     api.get<AsientoDetalle>(`/asientos/${id}`).then((r) => r.data),
 
+  /** De dónde salió: el documento, lo que hizo María y quién aprobó. */
+  trazabilidad: (id: string) =>
+    api.get<Trazabilidad>(`/asientos/${id}/trazabilidad`).then((r) => r.data),
+
   crear: (datos: AsientoNuevo) =>
     api
       .post<{ id: string; numero: string }>("/asientos", datos)
@@ -129,4 +135,12 @@ export const librosApi = {
     api
       .get<BalancePrueba>(`/libros/balance-prueba/${periodoId}`)
       .then((r) => r.data),
+};
+
+/**
+ * Lo que no cuadra y lo que está dos veces. Solo lee: lo que encuentra lo
+ * corrige una persona, por las pantallas de siempre.
+ */
+export const revisionApi = {
+  revisar: () => api.get<Hallazgo[]>("/revision").then((r) => r.data),
 };

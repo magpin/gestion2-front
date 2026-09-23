@@ -24,6 +24,9 @@ import type { LucideIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { buttonVariants } from "@/components/ui/button";
+import { useAuthStore } from "@/core/store/authStore";
+import { MariaEstaSemana } from "@/modules/asistente/components/MariaEstaSemana";
+import { ROLES_MARIA } from "@/modules/asistente/hooks/usePendientes";
 import { comprasApi } from "@/modules/compras/services/compras.service";
 import { productosApi } from "@/modules/inventario/services/inventario.service";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
@@ -75,6 +78,8 @@ const TONO: Record<
 
 export function InicioView() {
   const { data, isLoading, isError } = useEstadoConfiguracion();
+  const roles = useAuthStore((s) => s.roles);
+  const veMaria = ROLES_MARIA.some((r) => roles.includes(r));
 
   if (isLoading) {
     return (
@@ -134,6 +139,8 @@ export function InicioView() {
           <FilaPaso key={paso.clave} paso={paso} />
         ))}
       </div>
+
+      {veMaria && <MariaEstaSemana />}
 
       <Atajos />
     </div>

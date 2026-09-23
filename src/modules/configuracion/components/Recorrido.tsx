@@ -38,6 +38,8 @@ interface RecorridoProps {
   razonSocial: string;
   /** En modo IA el riel explica que los pasos se llenan solos. */
   modoIA?: boolean;
+  /** Antes de crear la empresa no hay tablero adonde salir. */
+  sinSalida?: boolean;
 }
 
 export function Recorrido({
@@ -47,6 +49,7 @@ export function Recorrido({
   porcentaje,
   razonSocial,
   modoIA = false,
+  sinSalida = false,
 }: RecorridoProps) {
   return (
     <aside
@@ -93,15 +96,17 @@ export function Recorrido({
         {modoIA && (
           <p className="m-0 rounded-lg border border-rail-line bg-rail-foreground/6 p-3.5 text-xs leading-relaxed text-rail-muted">
             <span className="font-medium text-rail-foreground">Modo IA.</span> Los pasos se
-            llenan a medida que la IA lee tus documentos. Tú confirmas cada uno.
+            llenan a medida que la IA lee tus documentos. Vos confirmás cada uno.
           </p>
         )}
-        <Link
-          href="/dashboard"
-          className="text-[13px] text-rail-muted no-underline hover:text-rail-foreground"
-        >
-          Guardar y salir al tablero
-        </Link>
+        {!sinSalida && (
+          <Link
+            href="/dashboard"
+            className="text-[13px] text-rail-muted no-underline hover:text-rail-foreground"
+          >
+            Guardar y salir al tablero
+          </Link>
+        )}
       </div>
     </aside>
   );
@@ -123,7 +128,7 @@ function BarraSegmentada({ pasos, actual }: { pasos: Paso[]; actual: ClavePaso |
       {pasos.map((paso) => {
         const color =
           paso.estado === "LISTO"
-            ? "bg-secondary"
+            ? "bg-rail-foreground"
             : paso.clave === actual
               ? "bg-muted-foreground"
               : "bg-rail-line";
@@ -166,7 +171,7 @@ function FilaRecorrido({
         <span className="font-mono text-[11px] tracking-[1px] text-rail-muted">
           PASO {String(numero).padStart(2, "0")}
         </span>
-        <span className="rounded-full border border-muted-foreground px-2 py-0.5 text-[11px] text-secondary">
+        <span className="rounded-full border border-rail-muted px-2 py-0.5 text-[11px] text-rail-foreground">
           {modoIA ? "Llenando" : "En curso"}
         </span>
       </span>
@@ -203,7 +208,7 @@ function FilaRecorrido({
         <span
           className={`my-1 min-h-3.5 w-0 grow border-l ${
             paso.estado === "LISTO" || (esActual && anteriorListo)
-              ? "border-solid border-secondary"
+              ? "border-solid border-rail-foreground"
               : "border-dashed border-muted-foreground"
           }`}
         />
@@ -268,7 +273,7 @@ function MarcaPaso({ estado, esActual }: { estado: EstadoPaso; esActual: boolean
 
   if (estado === "LISTO") {
     return (
-      <span className="grid size-5 place-items-center rounded-full bg-secondary text-rail">
+      <span className="grid size-5 place-items-center rounded-full bg-rail-foreground text-rail">
         <Check className="size-3" strokeWidth={3} />
       </span>
     );

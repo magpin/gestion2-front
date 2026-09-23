@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/core/store/authStore";
 import { Maria } from "@/modules/asistente/components/Maria";
+import { ROLES_MARIA, usePendientes } from "@/modules/asistente/hooks/usePendientes";
 import type { RolCodigo } from "@/modules/auth/types/auth.types";
 
 interface Entrada {
@@ -90,7 +91,7 @@ const GRUPOS: Grupo[] = [
         href: "/dashboard/asistente",
         etiqueta: "María",
         icono: Sparkle,
-        roles: ["ADMIN_TENANT", "DIRECTOR", "CONTADOR"],
+        roles: ROLES_MARIA,
         cara: true,
       },
     ],
@@ -197,7 +198,7 @@ export function BarraLateral() {
   const pathname = usePathname();
   // En móvil el menú es un panel que tapa la pantalla: al elegir un destino
   // tiene que irse solo, o queda cubriendo la página a la que se acaba de ir.
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, state } = useSidebar();
   const cerrarEnMovil = () => setOpenMobile(false);
   const roles = useAuthStore((s) => s.roles);
   const montado = useSyncExternalStore(
@@ -209,6 +210,12 @@ export function BarraLateral() {
   const puedeVer = (entrada: Entrada) =>
     entrada.roles === undefined ||
     (montado && entrada.roles.some((r) => roles.includes(r)));
+
+  // Solo se pide si la persona ve a María: el número es suyo.
+  const pendientes = usePendientes(
+    montado && ROLES_MARIA.some((r) => roles.includes(r)),
+  );
+  const hayPendientes = (pendientes?.total ?? 0) > 0;
 
   // `/dashboard` es exacto; cualquier otra ruta también marca sus hijas.
   const esActiva = (href: string) =>
@@ -259,7 +266,13 @@ export function BarraLateral() {
                         render={<Link href={entrada.href} onClick={cerrarEnMovil} />}
                       >
                         {entrada.cara ? (
-                          <Maria estado="reposo" tamano={18} />
+                          // 20 px, como en la lámina `Aplicada`. Con la barra
+                          // plegada el número no entra: la cara pasa a «espera»,
+                          // con su distintivo ámbar, para que igual se note.
+                          <Maria
+                            estado={state === "collapsed" && hayPendientes ? "espera" : "reposo"}
+                            tamano={20}
+                          />
                         ) : (
                           <entrada.icono
                             className={entrada.acento ? "text-brand" : undefined}
@@ -267,6 +280,14 @@ export function BarraLateral() {
                           />
                         )}
                         <span>{entrada.etiqueta}</span>
+                        {entrada.cara && hayPendientes && pendientes !== undefined && (
+                          <span
+                            aria-label={`${pendientes.total} pendientes`}
+                            className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums group-data-[collapsible=icon]:hidden"
+                          >
+                            {pendientes.total}
+                          </span>
+                        )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}

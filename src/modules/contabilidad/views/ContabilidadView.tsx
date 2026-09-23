@@ -8,6 +8,7 @@ import {
   FileText,
   Percent,
   Plus,
+  SearchCheck,
   ShieldCheck,
 } from "lucide-react";
 
@@ -19,13 +20,15 @@ import { AsientosSeccion } from "./AsientosSeccion";
 import { RetencionesSeccion } from "@/modules/retenciones/views/RetencionesSeccion";
 import { LibrosSeccion } from "./LibrosSeccion";
 import { PeriodosSeccion } from "./PeriodosSeccion";
+import { RevisionSeccion } from "./RevisionSeccion";
 
-type Seccion = "Asientos" | "Períodos" | "Libros" | "Retenciones";
+type Seccion = "Asientos" | "Períodos" | "Libros" | "Revisión" | "Retenciones";
 
 const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Asientos", FileText],
   ["Períodos", CalendarDays],
   ["Libros", BookOpen],
+  ["Revisión", SearchCheck],
   ["Retenciones", Percent],
 ];
 
@@ -70,9 +73,9 @@ export function ContabilidadView() {
         {puedeAsentar && (
           <Button
             onClick={() => setCreando(true)}
-            className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-brand hover:text-white"
+            className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-primary/90"
           >
-            <span className="flex size-7 items-center justify-center rounded-full bg-white/15">
+            <span className="flex size-7 items-center justify-center rounded-full bg-primary-foreground/15">
               <Plus className="size-4" />
             </span>
             Nuevo asiento
@@ -102,6 +105,7 @@ export function ContabilidadView() {
       {seccion === "Asientos" && <AsientosSeccion />}
       {seccion === "Períodos" && <PeriodosSeccion />}
       {seccion === "Libros" && <LibrosSeccion />}
+      {seccion === "Revisión" && <RevisionSeccion />}
       {seccion === "Retenciones" && <RetencionesSeccion />}
 
       {/* La regla que explica por qué no hay botón de editar en ninguna fila. */}

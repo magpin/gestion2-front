@@ -48,7 +48,7 @@ export function PanelMarcaLogin() {
           <div className="flex items-center justify-between">
             <span className="font-medium text-rail-foreground">Asiento 0142</span>
             <span
-              className={`${styles.pop} flex items-center gap-1.5 rounded-full border border-success/40 bg-success/15 px-2.5 py-0.5 font-sans text-xs font-medium text-secondary`}
+              className={`${styles.pop} flex items-center gap-1.5 rounded-full border border-success/40 bg-success/15 px-2.5 py-0.5 font-sans text-xs font-medium text-rail-foreground`}
             >
               <Visto size={12} strokeWidth={2.5} />
               Cuadra
@@ -65,7 +65,7 @@ export function PanelMarcaLogin() {
             {ASIENTO.map(({ cuenta, nombre, debe, haber, retraso }) => (
               <div
                 key={cuenta}
-                className={`${styles.row} ${retraso} grid grid-cols-[2fr_1fr_1fr] border-b border-rail-line py-2.5 text-secondary`}
+                className={`${styles.row} ${retraso} grid grid-cols-[2fr_1fr_1fr] border-b border-rail-line py-2.5 text-rail-foreground`}
               >
                 <span>
                   <span className="text-rail-muted">{cuenta}</span> {nombre}
@@ -115,7 +115,7 @@ export function PanelMarcaLogin() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Destello size={16} className="text-brand" />
-              <span className="text-xs font-medium text-secondary">Asistente IA</span>
+              <span className="text-xs font-medium text-rail-foreground">Asistente IA</span>
             </div>
             <span className="text-[11px] text-rail-muted">ahora</span>
           </div>
@@ -131,7 +131,7 @@ export function PanelMarcaLogin() {
                 className={`${styles.dot} ${styles.dot3} size-1.5 rounded-full bg-rail-muted`}
               />
             </div>
-            <p className={`${styles.msg} m-0 text-[13px] leading-[1.55] text-secondary`}>
+            <p className={`${styles.msg} m-0 text-[13px] leading-[1.55] text-rail-foreground`}>
               Concilié 24 movimientos del extracto bancario. 2 necesitan tu revisión.
             </p>
           </div>

@@ -10,7 +10,8 @@
 // Una factura es una cabecera con renglones, y esa diferencia es la razón por
 // la que el backend le hizo un camino aparte.
 
-export type EstadoLectura = "EN_COLA" | "LEYENDO" | "LEIDO" | "FALLO";
+/** DESCARTADO: una persona la dejó sin registrar, con su motivo (0067). */
+export type EstadoLectura = "EN_COLA" | "LEYENDO" | "LEIDO" | "FALLO" | "DESCARTADO";
 
 /** Un renglón del papel, tal como está escrito. Todavía sin interpretar. */
 export interface RenglonLeido {
@@ -71,6 +72,12 @@ export interface RenglonCruzado {
   resuelto: RenglonResuelto;
   /** Cómo se resolvió, o por qué no. Ya escrito para leerse. */
   motivo: string;
+  /**
+   * Por qué camino se encontró. `APRENDIDO` lo contestó una persona en otra
+   * factura del mismo proveedor, y es lo único resuelto que se puede cambiar
+   * acá. Ausente en lecturas anteriores a la memoria.
+   */
+  forma?: "CODIGO" | "NOMBRE_EXACTO" | "UNICA_COINCIDENCIA" | "NIT" | "APRENDIDO";
 }
 
 /** Lo que falta. `sobre` es `proveedor`, `numero` o `renglon-3`. */
@@ -111,6 +118,8 @@ export interface LecturaFactura {
   error: string | null;
   creadoEn: string;
   leidoEn: string | null;
+  /** Por qué se descartó. Solo en DESCARTADO. */
+  motivoDescarte: string | null;
 }
 
 /** Lo que una persona responde de lo que el cruce no pudo. */

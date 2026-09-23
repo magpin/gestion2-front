@@ -57,8 +57,8 @@ interface AuthState {
     empresas: EmpresaAccesible[],
   ) => void;
   elegirEmpresa: (token: string, empresaId: string, roles: RolCodigo[]) => void;
-  /** Vuelve al selector sin cerrar sesión: es lo que hace un contador al cambiar de cliente. */
-  salirDeEmpresa: () => void;
+  /** La lista releída del backend: una empresa recién creada no estaba al entrar. */
+  actualizarEmpresas: (empresas: EmpresaAccesible[]) => void;
   cerrarSesion: () => void;
 }
 
@@ -95,13 +95,7 @@ export const useAuthStore = create<AuthState>()(
         set({ token, empresaId, roles, operando: true });
       },
 
-      salirDeEmpresa: () => {
-        // Se pierde el token de trabajo a propósito: hay que pedir uno nuevo para
-        // la otra empresa, y ese es el momento en que el backend relee los roles.
-        Cookies.remove(COOKIE_EMPRESA);
-        Cookies.remove(COOKIE_SESION);
-        set({ token: null, empresaId: null, roles: [], autenticado: false, operando: false });
-      },
+      actualizarEmpresas: (empresas) => set({ empresas }),
 
       cerrarSesion: () => {
         Cookies.remove(COOKIE_SESION);

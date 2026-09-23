@@ -190,6 +190,42 @@
   }
 }
 
+/* La mano levantada de «te llama» (`raise` en la lámina `Cara`): sube, baja y
+   bascula un poco, como quien pide la palabra sin interrumpir. */
+@keyframes mariaLevanta {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(6deg);
+  }
+}
+
+/* La mano de «aprobado» (`pop` en la lámina): aparece de abajo, se pasa al
+   112 % y vuelve. Una sola vez, 0,9 s, como en el paquete. */
+@keyframes mariaAparece {
+  0% {
+    transform: scale(0.4) translateY(6px);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.12) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.levanta {
+  animation: mariaLevanta 1.4s ease-in-out infinite;
+}
+
+.aparece {
+  animation: mariaAparece 0.9s ease-out both;
+}
+
 .teclea {
   animation: mariaTeclea 0.7s ease-in-out infinite;
 }
@@ -296,6 +332,8 @@
   .teclea,
   .tecleaTarde,
   .saluda,
+  .levanta,
+  .aparece,
   .gira,
   .giraAlReves,
   .respira,

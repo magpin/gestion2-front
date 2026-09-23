@@ -147,6 +147,8 @@ export function Maria({
   progreso,
   invertida = false,
   saluda,
+  llama,
+  aprueba,
   mirada,
   className,
 }: {
@@ -180,6 +182,16 @@ export function Maria({
    * por eso se pide desde fuera y no sale de la tabla.
    */
   saluda?: boolean;
+  /**
+   * Levanta la mano: algo espera la decisión de quien mira. Es el «te llama»
+   * de la lámina `Cara`, y va con la cara de `espera`.
+   */
+  llama?: boolean;
+  /**
+   * La mano aparece de golpe, una sola vez: terminó de aprobarse todo lo que
+   * quedaba. El «aprobado» de la lámina `Cara`, con los ojos contentos.
+   */
+  aprueba?: boolean;
   /**
    * Hacia dónde mira, cuando hay un campo activo que seguir. Desplaza el
    * bloque de ojos un 7 % del diámetro, y siempre un poco hacia abajo: mira
@@ -237,6 +249,18 @@ export function Maria({
 
       {saluda === true && tamano >= MINIMO_MANOS && (
         <Mano tamano={tamano} color={tinta} lado="derecha" arriba={0.34} animacion={styles.saluda} />
+      )}
+
+      {/* La mano levantada asoma por encima de la cabeza: −8 px sobre 64 en
+          la lámina. Se balancea, no saluda: pide la palabra. */}
+      {llama === true && tamano >= MINIMO_MANOS && (
+        <Mano tamano={tamano} color={tinta} lado="derecha" arriba={-0.125} animacion={styles.levanta} />
+      )}
+
+      {/* La de «aprobado» aparece a media altura, crece un poco de más y se
+          queda: es un momento, no una animación que se repite. */}
+      {aprueba === true && tamano >= MINIMO_MANOS && (
+        <Mano tamano={tamano} color={tinta} lado="derecha" arriba={0.34} animacion={styles.aparece} />
       )}
 
       {/* La palma va antes del disco: asoma por detrás, como un brazo. */}

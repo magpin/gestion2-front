@@ -136,6 +136,11 @@ export const legalApi = {
     api
       .post(`/empresa-legal/actividades/${id}/cerrar`, { fechaFin })
       .then(() => undefined),
+  /** La tarifa de ICA de una actividad que se registró sin ella. */
+  completarTarifaIca: (id: string, tarifaIcaPorMil: number) =>
+    api
+      .post(`/empresa-legal/actividades/${id}/tarifa-ica`, { tarifaIcaPorMil })
+      .then(() => undefined),
 
   /**
    * Los cuatro hechos que ningún documento declara. Se leen y se guardan

@@ -7,6 +7,7 @@ import { Check, Loader2, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Maria } from "@/modules/asistente/components/Maria";
+import { LLAVE_APROBAR } from "@/modules/asistente/hooks/usePendientes";
 import { SelectorCuenta } from "@/modules/contabilidad/components/SelectorCuenta";
 import { SelectorProducto } from "@/modules/inventario/components/SelectorProducto";
 import { aviso } from "@/lib/avisos";
@@ -44,6 +45,9 @@ export function DetalleFacturaLeida({
   onRegistrada: () => void;
 }) {
   const cruzada = lectura.extraido;
+  // Una registrada ya no se registra, y una descartada tampoco: la decisión
+  // ya se tomó. Se sigue pudiendo mirar.
+  const registrable = lectura.compra === null && lectura.estado !== "DESCARTADO";
   const cliente = useQueryClient();
 
   // Lo que la persona va respondiendo. Arranca vacío: lo que el cruce ya
@@ -55,6 +59,9 @@ export function DetalleFacturaLeida({
   >({});
 
   const registrar = useMutation({
+    // La llave de todo lo que aprueba lo que María leyó: la cara del chat
+    // trabaja mientras se registra y hace el gesto de aprobado al terminar.
+    mutationKey: LLAVE_APROBAR,
     mutationFn: () =>
       lecturasApi.registrar(lectura.id, {
         ...(numero.trim() !== "" && { numero: numero.trim() }),
@@ -123,13 +130,13 @@ export function DetalleFacturaLeida({
               Qué dice el papel, y contra qué queda
             </h3>
 
-            {lectura.compra === null && faltaProveedor && (
+            {registrable && faltaProveedor && (
               <Pendiente texto="El documento no trae un NIT que reconozca. ¿Quién es el proveedor?">
                 <SelectorProveedor valor={proveedor} onElegir={setProveedor} />
               </Pendiente>
             )}
 
-            {lectura.compra === null && faltaNumero && (
+            {registrable && faltaNumero && (
               <Pendiente texto="El documento no trae número de factura. ¿Con cuál lo registro?">
                 <Input
                   value={numero}
@@ -147,6 +154,7 @@ export function DetalleFacturaLeida({
                 <Renglon
                   key={renglon.orden}
                   renglon={renglon}
+                  editable={registrable}
                   resuelto={resueltos[renglon.orden]}
                   onResolver={(r) =>
                     setResueltos((previo) => ({
@@ -167,7 +175,7 @@ export function DetalleFacturaLeida({
             )}
           </section>
 
-          {lectura.compra === null && (
+          {registrable && (
             <div className="flex flex-wrap items-center gap-3 border-t border-border pt-5">
               <Button
                 type="button"
@@ -289,10 +297,12 @@ function Comprobaciones({ cruzada }: { cruzada: FacturaCruzada }) {
 /** Un renglón: lo que dice el papel, y contra qué va a quedar. */
 function Renglon({
   renglon,
+  editable,
   resuelto,
   onResolver,
 }: {
   renglon: RenglonCruzado;
+  editable: boolean;
   resuelto?: { productoId?: string; cuentaId?: string; etiqueta: string };
   onResolver: (r: {
     productoId?: string;
@@ -301,10 +311,18 @@ function Renglon({
   }) => void;
 }) {
   const { leido } = renglon;
+  // Lo recordado se puede cambiar: lo contestó una persona en otra factura, y
+  // la última respuesta de una persona es la que manda. Lo que el cruce
+  // encontró por código o por nombre no se toca acá.
+  const [cambiando, setCambiando] = useState(false);
+  const recordado = renglon.forma === "APRENDIDO";
+
+  // Lo que la persona eligió acá le gana a lo que venía resuelto.
   const destino =
-    renglon.resuelto !== null
+    resuelto?.etiqueta ??
+    (renglon.resuelto !== null && !cambiando
       ? `${renglon.resuelto.codigo} · ${renglon.resuelto.nombre}`
-      : resuelto?.etiqueta;
+      : undefined);
 
   return (
     <div className="grid gap-3 border-b border-border p-4 last:border-b-0 sm:grid-cols-[1fr_auto_1fr] sm:items-start">
@@ -323,20 +341,47 @@ function Renglon({
 
       <div className="min-w-0">
         {destino !== undefined ? (
-          <p className="text-sm">
-            {destino}
+          <div className="text-sm">
+            <p className="flex flex-wrap items-center gap-2">
+              {destino}
+              {recordado && resuelto === undefined && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                  Recordado
+                </span>
+              )}
+            </p>
             {/* De dónde salió la coincidencia. La más floja de las formas es
                 «era el único que se parecía», y quien mira tiene derecho a
                 saber cuál fue antes de registrar. */}
-            {renglon.resuelto !== null && (
+            {resuelto === undefined && renglon.resuelto !== null && (
               <span className="mt-0.5 block text-xs text-muted-foreground">
                 {renglon.motivo}
               </span>
             )}
-          </p>
+            {resuelto !== undefined && editable && (
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Lo voy a recordar para las próximas facturas de este proveedor.
+              </span>
+            )}
+            {recordado && editable && resuelto === undefined && (
+              <button
+                type="button"
+                onClick={() => setCambiando(true)}
+                className="mt-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Cambiar
+              </button>
+            )}
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <p className="text-xs text-warning-foreground">{renglon.motivo}</p>
+            <p className="text-xs text-warning-foreground">
+              {cambiando
+                ? leido.clase === "GASTO"
+                  ? "¿Contra qué cuenta va, entonces?"
+                  : "¿Qué producto es, entonces?"
+                : renglon.motivo}
+            </p>
             {leido.clase === "GASTO" ? (
               <SelectorCuenta
                 valor={null}

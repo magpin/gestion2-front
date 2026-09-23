@@ -5,6 +5,8 @@ import { useState } from "react";
 
 import { cn, formatCOP, formatFecha } from "@/lib/utils";
 import type { CuerpoDePago, PropuestaConversacion } from "../types/conversacion.types";
+import { LIMITES } from "../lib/limites";
+import { Maria } from "./Maria";
 import { BotonTarjeta } from "./Piezas";
 
 const TITULO = { COBRO: "Cobro propuesto", PAGO: "Pago propuesto" } as const;
@@ -37,12 +39,19 @@ export function TarjetaPropuesta({
   descartando,
   alConfirmar,
   alDescartar,
+  sinPermiso,
 }: {
   propuesta: PropuestaConversacion;
   confirmando: boolean;
   descartando: boolean;
   alConfirmar: (correccion?: CuerpoDePago) => void;
   alDescartar: () => void;
+  /**
+   * Si al confirmar el servidor contestó que el rol no alcanza: su mensaje,
+   * que dice qué rol hace falta. No se guarda en la propuesta —no es de ella,
+   * es de quien la confirma—, así que llega desde afuera.
+   */
+  sinPermiso?: string | null;
 }) {
   const { accion, cuerpo, vistaPrevia, estado, error } = propuesta;
   const pendiente = estado === "PENDIENTE";
@@ -76,14 +85,16 @@ export function TarjetaPropuesta({
         <span className="text-sm font-semibold">
           {TITULO[accion]}
         </span>
+        {/* El estado va en el fondo y el borde; el texto, neutro. Es la regla
+            de identidad: el color dice en qué quedó, la palabra lo explica. */}
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+            "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
             estado === "CONFIRMADA"
-              ? "bg-success/10 text-success"
+              ? "border-success/40 bg-success/10 text-foreground"
               : pendiente
-                ? "bg-warning/10 text-warning"
-                : "bg-muted text-muted-foreground",
+                ? "border-warning/40 bg-warning/10 text-foreground"
+                : "border-transparent bg-muted text-muted-foreground",
           )}
         >
           {estado === "CONFIRMADA" && <Check className="size-3" aria-hidden="true" />}
@@ -191,11 +202,8 @@ export function TarjetaPropuesta({
         </div>
       )}
 
-      {pendiente && error !== null && (
-        <div role="alert" className="flex items-start gap-2 text-[13px] text-warning">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <span>{error}</span>
-        </div>
+      {pendiente && (sinPermiso != null || error !== null) && (
+        <NoSePudo error={error} sinPermiso={sinPermiso ?? null} />
       )}
 
       {pendiente ? (
@@ -216,6 +224,64 @@ export function TarjetaPropuesta({
           Pasaron más de 24 horas. Si todavía hace falta, pedile al asistente que la arme de nuevo.
         </span>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Por qué no se registró, con la cara que le corresponde.
+ *
+ * Dos casos tienen cara propia (`lib/limites.ts`): **el período cerrado** —la
+ * fecha cae en un mes que ya no recibe asientos— y **el rol que no alcanza**.
+ * Ninguno es rojo, porque no son errores de quien mira, y los dos dicen qué
+ * sigue. Cualquier otro rechazo —la caja se cerró, alguien cobró mientras
+ * tanto— se dice tal cual, sin cara.
+ *
+ * El período cerrado se reconoce por el mensaje, y acá sí se puede: no es texto
+ * del modelo sino de nuestro servidor, el mismo en compras, ventas y tesorería.
+ */
+function NoSePudo({
+  error,
+  sinPermiso,
+}: {
+  error: string | null;
+  sinPermiso: string | null;
+}) {
+  const periodoCerrado = error !== null && /per[ií]odo[^.]*cerrado/i.test(error);
+  const limite =
+    sinPermiso !== null
+      ? LIMITES.sinPermiso
+      : periodoCerrado
+        ? LIMITES.periodoCerrado
+        : null;
+
+  if (limite === null) {
+    return (
+      <div
+        role="alert"
+        className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-[13px]"
+      >
+        <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
+        <span>{error}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      role="alert"
+      className="flex items-start gap-3 rounded-md border border-muted bg-muted/40 px-3 py-2.5 text-[13px]"
+    >
+      <Maria estado={limite.cara} tamano={28} />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="font-medium">{limite.titulo}</span>
+        <span className="text-muted-foreground">{sinPermiso ?? error}</span>
+        <span className="text-muted-foreground">
+          {periodoCerrado && sinPermiso === null
+            ? "Cambiá la fecha a un período abierto y confirmá de nuevo, o descartala."
+            : limite.salida}
+        </span>
+      </div>
     </div>
   );
 }

@@ -141,3 +141,40 @@ describe("TarjetaPropuesta — cuando confirmar falló", () => {
     expect(screen.getByRole("button", { name: "Confirmar" })).toBeEnabled();
   });
 });
+
+describe("TarjetaPropuesta — los límites con su cara", () => {
+  it("un período cerrado lo dice con su título y ofrece qué hacer", () => {
+    mostrar(
+      propuesta({
+        error: "El período de esta fecha está cerrado. No se puede registrar el cobro.",
+      }),
+    );
+    const alerta = screen.getByRole("alert");
+    expect(alerta).toHaveTextContent("Ese período está cerrado");
+    expect(alerta).toHaveTextContent(/Cambiá la fecha a un período abierto/);
+    // La fecha se puede corregir ahí mismo, así que el botón sigue.
+    expect(screen.getByRole("button", { name: "Confirmar" })).toBeEnabled();
+  });
+
+  it("un rol que no alcanza lo dice con la cara de sin permiso", () => {
+    render(
+      <TarjetaPropuesta
+        propuesta={propuesta()}
+        confirmando={false}
+        descartando={false}
+        alConfirmar={vi.fn()}
+        alDescartar={vi.fn()}
+        sinPermiso="Cobrar lo hace alguien con rol CAJA o DIRECTOR."
+      />,
+    );
+    const alerta = screen.getByRole("alert");
+    expect(alerta).toHaveTextContent("Eso no lo puedo ver");
+    expect(alerta).toHaveTextContent(/rol CAJA o DIRECTOR/);
+    expect(alerta).toHaveTextContent(/Pedile acceso/);
+  });
+
+  it("cualquier otro rechazo se dice tal cual, sin cara", () => {
+    mostrar(propuesta({ error: "La factura ya no tiene saldo." }));
+    expect(screen.getByRole("alert")).not.toHaveTextContent("Ese período está cerrado");
+  });
+});

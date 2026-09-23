@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { env } from "@/core/config/env";
 import { useAuthStore } from "@/core/store/authStore";
 import type { EventoProgreso } from "../types/asistente.types";
+import type { EventoLote } from "../types/lote.types";
 
 /** Cuánto se espera antes de volver a colgarse del flujo si se cortó. */
 const REINTENTO_MS = 3000;
@@ -29,7 +30,7 @@ const REINTENTO_MS = 3000;
  */
 export function useProgreso(
   activo: boolean,
-  alEvento: (evento: EventoProgreso) => void,
+  alEvento: (evento: EventoProgreso | EventoLote) => void,
 ): boolean {
   const token = useAuthStore((s) => s.token);
   const manejador = useRef(alEvento);
@@ -88,7 +89,7 @@ export function useProgreso(
               .join("");
             if (datos === "") continue;
             try {
-              manejador.current(JSON.parse(datos) as EventoProgreso);
+              manejador.current(JSON.parse(datos) as EventoProgreso | EventoLote);
             } catch {
               // Un evento que no parsea se ignora: el estado real está en la
               // base, y tumbar el flujo por un renglón sería peor.

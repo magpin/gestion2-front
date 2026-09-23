@@ -17,19 +17,11 @@ import styles from "../asistente.module.css";
 export { RUTA_PASO };
 
 /**
- * Dónde vive el modo IA. **No es un paso de este asistente**: es un módulo del
- * área de trabajo, con su propia entrada en la barra lateral.
- *
- * Acá estaba `MODO_IA_DISPONIBLE = false`, una constante que apagaba las dos
- * entradas mientras el backend no existiera, y que apuntaba a
- * `/configuracion/ia` —una ruta que nunca se construyó—. El backend existe
- * desde el 20 de septiembre, así que las entradas se encienden; pero el
- * encendido **no vuelve a ser una constante**: sale de
- * `GET configuracion/ia/disponible`, que es lo que ya mira la pantalla del
- * asistente. Si mañana falta la clave del modelo o el bucket, la entrada se
- * apaga sola en vez de llevar a una pantalla que dice «no disponible».
+ * Dónde vive el modo IA: **dentro de la configuración** (`/configuracion/ia`),
+ * con el mismo riel de pasos. Antes llevaba al chat de María, y la configuración
+ * se terminaba fuera de su propia pantalla.
  */
-export const RUTA_MODO_IA = "/dashboard/asistente";
+export const RUTA_MODO_IA = "/configuracion/ia";
 
 /**
  * Una línea por paso, para el encabezado.
@@ -111,7 +103,11 @@ export function AsistenteShell({
   const completo = paso?.estado === "LISTO";
 
   const avanzar = () =>
-    router.push(siguiente ? RUTA_PASO[siguiente.clave] : "/configuracion/lista");
+    // Sin pasos por delante: si quedó completa, al Inicio; si no, la lista
+    // manda al que falta.
+    router.push(
+      siguiente ? RUTA_PASO[siguiente.clave] : data.completa ? "/dashboard" : "/configuracion/lista",
+    );
 
   // «Omitir» cuando el paso no está completo y «Continuar» cuando sí. Es el
   // mismo botón: ofrecer los dos obligaría a elegir entre dos cosas que llevan

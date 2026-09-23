@@ -1,10 +1,9 @@
-import { SelectorEmpresaView } from "@/modules/auth/views/SelectorEmpresaView";
+import { EntrandoView } from "@/modules/auth/views/EntrandoView";
 
 /**
- * Paso 2 de la entrada. Es una ruta propia y no un modal del login porque se
- * vuelve a ella: un contador cambia de contabilidad varias veces al día sin
- * cerrar sesión.
+ * Entre el login y el trabajo: se entra a la empresa, no se elige en una
+ * lista. Cambiar de empresa se hace desde la barra superior.
  */
 export default function EmpresaPage() {
-  return <SelectorEmpresaView />;
+  return <EntrandoView />;
 }

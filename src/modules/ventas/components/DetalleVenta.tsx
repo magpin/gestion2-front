@@ -9,8 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useState } from "react";
+
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { formatCOP, formatFecha } from "@/lib/utils";
+import { DetalleAsiento } from "@/modules/contabilidad/components/DetalleAsiento";
+import { PanelMaria } from "./PanelMaria";
 import type {
   VentaDocumentoDetalle,
   VentaDocumentoResumen,
@@ -32,10 +36,15 @@ function numeroDe(d: { prefijo: string | null; consecutivo: number }) {
 export function DetalleVenta({
   documento,
   onCerrar,
+  alCobrar,
 }: {
   documento: VentaDocumentoDetalle | null;
   onCerrar: () => void;
+  /** Desde el panel de María. Sin esto no se ofrece cobrar. */
+  alCobrar?: (documento: VentaDocumentoDetalle) => void;
 }) {
+  /** El asiento abierto desde el panel de María, con su trazabilidad. */
+  const [asiento, setAsiento] = useState<string | null>(null);
   // Una empresa que no liquida IVA no tiene que ver una columna de ceros: el
   // dato es siempre `0` y ocupa lugar sin decir nada.
   const conIva = useResponsableIva();
@@ -63,6 +72,11 @@ export function DetalleVenta({
             </DialogHeader>
 
             <DialogBody className="flex flex-col gap-5">
+              <PanelMaria
+                factura={documento}
+                alCobrar={alCobrar && (() => alCobrar(documento))}
+                alVerAsiento={() => setAsiento(documento.asiento_id)}
+              />
               <div className="overflow-x-auto rounded-2xl border border-border">
                 <table className="w-full min-w-[560px] text-left">
                   <thead className="border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -235,6 +249,8 @@ export function DetalleVenta({
                 </p>
               )}
             </DialogBody>
+            {/* Anidado: al cerrarlo se vuelve a la factura, no a la lista. */}
+            <DetalleAsiento asientoId={asiento} onCerrar={() => setAsiento(null)} />
           </>
         )}
       </DialogContent>

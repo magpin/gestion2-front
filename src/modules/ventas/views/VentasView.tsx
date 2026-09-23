@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { FileMinus, FilePlus, FileText, ReceiptText } from "lucide-react";
+import {
+  FileMinus,
+  FilePlus,
+  FileText,
+  ReceiptText,
+  ScanLine,
+} from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { useTieneRol } from "@/core/store/authStore";
@@ -9,18 +15,25 @@ import { CotizacionesSeccion } from "./CotizacionesSeccion";
 import { FacturasSeccion } from "./FacturasSeccion";
 import { NotasCreditoSeccion } from "./NotasCreditoSeccion";
 import { NotasDebitoSeccion } from "./NotasDebitoSeccion";
+import { PedidosSeccion } from "./PedidosSeccion";
 
-type Seccion = "Cotizaciones" | "Facturas" | "Notas crédito" | "Notas débito";
+export type Seccion =
+  | "Cotizaciones"
+  | "Facturas"
+  | "Notas crédito"
+  | "Notas débito"
+  | "Pedidos leídos";
 
 const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Cotizaciones", FileText],
   ["Facturas", ReceiptText],
   ["Notas crédito", FileMinus],
   ["Notas débito", FilePlus],
+  ["Pedidos leídos", ScanLine],
 ];
 
-/** Qué crea el botón de la cabecera en cada pestaña. */
-const ETIQUETA_NUEVO: Record<Seccion, string> = {
+/** Qué crea el botón de la cabecera en cada pestaña. Pedidos leídos no tiene: se sube el archivo. */
+const ETIQUETA_NUEVO: Partial<Record<Seccion, string>> = {
   Cotizaciones: "Nueva cotización",
   Facturas: "Nueva factura",
   "Notas crédito": "Nueva nota crédito",
@@ -36,8 +49,8 @@ const ETIQUETA_NUEVO: Record<Seccion, string> = {
  * lista vigente del producto; la excepción es la nota débito, donde lo que
  * se cobra es un importe nuevo y se digita.
  */
-export function VentasView() {
-  const [seccion, setSeccion] = useState<Seccion>("Cotizaciones");
+export function VentasView({ inicial = "Cotizaciones" }: { inicial?: Seccion } = {}) {
+  const [seccion, setSeccion] = useState<Seccion>(inicial);
   // El estado de "estoy creando" vive acá y no en cada sección: el botón está
   // en la cabecera, arriba de las pestañas, y desde ahí no alcanzaría.
   const [creando, setCreando] = useState(false);
@@ -61,9 +74,9 @@ export function VentasView() {
           </p>
         </div>
 
-        {puedeCrear && (
+        {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
           <BotonNuevo
-            etiqueta={ETIQUETA_NUEVO[seccion]}
+            etiqueta={ETIQUETA_NUEVO[seccion]!}
             onClick={() => setCreando(true)}
           />
         )}
@@ -112,6 +125,7 @@ export function VentasView() {
           onCerrarCreacion={cerrarCreacion}
         />
       )}
+      {seccion === "Pedidos leídos" && <PedidosSeccion />}
     </div>
   );
 }

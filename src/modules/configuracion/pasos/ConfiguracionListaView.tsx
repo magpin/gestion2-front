@@ -6,20 +6,19 @@ import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
 import { useAuthStore } from "@/core/store/authStore";
+import { aviso } from "@/lib/avisos";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
 import { Recorrido } from "../components/Recorrido";
 import { RUTA_PASO } from "../components/rutas";
 import styles from "../asistente.module.css";
 
 /**
- * El asistente termina diciéndolo, no expulsando.
+ * El cierre del asistente. Terminada la configuración se entra al Inicio, con
+ * un aviso que dice que quedó lista —el dueño lo pidió así el 23 de septiembre
+ * de 2026: el cierre lleva a la plataforma, no a otra pantalla con un botón—.
  *
- * Antes, al guardar el último paso, la aplicación redirigía al tablero sin más.
- * Funcionaba, pero dejaba a quien configuró sin saber si había terminado o si
- * lo habían echado: el tablero se ve igual con la configuración a medias.
- *
- * Acá se cierra: los cinco pasos con lo que quedó registrado en cada uno, y las
- * dos únicas cosas que tiene sentido hacer después.
+ * La pantalla de abajo queda solo como respaldo, mientras sale la redirección.
+ * Si se llega sin haber terminado, manda al paso que falta.
  */
 export function ConfiguracionListaView() {
   const router = useRouter();
@@ -34,6 +33,15 @@ export function ConfiguracionListaView() {
   useEffect(() => {
     if (incompleta && data?.siguiente) router.replace(RUTA_PASO[data.siguiente]);
   }, [incompleta, data?.siguiente, router]);
+
+  // Terminada, al Inicio: el dueño pidió que el cierre de la configuración lleve
+  // a la plataforma, no a otra pantalla con un botón para ir.
+  const completa = data?.completa === true;
+  useEffect(() => {
+    if (!completa) return;
+    aviso.exito("Tu empresa quedó lista", "Los cinco pasos están completos.");
+    router.replace("/dashboard");
+  }, [completa, router]);
 
   if (isLoading || !data || incompleta) {
     return (

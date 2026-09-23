@@ -26,16 +26,16 @@ import styles from "../asistente.module.css";
  * irreversible, que es lo que dice la línea del final.
  */
 
-const PUNTOS_IA = [
-  "Tú solo subes el RUT, la Cámara de Comercio y la resolución DIAN",
+export const PUNTOS_IA = [
+  "Solo subís el RUT, la Cámara de Comercio y la resolución DIAN",
   "Cada dato te dice de qué documento salió",
-  "Revisas y confirmas antes de guardar",
+  "Revisás y confirmás antes de guardar",
 ];
 
-const PUNTOS_MANUAL = [
+export const PUNTOS_MANUAL = [
   "Cinco formularios, en orden",
-  "Pausa y vuelve cuando quieras",
-  "Entra directo a cualquier paso",
+  "Pausá y volvé cuando quieras",
+  "Entrá directo a cualquier paso",
 ];
 
 const DOCUMENTOS = [
@@ -86,7 +86,7 @@ export function BienvenidaView() {
               Antes de facturar, dejemos lista <span className="italic">tu empresa.</span>
             </h1>
             <p className="m-0 max-w-[640px] text-[15px] leading-relaxed text-muted-foreground">
-              Son cinco pasos. Puedes llenarlos tú o dejar que la IA los complete a partir de
+              Son cinco pasos. Podés llenarlos vos o dejar que la IA los complete a partir de
               tus documentos. En los dos casos, nada se guarda sin que lo confirmes.
             </p>
           </div>
@@ -99,7 +99,7 @@ export function BienvenidaView() {
               insignia="Recomendado"
               titulo="Con "
               tituloCursiva="IA"
-              texto="Sube tus documentos. La IA lee, llena los pasos y te pregunta solo lo que los papeles no dicen."
+              texto="Subí tus documentos. La IA lee, llena los pasos y te pregunta solo lo que los papeles no dicen."
               puntos={PUNTOS_IA}
               accion="Empezar con IA"
               href={RUTA_MODO_IA}
@@ -116,7 +116,7 @@ export function BienvenidaView() {
               icono={<Pencil className="size-[22px] text-foreground" strokeWidth={1.6} />}
               titulo="A "
               tituloCursiva="mano"
-              texto="Llena cada paso tú mismo, con los formularios de siempre. Ideal si ya tienes los datos a mano."
+              texto="Llená cada paso vos mismo, con los formularios de siempre. Ideal si ya tenés los datos a mano."
               puntos={PUNTOS_MANUAL}
               accion="Configurar a mano"
               href={rutaManual}
@@ -137,7 +137,7 @@ export function BienvenidaView() {
               ))}
             </div>
             <p className="m-0 text-[13px] text-muted-foreground">
-              Puedes cambiar de modo cuando quieras. Lo que ya guardaste se conserva.
+              Podés cambiar de modo cuando quieras. Lo que ya guardaste se conserva.
             </p>
           </div>
         </section>
@@ -153,7 +153,7 @@ export function BienvenidaView() {
  * decoración: son dos caminos distintos, no dos variantes del mismo, y el peso
  * visual lo dice antes que la etiqueta "Recomendado".
  */
-function TarjetaModo({
+export function TarjetaModo({
   oscura,
   retraso,
   icono,
@@ -164,6 +164,7 @@ function TarjetaModo({
   puntos,
   accion,
   href,
+  alElegir,
   deshabilitado,
 }: {
   oscura?: boolean;
@@ -175,7 +176,9 @@ function TarjetaModo({
   texto: string;
   puntos: string[];
   accion: string;
-  href: string;
+  /** Un enlace, o —antes de que exista la empresa— un clic que cambia la pantalla. */
+  href?: string;
+  alElegir?: () => void;
   deshabilitado?: boolean;
 }) {
   const cuerpoBoton = (
@@ -193,7 +196,7 @@ function TarjetaModo({
 
   return (
     <article
-      className={`${styles.up} ${retraso} ${oscura ? styles.trama : "border border-border bg-card"} flex flex-col gap-4.5 rounded-[1.05rem] p-7 ${
+      className={`${styles.up} ${retraso} ${oscura ? `${styles.trama} border border-rail-line` : "border border-border bg-card"} flex flex-col gap-4.5 rounded-[1.05rem] p-7 ${
         oscura ? "text-rail-foreground" : ""
       }`}
     >
@@ -206,7 +209,7 @@ function TarjetaModo({
           {icono}
         </span>
         {insignia && (
-          <span className="rounded-full border border-muted-foreground px-2.5 py-1 text-xs font-medium text-secondary">
+          <span className="rounded-full border border-rail-muted px-2.5 py-1 text-xs font-medium text-rail-foreground">
             {insignia}
           </span>
         )}
@@ -228,7 +231,7 @@ function TarjetaModo({
 
       <ul
         className={`m-0 flex list-none flex-col gap-2.5 border-t p-0 pt-4 text-sm leading-normal ${
-          oscura ? "border-rail-line text-secondary" : "border-border"
+          oscura ? "border-rail-line text-rail-foreground" : "border-border"
         }`}
       >
         {puntos.map((p) => (
@@ -246,10 +249,14 @@ function TarjetaModo({
         <span className={clasesBoton} aria-disabled="true">
           {cuerpoBoton}
         </span>
-      ) : (
+      ) : href !== undefined ? (
         <Link href={href} className={clasesBoton}>
           {cuerpoBoton}
         </Link>
+      ) : (
+        <button type="button" onClick={alElegir} className={`${clasesBoton} w-full text-left`}>
+          {cuerpoBoton}
+        </button>
       )}
     </article>
   );
