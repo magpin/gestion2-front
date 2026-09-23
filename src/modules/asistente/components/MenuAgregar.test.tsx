@@ -50,13 +50,13 @@ describe("MenuAgregar", () => {
     expect(mas).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("abre con Subir y Conversación, y nada de lo que no existe", async () => {
+  it("abre con Subir y María, y nada de lo que no existe", async () => {
     const { mas, titulos } = mostrar();
     await userEvent.click(mas);
     expect(mas).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("Subir")).toBeInTheDocument();
-    expect(screen.getByText("Conversación")).toBeInTheDocument();
-    expect(titulos()).toEqual(["Subir documento", "Preguntas sugeridas", "Nueva conversación"]);
+    expect(screen.getByText("María")).toBeInTheDocument();
+    expect(titulos()).toEqual(["Subir documento", "Pedirle algo a María", "Nueva conversación"]);
     for (const falta of ["Recientes", "Adjuntar del sistema", "Pedirle que haga", "Asentar sin preguntar"]) {
       expect(screen.queryByText(falta)).not.toBeInTheDocument();
     }
@@ -65,7 +65,7 @@ describe("MenuAgregar", () => {
   it("sin conversación, solo la sección Subir", async () => {
     const { mas, titulos } = mostrar({ conversa: false });
     await userEvent.click(mas);
-    expect(screen.queryByText("Conversación")).not.toBeInTheDocument();
+    expect(screen.queryByText("María")).not.toBeInTheDocument();
     expect(titulos()).toEqual(["Subir documento"]);
   });
 
@@ -90,15 +90,15 @@ describe("MenuAgregar", () => {
   it("«Volver» regresa a la primera lista", async () => {
     const { mas, titulos } = mostrar();
     await userEvent.click(mas);
-    await userEvent.click(screen.getByRole("menuitem", { name: /Preguntas sugeridas/ }));
+    await userEvent.click(screen.getByRole("menuitem", { name: /Pedirle algo a María/ }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Volver" }));
-    expect(titulos()).toEqual(["Subir documento", "Preguntas sugeridas", "Nueva conversación"]);
+    expect(titulos()).toEqual(["Subir documento", "Pedirle algo a María", "Nueva conversación"]);
   });
 
   it("una pregunta sugerida se entrega para llenar el campo, sin mandarse", async () => {
     const { mas, alPreguntar } = mostrar();
     await userEvent.click(mas);
-    await userEvent.click(screen.getByRole("menuitem", { name: /Preguntas sugeridas/ }));
+    await userEvent.click(screen.getByRole("menuitem", { name: /Pedirle algo a María/ }));
     await userEvent.click(screen.getByRole("menuitem", { name: "¿Dónde concilio el banco?" }));
     expect(alPreguntar).toHaveBeenCalledWith("¿Dónde concilio el banco?");
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();

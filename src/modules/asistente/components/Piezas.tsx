@@ -1,45 +1,16 @@
 import { File } from "lucide-react";
 
-import { Destello } from "@/modules/landing/components/Marca";
 import { cn } from "@/lib/utils";
-import styles from "../asistente.module.css";
 
 /**
  * Las piezas chicas que se repiten en el chat.
  *
  * Están juntas porque ninguna llega a diez líneas y todas dicen lo mismo: un
  * estado, un archivo, una cifra resaltada.
- */
-
-/**
- * El avatar del asistente: círculo neutro con el destello de marca adentro.
  *
- * En modo oscuro se invierte solo —`bg-primary` es `neutral-900` en claro y
- * `neutral-100` en oscuro— y el destello sigue naranja en los dos, que es la
- * única licencia del acento acá.
- *
- * `pensando` es un hecho, no un adorno: el anillo gira mientras el backend está
- * leyendo de verdad, y se apaga cuando termina.
+ * El avatar salió de acá: ahora es [`Maria`](./Maria.tsx), que ya no es un
+ * ícono dentro de un círculo sino una cara con once estados.
  */
-export function AvatarAsistente({
-  size = 28,
-  pensando = false,
-}: {
-  size?: number;
-  pensando?: boolean;
-}) {
-  return (
-    <span className="relative block shrink-0" style={{ width: size, height: size }}>
-      {pensando && <span className={styles.anillo} aria-hidden="true" />}
-      <span className="absolute inset-0 flex items-center justify-center rounded-full bg-primary">
-        <Destello
-          size={Math.round(size * 0.43)}
-          className={cn("text-brand", pensando && styles.respira)}
-        />
-      </span>
-    </span>
-  );
-}
 
 /**
  * Una píldora de estado: fondo y borde del color, **texto neutro**.

@@ -78,6 +78,11 @@ export interface AsientoDetalle {
   anulado_en: string | null;
   origen_tipo: string | null;
   origen_id: string | null;
+  /**
+   * La propuesta de María de la que salió, si salió de una. Nulo cuando lo
+   * registró una persona, que es el caso de casi todos.
+   */
+  propuesta_id: string | null;
   creado_en: string;
   comprobante_codigo: string;
   comprobante_nombre: string;

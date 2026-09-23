@@ -8,7 +8,6 @@ import type { CuerpoDePago, PropuestaConversacion } from "../types/conversacion.
 import { BotonTarjeta } from "./Piezas";
 
 const TITULO = { COBRO: "Cobro propuesto", PAGO: "Pago propuesto" } as const;
-const TITULO_SOLO = { COBRO: "Cobro", PAGO: "Pago" } as const;
 const DESHACER = {
   COBRO: "Si hubo un error, se deshace con «Devolver cobro» en el menú de la factura.",
   PAGO: "Si hubo un error, se deshace con «Devolver pago» en el menú de la compra.",
@@ -45,7 +44,7 @@ export function TarjetaPropuesta({
   alConfirmar: (correccion?: CuerpoDePago) => void;
   alDescartar: () => void;
 }) {
-  const { accion, cuerpo, vistaPrevia, estado, error, automatica } = propuesta;
+  const { accion, cuerpo, vistaPrevia, estado, error } = propuesta;
   const pendiente = estado === "PENDIENTE";
   const unSoloMedio = cuerpo.pagos.length === 1;
   const [fecha, setFecha] = useState(cuerpo.fecha);
@@ -75,7 +74,7 @@ export function TarjetaPropuesta({
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold">
-          {automatica ? TITULO_SOLO[accion] : TITULO[accion]}
+          {TITULO[accion]}
         </span>
         <span
           className={cn(
@@ -88,7 +87,7 @@ export function TarjetaPropuesta({
           )}
         >
           {estado === "CONFIRMADA" && <Check className="size-3" aria-hidden="true" />}
-          {automatica && estado === "CONFIRMADA" ? "Registrado sin preguntar" : ESTADO[estado]}
+          {ESTADO[estado]}
         </span>
       </div>
 
@@ -210,8 +209,6 @@ export function TarjetaPropuesta({
         </div>
       ) : estado === "CONFIRMADA" ? (
         <span className="text-xs text-muted-foreground">
-          {automatica &&
-            "Lo registró una regla de autonomía, en «Hasta dónde llega el asistente». "}
           {DESHACER[accion]}
         </span>
       ) : estado === "VENCIDA" ? (

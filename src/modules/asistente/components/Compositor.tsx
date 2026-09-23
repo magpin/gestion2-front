@@ -41,10 +41,18 @@ export function Compositor({
   subiendo,
   alSubir,
   conversacion,
+  alMirar,
 }: {
   subiendo: boolean;
   alSubir: (archivo: File) => void;
   conversacion?: ConversacionDelPie;
+  /**
+   * Qué está pasando acá abajo, para que la cara del encabezado lo mire.
+   *
+   * El pie es el único sitio del chat donde la persona hace algo, así que es
+   * lo único que hay para mirar. Con `null` vuelve a la mirada suelta.
+   */
+  alMirar?: (que: "arrastrando" | "escribiendo" | null) => void;
 }) {
   const archivo = useRef<HTMLInputElement>(null);
   const campo = useRef<HTMLTextAreaElement>(null);
@@ -69,6 +77,7 @@ export function Compositor({
   const alSoltar = (e: React.DragEvent) => {
     e.preventDefault();
     setEncima(false);
+    alMirar?.(null);
     if (subiendo) return;
     const soltado = e.dataTransfer.files?.[0];
     if (soltado !== undefined) alSubir(soltado);
@@ -77,9 +86,14 @@ export function Compositor({
   const soltable = {
     onDragOver: (e: React.DragEvent) => {
       e.preventDefault();
-      if (!subiendo) setEncima(true);
+      if (subiendo) return;
+      setEncima(true);
+      alMirar?.("arrastrando");
     },
-    onDragLeave: () => setEncima(false),
+    onDragLeave: () => {
+      setEncima(false);
+      alMirar?.(null);
+    },
     onDrop: alSoltar,
   };
 
@@ -194,6 +208,8 @@ export function Compositor({
             value={texto}
             disabled={superaTope}
             onChange={(e) => setTexto(e.target.value)}
+            onFocus={() => alMirar?.("escribiendo")}
+            onBlur={() => alMirar?.(null)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();

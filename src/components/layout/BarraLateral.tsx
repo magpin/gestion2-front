@@ -35,6 +35,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/core/store/authStore";
+import { Maria } from "@/modules/asistente/components/Maria";
 import type { RolCodigo } from "@/modules/auth/types/auth.types";
 
 interface Entrada {
@@ -55,6 +56,11 @@ interface Entrada {
    * y si lo llevaran dos entradas dejaría de señalar ninguna.
    */
   acento?: boolean;
+  /**
+   * En vez de un ícono, la cara del asistente. Es una sola entrada: la cara
+   * distingue a María de los módulos, y repetirla dejaría de distinguir nada.
+   */
+  cara?: boolean;
 }
 
 interface Grupo {
@@ -82,10 +88,10 @@ const GRUPOS: Grupo[] = [
         // Los mismos tres roles que «Configurar empresa», que son los que el
         // backend exige para escribir: el asistente no amplía permisos.
         href: "/dashboard/asistente",
-        etiqueta: "Asistente IA",
+        etiqueta: "María",
         icono: Sparkle,
         roles: ["ADMIN_TENANT", "DIRECTOR", "CONTADOR"],
-        acento: true,
+        cara: true,
       },
     ],
   },
@@ -252,10 +258,14 @@ export function BarraLateral() {
                         tooltip={entrada.etiqueta}
                         render={<Link href={entrada.href} onClick={cerrarEnMovil} />}
                       >
-                        <entrada.icono
-                          className={entrada.acento ? "text-brand" : undefined}
-                          fill={entrada.acento ? "currentColor" : "none"}
-                        />
+                        {entrada.cara ? (
+                          <Maria estado="reposo" tamano={18} />
+                        ) : (
+                          <entrada.icono
+                            className={entrada.acento ? "text-brand" : undefined}
+                            fill={entrada.acento ? "currentColor" : "none"}
+                          />
+                        )}
                         <span>{entrada.etiqueta}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

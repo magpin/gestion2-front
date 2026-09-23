@@ -7,6 +7,7 @@ import { Building2, ChevronRight, Loader2, LogOut, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useAuthStore } from "@/core/store/authStore";
+import { Maria } from "@/modules/asistente/components/Maria";
 import { NOMBRE_ROL, type EmpresaAccesible } from "../types/auth.types";
 import { useCerrarSesion, useElegirEmpresa, useEmpresasAccesibles } from "../hooks/useAuth";
 
@@ -50,6 +51,30 @@ export function SelectorEmpresaView() {
       (e) => normalizar(e.razonSocial).includes(q) || e.nit.includes(q),
     );
   }, [empresas, busqueda]);
+
+  /**
+   * Abrir una empresa no es instantáneo: se pide un token nuevo y se tira todo
+   * lo que había en memoria de la anterior. Con solo deshabilitar los botones,
+   * ese rato se ve como que no pasó nada.
+   *
+   * Va después de los hooks, no antes: salir temprano de un componente se lleva
+   * por delante el orden en que React los llama.
+   */
+  if (elegir.isPending) {
+    const abriendo = empresas.find((e) => e.id === elegir.variables);
+    return (
+      <div className="flex min-h-[60dvh] items-center justify-center px-4">
+        <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl bg-primary px-8 py-12">
+          {/* Es donde mejor lucen las ondas: hay tiempo y no hay nada más que
+              mirar. Media y no alta: abrir una empresa no es leer un lote. */}
+          <Maria estado="trabajando" tamano={64} intensidad="media" invertida />
+          <span className="text-center text-xs text-primary-foreground/70">
+            Abriendo {abriendo?.razonSocial ?? "tu empresa"}…
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-12">

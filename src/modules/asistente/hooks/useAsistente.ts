@@ -20,6 +20,7 @@ import {
 export {
   CLAVE_DISPONIBLE,
   useDisponible,
+  useDisponibilidadIa,
 } from "@/modules/configuracion/hooks/useModoIa";
 
 export const CLAVE_DOCUMENTOS = ["asistente", "documentos"] as const;

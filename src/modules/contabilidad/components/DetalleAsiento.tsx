@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Maria } from "@/modules/asistente/components/Maria";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { asientosApi } from "../services/contabilidad.service";
 
@@ -56,6 +57,7 @@ export function DetalleAsiento({
                   {data.estado === "ANULADO" && (
                     <Badge variant="destructive">Anulado</Badge>
                   )}
+                  {data.propuesta_id !== null && <ChipDeMaria />}
                 </DialogTitle>
                 <DialogDescription>
                   {formatFecha(data.fecha)} · {data.glosa}
@@ -134,5 +136,24 @@ export function DetalleAsiento({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * «Propuesto por María», en el asiento que salió de una propuesta suya.
+ *
+ * Va con su cara y no con un ícono genérico porque el punto es **que nadie la
+ * confunda con una persona llamada María**: la cara con el punto naranja es lo
+ * que la distingue de unas iniciales.
+ *
+ * Solo aparece cuando la base lo dice (`propuesta_id`). No se deduce de la
+ * glosa ni de la hora: un asiento mal atribuido es peor que uno sin atribuir.
+ */
+function ChipDeMaria() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary py-1 pr-2.5 pl-1 text-xs font-medium text-primary-foreground">
+      <Maria estado="reposo" tamano={20} invertida />
+      Propuesto por María
+    </span>
   );
 }

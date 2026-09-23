@@ -13,6 +13,7 @@ const turno = (e: Partial<TurnoConversacion>): TurnoConversacion => ({
   texto: "Almacenes Corona te debe **$ 27.316.050**.",
   estado: "COMPLETO",
   motivo: null,
+  clase: null,
   creado_en: "2026-09-21T15:00:00Z",
   fuentes: [],
   propuestas: [],

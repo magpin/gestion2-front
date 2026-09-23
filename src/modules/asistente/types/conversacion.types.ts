@@ -6,6 +6,20 @@
 
 export type EstadoTurno = "COMPLETO" | "CORTADO" | "RECHAZADO" | "FALLO";
 
+/**
+ * De qué tipo fue la falla, cuando la hubo.
+ *
+ * `SIN_SALDO` va aparte de `PETICION` porque llega con la misma forma —un 400
+ * del proveedor— y significa lo contrario: la pregunta estaba bien y lo que
+ * falta es recargar la cuenta.
+ */
+export type ClaseDeFalla =
+  | "SIN_CLAVE"
+  | "SIN_SALDO"
+  | "NO_DISPONIBLE"
+  | "PETICION"
+  | "FALLA";
+
 /** Un turno guardado. El uso de tokens no viaja: queda en la base. */
 export interface TurnoConversacion {
   id: string;
@@ -14,6 +28,7 @@ export interface TurnoConversacion {
   texto: string;
   estado: EstadoTurno;
   motivo: string | null;
+  clase: ClaseDeFalla | null;
   creado_en: string;
   /**
    * De dónde salieron las cifras: «Cartera», «Saldos de caja y bancos». Vacío
@@ -68,8 +83,6 @@ export interface PropuestaConversacion {
   /** El último intento de confirmar que falló. */
   error: string | null;
   cuerpoConfirmado: CuerpoDePago | null;
-  /** La confirmó una regla de autonomía, sin preguntar (paso 8). */
-  automatica: boolean;
 }
 
 /** La conversación en la que se escribe. `id` nulo: todavía no hay. */

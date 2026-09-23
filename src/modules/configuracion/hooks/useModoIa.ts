@@ -35,3 +35,33 @@ export const useDisponible = () => {
     meta: { silencioso: true },
   });
 };
+
+/** Por qué no está disponible, cuando no lo está. */
+export type MotivoSinIa = "SIN_CLAVE" | "EN_PAUSA";
+
+/**
+ * Lo mismo, pero con el motivo.
+ *
+ * Va aparte de `useDisponible` porque las dos entradas al modo IA solo
+ * necesitan saber si se ofrece o no; el motivo lo usa el chat, que es el único
+ * que muestra una pantalla explicando por qué no.
+ *
+ * `staleTime` corto y no `Infinity`: la clave depende del despliegue, pero la
+ * pausa se levanta desde la consola mientras alguien mira la pantalla, y
+ * quedarse dormida media hora después de que la despertaron sería peor que
+ * preguntar de más.
+ */
+export const useDisponibilidadIa = () => {
+  const operando = useAuthStore((s) => s.operando);
+
+  return useQuery({
+    queryKey: [...CLAVE_DISPONIBLE, "motivo"],
+    queryFn: () =>
+      api
+        .get<{ disponible: boolean; motivo?: MotivoSinIa }>("/configuracion/ia/disponible")
+        .then((r) => r.data),
+    enabled: operando,
+    staleTime: 60_000,
+    meta: { silencioso: true },
+  });
+};

@@ -13,6 +13,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 
 import { cn } from "@/lib/utils";
 import styles from "../asistente.module.css";
+import { Maria } from "./Maria";
 
 /** De dónde sale el archivo: el selector de siempre o la cámara del celular. */
 export type FuenteArchivo = "ARCHIVO" | "CAMARA";
@@ -175,11 +176,13 @@ export function MenuAgregar({
       });
     }
     if (conversa) {
-      elementos.push("Conversación", {
+      elementos.push("María", {
         clave: "preguntas",
-        icono: icono(MessageCircleQuestion),
-        titulo: "Preguntas sugeridas",
-        detalle: "Para arrancar, si no sabés qué preguntar",
+        // Su cara y no un ícono de interrogación: es la única fila del menú
+        // que lleva a hablar con ella, y conviene que se vea quién contesta.
+        icono: <Maria estado="reposo" tamano={20} />,
+        titulo: "Pedirle algo a María",
+        detalle: "Preguntas sugeridas, para arrancar",
         siguiente: true,
         accion: { tipo: "VISTA", vista: "PREGUNTAS" },
       });

@@ -3,6 +3,7 @@ import { aviso } from "@/lib/avisos";
 import { cn } from "@/lib/utils";
 import { useResolverPropuesta } from "../hooks/useConversacion";
 import type { TurnoEnVivo } from "../hooks/useConversacion";
+import { limiteDelTurno } from "../lib/limites";
 import type { TurnoConversacion } from "../types/conversacion.types";
 import styles from "../asistente.module.css";
 import { Turno } from "./Mensajes";
@@ -50,30 +51,23 @@ export function TurnoGuardado({ turno }: { turno: TurnoConversacion }) {
           }
         />
       );
+    // Los dos que no contestaron comparten forma y se diferencian en la cara:
+    // «no te entendí» y «no pude» no son lo mismo, y hasta ahora se veían
+    // igual. El motivo del backend manda sobre la salida genérica.
     case "RECHAZADO":
+    case "FALLO": {
+      const limite = limiteDelTurno(turno.estado, turno.clase);
+      if (limite === null) return null;
       return (
         <Turno
           turno={{ id: turno.id, autor: "ASISTENTE" }}
+          cara={limite.cara}
           tarjeta={
-            <TarjetaFalla
-              titulo="No contesté esa pregunta"
-              detalle={turno.motivo ?? "Probá preguntarlo de otra manera."}
-            />
+            <TarjetaFalla titulo={limite.titulo} detalle={turno.motivo ?? limite.salida} />
           }
         />
       );
-    case "FALLO":
-      return (
-        <Turno
-          turno={{ id: turno.id, autor: "ASISTENTE" }}
-          tarjeta={
-            <TarjetaFalla
-              titulo="No pude contestar"
-              detalle={turno.motivo ?? "Probá de nuevo en un rato."}
-            />
-          }
-        />
-      );
+    }
   }
 }
 

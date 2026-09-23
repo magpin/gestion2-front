@@ -34,7 +34,6 @@ const propuesta = (e: Partial<PropuestaConversacion> = {}): PropuestaConversacio
   venceEn: "2026-09-22T10:00:00Z",
   error: null,
   cuerpoConfirmado: null,
-  automatica: false,
   ...e,
 });
 
@@ -131,28 +130,14 @@ describe("TarjetaPropuesta — resuelta", () => {
   });
 });
 
-describe("TarjetaPropuesta — registrada por una regla (paso 8)", () => {
-  it("dice que se registró sin preguntar, por qué regla y cómo deshacerlo", () => {
+describe("TarjetaPropuesta — cuando confirmar falló", () => {
+  it("muestra el motivo y deja volver a intentarlo", () => {
     mostrar(
       propuesta({
-        estado: "CONFIRMADA",
-        automatica: true,
-        cuerpoConfirmado: { fecha: "2026-09-21", pagos: [{ medio: "CAJA", cajaId: CAJA, valor: 1000 }] },
+        error: "No se pudo registrar: la caja está cerrada. Probá de nuevo.",
       }),
     );
-    expect(screen.getByText("Registrado sin preguntar")).toBeInTheDocument();
-    expect(screen.getByText(/regla de autonomía/)).toBeInTheDocument();
-    expect(screen.getByText(/Devolver cobro/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Confirmar/ })).not.toBeInTheDocument();
-  });
-
-  it("apartada por la regla: sigue pendiente y dice por qué no se registró sola", () => {
-    mostrar(
-      propuesta({
-        error: "No se registró sola: supera el límite de $ 5.000 de la regla. Espera tu confirmación.",
-      }),
-    );
-    expect(screen.getByRole("alert")).toHaveTextContent(/supera el límite/);
+    expect(screen.getByRole("alert")).toHaveTextContent(/caja está cerrada/);
     expect(screen.getByRole("button", { name: "Confirmar" })).toBeEnabled();
   });
 });

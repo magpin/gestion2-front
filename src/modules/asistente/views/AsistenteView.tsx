@@ -6,12 +6,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { aviso } from "@/lib/avisos";
-import { formatCOP } from "@/lib/utils";
 import { BurbujaLectura } from "../components/BurbujaLectura";
 import { Compositor } from "../components/Compositor";
 import { ListaConversaciones } from "../components/ListaConversaciones";
 import { Turno } from "../components/Mensajes";
-import { AvatarAsistente, Pildora } from "../components/Piezas";
+import { Maria } from "../components/Maria";
+import { Pildora } from "../components/Piezas";
 import {
   TarjetaConfirmado,
   TarjetaDocumentos,
@@ -24,7 +24,7 @@ import {
   mensajeDeError,
   useConfirmar,
   useDetener,
-  useDisponible,
+  useDisponibilidadIa,
   useDocumentos,
   useSubirDocumento,
 } from "../hooks/useAsistente";
@@ -36,9 +36,9 @@ import {
   useNuevaConversacion,
   usePreguntar,
 } from "../hooks/useConversacion";
-import { useResumenDelDia } from "../hooks/useAutonomia";
 import { useProgreso } from "../hooks/useProgreso";
 import { aplicarEvento, type LecturasEnVivo } from "../lib/lecturaEnVivo";
+import { limiteDeLectura } from "../lib/limites";
 import {
   NOMBRE_DOCUMENTO,
   TIPOS_ACEPTADOS,
@@ -51,6 +51,13 @@ import {
  * Para arrancar, si no se sabe qué preguntar. Son preguntas que el asistente
  * contesta con el mapa de la aplicación que lleva en sus instrucciones.
  */
+/**
+ * Cuánto se mira hacia atrás para saber qué documentos se subieron juntos.
+ * Dos minutos: lo que tarda alguien en soltar el RUT, la Cámara y la
+ * resolución, sin llegar a mezclar dos intentos distintos.
+ */
+const VENTANA_TANDA_MS = 120_000;
+
 const PREGUNTAS_SUGERIDAS = [
   "¿Cómo registro una compra a un proveedor?",
   "¿Cómo le cobro una factura a un cliente?",
@@ -80,7 +87,9 @@ const PREGUNTAS_SUGERIDAS = [
  */
 export function AsistenteView() {
   const queryClient = useQueryClient();
-  const { data: disponible, isPending: consultandoModo } = useDisponible();
+  const { data: estadoIa, isPending: consultandoModo } = useDisponibilidadIa();
+  const disponible = estadoIa?.disponible;
+  const enPausa = estadoIa?.motivo === "EN_PAUSA";
   const { data: documentos = [] } = useDocumentos();
   const subir = useSubirDocumento();
   const confirmar = useConfirmar();
@@ -98,7 +107,6 @@ export function AsistenteView() {
   const [listaAbierta, setListaAbierta] = useState(false);
   const cuerpo = useRef<HTMLDivElement>(null);
   /** Lo que el asistente registró solo hoy (paso 8): no puede pasar desapercibido. */
-  const { data: resumen } = useResumenDelDia(conversa);
 
   /** Los archivos que se subieron en esta sesión: el nombre solo lo sabe el navegador. */
   const [subidos, setSubidos] = useState<Record<string, string>>({});
@@ -114,6 +122,13 @@ export function AsistenteView() {
   const [lecturas, setLecturas] = useState<LecturasEnVivo>({});
   /** El reloj del tiempo transcurrido. Solo corre mientras algo se lee. */
   const [ahora, setAhora] = useState(() => Date.now());
+  /**
+   * Qué está haciendo la persona en el pie, para que la cara lo mire.
+   *
+   * Mirar hacia donde pasa algo es la diferencia entre una cara puesta ahí y
+   * una que acompaña. Y es barato: son tres píxeles de desplazamiento.
+   */
+  const [mirando, setMirando] = useState<"arrastrando" | "escribiendo" | null>(null);
 
   /**
    * Los documentos que ya se confirmaron en esta sesión.
@@ -133,6 +148,35 @@ export function AsistenteView() {
     .filter((d) => d.estado === "EN_COLA" || d.estado === "LEYENDO")
     .sort((a, b) => a.creadoEn.localeCompare(b.creadoEn));
   const leyendo = enCurso.length > 0;
+
+  /**
+   * La tanda: los documentos que se subieron cerca del que se está leyendo.
+   *
+   * **No hay lotes en el backend** —un archivo es un POST y una fila suelta,
+   * sin llave que agrupe—, así que la tanda se deduce del único dato que hay:
+   * cuándo entró cada documento. Los subidos dentro de los dos minutos
+   * anteriores al último que está en curso se cuentan juntos.
+   *
+   * Es una aproximación, y por eso se calcula acá y no en la base: lo que se
+   * muestra son documentos reales contados por su estado, no una estimación
+   * de cuánto falta. Si algún día se sueltan veinte facturas de una, esto hay
+   * que agruparlo de verdad, con su `lote_id`.
+   */
+  const ultimoEnCurso = enCurso.at(-1)?.creadoEn;
+  const tanda =
+    ultimoEnCurso === undefined
+      ? []
+      : documentos.filter(
+          (d) => Date.parse(ultimoEnCurso) - Date.parse(d.creadoEn) <= VENTANA_TANDA_MS,
+        );
+
+  /**
+   * Cuánto lleva la tanda, solo cuando hay más de un documento: con uno solo,
+   * «0 de 1» no le dice nada a nadie y el anillo de ondas dice más.
+   */
+  const hechos = tanda.length - enCurso.length;
+  const avance = tanda.length > 1 ? hechos / tanda.length : undefined;
+  const cuenta = avance === undefined ? undefined : `${hechos} de ${tanda.length}`;
 
   useEffect(() => {
     if (!leyendo) return;
@@ -258,13 +302,15 @@ export function AsistenteView() {
       <Pantalla>
         <div className="flex flex-grow items-center justify-center px-7">
           <div className="flex max-w-[420px] flex-col items-center gap-3 text-center">
-            <AvatarAsistente size={36} />
+            {/* Dormida, que es exactamente lo que pasa. */}
+            <Maria estado="dormida" tamano={36} />
             <p className="m-0 text-[15px] font-medium">
-              La lectura de documentos no está disponible
+              {enPausa ? "María está en pausa" : "La lectura de documentos no está disponible"}
             </p>
             <p className="m-0 text-[13px] leading-normal text-muted-foreground">
-              Falta configurarla en el servidor. Podés configurar la empresa a mano
-              mientras tanto: es el mismo resultado, con más tecleo.
+              {enPausa
+                ? "La pausó quien administra la plataforma, y se levanta desde ahí. Podés configurar la empresa a mano mientras tanto."
+                : "Falta configurarla en el servidor. Podés configurar la empresa a mano mientras tanto: es el mismo resultado, con más tecleo."}
             </p>
             <Link
               href="/configuracion/empresa"
@@ -314,6 +360,7 @@ export function AsistenteView() {
       {documento.estado === "FALLO" && (
         <Turno
           turno={{ id: `fallo-${documento.id}`, autor: "ASISTENTE" }}
+          cara={limiteDeLectura.cara}
           tarjeta={
             <TarjetaFalla
               titulo={`No pude leer ${NOMBRE_DOCUMENTO[documento.tipo]}`}
@@ -387,15 +434,21 @@ export function AsistenteView() {
 
   const marco = {
     pensando: leyendo || respondiendo,
+    // Mientras lee, el avance va en el arco de la cara. La cuenta también va
+    // escrita: la cara acompaña, el texto informa.
+    leyendo,
+    avance,
+    mirando,
     subtitulo: respondiendo
       ? "Escribiendo…"
       : leyendo
-        ? "Leyendo tus documentos…"
+        ? cuenta === undefined
+          ? "Leyendo tus documentos…"
+          : `Leyendo tus documentos… ${cuenta}`
         : "Nada se guarda sin tu confirmación",
     lista,
     listaAbierta,
     alAlternarLista: setListaAbierta,
-    conAutonomia: conversa,
   };
 
   // Una archivada: se lee, no se escribe.
@@ -449,15 +502,6 @@ export function AsistenteView() {
           }
         />
 
-        {resumen !== undefined && resumen.registradas.length > 0 && (
-          <Link
-            href="/dashboard/asistente/autonomia"
-            className="self-center rounded-full bg-muted px-3.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
-          >
-            Hoy el asistente registró {resumen.registradas.length} sin preguntar, por{" "}
-            {formatCOP(resumen.registradas.reduce((s, r) => s + r.valor, 0))}. Ver
-          </Link>
-        )}
 
         {linea.map((item) => (
           <div key={item.clave} className="contents">
@@ -522,6 +566,7 @@ export function AsistenteView() {
                 lectura={lecturas[documento.id]}
                 enVivo={conectado}
                 ahora={ahora}
+                progreso={avance}
                 deteniendo={detener.isPending && detener.variables === documento.id}
                 alDetener={alDetener}
               />
@@ -535,6 +580,7 @@ export function AsistenteView() {
       <Compositor
         subiendo={subir.isPending}
         alSubir={(archivo) => alSubir(undefined, archivo)}
+        alMirar={setMirando}
         conversacion={
           conversa
             ? {
@@ -566,20 +612,26 @@ export function AsistenteView() {
 function Pantalla({
   children,
   pensando = false,
+  leyendo = false,
+  avance,
+  mirando = null,
   subtitulo = "Nada se guarda sin tu confirmación",
   lista = null,
   listaAbierta = false,
   alAlternarLista,
-  conAutonomia = false,
 }: {
   children: React.ReactNode;
   pensando?: boolean;
+  /** Si lo que está pasando es una lectura de documentos y no una respuesta. */
+  leyendo?: boolean;
+  /** Cuánto lleva la tanda, si son varios documentos. */
+  avance?: number;
+  /** Qué está haciendo la persona en el pie: la cara mira hacia allá. */
+  mirando?: "arrastrando" | "escribiendo" | null;
   subtitulo?: string;
   lista?: React.ReactNode;
   listaAbierta?: boolean;
   alAlternarLista?: (abierta: boolean) => void;
-  /** El enlace a «Hasta dónde llega» (paso 8), si se puede conversar. */
-  conAutonomia?: boolean;
 }) {
   return (
     <div className="relative -mx-4 -my-7 flex h-[calc(100dvh-3.5rem)] min-h-0 md:-mx-10 lg:-mx-14">
@@ -599,8 +651,10 @@ function Pantalla({
         </div>
       )}
 
-      <section aria-label="Asistente" className="flex min-w-0 flex-grow flex-col bg-card">
-        <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-muted px-4 md:px-7">
+      <section aria-label="María, la asistente" className="flex min-w-0 flex-grow flex-col bg-card">
+        {/* 80 px de alto y no 60: el aura de la cara mide 1,9 veces su
+            diámetro, y con el encabezado justo se cortaba arriba y abajo. */}
+        <div className="flex h-20 shrink-0 items-center justify-between gap-3 border-b border-muted px-4 md:px-7">
           <div className="flex min-w-0 items-center gap-3">
             {lista !== null && (
               <button
@@ -612,9 +666,24 @@ function Pantalla({
                 <MessagesSquare className="size-4" aria-hidden="true" />
               </button>
             )}
-            <AvatarAsistente size={30} pensando={pensando} />
+            {/* 40 y no 30: por debajo de 40 px el aura no se dibuja —no cabe—,
+                y el encabezado es el único sitio fijo del chat donde vive la
+                cara, así que es donde tiene que verse.
+
+                En reposo va en «suave» y no en «calma»: quieta del todo, el
+                aura es tan tenue que no se distingue del borde, y acá la idea
+                es justamente que se vea que hay alguien. */}
+            <Maria
+              estado={leyendo ? "leyendo" : pensando ? "pensando" : "reposo"}
+              tamano={40}
+              intensidad={leyendo || pensando ? undefined : "suave"}
+              progreso={leyendo ? avance : undefined}
+              // El pie está abajo a la izquierda del encabezado, así que mirar
+              // lo que pasa ahí es mirar a la izquierda.
+              mirada={mirando === null ? undefined : "izquierda"}
+            />
             <div className="flex min-w-0 flex-col">
-              <span className="text-sm font-semibold">Asistente</span>
+              <span className="text-sm font-semibold">María</span>
               <span className="truncate text-xs text-muted-foreground">{subtitulo}</span>
             </div>
           </div>
@@ -622,14 +691,6 @@ function Pantalla({
             <span className="hidden sm:inline-flex">
               <Pildora tono="HECHO">Lee y propone</Pildora>
             </span>
-            {conAutonomia && (
-              <Link
-                href="/dashboard/asistente/autonomia"
-                className="hidden h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap md:inline-flex"
-              >
-                Hasta dónde llega
-              </Link>
-            )}
             <Link
               href="/configuracion/empresa"
               className="inline-flex h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap"
