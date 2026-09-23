@@ -20,6 +20,7 @@ import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { SelectorProveedor } from "./SelectorProveedor";
 import {
   EditorLineasCompra,
+  lineaCompleta,
   lineaCompraVacia,
   type LineaCompraBorrador,
 } from "./EditorLineasCompra";
@@ -78,8 +79,10 @@ export function FormularioCompra({
     setFormaPago(formaPagoVacia());
   };
 
-  const sinProducto = lineas
-    .map((l, i) => (l.producto === null ? i + 1 : null))
+  // Una línea está incompleta por razones distintas según lo que sea: a la
+  // de producto le falta el producto; a la de gasto, la cuenta o el detalle.
+  const incompletas = lineas
+    .map((l, i) => (lineaCompleta(l) ? null : i + 1))
     .filter((n): n is number => n !== null);
   const sinCantidad = lineas
     .map((l, i) =>
@@ -110,8 +113,8 @@ export function FormularioCompra({
     if (numeroFactura.trim() === "")
       return "Escribí el número de la factura del proveedor.";
     if (lineas.length === 0) return "Agregá al menos una línea.";
-    if (sinProducto.length > 0)
-      return `Falta el producto en ${nombrar(sinProducto)}.`;
+    if (incompletas.length > 0)
+      return `Falta decir qué se compró en ${nombrar(incompletas)}: el producto, o la cuenta y el detalle del gasto.`;
     if (sinCantidad.length > 0)
       return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;
     if (sinCosto.length > 0)
@@ -129,12 +132,22 @@ export function FormularioCompra({
       terceroId: proveedor.id,
       fecha,
       numeroFacturaProveedor: numeroFactura.trim(),
-      lineas: lineas.map((l) => ({
-        productoId: l.producto!.id,
-        cantidad: Number(l.cantidad),
-        costoUnitario: Number(l.costoUnitario),
-        sinIva: l.sinIva || undefined,
-      })),
+      lineas: lineas.map((l) =>
+        l.tipo === "PRODUCTO"
+          ? {
+              productoId: l.producto!.id,
+              cantidad: Number(l.cantidad),
+              costoUnitario: Number(l.costoUnitario),
+              sinIva: l.sinIva || undefined,
+            }
+          : {
+              cuentaId: l.cuenta!.id,
+              detalle: l.detalle.trim(),
+              ivaTarifa: Number(l.ivaTarifa),
+              cantidad: Number(l.cantidad),
+              costoUnitario: Number(l.costoUnitario),
+            },
+      ),
       retenciones:
         retenciones.length === 0
           ? undefined

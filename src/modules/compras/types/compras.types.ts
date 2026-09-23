@@ -68,9 +68,16 @@ export interface CompraDocumentoLineaResumen {
   id: string;
   compra_documento_id: string;
   orden: number;
-  producto_id: string;
-  producto_codigo: string;
-  producto_nombre: string;
+  /** Nulo en una línea de gasto. */
+  producto_id: string | null;
+  producto_codigo: string | null;
+  producto_nombre: string | null;
+  /** Contra qué cuenta se debitó: la del producto, o la del gasto. */
+  cuenta_id: string;
+  cuenta_codigo: string;
+  cuenta_nombre: string;
+  /** Qué se compró, cuando no es un producto. */
+  detalle: string | null;
   cantidad: string;
   costo_unitario: string;
   iva_tarifa: string;
@@ -111,7 +118,14 @@ export interface FiltroCompras {
 }
 
 export interface LineaCompraInput {
-  productoId: string;
+  /** En una línea de gasto no va: lo que se compró lo dicen `cuentaId` y `detalle`. */
+  productoId?: string;
+  /** Contra qué cuenta se debita el gasto. Excluyente con `productoId`. */
+  cuentaId?: string;
+  /** Qué se compró, cuando no es un producto. Obligatorio en las de gasto. */
+  detalle?: string;
+  /** La tarifa del gasto: no hay producto que la diga. */
+  ivaTarifa?: number;
   cantidad: number;
   /** El costo que dice la factura del proveedor — no un precio de catálogo. */
   costoUnitario: number;

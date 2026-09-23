@@ -66,7 +66,7 @@ export function DetalleCompra({
                   <thead className="border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     <tr>
                       <th scope="col" className="px-4 py-3">
-                        Producto
+                        Qué se compró
                       </th>
                       <th scope="col" className="px-4 py-3 text-right">
                         Cantidad
@@ -88,7 +88,15 @@ export function DetalleCompra({
                     {documento.lineas.map((l) => (
                       <tr key={l.id}>
                         <td className="px-4 py-3 text-sm font-medium">
-                          {l.producto_nombre}
+                          {/* Una línea de gasto no tiene producto: lo que se
+                              compró lo dice su detalle, y la cuenta abajo, que
+                              es lo que un contador va a querer ver. */}
+                          {l.producto_nombre ?? l.detalle}
+                          {l.producto_nombre === null && (
+                            <span className="mt-0.5 block font-mono text-xs font-normal text-muted-foreground">
+                              {l.cuenta_codigo} · {l.cuenta_nombre}
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {l.cantidad}
