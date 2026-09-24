@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // El informe que genera Playwright: es código compilado, no del proyecto.
+    "e2e/.informe/**",
   ]),
   {
     rules: {

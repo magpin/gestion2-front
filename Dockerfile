@@ -1,16 +1,21 @@
 # Mismo criterio que el backend: `desarrollo` para trabajar, `produccion` para
-# desplegar. Next se construye en su propia etapa porque el resultado —`.next`—
-# es lo único que producción necesita del código fuente.
+# desplegar. Next se construye en su propia etapa porque el resultado —la
+# carpeta `standalone`— es lo único que producción necesita del código fuente.
+#
+# El repo usa pnpm: el lockfile es `pnpm-lock.yaml`. La versión se fija acá
+# para que la imagen instale exactamente lo mismo que la máquina de cada uno.
 
 FROM node:24-alpine AS base
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN corepack enable && yarn install --frozen-lockfile
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable && corepack prepare pnpm@12.5.1 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM base AS desarrollo
 COPY . .
 EXPOSE 3000
-CMD ["yarn", "dev"]
+CMD ["pnpm", "dev"]
 
 FROM base AS construccion
 COPY . .
@@ -19,15 +24,22 @@ COPY . .
 # real, y no alcanza con pasarla como variable del contenedor.
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN yarn build
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN pnpm build
 
+# `output: 'standalone'` deja en `.next/standalone` un `server.js` con solo las
+# dependencias que las páginas usan: no hace falta instalar `node_modules` acá,
+# y la imagen pesa y consume bastante menos. `public` y `.next/static` no vienen
+# incluidos y se copian aparte.
 FROM node:24-alpine AS produccion
 WORKDIR /app
-ENV NODE_ENV=production
-COPY package.json yarn.lock ./
-RUN corepack enable && yarn install --frozen-lockfile --production
-COPY --from=construccion /app/.next ./.next
-COPY --from=construccion /app/public ./public
-COPY --from=construccion /app/next.config.ts ./
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+COPY --from=construccion --chown=node:node /app/.next/standalone ./
+COPY --from=construccion --chown=node:node /app/.next/static ./.next/static
+COPY --from=construccion --chown=node:node /app/public ./public
+USER node
 EXPOSE 3000
-CMD ["yarn", "start"]
+CMD ["node", "server.js"]

@@ -1,0 +1,144 @@
+# Construye la imagen en GitHub, la sube a GHCR y la despliega en el VPS.
+#
+#   push a develop  →  tag qa-<sha>  →  QA
+#   push a main     →  tag <sha>     →  PROD (espera la aprobación del
+#                                        environment `produccion`)
+#   Run workflow    →  vuelve a desplegar un tag que ya existe, sin construir
+#
+# NEXT_PUBLIC_API_URL se hornea al construir, así que la imagen de QA y la de
+# PROD son distintas. Sale de las variables del repo (Settings → Secrets and
+# variables → Actions → Variables): API_URL_QA y API_URL_PROD.
+#
+# Secretos de cada environment (`qa` y `produccion`):
+#   VPS_HOST, VPS_PORT, VPS_USER, VPS_SSH_KEY, VPS_KNOWN_HOSTS
+name: Desplegar
+
+on:
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+    inputs:
+      entorno:
+        description: Entorno
+        type: choice
+        options: [qa, prod]
+        required: true
+      tag:
+        description: Tag que ya está en GHCR (por ejemplo a1b2c3d o qa-a1b2c3d)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGEN: ghcr.io/magpin/gestion2-front
+
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    outputs:
+      entorno: ${{ steps.p.outputs.entorno }}
+      environment: ${{ steps.p.outputs.environment }}
+      tag: ${{ steps.p.outputs.tag }}
+      construir: ${{ steps.p.outputs.construir }}
+    steps:
+      - id: p
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            entorno="${{ inputs.entorno }}"
+            tag="${{ inputs.tag }}"
+            construir=false
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            entorno=prod; tag="${GITHUB_SHA::7}"; construir=true
+          else
+            entorno=qa; tag="qa-${GITHUB_SHA::7}"; construir=true
+          fi
+          [[ "$tag" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "Tag inválido: $tag"; exit 1; }
+          # Una imagen de QA apunta a la API de QA: desplegarla en PROD rompería
+          # todo sin que nada falle al levantar.
+          if [[ "$entorno" == prod && "$tag" == qa-* ]] || [[ "$entorno" == qa && "$tag" != qa-* ]]; then
+            echo "El tag $tag no es de $entorno"; exit 1
+          fi
+          echo "entorno=$entorno" >> "$GITHUB_OUTPUT"
+          echo "environment=$([[ $entorno == prod ]] && echo produccion || echo qa)" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "construir=$construir" >> "$GITHUB_OUTPUT"
+
+  construir:
+    needs: preparar
+    if: needs.preparar.outputs.construir == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: URL de la API
+        id: url
+        env:
+          QA: ${{ vars.API_URL_QA }}
+          PROD: ${{ vars.API_URL_PROD }}
+        run: |
+          url="$([[ '${{ needs.preparar.outputs.entorno }}' == prod ]] && echo "$PROD" || echo "$QA")"
+          [[ "$url" == https://* ]] || { echo "Falta la variable API_URL_QA o API_URL_PROD"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: produccion
+          push: true
+          build-args: NEXT_PUBLIC_API_URL=${{ steps.url.outputs.url }}
+          tags: ${{ env.IMAGEN }}:${{ needs.preparar.outputs.tag }}
+          cache-from: type=gha,scope=front-${{ needs.preparar.outputs.entorno }}
+          cache-to: type=gha,scope=front-${{ needs.preparar.outputs.entorno }},mode=max
+
+  desplegar:
+    needs: [preparar, construir]
+    if: always() && needs.preparar.result == 'success' && needs.construir.result != 'failure' && needs.construir.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ needs.preparar.outputs.environment }}
+    concurrency:
+      group: desplegar-${{ needs.preparar.outputs.entorno }}
+      cancel-in-progress: false
+    env:
+      ENTORNO: ${{ needs.preparar.outputs.entorno }}
+      TAG: ${{ needs.preparar.outputs.tag }}
+    steps:
+      - name: Llave SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/despliegue
+          chmod 600 ~/.ssh/despliegue
+          echo "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName ${{ secrets.VPS_HOST }}
+            Port ${{ secrets.VPS_PORT }}
+            User ${{ secrets.VPS_USER }}
+            IdentityFile ~/.ssh/despliegue
+            StrictHostKeyChecking yes
+          EOF
+
+      # Igual que en el backend: token temporal por la entrada estándar y
+      # DOCKER_CONFIG aparte. Los scripts y el compose los trae el backend.
+      - name: Entrar a GHCR desde el VPS
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$TOKEN" | ssh vps "mkdir -p /opt/contable/.docker && chmod 700 /opt/contable/.docker \
+            && { [ -d ~/.docker/cli-plugins ] && ln -sfn ~/.docker/cli-plugins /opt/contable/.docker/cli-plugins || true; } \
+            && DOCKER_CONFIG=/opt/contable/.docker docker login ghcr.io -u '${{ github.actor }}' --password-stdin >/dev/null"
+
+      - name: Desplegar
+        run: ssh vps "DOCKER_CONFIG=/opt/contable/.docker /opt/contable/scripts/desplegar.sh '$ENTORNO' web '$TAG'"
+
+      - name: Salir de GHCR
+        if: always()
+        run: ssh vps 'DOCKER_CONFIG=/opt/contable/.docker docker logout ghcr.io >/dev/null' || true
