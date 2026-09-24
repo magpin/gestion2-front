@@ -73,7 +73,10 @@ export function PedidosSeccion() {
       void cliente.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Subido. María lo está leyendo.");
     },
-    onError: (e: Error) => aviso.error(e.message),
+    // `falla` y no `e.message`: en un error HTTP, `message` es el genérico de
+    // axios («Request failed with status code 400») y esconde lo que dijo el
+    // servidor, que es lo que explica qué hacer.
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const elegir = (archivo: File | undefined) => {

@@ -80,7 +80,10 @@ export function DetalleFacturaLeida({
       );
       onRegistrada();
     },
-    onError: (e: Error) => aviso.error(e.message),
+    // `falla` y no `e.message`: en un error HTTP, `message` es el genérico de
+    // axios («Request failed with status code 400») y esconde lo que dijo el
+    // servidor, que es lo que explica qué hacer.
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   if (cruzada === null) {
