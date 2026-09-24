@@ -17,6 +17,8 @@ export interface TerceroResumen {
   nombre: string;
   esCliente: boolean;
   esProveedor: boolean;
+  /** Trabaja para la empresa: responde por una caja. */
+  esEmpleado: boolean;
   responsableIva: boolean;
   /** Si declara renta. Decide la tarifa de retefuente donde hay dos (4% o 6%). */
   declaranteRenta: boolean;
@@ -47,6 +49,7 @@ export interface TerceroDetalle {
   municipio_nombre: string | null;
   es_cliente: boolean;
   es_proveedor: boolean;
+  es_empleado: boolean;
   responsable_iva: boolean;
   es_agente_retenedor: boolean;
   es_autorretenedor: boolean;
@@ -70,6 +73,7 @@ export interface FiltroTerceros {
   q?: string;
   esCliente?: boolean;
   esProveedor?: boolean;
+  esEmpleado?: boolean;
   incluirInactivos?: boolean;
   /** Solo los desactivados. Manda sobre `incluirInactivos`. */
   soloInactivos?: boolean;
@@ -96,6 +100,7 @@ export function resumirTercero(d: TerceroDetalle): TerceroResumen {
         .join(" "),
     esCliente: d.es_cliente,
     esProveedor: d.es_proveedor,
+    esEmpleado: d.es_empleado,
     responsableIva: d.responsable_iva,
     declaranteRenta: d.declarante_renta ?? true,
     activo: d.activo,

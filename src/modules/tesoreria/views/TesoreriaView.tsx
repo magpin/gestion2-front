@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Banknote,
@@ -30,6 +30,7 @@ import {
 import { formatCOP } from "@/lib/utils";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
+import { useManejaCajaMenor } from "@/core/hooks/useManejaCajaMenor";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 import { FormularioCaja, type DatosCaja } from "../components/FormularioCaja";
 import {
@@ -37,7 +38,7 @@ import {
   type DatosCuentaBancaria,
 } from "../components/FormularioCuentaBancaria";
 import { cuentasBancariasApi } from "../services/bancos.service";
-import { cajasApi } from "../services/tesoreria.service";
+import { cajasApi, configuracionCajaApi } from "../services/tesoreria.service";
 import { NOMBRE_TIPO_CAJA } from "../types/tesoreria.types";
 import { ArqueoSeccion } from "./ArqueoSeccion";
 import { CajasSeccion } from "./CajasSeccion";
@@ -93,6 +94,34 @@ const ID_FORMULARIO_CUENTA_BANCARIA = "formulario-nueva-cuenta-bancaria";
 export function TesoreriaView() {
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("CAJA", "DIRECTOR");
+  const puedePreparar = useTieneRol("CONTADOR", "DIRECTOR");
+  const manejaCajaMenor = useManejaCajaMenor();
+
+  // Deja tesorería lista para operar: las cuentas de arqueo, la caja de cada
+  // sede y la caja menor si la empresa la maneja. Lo mismo corre al crear el
+  // plan de cuentas; acá llega también a las empresas que ya lo tenían. Es
+  // idempotente, pero basta una vez por visita.
+  const preparado = useRef(false);
+  const preparar = useMutation({
+    mutationFn: configuracionCajaApi.preparar,
+    onSuccess: async (r) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["cajas"] }),
+        queryClient.invalidateQueries({ queryKey: ["tesoreria", "configuracion"] }),
+      ]);
+      const creado = [...r.cuentasCreadas, ...r.cajasCreadas];
+      if (creado.length > 0) {
+        aviso.exito(`Tesorería lista para operar. Se creó: ${creado.join(", ")}`);
+      }
+    },
+    // Sin aviso de error: si falla, cada pantalla sigue funcionando y
+    // Configuración muestra lo que falta.
+  });
+  useEffect(() => {
+    if (!puedePreparar || preparado.current) return;
+    preparado.current = true;
+    preparar.mutate();
+  }, [puedePreparar, preparar]);
 
   const [grupo, setGrupo] = useState<Grupo>("Caja");
   const [seccionCaja, setSeccionCaja] = useState<SeccionCaja>("Cajas");
@@ -110,6 +139,7 @@ export function TesoreriaView() {
         tipo: d.tipo,
         sedeId: d.tipo === "PRINCIPAL" ? d.sedeId : undefined,
         cuentaId: d.cuentaId,
+        responsableTerceroId: d.responsableTerceroId || undefined,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["cajas"] });
@@ -250,7 +280,11 @@ export function TesoreriaView() {
           <DialogHeader>
             <div>
               <DialogTitle>Nueva caja</DialogTitle>
-              <DialogDescription>Una por sede (arqueo por punto de venta), o el fondo fijo de caja menor.</DialogDescription>
+              <DialogDescription>
+                {manejaCajaMenor
+                  ? "Una por sede (arqueo por punto de venta), o el fondo fijo de caja menor."
+                  : "Una por sede: el arqueo se hace por punto de venta."}
+              </DialogDescription>
             </div>
             <DialogCloseIcon />
           </DialogHeader>

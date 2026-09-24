@@ -24,6 +24,7 @@ export const tercerosApi = {
           // pantalla ofrece.
           esCliente: f.esCliente ? "true" : undefined,
           esProveedor: f.esProveedor ? "true" : undefined,
+          esEmpleado: f.esEmpleado ? "true" : undefined,
           incluirInactivos: f.incluirInactivos ? "true" : undefined,
           soloInactivos: f.soloInactivos ? "true" : undefined,
           pagina: f.pagina ?? 1,

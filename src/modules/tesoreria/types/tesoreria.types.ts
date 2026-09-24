@@ -11,6 +11,14 @@ export const NOMBRE_TIPO_CAJA: Record<TipoCaja, string> = {
   MENOR: "Caja menor",
 };
 
+/** Un tercero, con lo justo para mostrarlo y dejarlo elegido en un selector. */
+export interface ResponsableCaja {
+  id: string;
+  nombre: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
+}
+
 /** El maestro. Sin paginar: una empresa tiene pocas cajas. */
 export interface CajaResumen {
   id: string;
@@ -19,6 +27,8 @@ export interface CajaResumen {
   sede_id: string | null;
   cuenta_id: string;
   activa: boolean;
+  /** El empleado que responde por la caja: a quién se le cobra un faltante. */
+  responsable: ResponsableCaja | null;
   /** Cuánta plata hay adentro hoy. Lo calcula la API sobre el último movimiento. */
   saldo: string;
   /** El día del último movimiento, o `null` si la caja nunca se movió. */
@@ -43,10 +53,13 @@ export interface CrearCajaInput {
   /** Obligatoria para PRINCIPAL, ausente para MENOR — lo exige `ck_caja_sede` en el backend. */
   sedeId?: string;
   cuentaId: string;
+  responsableTerceroId?: string;
 }
 
 export interface EditarCajaInput {
   nombre?: string;
+  /** `null` quita el responsable; sin el campo, no se toca. */
+  responsableTerceroId?: string | null;
 }
 
 /** El libro. `tipo` de la fila, no el de la caja. */
@@ -122,6 +135,9 @@ export interface ArqueoResumen {
   cerrado_por: string | null;
   nota: string | null;
   asiento_ajuste_id: string | null;
+  /** Solo con faltante: lo asumió la empresa o se le cobró al responsable. */
+  tratamiento_faltante: TratamientoFaltante | null;
+  responsable_tercero_id: string | null;
   /** El conteo billete por billete; vacío si se cerró con el total a secas. */
   denominaciones: DenominacionContada[];
 }
@@ -153,7 +169,14 @@ export interface CerrarArqueoInput {
   saldoContado?: number;
   denominaciones?: { tipo: "BILLETE" | "MONEDA"; denominacion: number; cantidad: number }[];
   nota?: string;
+  /** Solo con faltante, y ahí es obligatorio. */
+  tratamientoFaltante?: TratamientoFaltante;
+  /** A quién se le cobra, si no es el responsable de la caja. */
+  responsableTerceroId?: string;
 }
+
+/** Un faltante lo asume la empresa (gasto) o lo paga quien respondía por la caja. */
+export type TratamientoFaltante = "EMPRESA" | "RESPONSABLE";
 
 /** Reversar un ingreso o egreso manual: la fecha de la corrección y su porqué. */
 export interface ReversarMovimientoCajaInput {
@@ -161,10 +184,36 @@ export interface ReversarMovimientoCajaInput {
   motivo: string;
 }
 
-/** `cuenta_diferencia_id` viene `null` si nadie la ha fijado todavía. */
+/** Los tres destinos de una diferencia de arqueo. */
+export type ConceptoArqueo = "SOBRANTE" | "FALTANTE_COBRABLE" | "FALTANTE_ASUMIDO";
+
+export interface CuentaDelConcepto {
+  id: string;
+  codigo: string;
+  nombre: string;
+}
+
+export interface ConceptoConfigurado {
+  concepto: ConceptoArqueo;
+  etiqueta: string;
+  /** La cuenta del decreto que el sistema propone: 429553, 136530 o 531595. */
+  codigoPorDefecto: string;
+  /** La que se usa hoy. `null` si hay que elegir entre varios auxiliares. */
+  cuenta: CuentaDelConcepto | null;
+  /** Los auxiliares de la cuenta por defecto, o la cuenta misma si no tiene. */
+  opciones: CuentaDelConcepto[];
+}
+
 export interface CajaConfiguracion {
-  empresa_id: string;
-  cuenta_diferencia_id: string | null;
+  conceptos: ConceptoConfigurado[];
+  /** Los tres conceptos tienen cuenta: cualquier arqueo puede cerrar. */
+  completa: boolean;
+}
+
+/** Lo que dejó hecho `preparar`. */
+export interface ResultadoPreparar {
+  cuentasCreadas: string[];
+  cajasCreadas: string[];
 }
 
 /**

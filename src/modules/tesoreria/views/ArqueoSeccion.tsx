@@ -55,7 +55,9 @@ export function ArqueoSeccion() {
     queryKey: ["tesoreria", "configuracion"],
     queryFn: configuracionCajaApi.obtener,
   });
-  const configurado = configuracion?.cuenta_diferencia_id != null;
+  // Sin configuración cargada no se avisa nada: el aviso es para cuando de
+  // verdad falta una cuenta, no para el instante en que carga.
+  const configurado = configuracion === undefined || configuracion.completa;
 
   const abierto = arqueos?.datos.find((a) => a.estado === "ABIERTO") ?? null;
   // El último cerrado es el que contesta "¿quedé cuadrado?", que es la pregunta
@@ -172,16 +174,15 @@ export function ArqueoSeccion() {
       {abierto && !configurado && (
         <Aviso
           tono="alarma"
-          titulo="Falta la cuenta de diferencia"
+          titulo="Falta configurar una cuenta de arqueo"
           accion={
             <span className="text-sm font-semibold">
               Tesorería → Configuración
             </span>
           }
         >
-          Sin ella, un cierre con faltante o sobrante no puede asentar el
-          ajuste. El cierre funciona igual, pero la diferencia no queda en el
-          libro.
+          Si el arqueo cierra con una diferencia de ese tipo, no se va a poder
+          asentar el ajuste. Un cierre que cuadra funciona igual.
         </Aviso>
       )}
 
@@ -302,8 +303,13 @@ export function ArqueoSeccion() {
             {modal === "abrir" && (
               <FormularioAbrirArqueo id={ID_FORMULARIO} alGuardar={(d) => abrir.mutate(d)} />
             )}
-            {modal === "cerrar" && abierto && (
-              <FormularioCerrarArqueo id={ID_FORMULARIO} arqueo={abierto} alGuardar={(d) => cerrar.mutate(d)} />
+            {modal === "cerrar" && abierto && caja && (
+              <FormularioCerrarArqueo
+                id={ID_FORMULARIO}
+                arqueo={abierto}
+                caja={caja}
+                alGuardar={(d) => cerrar.mutate(d)}
+              />
             )}
           </DialogBody>
           <DialogFooter>

@@ -8,6 +8,7 @@ import { Check, Loader2, TriangleAlert } from "lucide-react";
 
 import { ArbolPlan } from "@/modules/plan-cuentas/components/ArbolPlan";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
+import { configuracionCajaApi } from "@/modules/tesoreria/services/tesoreria.service";
 import type {
   Bloque as ClaveBloque,
   CuentaSugerida,
@@ -113,9 +114,23 @@ export function PasoPlanCuentas() {
   );
 
   const guardar = useGuardar<string[]>({
-    fn: (codigos) => planCuentasApi.aplicar(codigos),
+    fn: async (codigos) => {
+      const creadas = await planCuentasApi.aplicar(codigos);
+      // Con el plan creado, tesorería queda lista: la caja de cada sede, la
+      // caja menor si se declaró y las cuentas de arqueo asignadas. Si falla
+      // —por ejemplo, un rol sin permiso—, el plan ya quedó y tesorería lo
+      // vuelve a intentar al abrirse.
+      await configuracionCajaApi.preparar().catch(() => undefined);
+      return creadas;
+    },
     exito: "Cuentas agregadas al plan",
-    invalidar: [CLAVE_PLAN, CLAVE_SUGERENCIA, ["estado-configuracion"]],
+    invalidar: [
+      CLAVE_PLAN,
+      CLAVE_SUGERENCIA,
+      ["estado-configuracion"],
+      ["cajas"],
+      ["tesoreria", "configuracion"],
+    ],
     // Dentro del chat de IA no se navega: eso sacaba del modo.
     alTerminar: () => {
       if (!embebido) router.push(RUTA_PASO.RESOLUCIONES);

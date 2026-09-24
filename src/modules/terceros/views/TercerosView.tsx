@@ -45,7 +45,7 @@ import type { TerceroResumen } from "../types/terceros.types";
 
 const CLAVE = ["terceros"];
 
-type Tipo = "Todos" | "Cliente" | "Proveedor";
+type Tipo = "Todos" | "Cliente" | "Proveedor" | "Empleado";
 type Estado = "Todos" | "Activo" | "Inactivo";
 
 /**
@@ -104,6 +104,7 @@ export function TercerosView() {
         q: busqueda.trim() || undefined,
         esCliente: tipo === "Cliente",
         esProveedor: tipo === "Proveedor",
+        esEmpleado: tipo === "Empleado",
         incluirInactivos: estado === "Todos",
         soloInactivos: estado === "Inactivo",
         pagina,
@@ -187,7 +188,7 @@ export function TercerosView() {
         <FiltroSelect
           etiqueta="Tipo"
           valor={tipo}
-          opciones={["Todos", "Cliente", "Proveedor"]}
+          opciones={["Todos", "Cliente", "Proveedor", "Empleado"]}
           alCambiar={filtrar(setTipo)}
         />
         <FiltroSelect
@@ -478,6 +479,11 @@ function Fila({
           {tercero.esProveedor && (
             <Badge variant="outline" className="h-7 px-3">
               Proveedor
+            </Badge>
+          )}
+          {tercero.esEmpleado && (
+            <Badge variant="outline" className="h-7 px-3">
+              Empleado
             </Badge>
           )}
         </div>
