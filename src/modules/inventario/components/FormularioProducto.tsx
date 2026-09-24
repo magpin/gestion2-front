@@ -33,7 +33,8 @@ const esquema = z.object({
   nombre: z.string().min(2, "Requerido").max(200),
   unidadMedida: z.enum(UNIDADES_MEDIDA),
   ivaTarifa: z.union([z.literal(0), z.literal(5), z.literal(19)]),
-  cuentaInventarioId: z.string().min(1, "Elegí una cuenta de inventario"),
+  // Opcional: sin ella, el producto toma la cuenta de inventario de la empresa.
+  cuentaInventarioId: z.string().optional(),
   precioVenta: z.number().min(0, "No puede ser negativo"),
   categoriaId: z.string().optional(),
   codigoBarras: z
@@ -289,42 +290,43 @@ export function FormularioProducto({
           </Select>
         </Campo>
 
-        {!edicion && (
-          <Campo
-            id="cuentaInventarioId"
-            etiqueta="Cuenta de inventario *"
-            error={errores.cuentaInventarioId?.message}
-            ayuda="No se puede cambiar después de creado"
-            escala="grande"
-            className="sm:col-span-2"
-          >
-            <SelectorCuenta
-              valor={cuenta}
-              onElegir={elegirCuenta}
-              invalido={Boolean(errores.cuentaInventarioId)}
-            />
-          </Campo>
-        )}
+        {/* Las cuentas del producto son opcionales: sin elegir nada, toma las
+            de la empresa (Plan de cuentas → Cuentas automáticas). Quedan a la
+            mano para quien necesite otra, sin estorbar a quien no. */}
+        <details className="rounded-2xl border border-border p-4 sm:col-span-2">
+          <summary className="cursor-pointer select-none text-sm font-semibold">
+            Cuentas contables <span className="font-normal text-muted-foreground">(opcional)</span>
+          </summary>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Si no elegís ninguna, el producto usa las cuentas de la empresa para inventario, costo de venta e
+            ingreso.
+          </p>
+          <div className="mt-4 grid gap-5">
+            {!edicion && (
+              <Campo
+                id="cuentaInventarioId"
+                etiqueta="Cuenta de inventario"
+                error={errores.cuentaInventarioId?.message}
+                ayuda="No se puede cambiar después de creado"
+                escala="grande"
+              >
+                <SelectorCuenta
+                  valor={cuenta}
+                  onElegir={elegirCuenta}
+                  invalido={Boolean(errores.cuentaInventarioId)}
+                />
+              </Campo>
+            )}
 
-        <Campo
-          id="cuentaCostoVentaId"
-          etiqueta="Cuenta de costo de venta"
-          ayuda="Opcional acá — hace falta recién cuando se venda este producto"
-          escala="grande"
-          className="sm:col-span-2"
-        >
-          <SelectorCuenta valor={cuentaCosto} onElegir={onCuentaCosto} />
-        </Campo>
+            <Campo id="cuentaCostoVentaId" etiqueta="Cuenta de costo de venta" escala="grande">
+              <SelectorCuenta valor={cuentaCosto} onElegir={onCuentaCosto} />
+            </Campo>
 
-        <Campo
-          id="cuentaIngresoId"
-          etiqueta="Cuenta de ingreso"
-          ayuda="Opcional acá — hace falta recién cuando se venda este producto"
-          escala="grande"
-          className="sm:col-span-2"
-        >
-          <SelectorCuenta valor={cuentaIngreso} onElegir={onCuentaIngreso} />
-        </Campo>
+            <Campo id="cuentaIngresoId" etiqueta="Cuenta de ingreso" escala="grande">
+              <SelectorCuenta valor={cuentaIngreso} onElegir={onCuentaIngreso} />
+            </Campo>
+          </div>
+        </details>
 
         {!edicion && (
           <Campo

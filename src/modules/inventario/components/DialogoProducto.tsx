@@ -89,7 +89,7 @@ export function DialogoProducto({
           nombre: d.nombre,
           unidadMedida: d.unidadMedida,
           ivaTarifa: d.ivaTarifa,
-          cuentaInventarioId: d.cuentaInventarioId,
+          cuentaInventarioId: d.cuentaInventarioId || undefined,
           cuentaCostoVentaId: d.cuentaCostoVentaId,
           cuentaIngresoId: d.cuentaIngresoId,
           categoriaId: d.categoriaId || undefined,
