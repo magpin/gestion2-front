@@ -6,6 +6,7 @@ import type {
   CajaResumen,
   CargaInicialCajaInput,
   CerrarArqueoInput,
+  ConceptoArqueo,
   CrearCajaInput,
   EditarCajaInput,
   EgresoCajaInput,
@@ -14,6 +15,7 @@ import type {
   PaginaArqueos,
   PaginaMovimientosCaja,
   ResumenLibro,
+  ResultadoPreparar,
   ReversarMovimientoCajaInput,
 } from "../types/tesoreria.types";
 
@@ -99,8 +101,12 @@ export const arqueosApi = {
 export const configuracionCajaApi = {
   obtener: () => api.get<CajaConfiguracion>("/tesoreria/configuracion").then((r) => r.data),
 
-  fijarCuentaDiferencia: (cuentaDiferenciaId: string) =>
+  fijar: (concepto: ConceptoArqueo, cuentaId: string) =>
     api
-      .put<CajaConfiguracion>("/tesoreria/configuracion", { cuentaDiferenciaId })
+      .put<CajaConfiguracion>(`/tesoreria/configuracion/${concepto}`, { cuentaId })
       .then((r) => r.data),
+
+  /** Crea lo que falte para operar: cuentas de arqueo, cajas por sede y caja menor. */
+  preparar: () =>
+    api.post<ResultadoPreparar>("/tesoreria/configuracion/preparar").then((r) => r.data),
 };

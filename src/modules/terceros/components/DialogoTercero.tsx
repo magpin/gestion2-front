@@ -49,7 +49,7 @@ export function DialogoTercero({
   /** El tercero recién guardado. Opcional: el directorio no necesita nada. */
   alGuardar?: (tercero: TerceroResumen) => void;
   /** Con qué rol nace un tercero creado desde ventas o desde compras. */
-  rol?: "cliente" | "proveedor";
+  rol?: "cliente" | "proveedor" | "empleado";
   /** Lo que se venía buscando cuando no apareció: se precarga como nombre. */
   nombreSugerido?: string;
 }) {
@@ -141,8 +141,9 @@ export function DialogoTercero({
               valoresIniciales={
                 creando
                   ? {
-                      esCliente: rol !== "proveedor",
+                      esCliente: rol === undefined || rol === "cliente",
                       esProveedor: rol === "proveedor",
+                      esEmpleado: rol === "empleado",
                       razonSocial: nombreSugerido,
                       primerNombre: nombreSugerido,
                     }

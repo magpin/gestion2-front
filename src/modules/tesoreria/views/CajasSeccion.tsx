@@ -20,16 +20,20 @@ import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { cajasApi } from "../services/tesoreria.service";
 import { formatCOP, formatFecha } from "@/lib/utils";
+import { SelectorTercero } from "@/modules/ventas/components/SelectorTercero";
+import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { NOMBRE_TIPO_CAJA } from "../types/tesoreria.types";
 import type { CajaResumen } from "../types/tesoreria.types";
 
 const CLAVE = ["cajas"];
 
 /**
- * El maestro. Nada de "editar tipo/sede/cuenta" acá —el backend solo
- * acepta cambiar el nombre, y ni siquiera eso tiene pantalla propia
- * todavía—: la única acción real es activar/desactivar, mismo criterio
+ * El maestro. Nada de "editar tipo/sede/cuenta" acá —el backend no lo
+ * acepta—: se asigna el responsable y se activa o desactiva, mismo criterio
  * que `ProductosSeccion`.
+ *
+ * El responsable se elige en la misma fila: las cajas que crea el sistema
+ * nacen sin él, y es a quien se le cobra un faltante.
  *
  * El alta ("Nueva caja") vive en `TesoreriaView`, no acá: es la acción de
  * la pantalla entera, igual que "Nuevo producto" en `InventarioView`.
@@ -55,6 +59,15 @@ export function CajasSeccion() {
       await refrescar();
       aviso.exito("Caja desactivada");
       setConfirmando(false);
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+  const asignarResponsable = useMutation({
+    mutationFn: ({ id, tercero }: { id: string; tercero: TerceroResumen }) =>
+      cajasApi.editar(id, { responsableTerceroId: tercero.id }),
+    onSuccess: async () => {
+      await refrescar();
+      aviso.exito("Responsable asignado");
     },
     onError: (e: unknown) => aviso.falla(e),
   });
@@ -102,10 +115,10 @@ export function CajasSeccion() {
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left">
+            <table className="w-full min-w-[960px] text-left">
               <thead className="border-b border-border bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Caja", "Tipo", "Saldo", "Últ. movimiento", "Estado", "Acciones"].map((x) => (
+                  {["Caja", "Tipo", "Responsable", "Saldo", "Últ. movimiento", "Estado", "Acciones"].map((x) => (
                     <th key={x} scope="col" className={`px-5 py-4 ${x === "Acciones" ? "text-right" : ""}`}>
                       {x}
                     </th>
@@ -118,6 +131,17 @@ export function CajasSeccion() {
                     <td className="px-5 py-5 text-sm font-semibold">{c.nombre}</td>
                     <td className="px-5 py-5">
                       <span className="rounded-full border border-border px-3 py-1.5 text-xs">{NOMBRE_TIPO_CAJA[c.tipo]}</span>
+                    </td>
+                    <td className="w-72 px-5 py-4">
+                      {puedeOperar && c.activa ? (
+                        <SelectorTercero
+                          rol="empleado"
+                          valor={c.responsable === null ? null : ({ ...c.responsable } as TerceroResumen)}
+                          onElegir={(tercero) => asignarResponsable.mutate({ id: c.id, tercero })}
+                        />
+                      ) : (
+                        <span className="text-sm text-muted-foreground">{c.responsable?.nombre ?? "Sin responsable"}</span>
+                      )}
                     </td>
                     <td className="px-5 py-5 font-mono text-sm font-semibold">
                       {formatCOP(Number(c.saldo))}

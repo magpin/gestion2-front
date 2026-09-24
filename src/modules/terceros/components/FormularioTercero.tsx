@@ -43,6 +43,7 @@ const esquema = z
     municipioCodigo: z.string().optional(),
     esCliente: z.boolean(),
     esProveedor: z.boolean(),
+    esEmpleado: z.boolean(),
     responsableIva: z.boolean(),
     esAgenteRetenedor: z.boolean(),
     esAutorretenedor: z.boolean(),
@@ -51,8 +52,8 @@ const esquema = z
   })
   // Las dos reglas que el backend también sostiene. Validarlas acá evita un
   // viaje al servidor para descubrir algo que el formulario ya sabe.
-  .refine((d) => d.esCliente || d.esProveedor, {
-    message: "Tiene que ser cliente, proveedor o ambos",
+  .refine((d) => d.esCliente || d.esProveedor || d.esEmpleado, {
+    message: "Tiene que ser cliente, proveedor o empleado (o varios)",
     path: ["esCliente"],
   })
   .refine(
@@ -81,6 +82,7 @@ const VACIO: DatosTercero = {
   municipioCodigo: "",
   esCliente: true,
   esProveedor: false,
+  esEmpleado: false,
   responsableIva: false,
   esAgenteRetenedor: false,
   esAutorretenedor: false,
@@ -171,6 +173,7 @@ export function FormularioTercero({
       municipioCodigo: inicial.municipio_codigo ?? "",
       esCliente: inicial.es_cliente,
       esProveedor: inicial.es_proveedor,
+      esEmpleado: inicial.es_empleado,
       responsableIva: inicial.responsable_iva,
       esAgenteRetenedor: inicial.es_agente_retenedor,
       esAutorretenedor: inicial.es_autorretenedor,
@@ -429,9 +432,9 @@ export function FormularioTercero({
 
       <Seccion
         titulo="Qué es para tu empresa"
-        descripcion="Decide en qué listas aparece al digitar. Puede ser las dos cosas: el mismo NIT suele comprar y vender."
+        descripcion="Decide en qué listas aparece al digitar. Puede ser varias cosas: el mismo NIT suele comprar y vender."
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Tarjeta
             marcada={form.watch("esCliente")}
             titulo="Cliente"
@@ -446,6 +449,14 @@ export function FormularioTercero({
             detalle="Le comprás: aparece al registrar una compra"
             alAlternar={() =>
               form.setValue("esProveedor", !form.watch("esProveedor"))
+            }
+          />
+          <Tarjeta
+            marcada={form.watch("esEmpleado")}
+            titulo="Empleado"
+            detalle="Trabaja para la empresa: puede responder por una caja"
+            alAlternar={() =>
+              form.setValue("esEmpleado", !form.watch("esEmpleado"))
             }
           />
         </div>

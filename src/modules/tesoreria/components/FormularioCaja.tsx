@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useManejaCajaMenor } from "@/core/hooks/useManejaCajaMenor";
 import { SelectorCuenta } from "@/modules/contabilidad/components/SelectorCuenta";
+import { SelectorTercero } from "@/modules/ventas/components/SelectorTercero";
+import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { empresaApi } from "@/modules/configuracion/services/nucleo.service";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
@@ -28,11 +32,12 @@ const esquema = z.object({
   tipo: z.enum(TIPOS_CAJA),
   sedeId: z.string().optional(),
   cuentaId: z.string().min(1, "Elegí una cuenta contable"),
+  responsableTerceroId: z.string().optional(),
 });
 
 export type DatosCaja = z.infer<typeof esquema>;
 
-const VACIO: DatosCaja = { nombre: "", tipo: "PRINCIPAL", sedeId: "", cuentaId: "" };
+const VACIO: DatosCaja = { nombre: "", tipo: "PRINCIPAL", sedeId: "", cuentaId: "", responsableTerceroId: undefined };
 const CONTROL = "h-11 rounded-xl px-4";
 
 /**
@@ -60,6 +65,11 @@ export function FormularioCaja({
     staleTime: 5 * 60_000,
   });
 
+  // Si la empresa no maneja caja menor, no hay nada que elegir: toda caja es
+  // principal, igual que no se muestra el IVA a quien no lo liquida.
+  const manejaCajaMenor = useManejaCajaMenor();
+  const [responsable, setResponsable] = useState<TerceroResumen | null>(null);
+
   const form = useForm<DatosCaja>({
     resolver: zodResolver(esquema),
     defaultValues: VACIO,
@@ -84,6 +94,7 @@ export function FormularioCaja({
         <Input id="nombre" className={CONTROL} placeholder="Ej. Caja principal Chapinero" {...form.register("nombre")} />
       </Campo>
 
+      {manejaCajaMenor && (
       <Campo id="tipo" etiqueta="Tipo *" escala="grande">
         <Select
           value={tipo}
@@ -101,6 +112,7 @@ export function FormularioCaja({
           </SelectContent>
         </Select>
       </Campo>
+      )}
 
       {tipo === "PRINCIPAL" && (
         <Campo
@@ -136,6 +148,22 @@ export function FormularioCaja({
         escala="grande"
       >
         <SelectorCuenta valor={cuenta} onElegir={elegirCuenta} invalido={Boolean(errores.cuentaId)} />
+      </Campo>
+
+      <Campo
+        id="responsable"
+        etiqueta="Responsable"
+        ayuda="El empleado que responde por la caja: a quién se le cobra un faltante"
+        escala="grande"
+      >
+        <SelectorTercero
+          rol="empleado"
+          valor={responsable}
+          onElegir={(t) => {
+            setResponsable(t);
+            form.setValue("responsableTerceroId", t.id);
+          }}
+        />
       </Campo>
     </form>
   );

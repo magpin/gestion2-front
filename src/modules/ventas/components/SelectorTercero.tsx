@@ -19,19 +19,38 @@ import {
 } from "@/modules/terceros/components/DialogoTercero";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 
+const TEXTOS = {
+  cliente: {
+    vacio: "Seleccione un cliente",
+    buscar: "Buscar cliente",
+    ninguno: "Ningún cliente coincide.",
+    nuevo: "Registrar un cliente nuevo",
+  },
+  empleado: {
+    vacio: "Seleccione un empleado",
+    buscar: "Buscar empleado",
+    ninguno: "Ningún empleado coincide.",
+    nuevo: "Registrar un empleado nuevo",
+  },
+} as const;
+
 /**
- * Buscador de cliente: por nombre o documento, solo entre los que están
- * marcados como cliente. Mismo patrón que `SelectorCuenta`/`SelectorProducto`.
+ * Buscador de tercero por nombre o documento, solo entre los que tienen el
+ * rol pedido: clientes al vender, empleados al elegir quién responde por una
+ * caja. Mismo patrón que `SelectorCuenta`/`SelectorProducto`.
  */
 export function SelectorTercero({
   valor,
   onElegir,
   invalido,
+  rol = "cliente",
 }: {
   valor: TerceroResumen | null;
   onElegir: (tercero: TerceroResumen) => void;
   invalido?: boolean;
+  rol?: "cliente" | "empleado";
 }) {
+  const textos = TEXTOS[rol];
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   // El diálogo se abre CERRANDO el popover: si viviera dentro del
@@ -44,9 +63,13 @@ export function SelectorTercero({
   };
 
   const { data: pagina, isFetching } = useQuery({
-    queryKey: ["terceros", "selector-cliente", busqueda],
+    queryKey: ["terceros", `selector-${rol}`, busqueda],
     queryFn: () =>
-      tercerosApi.listar({ q: busqueda.trim() || undefined, esCliente: true }),
+      tercerosApi.listar({
+        q: busqueda.trim() || undefined,
+        esCliente: rol === "cliente",
+        esEmpleado: rol === "empleado",
+      }),
     enabled: abierto,
     staleTime: 60_000,
   });
@@ -65,7 +88,7 @@ export function SelectorTercero({
           >
             {valor
               ? `${valor.nombre} · ${valor.tipoDocumento} ${valor.numeroDocumento}`
-              : "Seleccione un cliente"}
+              : textos.vacio}
           </span>
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
@@ -81,7 +104,7 @@ export function SelectorTercero({
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Nombre o documento"
               className="h-11 rounded-xl px-4"
-              aria-label="Buscar cliente"
+              aria-label={textos.buscar}
             />
           </div>
 
@@ -123,7 +146,7 @@ export function SelectorTercero({
 
             {!isFetching && terceros.length === 0 && (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                Ningún cliente coincide.
+                {textos.ninguno}
               </p>
             )}
           </div>
@@ -139,7 +162,7 @@ export function SelectorTercero({
               onClick={() => abrirFicha("nuevo")}
             >
               <Plus className="size-4" />
-              Registrar un cliente nuevo
+              {textos.nuevo}
             </Button>
             {valor && (
               <Button
@@ -159,7 +182,7 @@ export function SelectorTercero({
       <DialogoTercero
         editando={editando}
         onCerrar={() => setEditando(null)}
-        rol="cliente"
+        rol={rol}
         nombreSugerido={busqueda.trim() || undefined}
         alGuardar={(tercero) => {
           onElegir(tercero);
