@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
@@ -8,6 +9,9 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { SelectorTercero } from "@/modules/ventas/components/SelectorTercero";
+import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
+import { cn } from "@/lib/utils";
 import { SelectorProducto } from "./SelectorProducto";
 import type {
   ProductoResumen,
@@ -25,6 +29,9 @@ const esquema = z.object({
   cantidad: z.number().positive("Tiene que ser mayor a cero"),
   costoUnitario: z.number().min(0, "No puede ser negativo").optional(),
   motivo: z.string().min(3, "Contá qué pasó").max(300),
+  // Solo la salida de ajuste: quién asume lo que falta.
+  tratamientoFaltante: z.enum(["EMPRESA", "RESPONSABLE"]).optional(),
+  responsableTerceroId: z.string().optional(),
 });
 
 export type DatosMovimiento = z.infer<typeof esquema>;
@@ -54,7 +61,6 @@ export function FormularioMovimiento({
   producto,
   onProducto,
   existencia,
-  configurado,
   alGuardar,
 }: {
   id: string;
@@ -63,8 +69,6 @@ export function FormularioMovimiento({
   onProducto?: (producto: ProductoResumen) => void;
   /** El saldo vigente, para mostrarlo y para el mensaje de "no alcanza". */
   existencia: string | null;
-  /** Si la empresa ya fijó la cuenta de ajuste. La carga inicial no la necesita. */
-  configurado: boolean;
   alGuardar: (datos: DatosMovimiento) => void;
 }) {
   const sinCosto = tipo === "SALIDA_AJUSTE";
@@ -75,13 +79,27 @@ export function FormularioMovimiento({
   });
   const errores = form.formState.errors;
 
-  const bloqueado = tipo !== "ENTRADA_INICIAL" && !configurado;
+  // Un faltante lo asume la empresa (merma, daño) o lo paga alguien: lo sabe
+  // quien contó la bodega, así que no viene elegido.
+  const faltante = tipo === "SALIDA_AJUSTE";
+  const tratamiento = form.watch("tratamientoFaltante");
+  const [responsable, setResponsable] = useState<TerceroResumen | null>(null);
+  const [intento, setIntento] = useState(false);
+  const faltaTratamiento = faltante && tratamiento === undefined;
+  const faltaResponsable = faltante && tratamiento === "RESPONSABLE" && responsable === null;
 
   return (
     <form
       id={id}
       className="flex flex-col gap-5"
-      onSubmit={form.handleSubmit(alGuardar)}
+      onSubmit={(e) => {
+        setIntento(true);
+        if (faltaTratamiento || faltaResponsable) {
+          e.preventDefault();
+          return;
+        }
+        void form.handleSubmit(alGuardar)(e);
+      }}
     >
       {onProducto ? (
         <Campo id="producto" etiqueta="Producto *" escala="grande">
@@ -116,12 +134,6 @@ export function FormularioMovimiento({
         </div>
       )}
 
-      {bloqueado && (
-        <div className="rounded-2xl bg-warning/10 p-4 text-sm text-warning">
-          Configura la cuenta contable de ajustes antes de registrar entradas o
-          salidas.
-        </div>
-      )}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Campo
@@ -172,6 +184,58 @@ export function FormularioMovimiento({
           </Campo>
         )}
       </div>
+
+      {faltante && (
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            ¿Quién responde por lo que falta?
+          </legend>
+          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
+            {(
+              [
+                ["EMPRESA", "Lo asume la empresa", "Merma, daño o pérdida: se registra como gasto."],
+                ["RESPONSABLE", "Lo paga el responsable", "Queda como cuenta por cobrar a esa persona."],
+              ] as const
+            ).map(([valor, titulo, detalle]) => (
+              <button
+                key={valor}
+                type="button"
+                role="radio"
+                aria-checked={tratamiento === valor}
+                onClick={() => form.setValue("tratamientoFaltante", valor)}
+                className={cn(
+                  "rounded-2xl border p-4 text-left transition-colors",
+                  tratamiento === valor ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
+                )}
+              >
+                <span className="block text-sm font-semibold">{titulo}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">{detalle}</span>
+              </button>
+            ))}
+          </div>
+          {intento && faltaTratamiento && (
+            <p className="text-sm text-danger">Elegí una de las dos para poder registrar el faltante.</p>
+          )}
+          {tratamiento === "RESPONSABLE" && (
+            <Campo
+              id="responsable"
+              etiqueta="¿A quién se le cobra? *"
+              error={intento && faltaResponsable ? "Elegí a quién se le cobra" : undefined}
+              escala="grande"
+            >
+              <SelectorTercero
+                rol="empleado"
+                valor={responsable}
+                onElegir={(t) => {
+                  setResponsable(t);
+                  form.setValue("responsableTerceroId", t.id);
+                }}
+                invalido={intento && faltaResponsable}
+              />
+            </Campo>
+          )}
+        </fieldset>
+      )}
 
       <Campo
         id="motivo"

@@ -14,6 +14,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { ArbolPlan } from "../components/ArbolPlan";
+import { CuentasAutomaticas } from "../components/CuentasAutomaticas";
 import { SelectorCuentaPuc } from "../components/SelectorCuentaPuc";
 import { planCuentasApi } from "../services/plan-cuentas.service";
 
@@ -59,7 +60,14 @@ export function PlanCuentasView() {
     queryFn: planCuentasApi.centros,
   });
 
-  const refrescar = () => queryClient.invalidateQueries({ queryKey: CLAVE });
+  // Un auxiliar nuevo puede volver elegible una cuenta automática (o dejar
+  // de serlo): las dos listas se refrescan juntas.
+  const refrescar = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: CLAVE }),
+      queryClient.invalidateQueries({ queryKey: ["tesoreria", "configuracion"] }),
+      queryClient.invalidateQueries({ queryKey: ["inventario", "configuracion"] }),
+    ]);
 
   // El conteo se saca de lo que ya está en pantalla y no de otra consulta: con el
   // buscador vacío es el plan entero, y con texto es cuántas encontró — que es
@@ -154,6 +162,8 @@ export function PlanCuentasView() {
           Ver sugerencias
         </Link>
       </header>
+
+      <CuentasAutomaticas />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-56 flex-1">

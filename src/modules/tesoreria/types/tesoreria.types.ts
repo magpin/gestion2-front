@@ -1,3 +1,5 @@
+import type { ConfiguracionCuentas } from "@/modules/plan-cuentas/types/cuentas-automaticas.types";
+
 // Espejo de `/cajas`, `/cajas/:id/movimientos`, `/cajas/:id/arqueos` e
 // `/tesoreria/configuracion` del backend (módulo `tesoreria`, Caja y
 // Bancos — hoy solo Caja).
@@ -187,28 +189,8 @@ export interface ReversarMovimientoCajaInput {
 /** Los tres destinos de una diferencia de arqueo. */
 export type ConceptoArqueo = "SOBRANTE" | "FALTANTE_COBRABLE" | "FALTANTE_ASUMIDO";
 
-export interface CuentaDelConcepto {
-  id: string;
-  codigo: string;
-  nombre: string;
-}
-
-export interface ConceptoConfigurado {
-  concepto: ConceptoArqueo;
-  etiqueta: string;
-  /** La cuenta del decreto que el sistema propone: 429553, 136530 o 531595. */
-  codigoPorDefecto: string;
-  /** La que se usa hoy. `null` si hay que elegir entre varios auxiliares. */
-  cuenta: CuentaDelConcepto | null;
-  /** Los auxiliares de la cuenta por defecto, o la cuenta misma si no tiene. */
-  opciones: CuentaDelConcepto[];
-}
-
-export interface CajaConfiguracion {
-  conceptos: ConceptoConfigurado[];
-  /** Los tres conceptos tienen cuenta: cualquier arqueo puede cerrar. */
-  completa: boolean;
-}
+/** Las cuentas automáticas de caja. Se muestran en Plan de cuentas → Cuentas automáticas. */
+export type CajaConfiguracion = ConfiguracionCuentas<ConceptoArqueo>;
 
 /** Lo que dejó hecho `preparar`. */
 export interface ResultadoPreparar {

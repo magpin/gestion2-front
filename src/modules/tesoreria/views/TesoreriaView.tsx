@@ -12,7 +12,6 @@ import {
   Landmark,
   ListFilter,
   Loader2,
-  Settings2,
 } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
@@ -44,7 +43,6 @@ import { ArqueoSeccion } from "./ArqueoSeccion";
 import { CajasSeccion } from "./CajasSeccion";
 import { ConciliacionSeccion } from "./ConciliacionSeccion";
 import { CorteBancoSeccion } from "./CorteBancoSeccion";
-import { ConfiguracionSeccion } from "./ConfiguracionSeccion";
 import { CuentasBancariasSeccion } from "./CuentasBancariasSeccion";
 import { ExtractosSeccion } from "./ExtractosSeccion";
 import { LibroBancoSeccion } from "./LibroBancoSeccion";
@@ -52,7 +50,7 @@ import { LibroCajaSeccion } from "./LibroCajaSeccion";
 import { ReglasExtractoSeccion } from "./ReglasExtractoSeccion";
 
 type Grupo = "Caja" | "Bancos";
-type SeccionCaja = "Cajas" | "Libro" | "Arqueo" | "Configuración";
+type SeccionCaja = "Cajas" | "Libro" | "Arqueo";
 type SeccionBanco =
   | "Cuentas"
   | "Libro"
@@ -65,7 +63,6 @@ const SECCIONES_CAJA: Array<[SeccionCaja, typeof Landmark]> = [
   ["Cajas", Landmark],
   ["Libro", History],
   ["Arqueo", ClipboardCheck],
-  ["Configuración", Settings2],
 ];
 
 const SECCIONES_BANCO: Array<[SeccionBanco, typeof Landmark]> = [
@@ -254,7 +251,6 @@ export function TesoreriaView() {
           {seccionCaja === "Cajas" && <CajasSeccion />}
           {seccionCaja === "Libro" && <LibroCajaSeccion />}
           {seccionCaja === "Arqueo" && <ArqueoSeccion />}
-          {seccionCaja === "Configuración" && <ConfiguracionSeccion />}
         </>
       )}
       {grupo === "Bancos" && (

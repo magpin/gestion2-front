@@ -177,7 +177,7 @@ export function ArqueoSeccion() {
           titulo="Falta configurar una cuenta de arqueo"
           accion={
             <span className="text-sm font-semibold">
-              Tesorería → Configuración
+              Plan de cuentas → Cuentas automáticas
             </span>
           }
         >

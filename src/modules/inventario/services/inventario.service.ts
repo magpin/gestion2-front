@@ -4,7 +4,9 @@ import type {
   CrearProductoInput,
   EditarProductoInput,
   PaginaFaltantes,
+  ConceptoInventario,
   InventarioConfiguracion,
+  TratamientoFaltante,
   PaginaMovimientos,
   PaginaPrecios,
   PaginaProductos,
@@ -164,26 +166,35 @@ export const kardexApi = {
       .post(`/productos/${productoId}/movimientos/entrada-ajuste`, datos)
       .then((r) => r.data),
 
-  /** Sin `costoUnitario`: una salida se valora al promedio vigente. */
-  salidaAjuste: (productoId: string, datos: Omit<RegistrarMovimientoInput, "costoUnitario">) =>
+  /**
+   * Sin `costoUnitario`: una salida se valora al promedio vigente. Con
+   * tratamiento: el faltante lo asume la empresa o lo paga alguien.
+   */
+  salidaAjuste: (
+    productoId: string,
+    datos: Omit<RegistrarMovimientoInput, "costoUnitario"> & {
+      tratamientoFaltante: TratamientoFaltante;
+      responsableTerceroId?: string;
+    },
+  ) =>
     api
       .post(`/productos/${productoId}/movimientos/salida-ajuste`, datos)
       .then((r) => r.data),
 };
 
-/** La cuenta contable contra la que se asientan los ajustes de inventario. */
+/** Las cuentas automáticas de inventario. */
 export const configuracionApi = {
   obtener: () => api.get<InventarioConfiguracion>("/inventario/configuracion").then((r) => r.data),
 
-  fijarCuentaAjuste: (cuentaAjusteId: string) =>
+  fijar: (concepto: ConceptoInventario, cuentaId: string) =>
     api
-      .put<InventarioConfiguracion>("/inventario/configuracion", { cuentaAjusteId })
+      .put<InventarioConfiguracion>(`/inventario/configuracion/${concepto}`, { cuentaId })
       .then((r) => r.data),
 
-  /** Vender sin existencia: solo DIRECTOR, ver el controlador del backend. */
-  fijarExistenciaNegativa: (permite: boolean) =>
+  /** Crea las cuentas que falten y las asigna. Idempotente. */
+  preparar: () =>
     api
-      .put<InventarioConfiguracion>("/inventario/configuracion/existencia-negativa", { permite })
+      .post<{ cuentasCreadas: string[] }>("/inventario/configuracion/preparar")
       .then((r) => r.data),
 };
 
