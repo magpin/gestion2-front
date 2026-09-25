@@ -6,9 +6,18 @@ import { tiempoTranscurrido } from "../lib/lecturaEnVivo";
 import type { Documento } from "../types/asistente.types";
 import { NOMBRE_DOCUMENTO, TITULO_DOCUMENTO } from "../types/asistente.types";
 import styles from "../asistente.module.css";
-import { Maria } from "./Maria";
+import type { EstadoMaria } from "./Maria";
 import { BotonTarjeta } from "./Piezas";
 import { comoTexto } from "./Tarjetas";
+
+/**
+ * La cara del turno que lleva esta burbuja: en reposo mientras espera en la
+ * cola, leyendo —las membranas abiertas— en cuanto empieza. La misma cuenta
+ * que hace la burbuja, para que la cara y la tarjeta no se contradigan.
+ */
+export function caraDeLectura(documento: Documento, lectura?: LecturaEnVivo): EstadoMaria {
+  return (lectura?.etapa ?? documento.estado) === "EN_COLA" ? "reposo" : "leyendo";
+}
 
 /** Los renglones del documento en miniatura. Es un dibujo: no son del archivo. */
 const RENGLONES = [60, 40, 90, 85, 70, 88, 50, 30, 75];
@@ -44,7 +53,6 @@ export function BurbujaLectura({
   lectura,
   enVivo,
   ahora,
-  progreso,
   deteniendo,
   alDetener,
 }: {
@@ -55,8 +63,6 @@ export function BurbujaLectura({
   enVivo: boolean;
   /** El reloj de la pantalla, en milisegundos. Solo para el tiempo transcurrido. */
   ahora: number;
-  /** Cuánto lleva la tanda, si son varios documentos. */
-  progreso?: number;
   deteniendo: boolean;
   alDetener: (id: string) => void;
 }) {
@@ -79,18 +85,11 @@ export function BurbujaLectura({
         className="relative flex flex-col gap-4 rounded-[calc(1.05rem-1px)] bg-card px-[18px] py-4"
       >
         <div className="flex items-center justify-between gap-4">
-          <span className="flex min-w-0 items-center gap-3.5">
-            {/* Acá había un ecualizador de cinco barras: decía «algo está
-                pasando» sin decir quién ni qué. María leyendo dice las dos
-                cosas, y es el único sitio del chat con espacio para su aura:
-                intensidad alta, que es lo que significa leer un documento. */}
-            <Maria
-              estado={enCola ? "reposo" : "leyendo"}
-              tamano={48}
-              progreso={progreso}
-              className="ml-1"
-            />
-            <span className={cn(styles.pulso, "truncate text-[15px] font-medium")}>{rotulo}</span>
+          {/* Sin cara adentro: la de María es la del turno, a la izquierda de
+              esta tarjeta, y es esa la que se agita mientras lee —ver
+              `caraDeLectura`—. Dos caras para lo mismo eran demasiadas. */}
+          <span className={cn(styles.pulso, "min-w-0 truncate text-[15px] font-medium")}>
+            {rotulo}
           </span>
 
           <span className="flex shrink-0 items-center gap-2.5">

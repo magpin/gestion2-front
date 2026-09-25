@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cn, formatCOP, formatFecha } from "@/lib/utils";
 import styles from "../asistente.module.css";
 import type { ArchivoDelLote, Lote, SituacionArchivo } from "../types/lote.types";
+import type { EstadoMaria } from "./Maria";
 import { Turno } from "./Mensajes";
 import { BotonTarjeta, ChipArchivo } from "./Piezas";
 
@@ -60,6 +61,7 @@ export function TurnosDelLote({
           texto: enMarcha ? undefined : resumen(lote),
         }}
         pensando={enMarcha}
+        cara={caraDelLote(lote)}
         tarjeta={
           enMarcha ? (
             <Procesando lote={lote} deteniendo={deteniendo} alDetener={alDetener} />
@@ -70,6 +72,18 @@ export function TurnosDelLote({
       />
     </div>
   );
+}
+
+/**
+ * La cara del turno del lote. Mientras lee, con las membranas abiertas. Al
+ * terminar, «no pude» si algún archivo falló —eso no cambia después—; si no,
+ * en reposo. Lo apartado no pone la cara en espera acá: se resuelve y este
+ * turno queda en el historial, y la espera la cuenta la cabecera, que sí sabe
+ * lo que falta hoy.
+ */
+export function caraDelLote(lote: Lote): EstadoMaria | undefined {
+  if (lote.terminadoEn === null) return "leyendo";
+  return lote.archivos.some((a) => a.situacion === "FALLO") ? "noPude" : undefined;
 }
 
 /** Lo que dice María cuando termina. Sin «asenté»: nada se asentó. */

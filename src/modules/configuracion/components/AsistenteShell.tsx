@@ -248,9 +248,9 @@ function BarraSuperior({ indice, total }: { indice: number; total: number }) {
         <span className="hidden sm:inline">Modo manual</span>
         {modoIa === true && (
           // Sin `?volver=`: lo llevaba y nadie lo leía nunca del otro lado. Un
-          // parámetro que no hace nada promete un regreso que no existe. Del
-          // modo IA se vuelve por «Pasar a manual», que está en su pantalla.
-          // Pasar a IA queda elegido: desde ahí se termina en IA.
+          // parámetro que no hace nada promete un regreso que no existe.
+          // Pasar a IA queda elegido: desde ahí se termina en IA —el backend
+          // no deja volver a manual hasta terminar—.
           <button
             type="button"
             onClick={() => {

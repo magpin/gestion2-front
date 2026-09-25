@@ -125,9 +125,16 @@ export function BuscadorGlobal({ abierto, alCerrar }: { abierto: boolean; alCerr
             className="h-14 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
           />
           {isFetching && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
-          <kbd className="rounded border border-border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+          {/* Se puede tocar: el clic afuera ya no cierra, y en el celular no
+              hay tecla Esc. */}
+          <button
+            type="button"
+            onClick={cerrar}
+            aria-label="Cerrar la búsqueda"
+            className="rounded border border-border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
             Esc
-          </kbd>
+          </button>
         </div>
 
         <div className="max-h-[60dvh] overflow-y-auto p-2" role="listbox" aria-label="Resultados">

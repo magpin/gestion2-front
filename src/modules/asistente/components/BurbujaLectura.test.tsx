@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { BurbujaLectura } from "./BurbujaLectura";
+import { BurbujaLectura, caraDeLectura } from "./BurbujaLectura";
 import type { LecturaEnVivo } from "../lib/lecturaEnVivo";
 import type { Documento } from "../types/asistente.types";
 
@@ -90,5 +90,19 @@ describe("BurbujaLectura", () => {
     const { alDetener } = mostrar();
     await userEvent.click(screen.getByRole("button", { name: "Detener" }));
     expect(alDetener).toHaveBeenCalledWith("d-1");
+  });
+});
+
+describe("caraDeLectura — la cara del turno de la burbuja", () => {
+  it("en reposo mientras espera en la cola", () => {
+    expect(caraDeLectura({ ...documento, estado: "EN_COLA" })).toBe("reposo");
+  });
+
+  it("leyendo en cuanto empieza", () => {
+    expect(caraDeLectura(documento)).toBe("leyendo");
+  });
+
+  it("manda lo que llegó por el flujo sobre lo que dice la base", () => {
+    expect(caraDeLectura({ ...documento, estado: "EN_COLA" }, lectura)).toBe("leyendo");
   });
 });

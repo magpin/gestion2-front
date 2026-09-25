@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type { ArchivoDelLote, Lote } from "../types/lote.types";
-import { resumen, TurnosDelLote } from "./TarjetaLote";
+import { caraDelLote, resumen, TurnosDelLote } from "./TarjetaLote";
 
 const archivo = (cambios: Partial<ArchivoDelLote>): ArchivoDelLote => ({
   id: cambios.nombre ?? "a",
@@ -108,5 +108,21 @@ describe("resumen", () => {
     expect(resumen(lote({ detenido: true, hechos: 2 }))).toBe(
       "Paré, como pediste. Alcancé a mirar 2 de 3.",
     );
+  });
+});
+
+describe("caraDelLote — la cara del turno del lote", () => {
+  it("leyendo mientras el lote está en marcha", () => {
+    expect(caraDelLote(lote({ terminadoEn: null }))).toBe("leyendo");
+  });
+
+  it("«no pude» si algún archivo falló", () => {
+    expect(caraDelLote(lote({ archivos: [archivo({}), archivo({ id: "f", situacion: "FALLO" })] }))).toBe(
+      "noPude",
+    );
+  });
+
+  it("la de siempre al terminar sin fallos, aunque haya algo apartado", () => {
+    expect(caraDelLote(lote({}))).toBeUndefined();
   });
 });

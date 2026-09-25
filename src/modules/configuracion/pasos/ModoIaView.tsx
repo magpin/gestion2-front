@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuthStore } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
-import { BurbujaLectura } from "@/modules/asistente/components/BurbujaLectura";
+import { BurbujaLectura, caraDeLectura } from "@/modules/asistente/components/BurbujaLectura";
 import { Turno } from "@/modules/asistente/components/Mensajes";
 import { TarjetaFalla } from "@/modules/asistente/components/Tarjetas";
 import {
@@ -238,6 +238,7 @@ export function ModoIaView() {
           key={tipo}
           turno={{ id: `leyendo-${tipo}`, autor: "ASISTENTE" }}
           pensando
+          cara={caraDeLectura(documento, lecturas[documento.id])}
           tarjeta={
             <BurbujaLectura
               documento={documento}
