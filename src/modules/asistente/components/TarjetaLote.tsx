@@ -244,6 +244,8 @@ function FilaResultado({
     (m) => m.clave === "DUPLICADO" || m.clave === "REPETIDO_EN_LOTE",
   );
   const esPedido = a.tipo === "PEDIDO_VENTA";
+  // Facturas del sistema anterior: se eligen y se cargan en Ventas (fase 11).
+  const esVentaAnterior = a.tipo === "VENTA_HISTORICA";
   return (
     <li className="flex flex-col gap-2 px-4 py-3">
       <div className="flex items-start gap-3">
@@ -287,12 +289,12 @@ function FilaResultado({
           {duplicado && (
             <BotonTarjeta onClick={() => alDescartar(a)}>Es la misma, descartala</BotonTarjeta>
           )}
-          {esPedido ? (
+          {esPedido || esVentaAnterior ? (
             <Link
-              href="/dashboard/ventas?seccion=pedidos"
+              href={`/dashboard/ventas?seccion=${esPedido ? "pedidos" : "anteriores"}`}
               className="inline-flex h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap"
             >
-              Facturarlo en Ventas
+              {esPedido ? "Facturarlo en Ventas" : "Revisarlas y cargarlas"}
             </Link>
           ) : (
             <BotonTarjeta principal={a.situacion === "LISTA"} onClick={() => alRevisar(a)}>

@@ -2,6 +2,12 @@ import { api } from "@/core/api/api";
 
 import type { Lote } from "../types/lote.types";
 
+/** Dónde vive cada lectura que se puede descartar desde el lote. */
+const RUTA_DE: Record<string, string> = {
+  PEDIDO_VENTA: "pedidos-leidos",
+  VENTA_HISTORICA: "ventas-historicas-leidas",
+};
+
 export const lotesApi = {
   /** Los archivos ya subidos al bucket, en el orden en que se soltaron. */
   crear: (archivos: Array<{ clave: string; nombre: string }>) =>
@@ -16,7 +22,7 @@ export const lotesApi = {
   descartar: (tipo: string, documentoId: string, motivo: string) =>
     api
       .post(
-        `/${tipo === "PEDIDO_VENTA" ? "pedidos-leidos" : "facturas-leidas"}/${documentoId}/descartar`,
+        `/${RUTA_DE[tipo] ?? "facturas-leidas"}/${documentoId}/descartar`,
         { motivo },
       )
       .then((r) => r.data),
