@@ -132,11 +132,9 @@ export function AsistenteShell({
   const completo = paso?.estado === "LISTO";
 
   const avanzar = () =>
-    // Sin pasos por delante: si quedó completa, al Inicio; si no, la lista
-    // manda al que falta.
-    router.push(
-      siguiente ? RUTA_PASO[siguiente.clave] : data.completa ? "/dashboard" : "/configuracion/lista",
-    );
+    // Sin pasos por delante, a la lista: si quedó completa es la bienvenida de
+    // María —o el tablero, si ya se vio—; si no, manda al paso que falta.
+    router.push(siguiente ? RUTA_PASO[siguiente.clave] : "/configuracion/lista");
 
   // «Omitir» cuando el paso no está completo y «Continuar» cuando sí. Es el
   // mismo botón: ofrecer los dos obligaría a elegir entre dos cosas que llevan

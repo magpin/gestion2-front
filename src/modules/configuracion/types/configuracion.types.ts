@@ -41,4 +41,6 @@ export interface EstadoConfiguracion {
   siguiente: ClavePaso | null;
   /** Con qué modo se configura (0068). IA se mantiene hasta terminar. */
   modo: "IA" | "MANUAL" | null;
+  /** Si ya se mostró la bienvenida de María al terminar (0072). Una vez por empresa. */
+  bienvenidaVista: boolean;
 }

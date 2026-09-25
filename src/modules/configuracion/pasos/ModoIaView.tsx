@@ -129,12 +129,12 @@ export function ModoIaView() {
     ),
   );
 
-  // Terminado todo, al Inicio.
+  // Terminado todo, a la bienvenida de María. Si ya se vio, ella misma manda
+  // al tablero.
   const completa = estado?.completa === true;
   useEffect(() => {
     if (!completa) return;
-    aviso.exito("Tu empresa quedó lista", "Los cinco pasos están completos.");
-    router.replace("/dashboard");
+    router.replace("/configuracion/lista");
   }, [completa, router]);
 
   const omitir = (tipo: TipoDocumento) => {

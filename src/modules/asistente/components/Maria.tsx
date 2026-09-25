@@ -150,6 +150,7 @@ export function Maria({
   llama,
   aprueba,
   mirada,
+  recorre = false,
   className,
 }: {
   estado: EstadoMaria;
@@ -198,6 +199,12 @@ export function Maria({
    * al campo, no al horizonte.
    */
   mirada?: "izquierda" | "centro" | "derecha";
+  /**
+   * Mira alrededor, despacio: el barrido de «leyendo» a 8 s. Para una cara
+   * quieta que no está haciendo nada pero tampoco está dormida —la bienvenida—.
+   * Si el estado ya trae su propio gesto, manda el del estado.
+   */
+  recorre?: boolean;
   className?: string;
 }) {
   const conf = ESTADOS[estado];
@@ -278,6 +285,7 @@ export function Maria({
             conf.gesto === "barre" && styles.barre,
             conf.gesto === "arriba" && styles.arriba,
             conf.gesto === "atiende" && styles.atiende,
+            recorre && conf.gesto === undefined && styles.recorre,
           )}
           style={{
             gap: px(conf.ojos === "pildora" ? P.ojoGap : P.arcoGap),

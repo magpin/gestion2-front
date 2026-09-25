@@ -1,0 +1,137 @@
+/* La bienvenida de María al terminar la configuración.
+ *
+ * La secuencia sale de `bienvenida-maria/bienvenida/LEEME.md` §3: 3,1 s, todo
+ * en `transform` y `opacity`. Lo que es de María —el parpadeo, las ondas que
+ * giran, la mirada— lo pone su componente; acá va lo que es de esta pantalla:
+ * cómo entra, las dos ondas que se expanden y el fondo.
+ */
+
+:root {
+  --ease-bienvenida: cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+@keyframes velo {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sube {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* María aparece: crece un poco de más y se asienta. */
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) translateY(6px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.12) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes onda {
+  0% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+/* El chulito de cada paso. */
+@keyframes marca {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Los renglones del fondo: un libro contable, apenas. */
+.renglones {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgb(from var(--border) r g b / 45%) 0 1px,
+    transparent 1px 36px
+  );
+  animation: velo 1100ms ease-out both;
+}
+
+@media (min-width: 640px) {
+  .renglones {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgb(from var(--border) r g b / 45%) 0 1px,
+      transparent 1px 40px
+    );
+  }
+}
+
+/* El halo naranja detrás de María. Muy tenue: acompaña, no ilumina. */
+.halo {
+  background: radial-gradient(
+    closest-side,
+    rgb(from var(--brand) r g b / 10%),
+    rgb(from var(--brand) r g b / 0%)
+  );
+}
+
+.sube {
+  animation: sube 600ms var(--ease-bienvenida) both;
+}
+
+.pop {
+  animation: pop 900ms ease-out 260ms both;
+}
+
+/* Dos ondas y paran: una bienvenida que late para siempre cansa. */
+.onda {
+  animation: onda 2600ms var(--ease-bienvenida) both;
+  animation-iteration-count: 2;
+}
+
+.marca {
+  animation: marca 380ms var(--ease-bienvenida) both;
+}
+
+/* Con movimiento reducido, la vista entera y quieta: armada, no a medias. */
+@media (prefers-reduced-motion: reduce) {
+  .renglones,
+  .sube,
+  .pop,
+  .marca {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .onda {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

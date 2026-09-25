@@ -266,6 +266,12 @@
   animation: mariaBarre 3.4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
 }
 
+/* El mismo barrido, a 8 s: mira alrededor sin estar leyendo nada. A 3,4 s en
+   una pantalla quieta se ve inquieta. Lo pide la bienvenida. */
+.recorre {
+  animation: mariaBarre 8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
 .arriba {
   animation: mariaArriba 2.6s ease-in-out infinite;
 }
@@ -321,6 +327,7 @@
 @media (prefers-reduced-motion: reduce) {
   .ojo,
   .barre,
+  .recorre,
   .arriba,
   .atiende,
   .late,
