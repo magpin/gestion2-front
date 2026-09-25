@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { admiteDecimales, esEntero } from "@/lib/numeros";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { SelectorProveedor } from "./SelectorProveedor";
@@ -89,6 +90,17 @@ export function FormularioCompra({
       l.cantidad.trim() === "" || Number(l.cantidad) <= 0 ? i + 1 : null,
     )
     .filter((n): n is number => n !== null);
+  // Una cantidad con decimales en un producto que va por unidades: pasa si se
+  // cambió un producto en kilos por uno en unidades sin corregir la cantidad.
+  const sinEntero = lineas
+    .map((l, i) =>
+      l.producto !== null &&
+      !admiteDecimales(l.producto.unidad_medida) &&
+      !esEntero(l.cantidad)
+        ? i + 1
+        : null,
+    )
+    .filter((n): n is number => n !== null);
   const sinCosto = lineas
     .map((l, i) =>
       l.costoUnitario.trim() === "" || Number(l.costoUnitario) < 0
@@ -117,6 +129,8 @@ export function FormularioCompra({
       return `Falta decir qué se compró en ${nombrar(incompletas)}: el producto, o la cuenta y el detalle del gasto.`;
     if (sinCantidad.length > 0)
       return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;
+    if (sinEntero.length > 0)
+      return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
     if (sinCosto.length > 0)
       return `El costo unitario tiene que ser válido en ${nombrar(sinCosto)}.`;
     if (retencionesIncompletas)

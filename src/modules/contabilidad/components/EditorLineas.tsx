@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
+import { mostrarNumero } from "@/lib/numeros";
 import {
   Select,
   SelectContent,
@@ -209,12 +211,10 @@ export function EditorLineas({
                     )}
 
                     {l.cuenta?.exige_base_gravable && (
-                      <Input
-                        type="number"
-                        inputMode="decimal"
+                      <CampoPesos
                         value={l.baseGravable}
-                        onChange={(e) =>
-                          actualizar(l.clave, { baseGravable: e.target.value })
+                        onChange={(baseGravable) =>
+                          actualizar(l.clave, { baseGravable })
                         }
                         placeholder="Base gravable (obligatoria)"
                         className="mt-2 h-11 rounded-xl px-4 text-right font-mono"
@@ -236,17 +236,13 @@ export function EditorLineas({
                   </td>
 
                   <td className="px-4 py-3">
-                    <Input
-                      type="number"
-                      inputMode="decimal"
+                    <CampoPesos
                       value={l.debito}
-                      onChange={(e) =>
-                        escribirMonto(l.clave, "debito", e.target.value)
-                      }
+                      onChange={(v) => escribirMonto(l.clave, "debito", v)}
                       onKeyDown={(e) => alTeclear(e, ultima)}
                       placeholder={
                         proponer && sugerida.lado === "DEBITO"
-                          ? String(sugerida.valor)
+                          ? mostrarNumero(String(sugerida.valor))
                           : "0"
                       }
                       className="h-11 w-36 rounded-xl px-4 text-right font-mono"
@@ -255,17 +251,13 @@ export function EditorLineas({
                   </td>
 
                   <td className="px-4 py-3">
-                    <Input
-                      type="number"
-                      inputMode="decimal"
+                    <CampoPesos
                       value={l.credito}
-                      onChange={(e) =>
-                        escribirMonto(l.clave, "credito", e.target.value)
-                      }
+                      onChange={(v) => escribirMonto(l.clave, "credito", v)}
                       onKeyDown={(e) => alTeclear(e, ultima)}
                       placeholder={
                         proponer && sugerida.lado === "CREDITO"
-                          ? String(sugerida.valor)
+                          ? mostrarNumero(String(sugerida.valor))
                           : "0"
                       }
                       className="h-11 w-36 rounded-xl px-4 text-right font-mono"

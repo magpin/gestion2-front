@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 
+import { CampoCantidad, CampoPesos } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -175,27 +176,20 @@ export function EditorLineasCompra({
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <Input
-                    type="number"
-                    min="0.000001"
-                    step="any"
+                  <CampoCantidad
+                    unidad={l.producto?.unidad_medida}
                     value={l.cantidad}
-                    onChange={(e) =>
-                      actualizar(l.clave, { cantidad: e.target.value })
-                    }
+                    onChange={(cantidad) => actualizar(l.clave, { cantidad })}
                     placeholder="0"
                     className="h-11 w-28 rounded-xl px-4 text-right font-mono"
                     aria-label={`Cantidad de la línea ${i + 1}`}
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <Input
-                    type="number"
-                    min="0"
-                    step="any"
+                  <CampoPesos
                     value={l.costoUnitario}
-                    onChange={(e) =>
-                      actualizar(l.clave, { costoUnitario: e.target.value })
+                    onChange={(costoUnitario) =>
+                      actualizar(l.clave, { costoUnitario })
                     }
                     placeholder="0"
                     className="h-11 w-32 rounded-xl px-4 text-right font-mono"

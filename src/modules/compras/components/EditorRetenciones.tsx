@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import {
   Select,
   SelectContent,
@@ -164,14 +164,9 @@ export function EditorRetenciones({
                           </Select>
                         </td>
                         <td className="px-4 py-3">
-                          <Input
-                            type="number"
-                            min="0.01"
-                            step="any"
+                          <CampoPesos
                             value={r.base}
-                            onChange={(e) =>
-                              actualizar(r.clave, { base: e.target.value })
-                            }
+                            onChange={(base) => actualizar(r.clave, { base })}
                             placeholder="0"
                             className="h-11 w-32 rounded-xl px-4 text-right font-mono"
                             aria-label={`Base de la retención ${i + 1}`}

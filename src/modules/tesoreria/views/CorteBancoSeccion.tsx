@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
@@ -290,12 +291,11 @@ export function CorteBancoSeccion() {
               escala="grande"
               ayuda="Opcional. Lo que dice el portal ahora; si no coincide, no se ajusta nada: lo explica la conciliación."
             >
-              <Input
+              <CampoPesos
                 id="saldo-banco"
-                type="number"
-                step="0.01"
+                negativo
                 value={saldoBanco}
-                onChange={(e) => setSaldoBanco(e.target.value)}
+                onChange={setSaldoBanco}
                 className="h-11 rounded-xl px-4 text-right font-mono"
               />
             </Campo>

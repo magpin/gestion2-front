@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
 import { z } from "zod";
@@ -11,6 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { SelectorTercero } from "@/modules/ventas/components/SelectorTercero";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
+import {
+  CampoCantidad,
+  CampoPesos,
+  comoNumero,
+  comoTexto,
+} from "@/components/shared/CampoNumero";
+import { admiteDecimales } from "@/lib/numeros";
 import { cn } from "@/lib/utils";
 import { SelectorProducto } from "./SelectorProducto";
 import type {
@@ -94,6 +101,19 @@ export function FormularioMovimiento({
       className="flex flex-col gap-5"
       onSubmit={(e) => {
         setIntento(true);
+        // Una cantidad con decimales en un producto que va por unidades: pasa
+        // si se eligió el producto después de digitarla.
+        if (
+          producto !== null &&
+          !admiteDecimales(producto.unidad_medida) &&
+          !Number.isInteger(form.getValues("cantidad"))
+        ) {
+          e.preventDefault();
+          form.setError("cantidad", {
+            message: "Este producto va en números enteros.",
+          });
+          return;
+        }
         if (faltaTratamiento || faltaResponsable) {
           e.preventDefault();
           return;
@@ -156,13 +176,19 @@ export function FormularioMovimiento({
           error={errores.cantidad?.message}
           escala="grande"
         >
-          <Input
-            id="cantidad"
-            type="number"
-            min="0.000001"
-            step="any"
-            className={CONTROL}
-            {...form.register("cantidad", { valueAsNumber: true })}
+          <Controller
+            control={form.control}
+            name="cantidad"
+            render={({ field }) => (
+              <CampoCantidad
+                id="cantidad"
+                unidad={producto?.unidad_medida}
+                className={CONTROL}
+                value={comoTexto(field.value)}
+                onChange={(v) => field.onChange(comoNumero(v))}
+                onBlur={field.onBlur}
+              />
+            )}
           />
         </Campo>
 
@@ -173,13 +199,18 @@ export function FormularioMovimiento({
             error={errores.costoUnitario?.message}
             escala="grande"
           >
-            <Input
-              id="costoUnitario"
-              type="number"
-              min="0"
-              step="any"
-              className={CONTROL}
-              {...form.register("costoUnitario", { valueAsNumber: true })}
+            <Controller
+              control={form.control}
+              name="costoUnitario"
+              render={({ field }) => (
+                <CampoPesos
+                  id="costoUnitario"
+                  className={CONTROL}
+                  value={comoTexto(field.value)}
+                  onChange={(v) => field.onChange(comoNumero(v))}
+                  onBlur={field.onBlur}
+                />
+              )}
             />
           </Campo>
         )}

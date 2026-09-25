@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -229,10 +230,10 @@ export function DialogoImportarExtracto({
                   <Input id="fechaHasta" type="date" className={CONTROL} value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} />
                 </Campo>
                 <Campo id="saldoInicial" etiqueta="Saldo inicial del banco" ayuda="El que dice el extracto al empezar el período." escala="grande">
-                  <Input id="saldoInicial" type="number" step="0.01" className={CONTROL} value={saldoInicial} onChange={(e) => setSaldoInicial(e.target.value)} />
+                  <CampoPesos id="saldoInicial" negativo className={CONTROL} value={saldoInicial} onChange={setSaldoInicial} />
                 </Campo>
                 <Campo id="saldoFinal" etiqueta="Saldo final del banco" ayuda="El que dice el extracto al cerrar el período." escala="grande">
-                  <Input id="saldoFinal" type="number" step="0.01" className={CONTROL} value={saldoFinal} onChange={(e) => setSaldoFinal(e.target.value)} />
+                  <CampoPesos id="saldoFinal" negativo className={CONTROL} value={saldoFinal} onChange={setSaldoFinal} />
                 </Campo>
               </div>
 

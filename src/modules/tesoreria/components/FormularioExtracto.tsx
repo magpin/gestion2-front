@@ -1,9 +1,14 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import {
+  CampoPesos,
+  comoNumero,
+  comoTexto,
+} from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import { Campo } from "@/modules/configuracion/components/Campo";
 
@@ -62,12 +67,19 @@ export function FormularioExtracto({
           error={errores.saldoInicialBanco?.message}
           escala="grande"
         >
-          <Input
-            id="saldoInicialBanco"
-            type="number"
-            step="0.01"
-            className={CONTROL}
-            {...form.register("saldoInicialBanco", { valueAsNumber: true })}
+          <Controller
+            control={form.control}
+            name="saldoInicialBanco"
+            render={({ field }) => (
+              <CampoPesos
+                id="saldoInicialBanco"
+                negativo
+                className={CONTROL}
+                value={comoTexto(field.value)}
+                onChange={(v) => field.onChange(comoNumero(v))}
+                onBlur={field.onBlur}
+              />
+            )}
           />
         </Campo>
 
@@ -77,12 +89,19 @@ export function FormularioExtracto({
           error={errores.saldoFinalBanco?.message}
           escala="grande"
         >
-          <Input
-            id="saldoFinalBanco"
-            type="number"
-            step="0.01"
-            className={CONTROL}
-            {...form.register("saldoFinalBanco", { valueAsNumber: true })}
+          <Controller
+            control={form.control}
+            name="saldoFinalBanco"
+            render={({ field }) => (
+              <CampoPesos
+                id="saldoFinalBanco"
+                negativo
+                className={CONTROL}
+                value={comoTexto(field.value)}
+                onChange={(v) => field.onChange(comoNumero(v))}
+                onBlur={field.onBlur}
+              />
+            )}
           />
         </Campo>
       </div>

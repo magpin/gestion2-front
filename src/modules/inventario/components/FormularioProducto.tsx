@@ -1,10 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import {
+  CampoPesos,
+  comoNumero,
+  comoTexto,
+} from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -335,13 +340,18 @@ export function FormularioProducto({
             error={errores.precioVenta?.message}
             escala="grande"
           >
-            <Input
-              id="precioVenta"
-              type="number"
-              min="0"
-              step="0.01"
-              className={CONTROL}
-              {...form.register("precioVenta", { valueAsNumber: true })}
+            <Controller
+              control={form.control}
+              name="precioVenta"
+              render={({ field }) => (
+                <CampoPesos
+                  id="precioVenta"
+                  className={CONTROL}
+                  value={comoTexto(field.value)}
+                  onChange={(v) => field.onChange(comoNumero(v))}
+                  onBlur={field.onBlur}
+                />
+              )}
             />
           </Campo>
         )}

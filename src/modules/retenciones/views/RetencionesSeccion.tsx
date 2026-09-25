@@ -6,6 +6,7 @@ import { Loader2, Percent } from "lucide-react";
 
 import { Aviso } from "@/components/shared/Aviso";
 import { Button } from "@/components/ui/button";
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -155,13 +156,10 @@ export function RetencionesSeccion() {
           escala="grande"
         >
           <div className="flex items-center gap-3">
-            <Input
+            <CampoPesos
               id="uvt"
-              type="number"
-              min="1"
-              step="0.01"
               value={valorUvt}
-              onChange={(e) => setValorUvt(e.target.value)}
+              onChange={setValorUvt}
               placeholder={
                 uvtDelAnio === null
                   ? "sin cargar"

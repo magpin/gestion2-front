@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { admiteDecimales, esEntero } from "@/lib/numeros";
 import { formatFecha, hoyEnColombia } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
@@ -112,6 +113,17 @@ export function FormularioDocumentoVenta({
       l.cantidad.trim() === "" || Number(l.cantidad) <= 0 ? i + 1 : null,
     )
     .filter((n): n is number => n !== null);
+  // Una cantidad con decimales en un producto que va por unidades: pasa si se
+  // cambió un producto en kilos por uno en unidades sin corregir la cantidad.
+  const sinEntero = lineas
+    .map((l, i) =>
+      l.producto !== null &&
+      !admiteDecimales(l.producto.unidad_medida) &&
+      !esEntero(l.cantidad)
+        ? i + 1
+        : null,
+    )
+    .filter((n): n is number => n !== null);
 
   const nombrar = (renglones: number[]) =>
     renglones.length === 1
@@ -126,6 +138,8 @@ export function FormularioDocumentoVenta({
       return `Falta el producto en ${nombrar(sinProducto)}.`;
     if (sinCantidad.length > 0)
       return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;
+    if (sinEntero.length > 0)
+      return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
     if (conFormaPago) return problemaFormaPago(formaPago);
     return null;
   };

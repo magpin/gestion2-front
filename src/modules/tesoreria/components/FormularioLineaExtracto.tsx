@@ -1,10 +1,15 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import {
+  CampoPesos,
+  comoNumero,
+  comoTexto,
+} from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -70,12 +75,17 @@ export function FormularioLineaExtracto({
 
       <label className="flex flex-col gap-1 text-xs font-medium">
         Valor
-        <Input
-          type="number"
-          min="0.01"
-          step="0.01"
-          className={CONTROL}
-          {...form.register("valor", { valueAsNumber: true })}
+        <Controller
+          control={form.control}
+          name="valor"
+          render={({ field }) => (
+            <CampoPesos
+              className={CONTROL}
+              value={comoTexto(field.value)}
+              onChange={(v) => field.onChange(comoNumero(v))}
+              onBlur={field.onBlur}
+            />
+          )}
         />
         {errores.valor && <span className="text-danger">{errores.valor.message}</span>}
       </label>

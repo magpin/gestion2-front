@@ -1,10 +1,15 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
 import { z } from "zod";
 
+import {
+  CampoPesos,
+  comoNumero,
+  comoTexto,
+} from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
@@ -96,13 +101,18 @@ export function FormularioMovimientoCaja({
         </Campo>
 
         <Campo id="valor" etiqueta="Valor *" error={errores.valor?.message} escala="grande">
-          <Input
-            id="valor"
-            type="number"
-            min="0.01"
-            step="0.01"
-            className={CONTROL}
-            {...form.register("valor", { valueAsNumber: true })}
+          <Controller
+            control={form.control}
+            name="valor"
+            render={({ field }) => (
+              <CampoPesos
+                id="valor"
+                className={CONTROL}
+                value={comoTexto(field.value)}
+                onChange={(v) => field.onChange(comoNumero(v))}
+                onBlur={field.onBlur}
+              />
+            )}
           />
         </Campo>
       </div>

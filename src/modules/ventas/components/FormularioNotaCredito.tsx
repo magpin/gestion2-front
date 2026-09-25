@@ -15,8 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { CampoCantidad } from "@/components/shared/CampoNumero";
 import { Textarea } from "@/components/ui/textarea";
+import { esEntero } from "@/lib/numeros";
 import { formatCOP, formatFecha, hoyEnColombia } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { SelectorFacturaVigente } from "./SelectorFacturaVigente";
@@ -219,16 +220,13 @@ export function FormularioNotaCredito({
                           {formatCOP(Number(l.precio_unitario))}
                         </td>
                         <td className="px-4 py-3">
-                          <Input
-                            type="number"
-                            min="0"
-                            max={l.cantidad}
-                            step="any"
+                          <CampoCantidad
+                            fraccionable={!esEntero(l.cantidad)}
                             value={cantidades[l.id] ?? ""}
-                            onChange={(e) =>
+                            onChange={(cantidad) =>
                               setCantidades((c) => ({
                                 ...c,
-                                [l.id]: e.target.value,
+                                [l.id]: cantidad,
                               }))
                             }
                             placeholder="0"

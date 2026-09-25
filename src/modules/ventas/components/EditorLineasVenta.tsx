@@ -3,8 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 
+import { CampoCantidad, CampoPesos } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { formatCOP } from "@/lib/utils";
 import { SelectorProducto } from "@/modules/inventario/components/SelectorProducto";
 import {
@@ -125,14 +125,10 @@ export function EditorLineasVenta({
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <Input
-                    type="number"
-                    min="0.000001"
-                    step="any"
+                  <CampoCantidad
+                    unidad={l.producto?.unidad_medida}
                     value={l.cantidad}
-                    onChange={(e) =>
-                      actualizar(l.clave, { cantidad: e.target.value })
-                    }
+                    onChange={(cantidad) => actualizar(l.clave, { cantidad })}
                     placeholder="0"
                     className="h-11 w-32 rounded-xl px-4 text-right font-mono"
                     aria-label={`Cantidad de la línea ${i + 1}`}
@@ -250,12 +246,9 @@ function PrecioDeLinea({
   }
   return (
     <>
-      <Input
-        type="number"
-        min="0.01"
-        step="any"
+      <CampoPesos
         value={valor}
-        onChange={(e) => onCambiar(e.target.value)}
+        onChange={onCambiar}
         placeholder="0"
         className="h-11 w-32 rounded-xl px-4 text-right font-mono"
         aria-label={etiqueta}

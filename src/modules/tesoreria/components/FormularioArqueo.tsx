@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
@@ -234,14 +235,11 @@ export function FormularioCerrarArqueo({
         </div>
       ) : (
         <Campo id="saldoContado" etiqueta="Saldo contado *" escala="grande" error={totalInvalido && total !== "" ? "No puede ser negativo" : undefined}>
-          <Input
+          <CampoPesos
             id="saldoContado"
-            type="number"
-            min="0"
-            step="0.01"
             className={CONTROL}
             value={total}
-            onChange={(e) => setTotal(e.target.value)}
+            onChange={setTotal}
           />
         </Campo>
       )}

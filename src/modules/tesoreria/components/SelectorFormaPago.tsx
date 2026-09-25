@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { cn } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { SelectorCaja } from "./SelectorCaja";
@@ -151,14 +151,9 @@ export function SelectorFormaPago({
                   />
                 )}
 
-                <Input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
+                <CampoPesos
                   value={r.valor}
-                  onChange={(e) =>
-                    cambiarRenglon(r.clave, { valor: e.target.value })
-                  }
+                  onChange={(valor) => cambiarRenglon(r.clave, { valor })}
                   placeholder="el resto"
                   className="h-11 rounded-xl px-4 text-right font-mono"
                   aria-label={`Valor del medio ${i + 1}`}
