@@ -622,6 +622,19 @@
 /* El hover vive en un elemento interno y el revelado en el de afuera. Si
    compartieran elemento, el `fill-mode: both` del revelado dejaría fijo
    `transform: none` y en Chrome el levantamiento del hover no ocurriría nunca. */
+/* Carrusel del celular (Funciones): se desliza de a una tarjeta, centrada,
+   sin barra de desplazamiento. Desde 640px vuelve a ser rejilla. */
+@media (max-width: 639px) {
+  .carrusel {
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .carrusel::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 .tarjeta {
   transition:
     transform 250ms ease,

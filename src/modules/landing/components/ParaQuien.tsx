@@ -14,11 +14,11 @@ const PUBLICOS = [
     titulo: "Contadores ",
     tituloCursiva: "independientes",
     texto:
-      "Deja de digitar facturas y dedica tu tiempo al análisis y la asesoría. Atiende más clientes con el mismo esfuerzo.",
+      "Dejá de digitar facturas y dedicá tu tiempo al análisis y la asesoría. Atendé más clientes con el mismo esfuerzo.",
     puntos: [
       "Varias empresas desde una sola cuenta",
-      "Tú apruebas; la IA no contabiliza sin tu criterio",
-      "Cada asiento con su soporte y su explicación",
+      "Vos aprobás; María no contabiliza sin tu criterio",
+      "Lo que propone María, con su soporte y su trazabilidad",
     ],
     oscura: false,
   },
@@ -27,11 +27,11 @@ const PUBLICOS = [
     titulo: "Pymes ",
     tituloCursiva: "y sus dueños",
     texto:
-      "Ten tu contabilidad al día sin saber de débitos y créditos. Sube tus facturas y el sistema se encarga del resto.",
+      "Tené tu contabilidad al día sin pelear con la digitación. Subile tus facturas a María: ella las lee y vos o tu contador las aprueban.",
     puntos: [
-      "Sin conocimientos contables",
+      "Sin digitar una sola factura",
       "Libros listos para tu contador cuando los necesite",
-      "Sabes cómo va tu negocio sin esperar al cierre",
+      "Sabés cómo va tu negocio sin esperar al cierre",
     ],
     oscura: true,
   },
@@ -39,10 +39,13 @@ const PUBLICOS = [
 
 export function ParaQuien() {
   return (
-    <section id="para-quien" className={`${styles.ancla} py-24 lg:py-32`}>
+    <section
+      id="para-quien"
+      className={`${styles.ancla} border-t border-border bg-card py-18 sm:py-24 lg:py-32`}
+    >
       <div className="mx-auto flex max-w-[1152px] flex-col gap-10 px-6 lg:gap-16">
         <div className={`${styles.rv} flex max-w-[820px] flex-col gap-4.5`}>
-          <Rotulo>04 — Para quién</Rotulo>
+          <Rotulo>06 — Para quién</Rotulo>
           <TituloSeccion className="font-serif text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.02] tracking-[-1.4px]">
             Para quien lleva los libros,{" "}
             <span className="italic">y para quien los necesita.</span>
