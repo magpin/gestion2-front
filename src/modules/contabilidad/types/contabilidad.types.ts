@@ -22,6 +22,25 @@ export interface Periodo {
   estado: EstadoPeriodo;
   cerrado_en: string | null;
   cerrado_por: string | null;
+  /** Lo cerró el sistema al terminar el mes. */
+  cierre_automatico?: boolean;
+}
+
+export type Agrupacion = "MENSUAL" | "TRIMESTRAL" | "SEMESTRAL" | "ANUAL";
+
+/** Un mes, trimestre, semestre o año del calendario contable, con sus cifras. */
+export interface ResumenPeriodo {
+  /** 2026-09, 2026-T3, 2026-S2 o 2026. */
+  grupo: string;
+  /** ABIERTO si alguno de sus meses lo está: es el que está en curso. */
+  estado: EstadoPeriodo;
+  desde: { anio: number; mes: number };
+  hasta: { anio: number; mes: number };
+  asientos: number;
+  ingresos: number;
+  costosGastos: number;
+  resultado: number;
+  meses: Array<Periodo & { asientos: number }>;
 }
 
 export interface ComprobanteTipo {

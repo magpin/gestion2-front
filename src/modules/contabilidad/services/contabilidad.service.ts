@@ -10,7 +10,9 @@ import type {
   Mayor,
   MovimientoAuxiliar,
   PaginaAsientos,
+  Agrupacion,
   Periodo,
+  ResumenPeriodo,
   Trazabilidad,
 } from "../types/contabilidad.types";
 
@@ -26,17 +28,14 @@ export const periodosApi = {
       .get<Periodo[]>("/periodos", { params: anio ? { anio } : undefined })
       .then((r) => r.data),
 
-  /** El período de hoy, o `null` si nadie lo abrió. */
+  /** El período en curso. Siempre existe: el calendario se pone al día solo. */
   actual: () => api.get<Periodo | null>("/periodos/actual").then((r) => r.data),
 
-  abrir: (anio: number, mes: number) =>
-    api.post<Periodo>("/periodos", { anio, mes }).then((r) => r.data),
-
-  cerrar: (id: string) =>
-    api.post(`/periodos/${id}/cerrar`).then(() => undefined),
-
-  reabrir: (id: string) =>
-    api.post(`/periodos/${id}/reabrir`).then(() => undefined),
+  /** El calendario por mes, trimestre, semestre o año, con sus cifras. */
+  resumen: (agrupacion: Agrupacion, anio?: number) =>
+    api
+      .get<ResumenPeriodo[]>("/periodos/resumen", { params: { agrupacion, anio } })
+      .then((r) => r.data),
 };
 
 /** Las series de numeración: CD-000145, CI-000032. Una por tipo. */

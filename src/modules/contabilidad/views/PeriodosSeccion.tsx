@@ -1,26 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CalendarClock, ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { aviso } from "@/lib/avisos";
+import { cn, formatCOP } from "@/lib/utils";
 import { periodosApi } from "../services/contabilidad.service";
-import type { Periodo } from "../types/contabilidad.types";
-
-const CLAVE = ["periodos"];
+import type { Agrupacion, ResumenPeriodo } from "../types/contabilidad.types";
 
 const MESES = [
   "Enero",
@@ -37,237 +24,183 @@ const MESES = [
   "Diciembre",
 ];
 
-type Accion = "abrir" | "cerrar" | "reabrir";
+const AGRUPACIONES: Array<[Agrupacion, string]> = [
+  ["MENSUAL", "Mensual"],
+  ["TRIMESTRAL", "Trimestral"],
+  ["SEMESTRAL", "Semestral"],
+  ["ANUAL", "Anual"],
+];
 
-/** Qué dice cada confirmación. Reabrir es la que más explicación necesita. */
-const TEXTO: Record<Accion, { titulo: string; cuerpo: string; boton: string }> =
-  {
-    abrir: {
-      titulo: "Abrir el período",
-      cuerpo:
-        "Queda listo para recibir asientos con fecha de ese mes. No se puede saltar meses: el saldo inicial de uno sale del saldo final del anterior.",
-      boton: "Abrir",
-    },
-    cerrar: {
-      titulo: "Cerrar el período",
-      cuerpo:
-        "Se congelan los saldos de todas las cuentas y el mes deja de aceptar asientos. Es una promesa: los estados financieros que salgan de acá no van a cambiar. Exige que el mes anterior ya esté cerrado.",
-      boton: "Cerrar",
-    },
-    reabrir: {
-      titulo: "Reabrir el período",
-      cuerpo:
-        "Se borran los saldos congelados y el mes vuelve a aceptar asientos. Los asientos no se tocan. Solo se puede si ningún mes posterior está cerrado, y solo lo puede hacer el director.",
-      boton: "Reabrir",
-    },
-  };
+const ORDINAL = ["1er", "2º", "3er", "4º"];
+
+/** «Septiembre 2026», «3er trimestre 2026», «2º semestre 2026», «2026». */
+function nombreDelGrupo(g: ResumenPeriodo, agrupacion: Agrupacion): string {
+  const { anio, mes } = g.desde;
+  switch (agrupacion) {
+    case "MENSUAL":
+      return `${MESES[mes - 1]} ${anio}`;
+    case "TRIMESTRAL":
+      return `${ORDINAL[Math.ceil(mes / 3) - 1]} trimestre ${anio}`;
+    case "SEMESTRAL":
+      return `${mes <= 6 ? "1er" : "2º"} semestre ${anio}`;
+    case "ANUAL":
+      return String(anio);
+  }
+}
+
+/** Cuántos días le quedan al mes en curso, en hora de Colombia. */
+function diasParaCierre(): { dias: number; ultimo: string } {
+  const hoy = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const [a, m, d] = hoy.split("-").map(Number);
+  const ultimoDia = new Date(a, m, 0).getDate();
+  return { dias: ultimoDia - d, ultimo: `${ultimoDia} de ${MESES[m - 1].toLowerCase()}` };
+}
 
 /**
- * El calendario contable del año, mes por mes.
+ * El calendario contable. Ya no se opera: se mira.
  *
- * Doce tarjetas y no una lista: un año se mira de un vistazo, y lo que importa
- * —cuál está abierto, cuál falta cerrar— se ve por el color, no leyendo.
+ * El mes en curso está siempre abierto y el último día se cierra solo; lo que
+ * llegue con fecha de un mes cerrado se registra en el mes abierto. Por eso
+ * esta pantalla no tiene botones de abrir ni cerrar: muestra en qué va cada
+ * período, agrupado por mes, trimestre, semestre o año, con sus cifras.
  */
 export function PeriodosSeccion() {
-  const queryClient = useQueryClient();
-  const [anio, setAnio] = useState(new Date().getFullYear());
-  const [confirmar, setConfirmar] = useState<{
-    accion: Accion;
-    mes: number;
-    periodo?: Periodo;
-  } | null>(null);
+  const [agrupacion, setAgrupacion] = useState<Agrupacion>("MENSUAL");
+  const [anio, setAnio] = useState<number | undefined>(new Date().getFullYear());
 
-  const { data: periodos = [], isLoading } = useQuery({
-    queryKey: [...CLAVE, anio],
-    queryFn: () => periodosApi.listar(anio),
+  const { data: grupos = [], isLoading } = useQuery({
+    queryKey: ["periodos", "resumen", agrupacion, anio],
+    queryFn: () => periodosApi.resumen(agrupacion, anio),
   });
 
-  const refrescar = () =>
-    queryClient.invalidateQueries({ queryKey: ["periodos"] });
-
-  const ejecutar = useMutation({
-    mutationFn: ({ accion, mes, periodo }: NonNullable<typeof confirmar>) => {
-      if (accion === "abrir") return periodosApi.abrir(anio, mes);
-      if (accion === "cerrar") return periodosApi.cerrar(periodo!.id);
-      return periodosApi.reabrir(periodo!.id);
-    },
-    onSuccess: async (_r, v) => {
-      await refrescar();
-      // También el balance: sus números cambian según el período esté abierto o
-      // cerrado, porque son dos consultas distintas.
-      await queryClient.invalidateQueries({ queryKey: ["balance-prueba"] });
-      aviso.exito(
-        v.accion === "abrir"
-          ? "Período abierto"
-          : v.accion === "cerrar"
-            ? "Período cerrado y saldos congelados"
-            : "Período reabierto",
-      );
-      setConfirmar(null);
-    },
-    onError: (e: unknown) => aviso.falla(e),
-  });
-
-  const porMes = new Map(periodos.map((p) => [p.mes, p]));
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-24 text-muted-foreground">
-        <Loader2 className="size-6 animate-spin" />
-      </div>
-    );
-  }
+  const { dias, ultimo } = diasParaCierre();
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-center gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Año anterior"
-          className="size-11 rounded-xl"
-          onClick={() => setAnio((a) => a - 1)}
-        >
-          <ChevronLeft className="size-4" />
-        </Button>
-        <span className="min-w-24 text-center text-2xl font-semibold tabular-nums">
-          {anio}
-        </span>
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Año siguiente"
-          className="size-11 rounded-xl"
-          onClick={() => setAnio((a) => a + 1)}
-        >
-          <ChevronRight className="size-4" />
-        </Button>
+      <div className="mb-6 flex items-start gap-3 rounded-2xl border border-border bg-card p-4 text-sm">
+        <CalendarClock className="mt-0.5 size-5 shrink-0 text-brand" />
+        <p className="leading-6">
+          <span className="font-semibold">El mes en curso se cierra solo el {ultimo}</span>
+          {dias === 0 ? " (hoy)" : ` (en ${dias} día${dias === 1 ? "" : "s"})`}. Lo que llegue después con fecha
+          de un mes cerrado se registra en el mes abierto, con la fecha del documento anotada en el asiento.
+        </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {MESES.map((nombre, i) => {
-          const mes = i + 1;
-          const periodo = porMes.get(mes);
-          const estado = periodo?.estado;
-
-          return (
-            <div
-              key={nombre}
-              className="flex flex-col rounded-3xl border border-border bg-card p-6 shadow-sm"
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="inline-flex gap-1 rounded-2xl border border-border bg-muted p-1" role="radiogroup">
+          {AGRUPACIONES.map(([valor, etiqueta]) => (
+            <button
+              key={valor}
+              type="button"
+              role="radio"
+              aria-checked={agrupacion === valor}
+              onClick={() => {
+                setAgrupacion(valor);
+                // La vista anual compara años: no tiene sentido filtrarla por uno.
+                setAnio(valor === "ANUAL" ? undefined : (anio ?? new Date().getFullYear()));
+              }}
+              className={cn(
+                "rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
+                agrupacion === valor ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent",
+              )}
             >
-              <div className="flex items-center justify-between">
-                <CalendarDays className="size-5 text-brand" />
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    estado === "ABIERTO"
-                      ? "bg-success/15 text-success"
-                      : estado === "CERRADO"
-                        ? "bg-muted text-foreground"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {estado === "ABIERTO"
-                    ? "Abierto"
-                    : estado === "CERRADO"
-                      ? "Cerrado"
-                      : "Sin abrir"}
-                </span>
-              </div>
+              {etiqueta}
+            </button>
+          ))}
+        </div>
 
-              <h2 className="mt-8 text-xl font-semibold">
-                {nombre} {anio}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {estado === "ABIERTO"
-                  ? "Listo para registrar movimientos"
-                  : estado === "CERRADO"
-                    ? "Saldos congelados"
-                    : "Aún no acepta asientos"}
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                {estado === undefined && (
-                  <Button
-                    variant="ghost"
-                    className="h-11 rounded-xl px-4 text-brand-text"
-                    onClick={() => setConfirmar({ accion: "abrir", mes })}
-                  >
-                    Abrir período →
-                  </Button>
-                )}
-                {estado === "ABIERTO" && (
-                  <Button
-                    variant="ghost"
-                    className="h-11 rounded-xl px-4 text-brand-text"
-                    onClick={() =>
-                      setConfirmar({ accion: "cerrar", mes, periodo })
-                    }
-                  >
-                    Cerrar período →
-                  </Button>
-                )}
-                {estado === "CERRADO" && (
-                  <Button
-                    variant="ghost"
-                    className="h-11 rounded-xl px-4 text-muted-foreground"
-                    onClick={() =>
-                      setConfirmar({ accion: "reabrir", mes, periodo })
-                    }
-                  >
-                    Reabrir período →
-                  </Button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+        {anio !== undefined && (
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Año anterior"
+              className="size-10 rounded-xl"
+              onClick={() => setAnio((a) => (a ?? 0) - 1)}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="min-w-16 text-center text-xl font-semibold tabular-nums">{anio}</span>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Año siguiente"
+              className="size-10 rounded-xl"
+              onClick={() => setAnio((a) => (a ?? 0) + 1)}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
-      <AlertDialog
-        open={confirmar !== null}
-        onOpenChange={(a) => !a && setConfirmar(null)}
-      >
-        <AlertDialogContent className="gap-6 p-6 sm:max-w-lg!">
-          {confirmar && (
-            <>
-              <AlertDialogHeader>
-                <AlertDialogMedia
-                  className={
-                    confirmar.accion === "reabrir"
-                      ? "bg-warning/15 text-warning"
-                      : "bg-muted"
-                  }
-                >
-                  <CalendarDays />
-                </AlertDialogMedia>
-                <AlertDialogTitle className="text-lg">
-                  {TEXTO[confirmar.accion].titulo} — {MESES[confirmar.mes - 1]}{" "}
-                  {anio}
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-[15px] leading-6">
-                  {TEXTO[confirmar.accion].cuerpo}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-
-              <AlertDialogFooter className="-mx-6 -mb-6 p-6">
-                <AlertDialogCancel className="h-11 rounded-xl px-6">
-                  Cancelar
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  className="h-11 rounded-xl px-6"
-                  disabled={ejecutar.isPending}
-                  onClick={() => ejecutar.mutate(confirmar)}
-                >
-                  {ejecutar.isPending && (
-                    <Loader2 className="size-4 animate-spin" />
-                  )}
-                  {TEXTO[confirmar.accion].boton}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </>
-          )}
-        </AlertDialogContent>
-      </AlertDialog>
+      {isLoading ? (
+        <div className="flex justify-center py-24 text-muted-foreground">
+          <Loader2 className="size-6 animate-spin" />
+        </div>
+      ) : grupos.length === 0 ? (
+        <div className="rounded-3xl border border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
+          No hay períodos en {anio}.
+        </div>
+      ) : (
+        <section className="overflow-hidden rounded-3xl border border-border bg-card">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left">
+              <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                <tr>
+                  {["Período", "Estado", "Asientos", "Ingresos", "Costos y gastos", "Resultado"].map((x, i) => (
+                    <th key={x} scope="col" className={cn("px-5 py-4", i >= 2 && "text-right")}>
+                      {x}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {grupos.map((g) => (
+                  <tr key={g.grupo} className={g.estado === "ABIERTO" ? "bg-success/5" : ""}>
+                    <td className="px-5 py-4">
+                      <p className="font-semibold">{nombreDelGrupo(g, agrupacion)}</p>
+                      {agrupacion !== "MENSUAL" && (
+                        <p className="text-xs text-muted-foreground">
+                          {MESES[g.desde.mes - 1]} a {MESES[g.hasta.mes - 1].toLowerCase()} ·{" "}
+                          {g.meses.length} mes{g.meses.length === 1 ? "" : "es"}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+                          g.estado === "ABIERTO" ? "bg-success/15 text-success" : "bg-muted text-foreground",
+                        )}
+                      >
+                        {g.estado === "CERRADO" && <Lock className="size-3" />}
+                        {g.estado === "ABIERTO" ? "En curso" : "Cerrado"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-right font-mono tabular-nums">{g.asientos}</td>
+                    <td className="px-5 py-4 text-right font-mono tabular-nums">{formatCOP(g.ingresos)}</td>
+                    <td className="px-5 py-4 text-right font-mono tabular-nums">{formatCOP(g.costosGastos)}</td>
+                    <td
+                      className={cn(
+                        "px-5 py-4 text-right font-mono font-semibold tabular-nums",
+                        g.resultado > 0 ? "text-success" : g.resultado < 0 ? "text-danger" : "text-muted-foreground",
+                      )}
+                    >
+                      {formatCOP(g.resultado)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </>
   );
 }
