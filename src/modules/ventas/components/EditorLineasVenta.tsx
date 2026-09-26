@@ -1,10 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 
 import { CampoCantidad, CampoPesos } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
+import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { formatCOP } from "@/lib/utils";
 import { SelectorProducto } from "@/modules/inventario/components/SelectorProducto";
 import {
@@ -12,6 +13,20 @@ import {
   precioApi,
 } from "@/modules/inventario/services/inventario.service";
 import type { ProductoResumen } from "@/modules/inventario/types/inventario.types";
+import { sumarTotales, totalesDeLinea, type TotalesLinea } from "../lib/totales";
+
+/**
+ * Pesos con centavos solo si los hay: el precio sin IVA de la tinta es
+ * $25.210,08 y mostrarlo como $25.210 sería decir otro número.
+ */
+function pesos(valor: number): string {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(valor);
+}
 
 /** Una línea mientras se edita. La cantidad es texto: vacío es "sin llenar", no cero. */
 export interface LineaVentaBorrador {
@@ -56,8 +71,12 @@ export function usePrecioVigente(producto: ProductoResumen | null) {
  * línea o por documento" en `docs/planes/ventas-backend.md`). La única
  * excepción es `precioEditable` —la cotización— y solo para el producto que
  * todavía no tiene precio de lista: de los 1.638 importados, muchos llegaron
- * sin ese dato, y una cotización no puede quedar trabada por eso. El total
- * exacto se ve recién en la respuesta, no mientras se digita.
+ * sin ese dato, y una cotización no puede quedar trabada por eso.
+ *
+ * Cada línea muestra su precio sin IVA, el subtotal, el IVA y el total, y al
+ * pie van los del documento, calculados igual que el servidor
+ * (`lib/totales.ts`). Las retenciones no están: esas las calcula el
+ * servidor al emitir.
  */
 export function EditorLineasVenta({
   lineas,
@@ -86,6 +105,43 @@ export function EditorLineasVenta({
   const actualizar = (clave: number, cambio: Partial<LineaVentaBorrador>) =>
     onCambiar(lineas.map((l) => (l.clave === clave ? { ...l, ...cambio } : l)));
 
+  // El IVA de la línea: el del producto, si la empresa lo liquida. Es lo
+  // mismo que decide el servidor, que fuerza 0 a quien no es responsable.
+  const responsable = useResponsableIva();
+  // Los precios de todas las líneas, con la misma llave que `usePrecioVigente`:
+  // comparten el caché, no son consultas de más.
+  const consultas = useQueries({
+    queries: lineas.map((l) => ({
+      queryKey: ["productos", "precios", l.producto?.id],
+      queryFn: () => precioApi.historialDe(l.producto!.id),
+      enabled: l.producto !== null,
+      staleTime: 60_000,
+    })),
+  });
+  const calculos: Array<(TotalesLinea & { tarifa: number }) | null> =
+    lineas.map((l, i) => {
+      if (l.producto === null) return null;
+      const vigente = consultas[i]?.data?.find((p) => p.fecha_fin === null);
+      const deLista =
+        vigente && Number(vigente.precio_venta) > 0
+          ? Number(vigente.precio_venta)
+          : null;
+      const digitado =
+        l.precioUnitario.trim() === "" ? null : Number(l.precioUnitario);
+      const precio = precioSiempreDigitado
+        ? digitado
+        : (deLista ?? (precioEditable ? digitado : null));
+      const cantidad = Number(l.cantidad);
+      if (precio === null || !(precio > 0) || !(cantidad > 0)) return null;
+      const tarifa = responsable ? Number(l.producto.iva_tarifa) : 0;
+      return { ...totalesDeLinea(cantidad, precio, tarifa), tarifa };
+    });
+  const completas = calculos.filter(
+    (c): c is TotalesLinea & { tarifa: number } => c !== null,
+  );
+  const totales = sumarTotales(completas);
+  const pendientes = lineas.length - completas.length;
+
   const agregar = () => onCambiar([...lineas, lineaVentaVacia()]);
   const quitar = (clave: number) =>
     onCambiar(lineas.filter((l) => l.clave !== clave));
@@ -93,7 +149,7 @@ export function EditorLineasVenta({
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-2xl border border-border">
-        <table className="w-full min-w-[560px] text-left">
+        <table className="w-full min-w-[900px] text-left">
           <thead className="border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-3">
@@ -102,11 +158,20 @@ export function EditorLineasVenta({
               <th scope="col" className="px-4 py-3">
                 Cantidad
               </th>
-              {(precioEditable || precioSiempreDigitado) && (
-                <th scope="col" className="px-4 py-3">
-                  Precio
+              <th scope="col" className="px-4 py-3 text-right">
+                Precio sin IVA
+              </th>
+              <th scope="col" className="px-4 py-3 text-right">
+                Subtotal
+              </th>
+              {responsable && (
+                <th scope="col" className="px-4 py-3 text-right">
+                  IVA
                 </th>
               )}
+              <th scope="col" className="px-4 py-3 text-right">
+                Total
+              </th>
               <th scope="col" className="w-12 px-4 py-3" />
             </tr>
           </thead>
@@ -134,19 +199,38 @@ export function EditorLineasVenta({
                     aria-label={`Cantidad de la línea ${i + 1}`}
                   />
                 </td>
-                {(precioEditable || precioSiempreDigitado) && (
-                  <td className="px-4 py-3">
-                    <PrecioDeLinea
-                      producto={l.producto}
-                      valor={l.precioUnitario}
-                      onCambiar={(precioUnitario) =>
-                        actualizar(l.clave, { precioUnitario })
-                      }
-                      etiqueta={`Precio de la línea ${i + 1}`}
-                      siempreDigitado={precioSiempreDigitado}
-                    />
+                <td className="px-4 py-3">
+                  <PrecioDeLinea
+                    producto={l.producto}
+                    valor={l.precioUnitario}
+                    onCambiar={(precioUnitario) =>
+                      actualizar(l.clave, { precioUnitario })
+                    }
+                    etiqueta={`Precio de la línea ${i + 1}`}
+                    editable={precioEditable}
+                    siempreDigitado={precioSiempreDigitado}
+                  />
+                </td>
+                <td className="px-4 py-3 pt-6 text-right font-mono text-sm tabular-nums">
+                  {calculos[i] === null ? "—" : pesos(calculos[i]!.subtotal)}
+                </td>
+                {responsable && (
+                  <td className="px-4 py-3 pt-6 text-right font-mono text-sm tabular-nums">
+                    {calculos[i] === null ? (
+                      "—"
+                    ) : (
+                      <>
+                        {pesos(calculos[i]!.iva)}
+                        <span className="mt-0.5 block font-sans text-[10px] text-muted-foreground">
+                          {calculos[i]!.tarifa} %
+                        </span>
+                      </>
+                    )}
                   </td>
                 )}
+                <td className="px-4 py-3 pt-6 text-right font-mono text-sm font-semibold tabular-nums">
+                  {calculos[i] === null ? "—" : pesos(calculos[i]!.total)}
+                </td>
                 <td className="px-4 py-3">
                   {/* Con una sola línea no se ofrece quitar: es el mínimo del documento. */}
                   {lineas.length > 1 && (
@@ -168,15 +252,47 @@ export function EditorLineasVenta({
         </table>
       </div>
 
-      <Button
-        type="button"
-        variant="ghost"
-        className="h-11 self-start rounded-xl px-4 text-brand-text"
-        onClick={agregar}
-      >
-        <Plus className="size-4" />
-        Agregar línea
-      </Button>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-11 rounded-xl px-4 text-brand-text"
+          onClick={agregar}
+        >
+          <Plus className="size-4" />
+          Agregar línea
+        </Button>
+
+        {completas.length > 0 && (
+          <dl className="grid min-w-[260px] grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+            <dt className="text-muted-foreground">Subtotal</dt>
+            <dd className="text-right font-mono tabular-nums">
+              {pesos(totales.subtotal)}
+            </dd>
+            {responsable && (
+              <>
+                <dt className="text-muted-foreground">IVA</dt>
+                <dd className="text-right font-mono tabular-nums">
+                  {pesos(totales.iva)}
+                </dd>
+              </>
+            )}
+            <dt className="border-t border-border pt-1.5 font-semibold">
+              Total
+            </dt>
+            <dd className="border-t border-border pt-1.5 text-right font-mono text-base font-semibold tabular-nums">
+              {pesos(totales.total)}
+            </dd>
+            {pendientes > 0 && (
+              <dd className="col-span-2 text-xs text-muted-foreground">
+                {pendientes === 1
+                  ? "Falta completar 1 línea: no está en el total."
+                  : `Faltan completar ${pendientes} líneas: no están en el total.`}
+              </dd>
+            )}
+          </dl>
+        )}
+      </div>
     </div>
   );
 }
@@ -218,12 +334,15 @@ function PrecioDeLinea({
   valor,
   onCambiar,
   etiqueta,
+  editable = false,
   siempreDigitado = false,
 }: {
   producto: ProductoResumen | null;
   valor: string;
   onCambiar: (valor: string) => void;
   etiqueta: string;
+  /** La cotización: deja digitar el precio del producto que no tiene. */
+  editable?: boolean;
   siempreDigitado?: boolean;
 }) {
   const { precio, cargando } = usePrecioVigente(producto);
@@ -236,11 +355,20 @@ function PrecioDeLinea({
   }
   if (!siempreDigitado && precio !== null) {
     return (
-      <span className="block w-32 text-right font-mono text-sm">
-        {formatCOP(precio)}
+      <span className="ml-auto block w-32 pt-3 text-right font-mono text-sm">
+        {pesos(precio)}
         <span className="mt-1 block text-[10px] font-sans text-muted-foreground">
           de lista
         </span>
+      </span>
+    );
+  }
+  // En una factura el precio no se digita: sin precio de lista, el servidor
+  // la rechaza. Se dice acá, antes de intentarlo.
+  if (!siempreDigitado && !editable) {
+    return (
+      <span className="ml-auto block w-32 pt-3 text-right text-xs text-warning-foreground">
+        Sin precio de lista
       </span>
     );
   }

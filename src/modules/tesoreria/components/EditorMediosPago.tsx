@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { cn, formatCOP } from "@/lib/utils";
+import { CajaPrincipal } from "./CajaPrincipal";
 import { SelectorCaja } from "./SelectorCaja";
 import { SelectorCuentaBancaria } from "./SelectorCuentaBancaria";
 import type { CajaResumen, MedioPagoInput } from "../types/tesoreria.types";
@@ -98,6 +99,7 @@ export function EditorMediosPago({
   onCambiar,
   tope,
   soloExceso = false,
+  cajaFija = false,
 }: {
   renglones: RenglonPagoBorrador[];
   onCambiar: (renglones: RenglonPagoBorrador[]) => void;
@@ -108,6 +110,12 @@ export function EditorMediosPago({
    * lo cobrado y no hay que devolverlo todo: «falta repartir» sería falso.
    */
   soloExceso?: boolean;
+  /**
+   * La caja no se elige: es la principal de la empresa (`CajaPrincipal`).
+   * Ventas lo usa —el efectivo de una venta entra siempre ahí—; compras no,
+   * porque pagar con la caja menor sí tiene sentido.
+   */
+  cajaFija?: boolean;
 }) {
   const actualizar = (clave: number, cambio: Partial<RenglonPagoBorrador>) =>
     onCambiar(
@@ -161,10 +169,17 @@ export function EditorMediosPago({
 
           <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
             {r.medio === "CAJA" ? (
-              <SelectorCaja
-                valor={r.caja}
-                onElegir={(caja) => actualizar(r.clave, { caja })}
-              />
+              cajaFija ? (
+                <CajaPrincipal
+                  valor={r.caja}
+                  onElegir={(caja) => actualizar(r.clave, { caja })}
+                />
+              ) : (
+                <SelectorCaja
+                  valor={r.caja}
+                  onElegir={(caja) => actualizar(r.clave, { caja })}
+                />
+              )
             ) : (
               <SelectorCuentaBancaria
                 valor={r.cuenta}

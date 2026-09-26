@@ -173,6 +173,7 @@ function Contenido({
         </Campo>
 
         <EditorMediosPago
+          cajaFija
           renglones={renglones}
           onCambiar={setRenglones}
           tope={tope}

@@ -225,7 +225,7 @@ export function FormularioDocumentoVenta({
           />
 
           {conFormaPago && (
-            <SelectorFormaPago valor={formaPago} onCambiar={setFormaPago} />
+            <SelectorFormaPago valor={formaPago} onCambiar={setFormaPago} cajaFija />
           )}
         </DialogBody>
 

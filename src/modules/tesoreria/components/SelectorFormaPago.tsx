@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { cn } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { CajaPrincipal } from "./CajaPrincipal";
 import { SelectorCaja } from "./SelectorCaja";
 import { SelectorCuentaBancaria } from "./SelectorCuentaBancaria";
 import {
@@ -39,11 +40,18 @@ export function SelectorFormaPago({
   onCambiar,
   soloCredito = false,
   motivoSoloCredito,
+  cajaFija = false,
 }: {
   valor: FormaPagoBorrador;
   onCambiar: (valor: FormaPagoBorrador) => void;
   soloCredito?: boolean;
   motivoSoloCredito?: string;
+  /**
+   * La caja no se elige: es la principal de la empresa (`CajaPrincipal`).
+   * Ventas lo usa —el efectivo de una venta entra siempre ahí—; compras no,
+   * porque pagar con la caja menor sí tiene sentido.
+   */
+  cajaFija?: boolean;
 }) {
   const cambiar = (cambio: Partial<FormaPagoBorrador>) =>
     onCambiar({ ...valor, ...cambio });
@@ -100,12 +108,18 @@ export function SelectorFormaPago({
           })}
         </div>
 
-        {valor.modo === "EFECTIVO" && (
-          <SelectorCaja
-            valor={valor.caja}
-            onElegir={(caja) => cambiar({ caja })}
-          />
-        )}
+        {valor.modo === "EFECTIVO" &&
+          (cajaFija ? (
+            <CajaPrincipal
+              valor={valor.caja}
+              onElegir={(caja) => cambiar({ caja })}
+            />
+          ) : (
+            <SelectorCaja
+              valor={valor.caja}
+              onElegir={(caja) => cambiar({ caja })}
+            />
+          ))}
 
         {valor.modo === "TRANSFERENCIA" && (
           <SelectorCuentaBancaria
@@ -140,10 +154,17 @@ export function SelectorFormaPago({
                 </div>
 
                 {r.medio === "CAJA" ? (
-                  <SelectorCaja
-                    valor={r.caja}
-                    onElegir={(caja) => cambiarRenglon(r.clave, { caja })}
-                  />
+                  cajaFija ? (
+                    <CajaPrincipal
+                      valor={r.caja}
+                      onElegir={(caja) => cambiarRenglon(r.clave, { caja })}
+                    />
+                  ) : (
+                    <SelectorCaja
+                      valor={r.caja}
+                      onElegir={(caja) => cambiarRenglon(r.clave, { caja })}
+                    />
+                  )
                 ) : (
                   <SelectorCuentaBancaria
                     valor={r.cuenta}
