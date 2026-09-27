@@ -24,7 +24,8 @@ export function dolares(n: number | null | undefined): string {
   })}`;
 }
 
-export const entero = (n: number): string => Math.round(n).toLocaleString("es-CO");
+export const entero = (n: number): string =>
+  Math.round(n).toLocaleString("es-CO");
 
 /** `23 %`, o con un decimal si se pide. */
 export function porciento(fraccion: number, decimales = 0): string {
@@ -35,7 +36,9 @@ export function porciento(fraccion: number, decimales = 0): string {
 }
 
 const partes = (iso: string, opciones: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat("es-CO", { timeZone: ZONA, ...opciones }).format(new Date(iso));
+  new Intl.DateTimeFormat("es-CO", { timeZone: ZONA, ...opciones }).format(
+    new Date(iso),
+  );
 
 /** `22/09/2026`. */
 export function fecha(iso: string | null | undefined): string {
@@ -62,7 +65,10 @@ function diaDe(iso: string | Date): string {
  * Un acceso como se lee de un vistazo: «Hoy 13:52», «Ayer 18:07» o la fecha.
  * `ahora` se recibe para poder probarlo.
  */
-export function cuando(iso: string | null | undefined, ahora = new Date()): string {
+export function cuando(
+  iso: string | null | undefined,
+  ahora = new Date(),
+): string {
   if (!iso) return "Nunca";
   const dia = diaDe(iso);
   const hoy = diaDe(ahora);
@@ -87,13 +93,18 @@ export function nit(numero: string, dv?: string | null): string {
 /** El nombre del mes: `2026-08` → «agosto». */
 export function nombreMes(mes: string): string {
   const [a, m] = mes.split("-").map(Number);
-  return new Intl.DateTimeFormat("es-CO", { month: "long", timeZone: "UTC" }).format(
-    new Date(Date.UTC(a, m - 1, 1)),
-  );
+  return new Intl.DateTimeFormat("es-CO", {
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(a, m - 1, 1)));
 }
 
 /** Singular o plural según la cantidad: `plural(1, "cuenta")` → «1 cuenta». */
-export function plural(n: number, singular: string, pluralDe = `${singular}s`): string {
+export function plural(
+  n: number,
+  singular: string,
+  pluralDe = `${singular}s`,
+): string {
   return `${entero(n)} ${n === 1 ? singular : pluralDe}`;
 }
 

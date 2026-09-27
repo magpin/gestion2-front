@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { aviso } from "@/lib/avisos";
 import { FormularioTercero, type DatosTercero } from "./FormularioTercero";
+import { DatosTributarios } from "@/modules/retenciones/components/DatosTributarios";
 import { tercerosApi } from "../services/terceros.service";
 import type { TerceroResumen } from "../types/terceros.types";
 
@@ -152,6 +153,9 @@ export function DialogoTercero({
               alGuardar={(d) => guardar.mutate(d)}
             />
           )}
+          {/* Con historia y fecha: lo que el motor de retenciones mira a la
+              fecha de cada factura. Solo al editar: al crear no hay historia. */}
+          {!creando && editando !== null && <DatosTributarios terceroId={editando} />}
         </DialogBody>
 
         <DialogFooter>

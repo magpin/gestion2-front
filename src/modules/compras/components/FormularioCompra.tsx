@@ -25,11 +25,17 @@ import {
   lineaCompraVacia,
   type LineaCompraBorrador,
 } from "./EditorLineasCompra";
-import {
-  EditorRetenciones,
-  type RetencionBorrador,
-} from "./EditorRetenciones";
 import { useTieneRol } from "@/core/store/authStore";
+import { PropuestaRenta } from "@/modules/retenciones/components/PropuestaRenta";
+import { useSimulacionRenta } from "@/modules/retenciones/hooks/useSimulacionRenta";
+import {
+  aEnvioRenta,
+  problemaRenta,
+  respuestasRentaVacias,
+} from "@/modules/retenciones/types/retenciones.types";
+import { comprasApi } from "../services/compras.service";
+import { retencionesApi } from "@/modules/retenciones/services/retenciones.service";
+import { useQuery } from "@tanstack/react-query";
 import { SelectorFormaPago } from "@/modules/tesoreria/components/SelectorFormaPago";
 import {
   aFormaPago,
@@ -65,7 +71,16 @@ export function FormularioCompra({
   const [lineas, setLineas] = useState<LineaCompraBorrador[]>([
     lineaCompraVacia(),
   ]);
-  const [retenciones, setRetenciones] = useState<RetencionBorrador[]>([]);
+  // Dónde se recibe la compra: decide dónde se causa la ReteICA. Solo se
+  // pregunta si la empresa tiene sedes en más de un municipio.
+  const [municipio, setMunicipio] = useState("");
+  const { data: municipiosIca = [] } = useQuery({
+    queryKey: ["retenciones", "ica"],
+    queryFn: retencionesApi.ica,
+    enabled: abierto,
+  });
+  const [renta, setRenta] = useState(respuestasRentaVacias);
+  const [conTarjeta, setConTarjeta] = useState(false);
   const [formaPago, setFormaPago] = useState(formaPagoVacia);
   // Pagar de contado saca plata de una caja o un banco: el backend lo rechaza
   // de quien no tenga CAJA o DIRECTOR, así que acá ni se ofrece.
@@ -76,7 +91,9 @@ export function FormularioCompra({
     setFecha(hoy());
     setNumeroFactura("");
     setLineas([lineaCompraVacia()]);
-    setRetenciones([]);
+    setMunicipio("");
+    setRenta(respuestasRentaVacias());
+    setConTarjeta(false);
     setFormaPago(formaPagoVacia());
   };
 
@@ -108,11 +125,6 @@ export function FormularioCompra({
         : null,
     )
     .filter((n): n is number => n !== null);
-  // El valor ya no se digita —lo calcula el servidor contra el catálogo—, así
-  // que lo único que puede faltar es el concepto o la base.
-  const retencionesIncompletas = retenciones.some(
-    (r) => r.conceptoId === "" || r.base.trim() === "" || Number(r.base) <= 0,
-  );
 
   const nombrar = (renglones: number[]) =>
     renglones.length === 1
@@ -133,20 +145,11 @@ export function FormularioCompra({
       return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
     if (sinCosto.length > 0)
       return `El costo unitario tiene que ser válido en ${nombrar(sinCosto)}.`;
-    if (retencionesIncompletas)
-      return "Completá la base y el valor de cada retención, o quitala.";
     return problemaFormaPago(formaPago);
   };
 
-  const problema = impedimento();
-
-  const enviar = () => {
-    if (problema !== null || proveedor === null) return;
-    onGuardar({
-      terceroId: proveedor.id,
-      fecha,
-      numeroFacturaProveedor: numeroFactura.trim(),
-      lineas: lineas.map((l) =>
+  const lineasParaEnviar = () =>
+    lineas.map((l) =>
         l.tipo === "PRODUCTO"
           ? {
               productoId: l.producto!.id,
@@ -161,14 +164,42 @@ export function FormularioCompra({
               cantidad: Number(l.cantidad),
               costoUnitario: Number(l.costoUnitario),
             },
-      ),
-      retenciones:
-        retenciones.length === 0
-          ? undefined
-          : retenciones.map((r) => ({
-              conceptoId: r.conceptoId,
-              base: Number(r.base),
-            })),
+      );
+
+  // La retención de renta la propone el servidor —el mismo motor que corre al
+  // registrar—. Se pide cuando hay proveedor y todas las líneas completas.
+  const lineasListas =
+    lineas.length > 0 &&
+    incompletas.length === 0 &&
+    sinCantidad.length === 0 &&
+    sinCosto.length === 0;
+  const simulacion = useSimulacionRenta(
+    "compra",
+    proveedor !== null && fecha !== "" && lineasListas && !renta.sinRetencion
+      ? {
+          terceroId: proveedor.id,
+          fecha,
+          lineas: lineasParaEnviar(),
+          ...aEnvioRenta(renta),
+          ...(conTarjeta && { pagadaConTarjeta: true }),
+          ...(municipio !== "" && { municipioCodigo: municipio }),
+        }
+      : null,
+    comprasApi.simularRetencion,
+  );
+
+  const problema = impedimento() ?? problemaRenta(simulacion.propuesta, renta);
+
+  const enviar = () => {
+    if (problema !== null || proveedor === null) return;
+    onGuardar({
+      terceroId: proveedor.id,
+      fecha,
+      numeroFacturaProveedor: numeroFactura.trim(),
+      lineas: lineasParaEnviar(),
+      ...aEnvioRenta(renta),
+      ...(conTarjeta && { pagadaConTarjeta: true }),
+      ...(municipio !== "" && { municipioCodigo: municipio }),
       ...aFormaPago(formaPago),
     });
   };
@@ -228,12 +259,46 @@ export function FormularioCompra({
 
           <EditorLineasCompra lineas={lineas} onCambiar={setLineas} />
 
-          <EditorRetenciones
-            retenciones={retenciones}
-            onCambiar={setRetenciones}
-            fecha={fecha}
-            declaranteRenta={proveedor?.declaranteRenta ?? true}
+          <PropuestaRenta
+            propuesta={simulacion.propuesta}
+            cargando={simulacion.cargando}
+            error={simulacion.error}
+            respuestas={renta}
+            onCambiar={setRenta}
           />
+          {/* Con tarjeta la retención la practica la entidad de la tarjeta,
+              no la empresa (caso borde 6). */}
+          <label className="-mt-4 flex w-fit items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              className="size-4 accent-foreground"
+              checked={conTarjeta}
+              onChange={(e) => setConTarjeta(e.target.checked)}
+            />
+            La pagué con tarjeta débito o crédito
+          </label>
+
+          {municipiosIca.length > 1 && (
+            <label className="-mt-2 flex w-fit flex-col gap-1.5 text-xs text-muted-foreground">
+              Dónde se recibe (decide el municipio de la ReteICA)
+              <select
+                className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm text-foreground"
+                value={municipio}
+                onChange={(e) => setMunicipio(e.target.value)}
+              >
+                <option value="">
+                  {municipiosIca.find((m) => m.es_principal)?.nombre ?? "La sede principal"} (principal)
+                </option>
+                {municipiosIca
+                  .filter((m) => !m.es_principal)
+                  .map((m) => (
+                    <option key={m.codigo} value={m.codigo}>
+                      {m.nombre}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          )}
 
           <SelectorFormaPago
             valor={formaPago}

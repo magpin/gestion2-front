@@ -29,7 +29,9 @@ const TITULOS = {
 
 /** `SETP-991`, y solo el consecutivo cuando el documento no lleva prefijo. */
 function numeroDe(d: { prefijo: string | null; consecutivo: number }) {
-  return d.prefijo === null ? String(d.consecutivo) : `${d.prefijo}-${d.consecutivo}`;
+  return d.prefijo === null
+    ? String(d.consecutivo)
+    : `${d.prefijo}-${d.consecutivo}`;
 }
 
 /** El detalle de cualquiera de los tres documentos: cabecera y líneas. */
@@ -195,6 +197,13 @@ export function DetalleVenta({
                 )}
               </div>
 
+              {documento.retencion_aviso && (
+                <p className="rounded-xl bg-warning/10 px-4 py-3 text-sm">
+                  <span className="font-medium">Retenciones · </span>
+                  {documento.retencion_aviso}
+                </p>
+              )}
+
               {/* Las dos direcciones del enlace: desde la nota, su factura;
                   desde la factura, las notas que le colgaron encima. */}
               {documento.documento_origen && (
@@ -250,7 +259,10 @@ export function DetalleVenta({
               )}
             </DialogBody>
             {/* Anidado: al cerrarlo se vuelve a la factura, no a la lista. */}
-            <DetalleAsiento asientoId={asiento} onCerrar={() => setAsiento(null)} />
+            <DetalleAsiento
+              asientoId={asiento}
+              onCerrar={() => setAsiento(null)}
+            />
           </>
         )}
       </DialogContent>

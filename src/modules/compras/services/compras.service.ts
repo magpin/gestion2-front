@@ -9,6 +9,7 @@ import type {
   PagarInput,
   PaginaCompras,
 } from "../types/compras.types";
+import type { PropuestaRenta } from "@/modules/retenciones/types/retenciones.types";
 
 /**
  * Facturas de compra. Al crearse: asientan y aumentan el kardex, todo en el
@@ -32,6 +33,14 @@ export const comprasApi = {
 
   crear: (datos: CrearCompraInput) =>
     api.post<CompraDocumentoDetalle>("/compras", datos).then((r) => r.data),
+
+  /** La retención de renta que llevaría la compra, sin registrar nada. */
+  simularRetencion: (
+    datos: Pick<CrearCompraInput, "terceroId" | "fecha" | "lineas" | "conceptosRenta" | "pagadaConTarjeta" | "municipioCodigo">,
+  ) =>
+    api
+      .post<PropuestaRenta>("/compras/simular-retencion", datos)
+      .then((r) => r.data),
 
   /** No borra: anula el asiento y marca el documento, junto. */
   anular: (id: string, motivo: string) =>

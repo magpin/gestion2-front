@@ -1,7 +1,12 @@
 import type { RolCodigo } from "@/modules/auth/types/auth.types";
 
 /** Espejo de `reglas/reportes.ts` del backend. */
-export type ClaveReporte = "VENTAS_POR_CLIENTE" | "ANTIGUEDAD_CARTERA";
+export type ClaveReporte =
+  | "VENTAS_POR_CLIENTE"
+  | "ANTIGUEDAD_CARTERA"
+  | "RETENCIONES_350"
+  | "RETEICA"
+  | "CERTIFICADOS_RETENCION";
 
 export type Area =
   | "VENTAS"

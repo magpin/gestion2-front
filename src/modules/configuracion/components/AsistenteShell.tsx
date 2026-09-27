@@ -33,8 +33,9 @@ export const RUTA_MODO_IA = "/configuracion/ia";
  */
 const DESCRIPCION: Record<ClavePaso, string> = {
   EMPRESA: "Cómo se identifica y con qué políticas lleva su contabilidad.",
-  SEDES: "Dónde opera. El municipio de la principal define la tarifa de ICA.",
-  SITUACION_LEGAL: "Lo que dice el RUT: responsabilidades, representante y actividad.",
+  SEDES: "Dónde opera. De cada municipio sale su ICA.",
+  SITUACION_LEGAL: "Quién es la empresa: representante, actividad y matrícula.",
+  IMPUESTOS: "Qué impuestos cobra, qué retiene y qué le retienen, en palabras simples.",
   PLAN_CUENTAS: "Las cuentas que se desprenden de lo que ya declaraste.",
   RESOLUCIONES: "La numeración que la DIAN autorizó para facturar.",
 };

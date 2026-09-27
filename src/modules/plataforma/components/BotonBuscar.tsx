@@ -15,7 +15,9 @@ export function BotonBuscar() {
     >
       <Search className="size-4 shrink-0" aria-hidden />
       <span className="flex-1">Buscar cuenta, empresa, NIT o correo</span>
-      <kbd className="rounded border border-border px-1.5 py-0.5 font-mono text-[11px]">Ctrl K</kbd>
+      <kbd className="rounded border border-border px-1.5 py-0.5 font-mono text-[11px]">
+        Ctrl K
+      </kbd>
     </button>
   );
 }

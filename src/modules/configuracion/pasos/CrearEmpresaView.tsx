@@ -68,7 +68,7 @@ interface Identidad {
 const TIPOS_RUT = "application/pdf,image/jpeg,image/png,image/webp";
 
 /**
- * Los cinco pasos sin empezar, para el riel. La empresa todavía no existe, así
+ * Los seis pasos sin empezar, para el riel. La empresa todavía no existe, así
  * que no hay estado que pedirle al backend: es el recorrido en blanco.
  */
 const PASOS_EN_BLANCO: Paso[] = (
@@ -76,6 +76,7 @@ const PASOS_EN_BLANCO: Paso[] = (
     ["EMPRESA", "Empresa"],
     ["SEDES", "Sedes"],
     ["SITUACION_LEGAL", "Situación legal"],
+    ["IMPUESTOS", "Impuestos"],
     ["PLAN_CUENTAS", "Plan de cuentas"],
     ["RESOLUCIONES", "Resoluciones"],
   ] as Array<[ClavePaso, string]>
@@ -259,7 +260,7 @@ export function CrearEmpresaView() {
                   ¿Cómo querés configurar <span className="italic">tu empresa?</span>
                 </h1>
                 <p className="m-0 max-w-[640px] text-[15px] leading-relaxed text-muted-foreground">
-                  Son cinco pasos. Podés llenarlos vos o dejar que la IA los complete a partir de
+                  Son seis pasos. Podés llenarlos vos o dejar que la IA los complete a partir de
                   tus documentos. En los dos casos, nada se guarda sin que lo confirmes.
                 </p>
               </div>

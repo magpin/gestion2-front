@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { formatCOP, formatFecha } from "@/lib/utils";
+import { PorQueRetencion } from "@/modules/retenciones/components/PorQueRetencion";
 import { CONCEPTOS_RETENCION } from "../types/compras.types";
 import type {
   CompraDocumentoDetalle,
@@ -157,6 +158,15 @@ export function DetalleCompra({
                   </table>
                 </div>
               )}
+
+              {/* El porqué de la retención —o de que no la haya—, con la
+                  norma y la base: lo que quedó guardado al registrar. */}
+              <PorQueRetencion
+                tipo={documento.tipo === "NOTA_CREDITO" ? "NOTA_CREDITO_COMPRA" : "COMPRA"}
+                documentoId={documento.id}
+                decision={documento.retencion_decision ?? null}
+                motivo={documento.retencion_motivo ?? null}
+              />
 
               <div className="ml-auto flex w-full max-w-xs flex-col gap-2 text-sm sm:w-64">
                 <div className="flex justify-between text-muted-foreground">

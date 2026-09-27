@@ -1,4 +1,5 @@
 import { api } from "@/core/api/api";
+import type { PropuestaRenta } from "@/modules/retenciones/types/retenciones.types";
 import type { CompraDocumentoDetalle } from "../types/compras.types";
 import type {
   LecturaFactura,
@@ -78,6 +79,12 @@ export const lecturasApi = {
    * salen de lo que el backend guardó al leer. De acá va solo lo que la persona
    * decidió — a qué apunta cada renglón, quién es el proveedor, qué número.
    */
+  /** La retención de renta que llevaría, con la impresa al lado. Nada se guarda. */
+  simularRetencion: (id: string, datos: RegistrarLecturaInput) =>
+    api
+      .post<PropuestaRenta>(`/facturas-leidas/${id}/simular-retencion`, datos)
+      .then((r) => r.data),
+
   registrar: (id: string, datos: RegistrarLecturaInput) =>
     api
       .post<CompraDocumentoDetalle>(`/facturas-leidas/${id}/registrar`, datos)

@@ -80,7 +80,7 @@ test.describe("Plan de cuentas y terceros", () => {
     await dialogo.getByRole("button", { name: "Registrar tercero" }).click();
 
     // No se guarda, y el formulario lo dice sin ir al servidor.
-    await expect(page.getByText("Tiene que ser cliente, proveedor o ambos")).toBeVisible();
+    await expect(page.getByText("Tiene que ser cliente, proveedor o empleado (o varios)")).toBeVisible();
     await expect(dialogo).toBeVisible();
   });
 });

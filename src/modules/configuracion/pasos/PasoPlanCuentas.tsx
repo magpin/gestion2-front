@@ -161,11 +161,18 @@ export function PasoPlanCuentas() {
   // Llegar acá con el paso bloqueado solo pasa por URL: el recorrido no lo
   // enlaza. Decir por qué y a dónde ir es más útil que un 404.
   if (paso?.estado === "BLOQUEADO") {
+    const impuestos = paso.bloqueadoPor === "IMPUESTOS";
     return (
       <AsistenteShell clave="PLAN_CUENTAS" titulo="Plan de cuentas">
-        <AvisoFaltante accion={{ texto: "Ir a situación legal", href: RUTA_PASO.SITUACION_LEGAL }}>
-          Todavía no se puede proponer un plan: las cuentas se desprenden de lo que diga el RUT,
-          y la situación legal está sin completar.
+        <AvisoFaltante
+          accion={{
+            texto: impuestos ? "Ir a impuestos" : "Ir a situación legal",
+            href: impuestos ? RUTA_PASO.IMPUESTOS : RUTA_PASO.SITUACION_LEGAL,
+          }}
+        >
+          {impuestos
+            ? "Todavía no se puede proponer un plan: las cuentas de IVA y de retención se desprenden de lo que contestes en Impuestos."
+            : "Todavía no se puede proponer un plan: las cuentas se desprenden de lo que diga el RUT, y la situación legal está sin completar."}
         </AvisoFaltante>
       </AsistenteShell>
     );
@@ -202,7 +209,13 @@ export function PasoPlanCuentas() {
             <AvisoFaltante
               key={f.hecho}
               accion={{
-                texto: `Ir a ${f.paso === "SITUACION_LEGAL" ? "situación legal" : "resolverlo"}`,
+                texto: `Ir a ${
+                  f.paso === "SITUACION_LEGAL"
+                    ? "situación legal"
+                    : f.paso === "IMPUESTOS"
+                      ? "impuestos"
+                      : "resolverlo"
+                }`,
                 href: RUTA_PASO[f.paso as ClavePaso],
               }}
             >

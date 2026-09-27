@@ -106,6 +106,15 @@ export function FacturasCompraSeccion({
     onError: (e: unknown) => aviso.falla(e),
   });
 
+  // Lo que se anula con la compra: los ajustes de su retención por cambio de
+  // norma (Fase 8, §8.3). Se avisa antes de confirmar.
+  const anulacion = useQuery({
+    queryKey: [...CLAVE, porAnular?.id, "detalle"],
+    queryFn: () => comprasApi.porId(porAnular!.id),
+    enabled: porAnular !== null,
+  });
+  const ajustesAnulables = anulacion.data?.ajustes_retencion ?? [];
+
   const anular = useMutation({
     mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
       comprasApi.anular(id, motivo),
@@ -181,7 +190,10 @@ export function FacturasCompraSeccion({
     // Solo si algo se pagó: el proveedor no devuelve plata que no recibió.
     if (puedePagar && Number(c.monto_pagado) > 0) {
       acciones.push({
-        label: Number(c.saldo_a_favor) > 0 ? "Recibir saldo a favor" : "Devolución del proveedor",
+        label:
+          Number(c.saldo_a_favor) > 0
+            ? "Recibir saldo a favor"
+            : "Devolución del proveedor",
         icon: Undo2,
         onSelect: () => setDevolucionDe(c),
       });
@@ -392,6 +404,18 @@ export function FacturasCompraSeccion({
               mercancía se devuelve al proveedor, hace falta un ajuste de
               inventario aparte.
             </AlertDialogDescription>
+            {ajustesAnulables.length > 0 && (
+              <p className="text-[15px] leading-6">
+                También se anula{ajustesAnulables.length > 1 ? "n" : ""} el
+                ajuste
+                {ajustesAnulables.length > 1 ? "s" : ""} de su retención por
+                cambio de norma:{" "}
+                <strong>
+                  {ajustesAnulables.map((x) => x.asiento).join(", ")}
+                </strong>
+                .
+              </p>
+            )}
           </AlertDialogHeader>
 
           <label className="block text-sm font-medium">

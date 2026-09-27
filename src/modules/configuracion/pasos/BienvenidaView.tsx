@@ -76,7 +76,7 @@ export function BienvenidaView() {
       <div
         className={`${styles.sombraTarjeta} mx-auto flex h-full max-h-[calc(100dvh-64px)] w-full max-w-[1240px] overflow-hidden rounded-[1.05rem] border border-border bg-card`}
       >
-        {/* El riel va completo desde el primer momento: los cinco pasos en
+        {/* El riel va completo desde el primer momento: los seis pasos en
             pendiente y 0 %. Enseñar el recorrido antes de empezar es la mitad
             de lo que esta pantalla hace. */}
         <Recorrido
@@ -96,7 +96,7 @@ export function BienvenidaView() {
               Antes de facturar, dejemos lista <span className="italic">tu empresa.</span>
             </h1>
             <p className="m-0 max-w-[640px] text-[15px] leading-relaxed text-muted-foreground">
-              Son cinco pasos. Podés llenarlos vos o dejar que la IA los complete a partir de
+              Son seis pasos. Podés llenarlos vos o dejar que la IA los complete a partir de
               tus documentos. En los dos casos, nada se guarda sin que lo confirmes.
             </p>
           </div>

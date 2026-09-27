@@ -253,6 +253,7 @@ export interface PasoTrazabilidad {
     | "PROPUESTO"
     | "APROBADO"
     | "REGISTRADO"
+    | "RETENCION"
     | "CONTABILIZADO"
     | "ANULADO";
   cuando: string;

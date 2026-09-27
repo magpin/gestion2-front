@@ -38,7 +38,7 @@ const PANTALLAS = [
   },
   {
     src: "/landing/pantalla-config.png",
-    titulo: "Configuración en cinco pasos",
+    titulo: "Configuración en seis pasos",
     texto: "A mano, o que María la llene con tu RUT.",
   },
   {

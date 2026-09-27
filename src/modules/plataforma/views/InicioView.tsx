@@ -39,7 +39,11 @@ import {
 } from "../lib/formato";
 import { useTasa } from "../lib/tasa";
 import { plataformaService } from "../services/plataforma.service";
-import { NOMBRE_DOCUMENTO, type EstadoCuenta, type Inicio } from "../types/plataforma.types";
+import {
+  NOMBRE_DOCUMENTO,
+  type EstadoCuenta,
+  type Inicio,
+} from "../types/plataforma.types";
 
 type Tono = "peligro" | "advertencia" | "marca" | "info" | "neutro";
 
@@ -83,8 +87,14 @@ export function armarPendientes(p: Inicio["pendientes"]): Pendiente[] {
           : `La más antigua lleva ${una.dias} días.`),
       accion:
         p.morosas.length === 1
-          ? { texto: "Ver la cuenta", href: `/plataforma/cuentas/${una.id}?pestana=suscripcion` }
-          : { texto: "Ver cuentas", href: "/plataforma/cuentas?filtro=MOROSAS" },
+          ? {
+              texto: "Ver la cuenta",
+              href: `/plataforma/cuentas/${una.id}?pestana=suscripcion`,
+            }
+          : {
+              texto: "Ver cuentas",
+              href: "/plataforma/cuentas?filtro=MOROSAS",
+            },
     });
   }
 
@@ -99,7 +109,10 @@ export function armarPendientes(p: Inicio["pendientes"]): Pendiente[] {
           ? `${c.nombre} tiene el pago vencido hace ${plural(c.dias, "día")}`
           : `${plural(p.pagosVencidos.length, "cuenta")} con el pago vencido`,
       detalle: `${pesos(vencido)} vencido. A los 15 días pasan solas a morosas.`,
-      accion: { texto: "Registrar un pago", href: `/plataforma/cuentas/${c.id}?pestana=suscripcion` },
+      accion: {
+        texto: "Registrar un pago",
+        href: `/plataforma/cuentas/${c.id}?pestana=suscripcion`,
+      },
     });
   }
 
@@ -138,7 +151,10 @@ export function armarPendientes(p: Inicio["pendientes"]): Pendiente[] {
       detalle: `${e.empresa}: ${dolares(e.costoUsd)} este mes, contra un promedio de ${dolares(
         e.promedioUsd,
       )} al mes.`,
-      accion: { texto: "Ver consumo", href: `/plataforma/consumo-ia?cuenta=${e.cuentaId}` },
+      accion: {
+        texto: "Ver consumo",
+        href: `/plataforma/consumo-ia?cuenta=${e.cuentaId}`,
+      },
     });
   }
 
@@ -152,7 +168,9 @@ export function armarPendientes(p: Inicio["pendientes"]): Pendiente[] {
           ? "1 lectura de documentos falló hoy"
           : `${entero(fallidas)} lecturas de documentos fallaron hoy`,
       detalle: `${lista(
-        p.lecturasFallidas.map((l) => `${l.cantidad} ${NOMBRE_DOCUMENTO[l.tipo] ?? l.tipo}`),
+        p.lecturasFallidas.map(
+          (l) => `${l.cantidad} ${NOMBRE_DOCUMENTO[l.tipo] ?? l.tipo}`,
+        ),
       )}.`,
       accion: { texto: "Ver consumo", href: "/plataforma/consumo-ia" },
     });
@@ -188,7 +206,10 @@ export function armarPendientes(p: Inicio["pendientes"]): Pendiente[] {
         p.sinEntrar.length === 1
           ? `${c.nombre}, ${c.nuncaEntro ? "que nunca entró" : `hace ${c.dias} días`}.`
           : `${c.nombre} y ${p.sinEntrar.length - 1} más.`,
-      accion: { texto: "Ver cuentas", href: "/plataforma/cuentas?filtro=SIN_ACTIVIDAD" },
+      accion: {
+        texto: "Ver cuentas",
+        href: "/plataforma/cuentas?filtro=SIN_ACTIVIDAD",
+      },
     });
   }
 
@@ -219,7 +240,10 @@ export function InicioView() {
     return (
       <>
         <Encabezado titulo="Inicio" acciones={<BotonBuscar />} />
-        <ErrorCarga que="las cifras de la plataforma" alReintentar={() => void consulta.refetch()} />
+        <ErrorCarga
+          que="las cifras de la plataforma"
+          alReintentar={() => void consulta.refetch()}
+        />
       </>
     );
   }
@@ -244,18 +268,24 @@ export function InicioView() {
   const iaPesos = d.cifras.iaMesUsd * tasa;
   const ingreso = d.cifras.ingresoMensual;
   const margen = ingreso === null ? null : ingreso - iaPesos;
-  const parteIa = d.cifras.facturadoMes > 0 ? iaPesos / d.cifras.facturadoMes : null;
+  const parteIa =
+    d.cifras.facturadoMes > 0 ? iaPesos / d.cifras.facturadoMes : null;
 
   return (
     <>
-      <Encabezado titulo="Inicio" subtitulo={diaLargo(d.revisadoEn)} acciones={<BotonBuscar />} />
+      <Encabezado
+        titulo="Inicio"
+        subtitulo={diaLargo(d.revisadoEn)}
+        acciones={<BotonBuscar />}
+      />
 
       {/* ── Para atender hoy ── */}
       <Tarjeta
         titulo="Para atender hoy"
         accion={
           <span className="text-[13px] text-muted-foreground">
-            {pendientes.length > 0 && `${plural(pendientes.length, "pendiente")}, `}
+            {pendientes.length > 0 &&
+              `${plural(pendientes.length, "pendiente")}, `}
             revisado a las {hora(d.revisadoEn)}
           </span>
         }
@@ -263,7 +293,10 @@ export function InicioView() {
       >
         {pendientes.length === 0 ? (
           <div className="flex items-center gap-3.5 py-3">
-            <span className="size-2 shrink-0 rounded-full bg-success" aria-hidden />
+            <span
+              className="size-2 shrink-0 rounded-full bg-success"
+              aria-hidden
+            />
             <div className="flex flex-col gap-0.5">
               <span className="font-medium">Nada pendiente. Todo al día.</span>
               <span className="text-[13px] text-muted-foreground">
@@ -281,14 +314,22 @@ export function InicioView() {
                   i > 0 && "border-t border-border",
                 )}
               >
-                <span className={cn("size-2 shrink-0 rounded-full", PUNTO[p.tono])} aria-hidden />
+                <span
+                  className={cn("size-2 shrink-0 rounded-full", PUNTO[p.tono])}
+                  aria-hidden
+                />
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="font-medium">{p.titulo}</span>
-                  <span className="text-[13px] text-muted-foreground">{p.detalle}</span>
+                  <span className="text-[13px] text-muted-foreground">
+                    {p.detalle}
+                  </span>
                 </div>
                 <Link
                   href={p.accion.href}
-                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ml-5 sm:ml-0")}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "ml-5 sm:ml-0",
+                  )}
                 >
                   {p.accion.texto}
                 </Link>
@@ -366,7 +407,12 @@ export function InicioView() {
           <ChartContainer config={configIa} className="h-56 w-full">
             <BarChart data={meses} margin={{ left: 4, right: 4 }}>
               <CartesianGrid vertical={false} />
-              <XAxis dataKey="nombre" tickLine={false} axisLine={false} tickMargin={8} />
+              <XAxis
+                dataKey="nombre"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+              />
               <YAxis
                 tickLine={false}
                 axisLine={false}
@@ -377,13 +423,22 @@ export function InicioView() {
                     : `${Math.round(v / 1000)} mil`
                 }
               />
-              <ChartTooltip content={<ChartTooltipContent formatter={(v) => pesos(Number(v))} />} />
-              <Bar dataKey="facturado" fill="var(--color-facturado)" radius={4} />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent formatter={(v) => pesos(Number(v))} />
+                }
+              />
+              <Bar
+                dataKey="facturado"
+                fill="var(--color-facturado)"
+                radius={4}
+              />
               <Bar dataKey="ia" fill="var(--color-ia)" radius={4} />
             </BarChart>
           </ChartContainer>
           <span className="text-[13px] text-muted-foreground">
-            {parteIa !== null && `Este mes la IA cuesta ${porciento(parteIa, 1)} de lo facturado. `}
+            {parteIa !== null &&
+              `Este mes la IA cuesta ${porciento(parteIa, 1)} de lo facturado. `}
             {d.medicionDesde
               ? `La IA se mide desde el ${fecha(`${d.medicionDesde}T12:00:00Z`)}; el ingreso es lo facturado cada mes.`
               : "Todavía no hay consumo medido."}
@@ -404,7 +459,9 @@ export function InicioView() {
                   <span
                     key={e.clave}
                     className={e.color}
-                    style={{ width: `${(d.porEstado[e.clave] / totalCuentas) * 100}%` }}
+                    style={{
+                      width: `${(d.porEstado[e.clave] / totalCuentas) * 100}%`,
+                    }}
                   />
                 ) : null,
               )}
@@ -412,8 +469,14 @@ export function InicioView() {
           )}
           <div className="grid grid-cols-2 gap-x-6 gap-y-2">
             {ORDEN_ESTADOS.map((e) => (
-              <div key={e.clave} className="flex items-center gap-2 text-[13px]">
-                <span className={cn("size-2.5 shrink-0 rounded-sm", e.color)} aria-hidden />
+              <div
+                key={e.clave}
+                className="flex items-center gap-2 text-[13px]"
+              >
+                <span
+                  className={cn("size-2.5 shrink-0 rounded-sm", e.color)}
+                  aria-hidden
+                />
                 <span className="flex-1">{e.texto}</span>
                 <Mono className="text-[13px]">{d.porEstado[e.clave]}</Mono>
               </div>
@@ -507,9 +570,13 @@ export function InicioView() {
                         {e.pagaMensual ? (
                           <span className="inline-flex items-center gap-2">
                             {e.costoUsd * tasa > e.pagaMensual && (
-                              <Pastilla tono="peligro">Cuesta más de lo que paga</Pastilla>
+                              <Pastilla tono="peligro">
+                                Cuesta más de lo que paga
+                              </Pastilla>
                             )}
-                            <Mono>{porciento((e.costoUsd * tasa) / e.pagaMensual)}</Mono>
+                            <Mono>
+                              {porciento((e.costoUsd * tasa) / e.pagaMensual)}
+                            </Mono>
                           </span>
                         ) : (
                           <SinConfigurar texto="—" />
@@ -525,7 +592,10 @@ export function InicioView() {
           {/* En celular la tabla no cabe: cada empresa es una tarjeta. */}
           <ul className="m-0 flex list-none flex-col divide-y divide-border p-0 sm:hidden">
             {d.topIa.map((e) => (
-              <li key={e.empresaId} className="flex flex-col gap-1 py-3 first:pt-0">
+              <li
+                key={e.empresaId}
+                className="flex flex-col gap-1 py-3 first:pt-0"
+              >
                 <Link
                   href={`/plataforma/cuentas/${e.cuentaId}`}
                   className="font-medium hover:underline"
@@ -543,10 +613,13 @@ export function InicioView() {
                   {e.pagaMensual ? (
                     <span className="flex items-center gap-2">
                       {e.costoUsd * tasa > e.pagaMensual && (
-                        <Pastilla tono="peligro">Cuesta más de lo que paga</Pastilla>
+                        <Pastilla tono="peligro">
+                          Cuesta más de lo que paga
+                        </Pastilla>
                       )}
                       <Mono className="text-muted-foreground">
-                        {porciento((e.costoUsd * tasa) / e.pagaMensual)} de {pesos(e.pagaMensual)}
+                        {porciento((e.costoUsd * tasa) / e.pagaMensual)} de{" "}
+                        {pesos(e.pagaMensual)}
                       </Mono>
                     </span>
                   ) : (
@@ -578,16 +651,22 @@ export function InicioView() {
           ].map((c, i) => (
             <div
               key={c.etiqueta}
-              className={cn("flex flex-col gap-1 py-3", i > 0 && "border-t border-border")}
+              className={cn(
+                "flex flex-col gap-1 py-3",
+                i > 0 && "border-t border-border",
+              )}
             >
-              <span className="text-xs text-muted-foreground">{c.etiqueta}</span>
+              <span className="text-xs text-muted-foreground">
+                {c.etiqueta}
+              </span>
               <Mono className="text-lg font-medium">{c.valor}</Mono>
               <span className="text-xs text-muted-foreground">{c.nota}</span>
             </div>
           ))}
           {d.accesosDesde && (
             <p className="m-0 border-t border-border pt-3 text-xs text-muted-foreground">
-              Los accesos se cuentan desde el {fecha(`${d.accesosDesde}T12:00:00Z`)}.
+              Los accesos se cuentan desde el{" "}
+              {fecha(`${d.accesosDesde}T12:00:00Z`)}.
             </p>
           )}
         </Tarjeta>

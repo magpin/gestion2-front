@@ -1,6 +1,10 @@
 import { api } from "@/core/api/api";
 
-import type { EstadoConfiguracion } from "../types/configuracion.types";
+import type {
+  ClavePreguntaImpuesto,
+  EstadoConfiguracion,
+  EstadoImpuestos,
+} from "../types/configuracion.types";
 
 // Todas las llamadas del núcleo en un archivo.
 //
@@ -226,4 +230,32 @@ export const resolucionesApi = {
       .then((r) => r.data),
   guardarCredenciales: (datos: Record<string, unknown>) =>
     api.put("/resoluciones/credenciales", datos).then(() => undefined),
+};
+
+// ---------------------------------------------------------------------------
+// Impuestos (paso 4)
+// ---------------------------------------------------------------------------
+
+export const impuestosApi = {
+  estado: () =>
+    api.get<EstadoImpuestos>("/empresa-impuestos").then((r) => r.data),
+  responder: (clave: ClavePreguntaImpuesto, valor: boolean) =>
+    api
+      .put<EstadoImpuestos>("/empresa-impuestos/respuestas", { clave, valor })
+      .then((r) => r.data),
+  responderIca: (
+    municipio: string,
+    datos: {
+      esAgenteRetenedor: boolean;
+      esAutorretenedor: boolean;
+      tarifaProvisionalPorMil?: number;
+    },
+  ) =>
+    api
+      .put<EstadoImpuestos>(`/empresa-impuestos/ica/${municipio}`, datos)
+      .then((r) => r.data),
+  confirmar: () =>
+    api
+      .post<EstadoImpuestos>("/empresa-impuestos/confirmar")
+      .then((r) => r.data),
 };

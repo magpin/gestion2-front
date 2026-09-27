@@ -15,6 +15,7 @@ import {
   Loader2,
   Lock,
   Package,
+  Percent,
   Receipt,
   ReceiptText,
   ShoppingCart,
@@ -44,6 +45,7 @@ const ICONO: Record<ClavePaso, LucideIcon> = {
   EMPRESA: Building2,
   SEDES: Building2,
   SITUACION_LEGAL: FileText,
+  IMPUESTOS: Percent,
   PLAN_CUENTAS: BookOpen,
   RESOLUCIONES: Receipt,
 };

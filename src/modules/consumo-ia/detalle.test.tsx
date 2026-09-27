@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import type { DetalleConsumo, FilaDetalle } from "./consumo";
-import { DetalleConsumoVista, type FiltroVistaDetalle } from "./DetalleConsumoVista";
+import {
+  DetalleConsumoVista,
+  type FiltroVistaDetalle,
+} from "./DetalleConsumoVista";
 
 const CONSULTA: FilaDetalle = {
   id: "t-1",
@@ -20,7 +23,13 @@ const CONSULTA: FilaDetalle = {
   vueltas: 3,
   duracionMs: 9_500,
   tokens: { entrada: 100, salida: 200, cacheLeido: 9_000, cacheEscrito: 1_000 },
-  costo: { entrada: 0.0005, cacheLeido: 0.0045, cacheEscrito: 0.00625, salida: 0.005, total: 0.01625 },
+  costo: {
+    entrada: 0.0005,
+    cacheLeido: 0.0045,
+    cacheEscrito: 0.00625,
+    salida: 0.005,
+    total: 0.01625,
+  },
 };
 
 const LECTURA_SIN_MEDIR: FilaDetalle = {
@@ -43,13 +52,43 @@ const DATOS: DetalleConsumo = {
   desde: "2026-09-15",
   hasta: "2026-09-21",
   porCategoria: [
-    { categoria: "AYUDA", etiqueta: "Ayuda sobre el sistema", llamadas: 0, costoUsd: 0, participacion: 0 },
-    { categoria: "CONSULTA", etiqueta: "Consulta de datos", llamadas: 1, costoUsd: 0.01625, participacion: 1 },
-    { categoria: "PROPUESTA", etiqueta: "Propuesta de cobro o pago", llamadas: 0, costoUsd: 0, participacion: 0 },
-    { categoria: "LECTURA", etiqueta: "Lectura de documentos", llamadas: 1, costoUsd: 0, participacion: 0 },
+    {
+      categoria: "AYUDA",
+      etiqueta: "Ayuda sobre el sistema",
+      llamadas: 0,
+      costoUsd: 0,
+      participacion: 0,
+    },
+    {
+      categoria: "CONSULTA",
+      etiqueta: "Consulta de datos",
+      llamadas: 1,
+      costoUsd: 0.01625,
+      participacion: 1,
+    },
+    {
+      categoria: "PROPUESTA",
+      etiqueta: "Propuesta de cobro o pago",
+      llamadas: 0,
+      costoUsd: 0,
+      participacion: 0,
+    },
+    {
+      categoria: "LECTURA",
+      etiqueta: "Lectura de documentos",
+      llamadas: 1,
+      costoUsd: 0,
+      participacion: 0,
+    },
   ],
   porHerramienta: [
-    { herramienta: "consultar_cartera", etiqueta: "Cartera", respuestas: 1, veces: 2, costoUsd: 0.01625 },
+    {
+      herramienta: "consultar_cartera",
+      etiqueta: "Cartera",
+      respuestas: 1,
+      veces: 2,
+      costoUsd: 0.01625,
+    },
   ],
   filas: [CONSULTA, LECTURA_SIN_MEDIR],
   total: 2,
@@ -60,12 +99,25 @@ const DATOS: DetalleConsumo = {
   truncado: false,
 };
 
-const FILTRO: FiltroVistaDetalle = { categoria: null, orden: "FECHA", pagina: 1 };
+const FILTRO: FiltroVistaDetalle = {
+  categoria: null,
+  orden: "FECHA",
+  pagina: 1,
+};
 
 describe("DetalleConsumoVista", () => {
   it("lista cada llamada con en qué se gastó y su costo", () => {
-    render(<DetalleConsumoVista datos={DATOS} tasa={4000} filtro={FILTRO} alCambiar={() => {}} />);
-    expect(screen.getByText("Búsqueda de nombres, Cartera")).toBeInTheDocument();
+    render(
+      <DetalleConsumoVista
+        datos={DATOS}
+        tasa={4000}
+        filtro={FILTRO}
+        alCambiar={() => {}}
+      />,
+    );
+    expect(
+      screen.getByText("Búsqueda de nombres, Cartera"),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("US$ 0,0163").length).toBeGreaterThan(0);
     // La hora va en Colombia: 20:13 UTC son las 15:13.
     expect(screen.getByText("2026-09-21 15:13")).toBeInTheDocument();
@@ -73,18 +125,36 @@ describe("DetalleConsumoVista", () => {
   });
 
   it("al tocar una fila muestra el costo desarmado y lo que consultó", () => {
-    render(<DetalleConsumoVista datos={DATOS} tasa={4000} filtro={FILTRO} alCambiar={() => {}} />);
+    render(
+      <DetalleConsumoVista
+        datos={DATOS}
+        tasa={4000}
+        filtro={FILTRO}
+        alCambiar={() => {}}
+      />,
+    );
     fireEvent.click(screen.getByText("Búsqueda de nombres, Cartera"));
     expect(screen.getByText("Caché escrito")).toBeInTheDocument();
     // 0,00625 de 0,01625.
     expect(screen.getByText("38,5 %")).toBeInTheDocument();
-    expect(screen.getByText("Búsqueda de nombres, Cartera ×2")).toBeInTheDocument();
+    expect(
+      screen.getByText("Búsqueda de nombres, Cartera ×2"),
+    ).toBeInTheDocument();
   });
 
   it("una lectura sin medir lo dice en vez de mostrar ceros", () => {
-    render(<DetalleConsumoVista datos={DATOS} tasa={4000} filtro={FILTRO} alCambiar={() => {}} />);
+    render(
+      <DetalleConsumoVista
+        datos={DATOS}
+        tasa={4000}
+        filtro={FILTRO}
+        alCambiar={() => {}}
+      />,
+    );
     fireEvent.click(screen.getByText("RUT"));
-    expect(screen.getByText(/antes de que se midiera el consumo/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/antes de que se midiera el consumo/),
+    ).toBeInTheDocument();
   });
 
   it("filtrar u ordenar vuelve a la primera página", () => {
@@ -98,9 +168,17 @@ describe("DetalleConsumoVista", () => {
       />,
     );
     fireEvent.click(screen.getByRole("radio", { name: "Propuesta" }));
-    expect(alCambiar).toHaveBeenLastCalledWith({ categoria: "PROPUESTA", orden: "FECHA", pagina: 1 });
+    expect(alCambiar).toHaveBeenLastCalledWith({
+      categoria: "PROPUESTA",
+      orden: "FECHA",
+      pagina: 1,
+    });
     fireEvent.click(screen.getByRole("radio", { name: "Más caras" }));
-    expect(alCambiar).toHaveBeenLastCalledWith({ categoria: null, orden: "COSTO", pagina: 1 });
+    expect(alCambiar).toHaveBeenLastCalledWith({
+      categoria: null,
+      orden: "COSTO",
+      pagina: 1,
+    });
   });
 
   it("pagina cuando hay más de una página", () => {

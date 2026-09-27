@@ -11,6 +11,7 @@ export const RUTA_PASO: Record<ClavePaso, string> = {
   EMPRESA: "/configuracion/empresa",
   SEDES: "/configuracion/sedes",
   SITUACION_LEGAL: "/configuracion/situacion_legal",
+  IMPUESTOS: "/configuracion/impuestos",
   PLAN_CUENTAS: "/configuracion/plan_cuentas",
   RESOLUCIONES: "/configuracion/resoluciones",
 };

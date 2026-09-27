@@ -39,6 +39,7 @@ import { PasoEmpresa } from "./PasoEmpresa";
 import { PasoPlanCuentas } from "./PasoPlanCuentas";
 import { PasoResoluciones } from "./PasoResoluciones";
 import { PasoSedes } from "./PasoSedes";
+import { PasoImpuestos } from "./PasoImpuestos";
 import { PasoSituacionLegal } from "./PasoSituacionLegal";
 
 /** El orden en que se piden los documentos. Uno a la vez. */
@@ -65,6 +66,7 @@ const PASO: Record<ClavePaso, { nombre: string; Componente: () => React.ReactNod
   EMPRESA: { nombre: "Empresa", Componente: PasoEmpresa },
   SEDES: { nombre: "Sedes", Componente: PasoSedes },
   SITUACION_LEGAL: { nombre: "Situación legal", Componente: PasoSituacionLegal },
+  IMPUESTOS: { nombre: "Impuestos", Componente: PasoImpuestos },
   PLAN_CUENTAS: { nombre: "Plan de cuentas", Componente: PasoPlanCuentas },
   RESOLUCIONES: { nombre: "Resoluciones", Componente: PasoResoluciones },
 };

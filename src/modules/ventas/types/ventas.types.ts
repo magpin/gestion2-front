@@ -11,16 +11,10 @@ import type {
 // ya explica `docs/planes/ventas-backend.md`.
 
 export type TipoVentaDocumento =
-  | "COTIZACION"
-  | "FACTURA"
-  | "NOTA_CREDITO"
-  | "NOTA_DEBITO";
+  "COTIZACION" | "FACTURA" | "NOTA_CREDITO" | "NOTA_DEBITO";
 /** `CONVERTIDA` es exclusivo de COTIZACION: la que ya se pasó a factura. */
 export type EstadoVentaDocumento =
-  | "BORRADOR"
-  | "EMITIDA"
-  | "CONVERTIDA"
-  | "ANULADA";
+  "BORRADOR" | "EMITIDA" | "CONVERTIDA" | "ANULADA";
 
 export interface VentaDocumentoResumen {
   id: string;
@@ -66,6 +60,11 @@ export interface VentaDocumentoResumen {
    * asiento ni kardex: se consulta y se cobra, pero no lleva notas.
    */
   historica: boolean;
+  /**
+   * Lo que el motor de retenciones encontró al facturar: el cliente retuvo
+   * distinto de la norma, la autorretención que se practicó, falta una tarifa.
+   */
+  retencion_aviso?: string | null;
 }
 
 export interface VentaDocumentoLineaResumen {

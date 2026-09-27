@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Download, Loader2, Plus, Search } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Download,
+  Loader2,
+  Plus,
+  Search,
+} from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,14 +165,22 @@ export function CuentasView() {
             aria-label="Buscar cuenta por nombre"
           />
         </div>
-        <Button variant="outline" className="ml-auto" onClick={exportar} disabled={exportando}>
+        <Button
+          variant="outline"
+          className="ml-auto"
+          onClick={exportar}
+          disabled={exportando}
+        >
           {exportando ? <Loader2 className="animate-spin" /> : <Download />}
           Exportar a Excel
         </Button>
       </div>
 
       {consulta.isError ? (
-        <ErrorCarga que="las cuentas" alReintentar={() => void consulta.refetch()} />
+        <ErrorCarga
+          que="las cuentas"
+          alReintentar={() => void consulta.refetch()}
+        />
       ) : (
         <div
           className={cn(
@@ -183,13 +198,22 @@ export function CuentasView() {
                 titulo="Todavía no hay cuentas."
                 texto="Cada cliente que paga es una cuenta. Al crearla se genera la contraseña de su administrador."
                 accion={
-                  <Link href="/plataforma/cuentas/nueva" className={buttonVariants()}>
+                  <Link
+                    href="/plataforma/cuentas/nueva"
+                    className={buttonVariants()}
+                  >
                     Crear la primera cuenta
                   </Link>
                 }
               />
             ) : (
-              <Vacio titulo={q ? `Ninguna cuenta coincide con «${q}».` : "Ninguna cuenta en este filtro."} />
+              <Vacio
+                titulo={
+                  q
+                    ? `Ninguna cuenta coincide con «${q}».`
+                    : "Ninguna cuenta en este filtro."
+                }
+              />
             )
           ) : (
             <>
@@ -199,7 +223,11 @@ export function CuentasView() {
                   <thead>
                     <tr>
                       {COLUMNAS.map((c) => (
-                        <Th key={c.orden} derecha={c.derecha} className="first:pl-5">
+                        <Th
+                          key={c.orden}
+                          derecha={c.derecha}
+                          className="first:pl-5"
+                        >
                           <button
                             type="button"
                             onClick={() => ordenarPor(c.orden)}
@@ -224,7 +252,9 @@ export function CuentasView() {
                       return (
                         <tr
                           key={c.id}
-                          onClick={() => router.push(`/plataforma/cuentas/${c.id}`)}
+                          onClick={() =>
+                            router.push(`/plataforma/cuentas/${c.id}`)
+                          }
                           className="group/fila cursor-pointer hover:bg-muted/60"
                         >
                           <td className="border-b border-border py-2.5 pl-5 pr-3 text-[13px] group-last/fila:border-b-0">
@@ -251,10 +281,14 @@ export function CuentasView() {
                             </Mono>
                           </Celda>
                           <Celda derecha>
-                            <Mono title={dolares(c.iaMesUsd)}>{pesos(c.iaMesUsd * tasa)}</Mono>
+                            <Mono title={dolares(c.iaMesUsd)}>
+                              {pesos(c.iaMesUsd * tasa)}
+                            </Mono>
                           </Celda>
                           <Celda>
-                            <span className="block">{cuando(c.ultimoAcceso)}</span>
+                            <span className="block">
+                              {cuando(c.ultimoAcceso)}
+                            </span>
                             {dias !== null && (
                               <span className="block text-xs text-warning">
                                 {dias} días sin entrar
@@ -284,8 +318,16 @@ export function CuentasView() {
                         <EstadoCuentaBadge estado={c.estado} />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <BarraCupo usados={c.empresas} max={c.maxEmpresas} etiqueta="Empresas" />
-                        <BarraCupo usados={c.usuarios} max={c.maxUsuarios} etiqueta="Usuarios" />
+                        <BarraCupo
+                          usados={c.empresas}
+                          max={c.maxEmpresas}
+                          etiqueta="Empresas"
+                        />
+                        <BarraCupo
+                          usados={c.usuarios}
+                          max={c.maxUsuarios}
+                          etiqueta="Usuarios"
+                        />
                       </div>
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>
@@ -330,7 +372,13 @@ export function CuentasView() {
   );
 }
 
-function Celda({ children, derecha }: { children: React.ReactNode; derecha?: boolean }) {
+function Celda({
+  children,
+  derecha,
+}: {
+  children: React.ReactNode;
+  derecha?: boolean;
+}) {
   return (
     <td
       className={cn(

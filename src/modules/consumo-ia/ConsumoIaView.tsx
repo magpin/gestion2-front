@@ -12,7 +12,10 @@ import {
   rangoDe,
   type Periodo,
 } from "./consumo";
-import { DetalleConsumoVista, type FiltroVistaDetalle } from "./DetalleConsumoVista";
+import {
+  DetalleConsumoVista,
+  type FiltroVistaDetalle,
+} from "./DetalleConsumoVista";
 import { TableroConsumoVista } from "./TableroConsumoVista";
 
 /** Las dos partes del tablero: el resumen y el detalle de cada llamada. */
@@ -71,8 +74,17 @@ export function ConsumoIaView() {
   });
 
   const detalle = useQuery({
-    queryKey: ["consumo-ia", "detalle", claveActual, desde, hasta, empresaId, filtroDetalle],
-    queryFn: () => pedirDetalle(claveActual, { desde, hasta, empresaId, ...filtroDetalle }),
+    queryKey: [
+      "consumo-ia",
+      "detalle",
+      claveActual,
+      desde,
+      hasta,
+      empresaId,
+      filtroDetalle,
+    ],
+    queryFn: () =>
+      pedirDetalle(claveActual, { desde, hasta, empresaId, ...filtroDetalle }),
     enabled: claveActual !== "" && seccion === "DETALLE",
     retry: false,
     placeholderData: (anterior) => anterior,
@@ -122,7 +134,8 @@ export function ConsumoIaView() {
         <div className="flex flex-col gap-1">
           <h1 className="m-0 text-xl font-semibold">Consumo de la IA</h1>
           <p className="m-0 text-sm text-muted-foreground">
-            Cuánto cuesta, en qué se va y con qué eficiencia. Solo cifras: nada de lo conversado.
+            Cuánto cuesta, en qué se va y con qué eficiencia. Solo cifras: nada
+            de lo conversado.
           </p>
         </div>
         <button
@@ -135,7 +148,11 @@ export function ConsumoIaView() {
       </header>
 
       <div className="flex flex-wrap items-end gap-3">
-        <div role="radiogroup" aria-label="Período" className="flex flex-wrap gap-1.5">
+        <div
+          role="radiogroup"
+          aria-label="Período"
+          className="flex flex-wrap gap-1.5"
+        >
           {(Object.keys(ETIQUETA_PERIODO) as Periodo[]).map((p) => (
             <button
               key={p}
@@ -144,7 +161,9 @@ export function ConsumoIaView() {
               aria-checked={periodo === p}
               onClick={() => cambiarPeriodo(p)}
               className={`h-8 rounded-md border px-3 text-[13px] ${
-                periodo === p ? "border-foreground bg-muted font-medium" : "border-input bg-card"
+                periodo === p
+                  ? "border-foreground bg-muted font-medium"
+                  : "border-input bg-card"
               }`}
             >
               {ETIQUETA_PERIODO[p]}
@@ -155,7 +174,9 @@ export function ConsumoIaView() {
           Empresa
           <select
             value={empresaId ?? ""}
-            onChange={(e) => cambiarEmpresa(e.target.value === "" ? null : e.target.value)}
+            onChange={(e) =>
+              cambiarEmpresa(e.target.value === "" ? null : e.target.value)
+            }
             className="h-8 rounded-md border border-input bg-card px-2 text-[13px] text-foreground"
           >
             <option value="">Todas</option>
@@ -177,7 +198,11 @@ export function ConsumoIaView() {
         </label>
       </div>
 
-      <div role="tablist" aria-label="Sección" className="flex gap-4 border-b border-border">
+      <div
+        role="tablist"
+        aria-label="Sección"
+        className="flex gap-4 border-b border-border"
+      >
         {(
           [
             ["RESUMEN", "Resumen"],
@@ -203,7 +228,9 @@ export function ConsumoIaView() {
 
       {seccion === "RESUMEN" && (
         <>
-          {consulta.isPending && <p className="text-sm text-muted-foreground">Cargando…</p>}
+          {consulta.isPending && (
+            <p className="text-sm text-muted-foreground">Cargando…</p>
+          )}
           {consulta.error !== null && !rechazada && (
             <p role="alert" className="text-sm text-warning">
               {consulta.error.message}
@@ -217,7 +244,9 @@ export function ConsumoIaView() {
 
       {seccion === "DETALLE" && (
         <>
-          {detalle.isPending && <p className="text-sm text-muted-foreground">Cargando…</p>}
+          {detalle.isPending && (
+            <p className="text-sm text-muted-foreground">Cargando…</p>
+          )}
           {detalle.error !== null && !rechazada && (
             <p role="alert" className="text-sm text-warning">
               {detalle.error.message}
@@ -237,7 +266,13 @@ export function ConsumoIaView() {
   );
 }
 
-function Entrada({ error, alEntrar }: { error: string | null; alEntrar: (clave: string) => void }) {
+function Entrada({
+  error,
+  alEntrar,
+}: {
+  error: string | null;
+  alEntrar: (clave: string) => void;
+}) {
   const [valor, setValor] = useState("");
   return (
     <main className="flex min-h-dvh items-center justify-center px-4">
@@ -250,7 +285,8 @@ function Entrada({ error, alEntrar }: { error: string | null; alEntrar: (clave: 
       >
         <h1 className="m-0 text-lg font-semibold">Consumo de la IA</h1>
         <p className="m-0 text-sm text-muted-foreground">
-          Página privada. Escribí la clave del tablero (<code className="text-xs">CLAVE_CONSUMO_IA</code>).
+          Página privada. Escribí la clave del tablero (
+          <code className="text-xs">CLAVE_CONSUMO_IA</code>).
         </p>
         <input
           type="password"

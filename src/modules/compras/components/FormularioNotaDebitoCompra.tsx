@@ -17,8 +17,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { PropuestaRenta } from "@/modules/retenciones/components/PropuestaRenta";
+import { useSimulacionRenta } from "@/modules/retenciones/hooks/useSimulacionRenta";
+import {
+  aEnvioRenta,
+  problemaRenta,
+  respuestasRentaVacias,
+} from "@/modules/retenciones/types/retenciones.types";
+import { comprasApi } from "../services/compras.service";
 import {
   EditorLineasCompra,
+  lineaCompleta,
   lineaCompraVacia,
   type LineaCompraBorrador,
 } from "./EditorLineasCompra";
@@ -39,9 +48,12 @@ const hoy = () => {
  * flete, un interés, un mayor valor—.
  *
  * Lleva líneas siempre y no copia las de la compra: lo que el proveedor
- * agrega suele ser un concepto nuevo. Reusa `EditorLineasCompra` tal cual,
- * que ya pide producto, cantidad y costo — que es exactamente la forma de
- * esta nota.
+ * agrega suele ser un concepto nuevo —un producto o un gasto—. Reusa
+ * `EditorLineasCompra` tal cual.
+ *
+ * Lleva retención como la compra (plan motor de retenciones, Fase 8, §8.7): el
+ * mismo bloque, el mismo motor, con el proveedor de la compra y la fecha de
+ * la nota.
  */
 export function FormularioNotaDebitoCompra({
   abierto,
@@ -65,6 +77,7 @@ export function FormularioNotaDebitoCompra({
   const [lineas, setLineas] = useState<LineaCompraBorrador[]>([
     lineaCompraVacia(),
   ]);
+  const [renta, setRenta] = useState(respuestasRentaVacias);
 
   const limpiar = () => {
     setElegidaAMano(null);
@@ -72,7 +85,48 @@ export function FormularioNotaDebitoCompra({
     setNumeroNota("");
     setMotivo("");
     setLineas([lineaCompraVacia()]);
+    setRenta(respuestasRentaVacias());
   };
+
+  const lineasParaEnviar = () =>
+    lineas.map((l) =>
+      l.tipo === "PRODUCTO"
+        ? {
+            productoId: l.producto!.id,
+            cantidad: Number(l.cantidad),
+            costoUnitario: Number(l.costoUnitario),
+          }
+        : {
+            cuentaId: l.cuenta!.id,
+            detalle: l.detalle.trim(),
+            ivaTarifa: Number(l.ivaTarifa),
+            cantidad: Number(l.cantidad),
+            costoUnitario: Number(l.costoUnitario),
+          },
+    );
+  const lineasListas =
+    lineas.length > 0 &&
+    lineas.every(
+      (l) =>
+        lineaCompleta(l) &&
+        Number(l.cantidad) > 0 &&
+        Number(l.costoUnitario) > 0,
+    );
+
+  // La retención la propone el servidor con el proveedor de la compra y la
+  // fecha de la nota: el mismo motor que corre al registrar.
+  const simulacion = useSimulacionRenta(
+    "nota-debito-compra",
+    compra !== null && fecha !== "" && lineasListas && !renta.sinRetencion
+      ? {
+          terceroId: compra.tercero_id,
+          fecha,
+          lineas: lineasParaEnviar(),
+          ...aEnvioRenta(renta),
+        }
+      : null,
+    comprasApi.simularRetencion,
+  );
 
   const impedimento = (): string | null => {
     if (compra === null) return "Elegí la compra sobre la que cobra.";
@@ -81,8 +135,8 @@ export function FormularioNotaDebitoCompra({
       return "Falta el número que el proveedor le puso a su nota.";
     if (motivo.trim().length < 3)
       return "Contá por qué cobra de más. Es lo primero que lee quien audita.";
-    if (lineas.some((l) => l.producto === null))
-      return "Cada línea necesita un producto.";
+    if (lineas.some((l) => !lineaCompleta(l)))
+      return "Cada línea necesita el producto, o la cuenta y el detalle del gasto.";
     if (lineas.some((l) => Number(l.cantidad) <= 0))
       return "Cada línea necesita una cantidad mayor a cero.";
     if (lineas.some((l) => Number(l.costoUnitario) <= 0))
@@ -90,7 +144,7 @@ export function FormularioNotaDebitoCompra({
     return null;
   };
 
-  const problema = impedimento();
+  const problema = impedimento() ?? problemaRenta(simulacion.propuesta, renta);
 
   const enviar = () => {
     if (problema !== null || compra === null) return;
@@ -99,11 +153,8 @@ export function FormularioNotaDebitoCompra({
       fecha,
       numeroNotaProveedor: numeroNota.trim(),
       motivo: motivo.trim(),
-      lineas: lineas.map((l) => ({
-        productoId: l.producto!.id,
-        cantidad: Number(l.cantidad),
-        costoUnitario: Number(l.costoUnitario),
-      })),
+      lineas: lineasParaEnviar(),
+      ...aEnvioRenta(renta),
     });
   };
 
@@ -122,15 +173,19 @@ export function FormularioNotaDebitoCompra({
           <div>
             <DialogTitle>Nota débito del proveedor</DialogTitle>
             <DialogDescription>
-              Sube lo que se le debe sobre una compra ya registrada. No mueve
-              el kardex ni practica retenciones.
+              Sube lo que se le debe sobre una compra ya registrada. No mueve el
+              kardex; lo que cobra de más lleva retención como la compra.
             </DialogDescription>
           </div>
           <DialogCloseIcon />
         </DialogHeader>
 
         <DialogBody className="flex flex-col gap-5">
-          <Campo id="compra" etiqueta="Compra sobre la que cobra" escala="grande">
+          <Campo
+            id="compra"
+            etiqueta="Compra sobre la que cobra"
+            escala="grande"
+          >
             {compraFija ? (
               <p className="flex h-11 items-center rounded-xl border border-border bg-muted px-4 text-sm">
                 {compraFija.numero_factura_proveedor} ·{" "}
@@ -185,6 +240,14 @@ export function FormularioNotaDebitoCompra({
             <p className="mb-3 text-sm font-semibold">Qué cobra de más</p>
             <EditorLineasCompra lineas={lineas} onCambiar={setLineas} />
           </div>
+
+          <PropuestaRenta
+            propuesta={simulacion.propuesta}
+            cargando={simulacion.cargando}
+            error={simulacion.error}
+            respuestas={renta}
+            onCambiar={setRenta}
+          />
         </DialogBody>
 
         <DialogFooter className="sm:justify-between">

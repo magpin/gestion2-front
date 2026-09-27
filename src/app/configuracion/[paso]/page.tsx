@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
 
 import { PasoEmpresa } from "@/modules/configuracion/pasos/PasoEmpresa";
+import { PasoImpuestos } from "@/modules/configuracion/pasos/PasoImpuestos";
 import { PasoPlanCuentas } from "@/modules/configuracion/pasos/PasoPlanCuentas";
 import { PasoResoluciones } from "@/modules/configuracion/pasos/PasoResoluciones";
 import { PasoSedes } from "@/modules/configuracion/pasos/PasoSedes";
 import { PasoSituacionLegal } from "@/modules/configuracion/pasos/PasoSituacionLegal";
 
 // Una ruta por paso y no un asistente con estado interno: el director entra
-// directo a corregir la tarifa de ICA desde el tablero, sin recorrer los cinco.
+// directo a corregir la tarifa de ICA desde el tablero, sin recorrer los seis.
 //
 // Solo lo que hay que resolver antes de operar. Invitar usuarios y cargar
 // clientes se hace desde su propia pantalla, cuantas veces haga falta: como paso
@@ -16,6 +17,7 @@ const PASOS = {
   empresa: PasoEmpresa,
   sedes: PasoSedes,
   situacion_legal: PasoSituacionLegal,
+  impuestos: PasoImpuestos,
   plan_cuentas: PasoPlanCuentas,
   resoluciones: PasoResoluciones,
 } as const;

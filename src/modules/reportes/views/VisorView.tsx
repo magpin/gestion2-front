@@ -46,19 +46,49 @@ import type {
  */
 const CONOCIDOS: Record<
   ClaveReporte,
-  { etiqueta: string; area: Area; etiquetaArea: string; parametro: Parametro }
+  {
+    etiqueta: string;
+    area: Area;
+    etiquetaArea: string;
+    parametro: Parametro;
+    /** Si la hoja sale apaisada: el esqueleto de carga la imita. */
+    horizontal: boolean;
+  }
 > = {
   VENTAS_POR_CLIENTE: {
     etiqueta: "Ventas del mes por cliente",
     area: "VENTAS",
     etiquetaArea: "Ventas",
     parametro: "RANGO",
+    horizontal: false,
   },
   ANTIGUEDAD_CARTERA: {
     etiqueta: "Antigüedad de saldos de cartera",
     area: "CARTERA",
     etiquetaArea: "Cartera",
     parametro: "CORTE",
+    horizontal: true,
+  },
+  RETENCIONES_350: {
+    etiqueta: "Formulario 350 — retenciones del mes",
+    area: "CONTABILIDAD",
+    etiquetaArea: "Contabilidad",
+    parametro: "RANGO",
+    horizontal: true,
+  },
+  RETEICA: {
+    etiqueta: "ReteICA por municipio",
+    area: "CONTABILIDAD",
+    etiquetaArea: "Contabilidad",
+    parametro: "RANGO",
+    horizontal: false,
+  },
+  CERTIFICADOS_RETENCION: {
+    etiqueta: "Certificados de retención",
+    area: "CONTABILIDAD",
+    etiquetaArea: "Contabilidad",
+    parametro: "RANGO",
+    horizontal: false,
   },
 };
 
@@ -192,7 +222,7 @@ function Visor({ reporte, eleccion }: { reporte: ClaveReporte; eleccion: Eleccio
         {sinPermiso ? (
           <SinPermiso area={conocido.etiquetaArea} />
         ) : corriendo ? (
-          <Corriendo onCancelar={cancelar} horizontal={conocido.parametro === "CORTE"} />
+          <Corriendo onCancelar={cancelar} horizontal={conocido.horizontal} />
         ) : hoja.isError ? (
           <Aviso
             icono={<AlertTriangle className="size-5" aria-hidden />}

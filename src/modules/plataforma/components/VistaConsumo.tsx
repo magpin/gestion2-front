@@ -38,7 +38,9 @@ export function VistaConsumo({
   cuentaInicial?: string | null;
 }) {
   const [periodo, setPeriodo] = useState<Periodo>("MES");
-  const [cuentaId, setCuentaId] = useState<string | null>(cuentaFija ?? cuentaInicial ?? null);
+  const [cuentaId, setCuentaId] = useState<string | null>(
+    cuentaFija ?? cuentaInicial ?? null,
+  );
   const [empresaId, setEmpresaId] = useState<string | null>(null);
   const [seccion, setSeccion] = useState<"RESUMEN" | "DETALLE">("RESUMEN");
   const [filtroDetalle, setFiltroDetalle] = useState<FiltroVistaDetalle>({
@@ -60,7 +62,8 @@ export function VistaConsumo({
 
   const detalle = useQuery({
     queryKey: ["plataforma", "consumo", "detalle", filtro, filtroDetalle],
-    queryFn: () => plataformaService.consumoDetalle({ ...filtro, ...filtroDetalle }),
+    queryFn: () =>
+      plataformaService.consumoDetalle({ ...filtro, ...filtroDetalle }),
     enabled: seccion === "DETALLE",
     placeholderData: keepPreviousData,
   });
@@ -72,7 +75,9 @@ export function VistaConsumo({
     for (const e of empresas) m.set(e.cuentaId, e.cuenta);
     return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1], "es"));
   }, [empresas]);
-  const empresasDeCuenta = empresas.filter((e) => cuentaId === null || e.cuentaId === cuentaId);
+  const empresasDeCuenta = empresas.filter(
+    (e) => cuentaId === null || e.cuentaId === cuentaId,
+  );
 
   const reiniciarDetalle = () => setFiltroDetalle((f) => ({ ...f, pagina: 1 }));
 
@@ -147,8 +152,8 @@ export function VistaConsumo({
           />
         </label>
         <span className="w-full text-xs text-muted-foreground">
-          {cuentaFija && "Solo cifras: tokens, costos, tiempos y cantidades. "}Del{" "}
-          {fecha(`${desde}T12:00:00Z`)} al {fecha(`${hasta}T12:00:00Z`)}.
+          {cuentaFija && "Solo cifras: tokens, costos, tiempos y cantidades. "}
+          Del {fecha(`${desde}T12:00:00Z`)} al {fecha(`${hasta}T12:00:00Z`)}.
         </span>
       </div>
 
@@ -164,14 +169,20 @@ export function VistaConsumo({
 
       {seccion === "RESUMEN" ? (
         tablero.isError ? (
-          <ErrorCarga que="las cifras de la IA" alReintentar={() => void tablero.refetch()} />
+          <ErrorCarga
+            que="las cifras de la IA"
+            alReintentar={() => void tablero.refetch()}
+          />
         ) : !tablero.data ? (
           <Cargando />
         ) : (
           <TableroConsumoVista datos={tablero.data} tasa={tasa} />
         )
       ) : detalle.isError ? (
-        <ErrorCarga que="el detalle del gasto" alReintentar={() => void detalle.refetch()} />
+        <ErrorCarga
+          que="el detalle del gasto"
+          alReintentar={() => void detalle.refetch()}
+        />
       ) : !detalle.data ? (
         <Cargando />
       ) : (

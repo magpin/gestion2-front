@@ -22,6 +22,8 @@ export interface TerceroResumen {
   responsableIva: boolean;
   /** Si declara renta. Decide la tarifa de retefuente donde hay dos (4% o 6%). */
   declaranteRenta: boolean;
+  /** La ley distingue natural y jurídica en algunas retenciones (honorarios). */
+  tipoPersona: "NATURAL" | "JURIDICA";
   activo: boolean;
 }
 
@@ -103,6 +105,7 @@ export function resumirTercero(d: TerceroDetalle): TerceroResumen {
     esEmpleado: d.es_empleado,
     responsableIva: d.responsable_iva,
     declaranteRenta: d.declarante_renta ?? true,
+    tipoPersona: d.tipo_persona,
     activo: d.activo,
   };
 }

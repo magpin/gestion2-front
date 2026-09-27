@@ -9,6 +9,7 @@ import {
   Building2,
   Home,
   Layers,
+  Percent,
   Menu,
   Search,
   ShieldCheck,
@@ -19,7 +20,10 @@ import {
 import { BotonTema } from "@/components/shared/BotonTema";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { plataformaService, sesionPlataforma } from "../services/plataforma.service";
+import {
+  plataformaService,
+  sesionPlataforma,
+} from "../services/plataforma.service";
 import { BuscadorGlobal } from "./BuscadorGlobal";
 
 /**
@@ -37,9 +41,14 @@ const SECCIONES: { href: string; texto: string; icono: LucideIcon }[] = [
   { href: "/plataforma/cuentas", texto: "Cuentas", icono: Building2 },
   { href: "/plataforma/consumo-ia", texto: "Consumo de IA", icono: Sparkles },
   { href: "/plataforma/planes", texto: "Planes", icono: Layers },
+  { href: "/plataforma/retenciones", texto: "Retenciones", icono: Percent },
   { href: "/plataforma/bitacora", texto: "Bitácora", icono: BookText },
   { href: "/plataforma/sistema", texto: "Sistema", icono: Activity },
-  { href: "/plataforma/administradores", texto: "Administradores", icono: ShieldCheck },
+  {
+    href: "/plataforma/administradores",
+    texto: "Administradores",
+    icono: ShieldCheck,
+  },
 ];
 
 const Buscar = createContext<() => void>(() => {});
@@ -83,7 +92,9 @@ export function CromoPlataforma({ children }: { children: React.ReactNode }) {
   };
 
   const activa = (href: string) =>
-    href === "/plataforma" ? ruta === href : ruta === href || ruta.startsWith(`${href}/`);
+    href === "/plataforma"
+      ? ruta === href
+      : ruta === href || ruta.startsWith(`${href}/`);
 
   const riel = (
     <Riel
@@ -97,7 +108,9 @@ export function CromoPlataforma({ children }: { children: React.ReactNode }) {
   return (
     <Buscar.Provider value={() => setBuscando(true)}>
       <div className="flex min-h-dvh bg-background text-foreground">
-        <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 lg:block">{riel}</aside>
+        <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 lg:block">
+          {riel}
+        </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
           {/* En celular el riel se vuelve una barra con menú. */}
@@ -193,14 +206,21 @@ function Riel({
             >
               <Icono className="size-[18px]" strokeWidth={1.75} aria-hidden />
               <span>{texto}</span>
-              {aca && <span className="ml-auto size-1.5 rounded-full bg-brand" aria-hidden />}
+              {aca && (
+                <span
+                  className="ml-auto size-1.5 rounded-full bg-brand"
+                  aria-hidden
+                />
+              )}
             </Link>
           );
         })}
       </div>
 
       <div className="mt-auto flex flex-col gap-2.5 border-t border-rail-line px-2 pt-4">
-        {email && <span className="truncate text-[13px] text-rail-muted">{email}</span>}
+        {email && (
+          <span className="truncate text-[13px] text-rail-muted">{email}</span>
+        )}
         <div className="flex items-center justify-between gap-2">
           <button
             type="button"

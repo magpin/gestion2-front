@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { KeyRound, Loader2, Plus, UserCheck, UserX } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -32,10 +37,23 @@ import {
   Th,
   Vacio,
 } from "../components/piezas";
-import { DialogoPago, EstadoPago, PestanaSuscripcion } from "../components/suscripcion";
+import {
+  DialogoPago,
+  EstadoPago,
+  PestanaSuscripcion,
+} from "../components/suscripcion";
 import { VistaConsumo } from "../components/VistaConsumo";
 import { describir } from "../lib/bitacora";
-import { cuando, dolares, fecha, hora, lista, nit, pesos, porciento } from "../lib/formato";
+import {
+  cuando,
+  dolares,
+  fecha,
+  hora,
+  lista,
+  nit,
+  pesos,
+  porciento,
+} from "../lib/formato";
 import { useTasa } from "../lib/tasa";
 import { plataformaService } from "../services/plataforma.service";
 import {
@@ -46,8 +64,10 @@ import {
   type EntradaBitacora,
 } from "../types/plataforma.types";
 
-type Pestana = "resumen" | "empresas" | "usuarios" | "consumo" | "suscripcion" | "bitacora";
-type Dialogo = "plan" | "estado" | "cupos" | "empresa" | "usuario" | "pago" | null;
+type Pestana =
+  "resumen" | "empresas" | "usuarios" | "consumo" | "suscripcion" | "bitacora";
+type Dialogo =
+  "plan" | "estado" | "cupos" | "empresa" | "usuario" | "pago" | null;
 
 const GRUPO: Record<string, string> = {
   GRUPO_1: "Grupo 1",
@@ -61,9 +81,11 @@ export function DetalleCuentaView({ id }: { id: string }) {
   const url = useSearchParams();
   const pestana = (url.get("pestana") as Pestana | null) ?? "resumen";
   const [dialogo, setDialogo] = useState<Dialogo>(null);
-  const [contrasena, setContrasena] = useState<{ password: string; email: string; nombre?: string } | null>(
-    null,
-  );
+  const [contrasena, setContrasena] = useState<{
+    password: string;
+    email: string;
+    nombre?: string;
+  } | null>(null);
 
   const consulta = useQuery({
     queryKey: ["plataforma", "cuenta", id],
@@ -71,14 +93,22 @@ export function DetalleCuentaView({ id }: { id: string }) {
   });
 
   const irA = (p: Pestana) =>
-    router.replace(p === "resumen" ? ruta : `${ruta}?pestana=${p}`, { scroll: false });
+    router.replace(p === "resumen" ? ruta : `${ruta}?pestana=${p}`, {
+      scroll: false,
+    });
 
   if (consulta.isPending) return <EsqueletoPagina tarjetas={4} />;
   if (consulta.isError || !consulta.data) {
     return (
       <>
-        <Encabezado titulo="Cuenta" ruta={{ href: "/plataforma/cuentas", texto: "Cuentas" }} />
-        <ErrorCarga que="la cuenta" alReintentar={() => void consulta.refetch()} />
+        <Encabezado
+          titulo="Cuenta"
+          ruta={{ href: "/plataforma/cuentas", texto: "Cuentas" }}
+        />
+        <ErrorCarga
+          que="la cuenta"
+          alReintentar={() => void consulta.refetch()}
+        />
       </>
     );
   }
@@ -106,7 +136,9 @@ export function DetalleCuentaView({ id }: { id: string }) {
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <PlanBadge plan={c.plan} />
           <EstadoCuentaBadge estado={c.estado} />
-          <span className="text-[13px] text-muted-foreground">Cliente desde el {fecha(c.creadoEn)}</span>
+          <span className="text-[13px] text-muted-foreground">
+            Cliente desde el {fecha(c.creadoEn)}
+          </span>
         </div>
       </Encabezado>
 
@@ -117,7 +149,10 @@ export function DetalleCuentaView({ id }: { id: string }) {
       )}
       {pestana === "suscripcion" && <PestanaSuscripcion cuenta={c} />}
       {pestana === "empresas" && (
-        <Empresas empresas={d.empresas} alAgregar={() => setDialogo("empresa")} />
+        <Empresas
+          empresas={d.empresas}
+          alAgregar={() => setDialogo("empresa")}
+        />
       )}
       {pestana === "usuarios" && (
         <Usuarios
@@ -131,11 +166,22 @@ export function DetalleCuentaView({ id }: { id: string }) {
 
       {/* Cada diálogo se monta al abrirse: arranca con los datos de hoy. */}
       {dialogo === "plan" && (
-        <DialogoPlan cuenta={c} iaMesUsd={c.iaMesUsd} abierto alCerrar={() => setDialogo(null)} />
+        <DialogoPlan
+          cuenta={c}
+          iaMesUsd={c.iaMesUsd}
+          abierto
+          alCerrar={() => setDialogo(null)}
+        />
       )}
-      {dialogo === "estado" && <DialogoEstado cuenta={c} abierto alCerrar={() => setDialogo(null)} />}
-      {dialogo === "cupos" && <DialogoCupos cuenta={c} abierto alCerrar={() => setDialogo(null)} />}
-      {dialogo === "empresa" && <DialogoEmpresa cuenta={c} abierto alCerrar={() => setDialogo(null)} />}
+      {dialogo === "estado" && (
+        <DialogoEstado cuenta={c} abierto alCerrar={() => setDialogo(null)} />
+      )}
+      {dialogo === "cupos" && (
+        <DialogoCupos cuenta={c} abierto alCerrar={() => setDialogo(null)} />
+      )}
+      {dialogo === "empresa" && (
+        <DialogoEmpresa cuenta={c} abierto alCerrar={() => setDialogo(null)} />
+      )}
       {dialogo === "usuario" && (
         <DialogoUsuario
           cuenta={c}
@@ -162,7 +208,10 @@ export function DetalleCuentaView({ id }: { id: string }) {
           alCerrar={() => setDialogo(null)}
         />
       )}
-      <DialogoContrasena datos={contrasena} alCerrar={() => setContrasena(null)} />
+      <DialogoContrasena
+        datos={contrasena}
+        alCerrar={() => setContrasena(null)}
+      />
     </>
   );
 }
@@ -179,12 +228,23 @@ function PestanasCuenta({
   const opciones: { valor: Pestana; texto: string; cuenta?: number }[] = [
     { valor: "resumen", texto: "Resumen" },
     { valor: "empresas", texto: "Empresas", cuenta: d.empresas.length },
-    { valor: "usuarios", texto: "Usuarios", cuenta: d.usuarios.filter((u) => u.activo).length },
+    {
+      valor: "usuarios",
+      texto: "Usuarios",
+      cuenta: d.usuarios.filter((u) => u.activo).length,
+    },
     { valor: "consumo", texto: "Consumo de IA" },
     { valor: "suscripcion", texto: "Suscripción" },
     { valor: "bitacora", texto: "Bitácora" },
   ];
-  return <Pestanas etiqueta="Secciones de la cuenta" valor={pestana} alCambiar={irA} opciones={opciones} />;
+  return (
+    <Pestanas
+      etiqueta="Secciones de la cuenta"
+      valor={pestana}
+      alCambiar={irA}
+      opciones={opciones}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -211,14 +271,26 @@ function Resumen({
     <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Tarjeta titulo="Cupos" className="gap-3.5">
-          <BarraCupo usados={c.empresas} max={c.maxEmpresas} etiqueta="Empresas" />
-          <BarraCupo usados={c.usuarios} max={c.maxUsuarios} etiqueta="Usuarios" />
+          <BarraCupo
+            usados={c.empresas}
+            max={c.maxEmpresas}
+            etiqueta="Empresas"
+          />
+          <BarraCupo
+            usados={c.usuarios}
+            max={c.maxUsuarios}
+            etiqueta="Usuarios"
+          />
         </Tarjeta>
 
         <Tarjeta
           titulo="Lo que paga"
           className="gap-2"
-          accion={cobro && <EstadoPago diasMora={cobro.diasMora} vencido={cobro.vencido} />}
+          accion={
+            cobro && (
+              <EstadoPago diasMora={cobro.diasMora} vencido={cobro.vencido} />
+            )
+          }
         >
           {paga === null ? (
             <SinConfigurar />
@@ -227,13 +299,21 @@ function Resumen({
           )}
           {cobro && (
             <span className="text-[13px] text-muted-foreground">
-              Al mes{cobro.precioPactado !== null ? ", precio pactado" : `, plan ${NOMBRE_PLAN[c.plan]}`}.
-              Próximo cobro: {fecha(`${cobro.proximoCobro}T12:00:00Z`)}.
-              {cobro.ultimoPago && ` Último pago: ${fecha(`${cobro.ultimoPago.fecha}T12:00:00Z`)}.`}
+              Al mes
+              {cobro.precioPactado !== null
+                ? ", precio pactado"
+                : `, plan ${NOMBRE_PLAN[c.plan]}`}
+              . Próximo cobro: {fecha(`${cobro.proximoCobro}T12:00:00Z`)}.
+              {cobro.ultimoPago &&
+                ` Último pago: ${fecha(`${cobro.ultimoPago.fecha}T12:00:00Z`)}.`}
             </span>
           )}
           <div className="flex gap-3">
-            <button type="button" onClick={alPagar} className="text-[13px] text-brand-text hover:underline">
+            <button
+              type="button"
+              onClick={alPagar}
+              className="text-[13px] text-brand-text hover:underline"
+            >
               Registrar un pago
             </button>
             <button
@@ -249,13 +329,20 @@ function Resumen({
         <Tarjeta titulo="IA de este mes" className="gap-2">
           <div className="flex items-baseline gap-2">
             <Mono className="text-2xl font-medium">{dolares(c.iaMesUsd)}</Mono>
-            <Mono className="text-[13px] text-muted-foreground">{pesos(c.iaMesUsd * tasa)}</Mono>
+            <Mono className="text-[13px] text-muted-foreground">
+              {pesos(c.iaMesUsd * tasa)}
+            </Mono>
           </div>
           {tope !== null && tope > 0 ? (
             <>
-              <BarraCupo usados={Math.round(c.iaMesUsd * 100)} max={Math.round(tope * 100)} compacta />
+              <BarraCupo
+                usados={Math.round(c.iaMesUsd * 100)}
+                max={Math.round(tope * 100)}
+                compacta
+              />
               <span className="text-[13px] text-muted-foreground">
-                Tope de {dolares(tope)}. Al llegar, frena el chat y el cliente podrá comprar más.
+                Tope de {dolares(tope)}. Al llegar, frena el chat y el cliente
+                podrá comprar más.
               </span>
               <Pastilla tono="info">Ejemplo: todavía no frena</Pastilla>
             </>
@@ -277,7 +364,14 @@ function Resumen({
           {margen === null || paga === null ? (
             <SinConfigurar />
           ) : (
-            <Mono className={cn("text-2xl font-medium", margen < 0 && "text-danger")}>{pesos(margen)}</Mono>
+            <Mono
+              className={cn(
+                "text-2xl font-medium",
+                margen < 0 && "text-danger",
+              )}
+            >
+              {pesos(margen)}
+            </Mono>
           )}
           <span className="text-[13px] text-muted-foreground">
             {margen === null || !paga
@@ -325,7 +419,9 @@ function Resumen({
           }
         >
           {d.bitacora.length === 0 ? (
-            <p className="m-0 text-sm text-muted-foreground">Sin cambios registrados.</p>
+            <p className="m-0 text-sm text-muted-foreground">
+              Sin cambios registrados.
+            </p>
           ) : (
             <LineaDeTiempo entradas={d.bitacora.slice(0, 5)} />
           )}
@@ -339,8 +435,16 @@ function LineaDeTiempo({ entradas }: { entradas: EntradaBitacora[] }) {
   return (
     <ol className="m-0 flex list-none flex-col p-0">
       {entradas.map((e, i) => (
-        <li key={e.id} className={cn("flex flex-col gap-0.5 py-2.5", i > 0 && "border-t border-border")}>
-          <Mono className="text-xs text-muted-foreground">{cuando(e.ocurridoEn)}</Mono>
+        <li
+          key={e.id}
+          className={cn(
+            "flex flex-col gap-0.5 py-2.5",
+            i > 0 && "border-t border-border",
+          )}
+        >
+          <Mono className="text-xs text-muted-foreground">
+            {cuando(e.ocurridoEn)}
+          </Mono>
           <span className="text-[13px]">{describir(e)}</span>
           <span className="text-xs text-muted-foreground">{e.admin}</span>
         </li>
@@ -381,20 +485,24 @@ function TablaEmpresas({ empresas }: { empresas: EmpresaDeCuenta[] }) {
               <Td>
                 <Mono className="whitespace-nowrap">{nit(e.nit, e.dv)}</Mono>
               </Td>
-              <Td>{e.grupoNiif ? GRUPO[e.grupoNiif] ?? e.grupoNiif : "—"}</Td>
+              <Td>{e.grupoNiif ? (GRUPO[e.grupoNiif] ?? e.grupoNiif) : "—"}</Td>
               <Td>
                 <div className="flex items-center gap-2">
                   <Mono>
                     {e.configuracion.completados}/{e.configuracion.total}
                   </Mono>
-                  <Pastilla tono={e.configuracion.completa ? "exito" : "advertencia"}>
+                  <Pastilla
+                    tono={e.configuracion.completa ? "exito" : "advertencia"}
+                  >
                     {e.configuracion.completa ? "Completa" : "A medias"}
                   </Pastilla>
                   {!e.activo && <Pastilla>Inactiva</Pastilla>}
                 </div>
               </Td>
               <Td derecha>
-                <Mono title={dolares(e.iaMesUsd)}>{pesos(e.iaMesUsd * tasa)}</Mono>
+                <Mono title={dolares(e.iaMesUsd)}>
+                  {pesos(e.iaMesUsd * tasa)}
+                </Mono>
               </Td>
             </tr>
           ))}
@@ -404,7 +512,13 @@ function TablaEmpresas({ empresas }: { empresas: EmpresaDeCuenta[] }) {
   );
 }
 
-function Empresas({ empresas, alAgregar }: { empresas: EmpresaDeCuenta[]; alAgregar: () => void }) {
+function Empresas({
+  empresas,
+  alAgregar,
+}: {
+  empresas: EmpresaDeCuenta[];
+  alAgregar: () => void;
+}) {
   return (
     <Tarjeta
       titulo="Empresas"
@@ -437,23 +551,46 @@ function Usuarios({
 }: {
   d: DetalleCuenta;
   alAgregar: () => void;
-  alRestablecer: (p: { password: string; email: string; nombre: string }) => void;
+  alRestablecer: (p: {
+    password: string;
+    email: string;
+    nombre: string;
+  }) => void;
 }) {
   const qc = useQueryClient();
   const [ocupado, setOcupado] = useState<string | null>(null);
 
   const accion = useMutation({
-    mutationFn: async ({ tipo, usuarioId }: { tipo: "restablecer" | "desactivar" | "reactivar"; usuarioId: string }) => {
-      if (tipo === "restablecer") return plataformaService.restablecer(d.cuenta.id, usuarioId);
-      if (tipo === "desactivar") return plataformaService.desactivar(d.cuenta.id, usuarioId);
+    mutationFn: async ({
+      tipo,
+      usuarioId,
+    }: {
+      tipo: "restablecer" | "desactivar" | "reactivar";
+      usuarioId: string;
+    }) => {
+      if (tipo === "restablecer")
+        return plataformaService.restablecer(d.cuenta.id, usuarioId);
+      if (tipo === "desactivar")
+        return plataformaService.desactivar(d.cuenta.id, usuarioId);
       return plataformaService.reactivar(d.cuenta.id, usuarioId);
     },
     onMutate: ({ usuarioId }) => setOcupado(usuarioId),
     onSuccess: async (r, { tipo }) => {
-      if (tipo === "restablecer" && r && "password" in r && typeof r.password === "string") {
-        alRestablecer({ password: r.password, email: r.email, nombre: r.nombreCompleto });
+      if (
+        tipo === "restablecer" &&
+        r &&
+        "password" in r &&
+        typeof r.password === "string"
+      ) {
+        alRestablecer({
+          password: r.password,
+          email: r.email,
+          nombre: r.nombreCompleto,
+        });
       } else {
-        aviso.exito(tipo === "desactivar" ? "Usuario desactivado" : "Usuario reactivado");
+        aviso.exito(
+          tipo === "desactivar" ? "Usuario desactivado" : "Usuario reactivado",
+        );
       }
       await qc.invalidateQueries({ queryKey: ["plataforma"] });
     },
@@ -483,21 +620,39 @@ function Usuarios({
           </thead>
           <tbody>
             {d.usuarios.map((u) => (
-              <tr key={u.id} className={cn("group/fila", !u.activo && "text-muted-foreground")}>
+              <tr
+                key={u.id}
+                className={cn(
+                  "group/fila",
+                  !u.activo && "text-muted-foreground",
+                )}
+              >
                 <Td>
                   <span className="block font-medium">{u.nombreCompleto}</span>
-                  <span className="block text-xs text-muted-foreground">{u.email}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {u.email}
+                  </span>
                 </Td>
                 <Td>
                   <div className="flex flex-wrap gap-1.5">
-                    {u.esAdmin && <Pastilla tono="info">{NOMBRE_ROL.ADMIN_TENANT}</Pastilla>}
+                    {u.esAdmin && (
+                      <Pastilla tono="info">{NOMBRE_ROL.ADMIN_TENANT}</Pastilla>
+                    )}
                     {u.roles.map((r) => (
                       <Pastilla key={r}>{NOMBRE_ROL[r] ?? r}</Pastilla>
                     ))}
-                    {!u.esAdmin && u.roles.length === 0 && <span className="text-xs">Sin rol</span>}
+                    {!u.esAdmin && u.roles.length === 0 && (
+                      <span className="text-xs">Sin rol</span>
+                    )}
                   </div>
                 </Td>
-                <Td>{u.activo ? <Pastilla tono="exito">Activo</Pastilla> : <Pastilla>Desactivado</Pastilla>}</Td>
+                <Td>
+                  {u.activo ? (
+                    <Pastilla tono="exito">Activo</Pastilla>
+                  ) : (
+                    <Pastilla>Desactivado</Pastilla>
+                  )}
+                </Td>
                 <Td>{cuando(u.ultimoAcceso)}</Td>
                 <Td derecha>
                   <div className="flex justify-end gap-1.5">
@@ -509,7 +664,12 @@ function Usuarios({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => accion.mutate({ tipo: "restablecer", usuarioId: u.id })}
+                            onClick={() =>
+                              accion.mutate({
+                                tipo: "restablecer",
+                                usuarioId: u.id,
+                              })
+                            }
                           >
                             <KeyRound /> Restablecer contraseña
                           </Button>
@@ -518,7 +678,10 @@ function Usuarios({
                           variant="ghost"
                           size="sm"
                           onClick={() =>
-                            accion.mutate({ tipo: u.activo ? "desactivar" : "reactivar", usuarioId: u.id })
+                            accion.mutate({
+                              tipo: u.activo ? "desactivar" : "reactivar",
+                              usuarioId: u.id,
+                            })
                           }
                         >
                           {u.activo ? <UserX /> : <UserCheck />}
@@ -534,8 +697,8 @@ function Usuarios({
         </table>
       </div>
       <p className="m-0 text-xs text-muted-foreground">
-        La consola no puede entrar como un usuario ni ver lo que hace adentro. Restablecer genera una
-        contraseña nueva, que se muestra una sola vez.
+        La consola no puede entrar como un usuario ni ver lo que hace adentro.
+        Restablecer genera una contraseña nueva, que se muestra una sola vez.
       </p>
     </Tarjeta>
   );
@@ -554,7 +717,12 @@ function BitacoraCuenta({ cuentaId }: { cuentaId: string }) {
   });
 
   if (consulta.isError)
-    return <ErrorCarga que="la bitácora" alReintentar={() => void consulta.refetch()} />;
+    return (
+      <ErrorCarga
+        que="la bitácora"
+        alReintentar={() => void consulta.refetch()}
+      />
+    );
   const d = consulta.data;
 
   return (
@@ -564,7 +732,9 @@ function BitacoraCuenta({ cuentaId }: { cuentaId: string }) {
           <Loader2 className="size-5 animate-spin" />
         </div>
       ) : d.filas.length === 0 ? (
-        <p className="m-0 text-sm text-muted-foreground">Sin cambios registrados.</p>
+        <p className="m-0 text-sm text-muted-foreground">
+          Sin cambios registrados.
+        </p>
       ) : (
         <>
           <ol className="m-0 flex list-none flex-col p-0">
@@ -590,7 +760,12 @@ function BitacoraCuenta({ cuentaId }: { cuentaId: string }) {
                 {d.total} cambios, página {d.pagina}
               </span>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={pagina <= 1} onClick={() => setPagina(pagina - 1)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pagina <= 1}
+                  onClick={() => setPagina(pagina - 1)}
+                >
                   Anterior
                 </Button>
                 <Button
@@ -606,8 +781,9 @@ function BitacoraCuenta({ cuentaId }: { cuentaId: string }) {
           )}
         </>
       )}
-      <p className="m-0 text-xs text-muted-foreground">La bitácora no se edita ni se borra.</p>
+      <p className="m-0 text-xs text-muted-foreground">
+        La bitácora no se edita ni se borra.
+      </p>
     </Tarjeta>
   );
 }
-

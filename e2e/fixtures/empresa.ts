@@ -165,6 +165,15 @@ export async function prepararEmpresa(
     esPrincipal: true,
   });
 
+  // 4b. Impuestos: el ICA del municipio de la sede, y el resumen confirmado.
+  //     El IVA ya quedó contestado con el régimen del paso 3.
+  const ica = await api.put(`${API}/empresa-impuestos/ica/${MEDELLIN}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { esAgenteRetenedor: false, esAutorretenedor: false, tarifaProvisionalPorMil: 4.14 },
+  });
+  expect(ica.ok(), `PUT /empresa-impuestos/ica: ${await ica.text()}`).toBeTruthy();
+  await pedir("post", "/empresa-impuestos/confirmar", token);
+
   // 5. Plan de cuentas: el que el sistema sugiere para su sector.
   const sugerencia = (await pedir("get", "/plan-cuentas/sugerencia", token)) as
     | { codigo: string }[]

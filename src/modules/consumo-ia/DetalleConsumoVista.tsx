@@ -2,7 +2,13 @@
 
 import { Fragment, useState } from "react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   cop,
   ETIQUETA_CATEGORIA,
@@ -63,9 +69,12 @@ export function DetalleConsumoVista({
   return (
     <div className="flex flex-col gap-6">
       {datos.truncado && (
-        <p role="alert" className="m-0 rounded-md bg-warning/10 px-4 py-2 text-sm text-warning">
-          El período tiene más de 100.000 registros y se cortó: las cifras están incompletas.
-          Elegí un rango más corto.
+        <p
+          role="alert"
+          className="m-0 rounded-md bg-warning/10 px-4 py-2 text-sm text-warning"
+        >
+          El período tiene más de 100.000 registros y se cortó: las cifras están
+          incompletas. Elegí un rango más corto.
         </p>
       )}
 
@@ -75,8 +84,9 @@ export function DetalleConsumoVista({
           <CardHeader>
             <CardTitle>En qué se gastó</CardTitle>
             <CardDescription>
-              Cada llamada al modelo, según para qué fue. Una respuesta que propuso un cobro cuenta
-              como propuesta aunque también haya consultado.
+              Cada llamada al modelo, según para qué fue. Una respuesta que
+              propuso un cobro cuenta como propuesta aunque también haya
+              consultado.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
@@ -92,10 +102,16 @@ export function DetalleConsumoVista({
                     </span>
                   </span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
+                <div
+                  className="h-2 overflow-hidden rounded-full bg-muted"
+                  aria-hidden
+                >
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${c.participacion * 100}%`, background: COLOR[c.categoria] }}
+                    style={{
+                      width: `${c.participacion * 100}%`,
+                      background: COLOR[c.categoria],
+                    }}
                   />
                 </div>
               </div>
@@ -108,8 +124,9 @@ export function DetalleConsumoVista({
           <CardHeader>
             <CardTitle>Qué consultas pesan más</CardTitle>
             <CardDescription>
-              El costo de las respuestas que usaron cada herramienta. Una respuesta que usó dos
-              cuenta en las dos, así que no suman el total.
+              El costo de las respuestas que usaron cada herramienta. Una
+              respuesta que usó dos cuenta en las dos, así que no suman el
+              total.
             </CardDescription>
           </CardHeader>
           <CardContent className="overflow-x-auto">
@@ -126,14 +143,23 @@ export function DetalleConsumoVista({
                 {datos.porHerramienta.map((h) => (
                   <tr key={h.herramienta} className="border-t border-muted">
                     <td className="py-2">{h.etiqueta}</td>
-                    <td className="py-2 text-right tabular-nums">{miles(h.respuestas)}</td>
-                    <td className="py-2 text-right tabular-nums">{miles(h.veces)}</td>
-                    <td className="py-2 text-right font-medium tabular-nums">{usd(h.costoUsd)}</td>
+                    <td className="py-2 text-right tabular-nums">
+                      {miles(h.respuestas)}
+                    </td>
+                    <td className="py-2 text-right tabular-nums">
+                      {miles(h.veces)}
+                    </td>
+                    <td className="py-2 text-right font-medium tabular-nums">
+                      {usd(h.costoUsd)}
+                    </td>
                   </tr>
                 ))}
                 {datos.porHerramienta.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-4 text-center text-muted-foreground">
+                    <td
+                      colSpan={4}
+                      className="py-4 text-center text-muted-foreground"
+                    >
                       Ninguna respuesta consultó datos en este período.
                     </td>
                   </tr>
@@ -149,18 +175,25 @@ export function DetalleConsumoVista({
         <CardHeader>
           <CardTitle>Cada llamada</CardTitle>
           <CardDescription>
-            {miles(datos.total)} {datos.total === 1 ? "llamada" : "llamadas"} por {usd(datos.totalUsd)} (
-            {cop(datos.totalUsd, tasa)}). Tocá una fila para ver el costo desarmado.
+            {miles(datos.total)} {datos.total === 1 ? "llamada" : "llamadas"}{" "}
+            por {usd(datos.totalUsd)} ({cop(datos.totalUsd, tasa)}). Tocá una
+            fila para ver el costo desarmado.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div role="radiogroup" aria-label="Categoría" className="flex flex-wrap gap-1.5">
+            <div
+              role="radiogroup"
+              aria-label="Categoría"
+              className="flex flex-wrap gap-1.5"
+            >
               {[null, ...CATEGORIAS].map((c) => (
                 <Opcion
                   key={c ?? "TODAS"}
                   activa={filtro.categoria === c}
-                  onClick={() => alCambiar({ ...filtro, categoria: c, pagina: 1 })}
+                  onClick={() =>
+                    alCambiar({ ...filtro, categoria: c, pagina: 1 })
+                  }
                 >
                   {c === null ? "Todas" : CORTA[c]}
                 </Opcion>
@@ -169,13 +202,17 @@ export function DetalleConsumoVista({
             <div role="radiogroup" aria-label="Orden" className="flex gap-1.5">
               <Opcion
                 activa={filtro.orden === "FECHA"}
-                onClick={() => alCambiar({ ...filtro, orden: "FECHA", pagina: 1 })}
+                onClick={() =>
+                  alCambiar({ ...filtro, orden: "FECHA", pagina: 1 })
+                }
               >
                 Más recientes
               </Opcion>
               <Opcion
                 activa={filtro.orden === "COSTO"}
-                onClick={() => alCambiar({ ...filtro, orden: "COSTO", pagina: 1 })}
+                onClick={() =>
+                  alCambiar({ ...filtro, orden: "COSTO", pagina: 1 })
+                }
               >
                 Más caras
               </Opcion>
@@ -211,7 +248,9 @@ export function DetalleConsumoVista({
                         }
                       }}
                     >
-                      <td className="py-2 whitespace-nowrap tabular-nums">{fechaHora(f.fecha)}</td>
+                      <td className="py-2 whitespace-nowrap tabular-nums">
+                        {fechaHora(f.fecha)}
+                      </td>
                       <td className="py-2">{f.empresa}</td>
                       <td className="py-2 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 text-xs">
@@ -224,11 +263,15 @@ export function DetalleConsumoVista({
                         </span>
                       </td>
                       <td className="py-2">{f.enQue}</td>
-                      <td className="py-2 font-mono text-xs">{modeloCorto(f.modelo)}</td>
+                      <td className="py-2 font-mono text-xs">
+                        {modeloCorto(f.modelo)}
+                      </td>
                       <td className="py-2 text-right tabular-nums">
                         {f.tokens === null ? "—" : miles(totalTokens(f))}
                       </td>
-                      <td className="py-2 text-right tabular-nums">{segundos(f.duracionMs)}</td>
+                      <td className="py-2 text-right tabular-nums">
+                        {segundos(f.duracionMs)}
+                      </td>
                       <td className="py-2 text-right font-medium tabular-nums">
                         {f.costo === null ? "sin medir" : usd(f.costo.total)}
                       </td>
@@ -244,7 +287,10 @@ export function DetalleConsumoVista({
                 ))}
                 {datos.filas.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="py-4 text-center text-muted-foreground">
+                    <td
+                      colSpan={8}
+                      className="py-4 text-center text-muted-foreground"
+                    >
                       No hay llamadas con este filtro en el período.
                     </td>
                   </tr>
@@ -254,19 +300,26 @@ export function DetalleConsumoVista({
           </div>
 
           {datos.paginas > 1 && (
-            <nav aria-label="Páginas" className="flex items-center justify-end gap-3 text-sm">
+            <nav
+              aria-label="Páginas"
+              className="flex items-center justify-end gap-3 text-sm"
+            >
               <span className="text-muted-foreground tabular-nums">
                 Página {datos.pagina} de {datos.paginas}
               </span>
               <BotonPagina
                 deshabilitado={datos.pagina <= 1}
-                onClick={() => alCambiar({ ...filtro, pagina: datos.pagina - 1 })}
+                onClick={() =>
+                  alCambiar({ ...filtro, pagina: datos.pagina - 1 })
+                }
               >
                 Anterior
               </BotonPagina>
               <BotonPagina
                 deshabilitado={datos.pagina >= datos.paginas}
-                onClick={() => alCambiar({ ...filtro, pagina: datos.pagina + 1 })}
+                onClick={() =>
+                  alCambiar({ ...filtro, pagina: datos.pagina + 1 })
+                }
               >
                 Siguiente
               </BotonPagina>
@@ -283,7 +336,8 @@ function Desglose({ fila }: { fila: FilaDetalle }) {
   if (fila.tokens === null || fila.costo === null) {
     return (
       <p className="m-0 text-xs text-muted-foreground">
-        Esta lectura es de antes de que se midiera el consumo: no tiene tokens ni costo.
+        Esta lectura es de antes de que se midiera el consumo: no tiene tokens
+        ni costo.
       </p>
     );
   }
@@ -293,7 +347,11 @@ function Desglose({ fila }: { fila: FilaDetalle }) {
     { nombre: "Entrada nueva", tokens: t.entrada, costo: c.entrada },
     { nombre: "Caché leído", tokens: t.cacheLeido, costo: c.cacheLeido },
     { nombre: "Caché escrito", tokens: t.cacheEscrito, costo: c.cacheEscrito },
-    { nombre: "Salida (con el razonamiento)", tokens: t.salida, costo: c.salida },
+    {
+      nombre: "Salida (con el razonamiento)",
+      tokens: t.salida,
+      costo: c.salida,
+    },
   ];
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -310,7 +368,9 @@ function Desglose({ fila }: { fila: FilaDetalle }) {
           {partes.map((p) => (
             <tr key={p.nombre} className="border-t border-muted">
               <td className="py-1">{p.nombre}</td>
-              <td className="py-1 text-right tabular-nums">{miles(p.tokens)}</td>
+              <td className="py-1 text-right tabular-nums">
+                {miles(p.tokens)}
+              </td>
               <td className="py-1 text-right tabular-nums">{usd(p.costo)}</td>
               <td className="py-1 text-right tabular-nums">
                 {c.total === 0 ? "—" : porcentaje(p.costo / c.total)}
@@ -332,7 +392,9 @@ function Desglose({ fila }: { fila: FilaDetalle }) {
           <Dato
             nombre="Consultó"
             valor={fila.herramientas
-              .map((h) => (h.veces > 1 ? `${h.etiqueta} ×${h.veces}` : h.etiqueta))
+              .map((h) =>
+                h.veces > 1 ? `${h.etiqueta} ×${h.veces}` : h.etiqueta,
+              )
               .join(", ")}
           />
         )}
@@ -357,7 +419,9 @@ function Opcion({
       aria-checked={activa}
       onClick={onClick}
       className={`h-8 rounded-md border px-3 text-[13px] ${
-        activa ? "border-foreground bg-muted font-medium" : "border-input bg-card"
+        activa
+          ? "border-foreground bg-muted font-medium"
+          : "border-input bg-card"
       }`}
     >
       {children}
@@ -398,14 +462,21 @@ function Dato({ nombre, valor }: { nombre: string; valor: string }) {
 const totalTokens = (f: FilaDetalle): number =>
   f.tokens === null
     ? 0
-    : f.tokens.entrada + f.tokens.cacheLeido + f.tokens.cacheEscrito + f.tokens.salida;
+    : f.tokens.entrada +
+      f.tokens.cacheLeido +
+      f.tokens.cacheEscrito +
+      f.tokens.salida;
 
 /** «claude-opus-5» → «opus-5». */
-const modeloCorto = (m: string | null): string => (m === null ? "—" : m.replace(/^claude-/, ""));
+const modeloCorto = (m: string | null): string =>
+  m === null ? "—" : m.replace(/^claude-/, "");
 
 /** La hora de Colombia, `aaaa-mm-dd hh:mm`. */
 function fechaHora(iso: string): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return iso;
-  return new Date(t - 5 * 3_600_000).toISOString().slice(0, 16).replace("T", " ");
+  return new Date(t - 5 * 3_600_000)
+    .toISOString()
+    .slice(0, 16)
+    .replace("T", " ");
 }

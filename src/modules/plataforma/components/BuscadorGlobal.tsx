@@ -9,7 +9,11 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { nit } from "../lib/formato";
 import { plataformaService } from "../services/plataforma.service";
-import { NOMBRE_ESTADO, NOMBRE_PLAN, NOMBRE_ROL } from "../types/plataforma.types";
+import {
+  NOMBRE_ESTADO,
+  NOMBRE_PLAN,
+  NOMBRE_ROL,
+} from "../types/plataforma.types";
 
 interface Resultado {
   clave: string;
@@ -19,7 +23,11 @@ interface Resultado {
   destino: string;
 }
 
-const ICONO = { Cuentas: Briefcase, Empresas: Building2, Usuarios: User } as const;
+const ICONO = {
+  Cuentas: Briefcase,
+  Empresas: Building2,
+  Usuarios: User,
+} as const;
 
 /**
  * Ctrl K: cuentas por nombre, empresas por razón social o NIT —con o sin
@@ -28,7 +36,13 @@ const ICONO = { Cuentas: Briefcase, Empresas: Building2, Usuarios: User } as con
  * Todo lleva a la cuenta: la consola no tiene pantallas de empresa ni de
  * usuario sueltas en la fase 1.
  */
-export function BuscadorGlobal({ abierto, alCerrar }: { abierto: boolean; alCerrar: () => void }) {
+export function BuscadorGlobal({
+  abierto,
+  alCerrar,
+}: {
+  abierto: boolean;
+  alCerrar: () => void;
+}) {
   const router = useRouter();
   const [texto, setTexto] = useState("");
   const [pedido, setPedido] = useState("");
@@ -111,7 +125,10 @@ export function BuscadorGlobal({ abierto, alCerrar }: { abierto: boolean; alCerr
       <DialogContent className="top-[12%] translate-y-0 sm:max-w-xl">
         <DialogTitle className="sr-only">Búsqueda global</DialogTitle>
         <div className="flex items-center gap-3 border-b border-border px-4">
-          <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <Search
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
           <input
             autoFocus
             value={texto}
@@ -124,7 +141,9 @@ export function BuscadorGlobal({ abierto, alCerrar }: { abierto: boolean; alCerr
             aria-label="Buscar"
             className="h-14 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
           />
-          {isFetching && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+          {isFetching && (
+            <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          )}
           {/* Se puede tocar: el clic afuera ya no cierra, y en el celular no
               hay tecla Esc. */}
           <button
@@ -137,7 +156,11 @@ export function BuscadorGlobal({ abierto, alCerrar }: { abierto: boolean; alCerr
           </button>
         </div>
 
-        <div className="max-h-[60dvh] overflow-y-auto p-2" role="listbox" aria-label="Resultados">
+        <div
+          className="max-h-[60dvh] overflow-y-auto p-2"
+          role="listbox"
+          aria-label="Resultados"
+        >
           {pedido.length < 2 ? (
             <p className="m-0 px-3 py-6 text-center text-sm text-muted-foreground">
               Escriba al menos dos letras o los primeros dígitos de un NIT.
@@ -149,7 +172,9 @@ export function BuscadorGlobal({ abierto, alCerrar }: { abierto: boolean; alCerr
           ) : (
             grupos.map((g) => (
               <div key={g} className="py-1">
-                <p className="m-0 px-3 py-1.5 text-xs font-medium text-muted-foreground">{g}</p>
+                <p className="m-0 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                  {g}
+                </p>
                 {resultados.map((r, i) => {
                   if (r.grupo !== g) return null;
                   const Icono = ICONO[g];
@@ -166,10 +191,17 @@ export function BuscadorGlobal({ abierto, alCerrar }: { abierto: boolean; alCerr
                         i === marcado && "bg-muted",
                       )}
                     >
-                      <Icono className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <Icono
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden
+                      />
                       <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-sm font-medium">{r.titulo}</span>
-                        <span className="truncate text-xs text-muted-foreground">{r.detalle}</span>
+                        <span className="truncate text-sm font-medium">
+                          {r.titulo}
+                        </span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {r.detalle}
+                        </span>
                       </span>
                     </button>
                   );

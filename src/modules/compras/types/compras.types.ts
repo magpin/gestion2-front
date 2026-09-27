@@ -53,6 +53,14 @@ export interface CompraDocumentoResumen {
   neto_a_pagar: string;
   /** Cuánto se le ha pagado al proveedor. */
   monto_pagado: string;
+  /**
+   * Qué decidió el motor de renta (0079): CALCULADA, BAJO_BASE, NO_SUJETO,
+   * DECIDIDO_SIN (una persona, con motivo). `null` en las anteriores.
+   */
+  retencion_decision?:
+    "CALCULADA" | "BAJO_BASE" | "NO_SUJETO" | "DECIDIDO_SIN" | "MANUAL" | null;
+  /** El porqué, en una frase. */
+  retencion_motivo?: string | null;
   /** Lo que las notas del proveedor le restaron (NC) o sumaron (ND). */
   ajuste_notas: string;
   /** `neto_a_pagar + ajuste_notas`: lo que hoy se le debe. Lo calcula la API. */
@@ -103,6 +111,8 @@ export interface CompraDocumentoDetalle extends CompraDocumentoResumen {
   documento_origen?: CompraDocumentoResumen | null;
   /** En una factura: las notas del proveedor que le apuntan. */
   notas?: CompraDocumentoResumen[];
+  /** Ajustes de retención por cambio de norma que se anulan con la compra. */
+  ajustes_retencion?: Array<{ asiento: string; diferencia: number }>;
 }
 
 export interface PaginaCompras {
@@ -154,6 +164,14 @@ export interface CrearCompraInput {
   numeroFacturaProveedor: string;
   lineas: LineaCompraInput[];
   retenciones?: RetencionCompraInput[];
+  /** El concepto de renta de los renglones que lo necesitaban (motor, Fase 1). */
+  conceptosRenta?: Array<{ orden: number; conceptoCodigo: string }>;
+  /** «Sin retención», con el porqué. */
+  sinRetencionMotivo?: string;
+  /** Pagada con tarjeta: la retención la practica la entidad de la tarjeta. */
+  pagadaConTarjeta?: boolean;
+  /** El municipio donde se recibe; sin dato, el de la sede principal (ReteICA). */
+  municipioCodigo?: string;
   /**
    * Crédito, o contado con sus medios. Contado exige rol CAJA o DIRECTOR: el
    * backend lo rechaza de cualquier otro.
@@ -192,11 +210,16 @@ export interface CrearNotaCreditoCompraInput {
 }
 
 /** Lo que el proveedor cobra de más: un concepto nuevo, con su costo. */
-export interface LineaNotaDebitoCompraInput {
-  productoId: string;
-  cantidad: number;
-  costoUnitario: number;
-}
+/** Una línea de nota débito: un producto, o un gasto (un flete, un interés). */
+export type LineaNotaDebitoCompraInput =
+  | { productoId: string; cantidad: number; costoUnitario: number }
+  | {
+      cuentaId: string;
+      detalle: string;
+      ivaTarifa: number;
+      cantidad: number;
+      costoUnitario: number;
+    };
 
 /** Nota débito del proveedor: sube lo que se le debe. Siempre lleva líneas. */
 export interface CrearNotaDebitoCompraInput {
@@ -205,4 +228,7 @@ export interface CrearNotaDebitoCompraInput {
   numeroNotaProveedor: string;
   motivo: string;
   lineas: LineaNotaDebitoCompraInput[];
+  /** Los conceptos de renta contestados, como en la compra (Fase 8, §8.7). */
+  conceptosRenta?: Array<{ orden: number; conceptoCodigo: string }>;
+  sinRetencionMotivo?: string;
 }

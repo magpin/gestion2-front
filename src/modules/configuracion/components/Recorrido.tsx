@@ -25,7 +25,8 @@ import styles from "../asistente.module.css";
 const RESUMEN_CORTO: Record<ClavePaso, string> = {
   EMPRESA: "Identificación y políticas contables",
   SEDES: "Dónde opera la empresa",
-  SITUACION_LEGAL: "Lo que dice el RUT",
+  SITUACION_LEGAL: "Representante y actividad",
+  IMPUESTOS: "Qué retenés y qué te retienen",
   PLAN_CUENTAS: "Cuentas para registrar",
   RESOLUCIONES: "Numeración autorizada por la DIAN",
 };
@@ -158,7 +159,13 @@ function FilaRecorrido({
   // Qué falta, no cuántos faltan. "Faltan 2" no le dice a nadie qué hacer; el
   // dato concreto ya viaja en la respuesta del backend.
   const resumen = bloqueado
-    ? `Requiere ${paso.bloqueadoPor === "SITUACION_LEGAL" ? "la situación legal" : "un paso anterior"}`
+    ? `Requiere ${
+        paso.bloqueadoPor === "SITUACION_LEGAL"
+          ? "la situación legal"
+          : paso.bloqueadoPor === "IMPUESTOS"
+            ? "los impuestos"
+            : "un paso anterior"
+      }`
     : paso.faltantes.length > 0
       ? paso.faltantes.map((f) => f.etiqueta).join(" · ")
       : paso.estado === "LISTO"
