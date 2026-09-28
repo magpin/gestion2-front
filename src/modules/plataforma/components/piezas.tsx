@@ -15,7 +15,7 @@ import {
 
 /**
  * Las piezas con que se arma cada pantalla de la consola
- * (`docs/plataforma-diseno/`). Ningún color escrito a mano: todo por rol.
+ * (`docs/mocks/plataforma-diseno/`). Ningún color escrito a mano: todo por rol.
  */
 
 /** El título de la página: Instrument Serif, con su línea de contexto. */

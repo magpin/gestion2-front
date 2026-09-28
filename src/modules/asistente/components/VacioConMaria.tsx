@@ -10,7 +10,7 @@ import { ROLES_MARIA } from "../hooks/usePendientes";
 
 /**
  * Un estado vacío con María invitando a empezar, en vez de un ícono genérico
- * (lámina `Fuera` de `maria-identidad/`). La cara va a 56 px, con sus ondas.
+ * (lámina `Fuera` de `mocks/maria-identidad/`). La cara va a 56 px, con sus ondas.
  *
  * **Solo para quien la ve.** A quien no tiene a María en la barra, ofrecérsela
  * acá sería una puerta que da 403: para esa persona sale el vacío de siempre,

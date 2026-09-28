@@ -8,7 +8,7 @@ import type { ConversacionEnLista } from "../types/conversacion.types";
 
 /**
  * La columna de la izquierda: todas las conversaciones de quien pregunta.
- * Del prototipo `docs/asistente-ia-diseno/Main.dc.html`: 250 px, «Nueva
+ * Del prototipo `docs/mocks/asistente-ia-diseno/Main.dc.html`: 250 px, «Nueva
  * conversación» arriba y la lista agrupada por fecha.
  *
  * Solo se escribe en la vigente —la marcada «Actual»—; las demás se abren para

@@ -13,7 +13,7 @@ import { BarraMovil } from "../components/BarraMovil";
 /**
  * La cara pública del sistema, con María como protagonista.
  *
- * Referencia: `landing-maria/landing-maria/1-landing/index.html`; textos en
+ * Referencia: `mocks/landing-maria/landing-maria/1-landing/index.html`; textos en
  * `docs/planes/landing-maria-textos.md` (voseo, y nada que el producto no haga
  * hoy — lo que falta está en `docs/planes/funciones-faltantes.md`).
  *

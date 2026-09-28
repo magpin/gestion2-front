@@ -57,7 +57,7 @@ export function DocumentoSoporte({
 /**
  * Quién hizo qué y cuándo, del documento al libro.
  *
- * El prototipo es `docs/asistente-ia-diseno/Trazabilidad.dc.html`, con un
+ * El prototipo es `docs/mocks/asistente-ia-diseno/Trazabilidad.dc.html`, con un
  * cambio: su paso «Asentado sin preguntar» no existe, porque María no registra
  * nada sola. Ese lugar lo ocupa la persona que aprobó, con sus iniciales.
  */

@@ -7,7 +7,7 @@ import { ROLES_MARIA, usePendientes } from "@/modules/asistente/hooks/usePendien
 
 /**
  * El punto naranja en la pestaña cuando algo espera una decisión de quien mira
- * (lámina `Fuera` de `maria-identidad/`). Así se nota desde otra pestaña, sin
+ * (lámina `Fuera` de `mocks/maria-identidad/`). Así se nota desde otra pestaña, sin
  * volver.
  *
  * La cara de María ya es el ícono de toda la aplicación (`app/icon.png`); esto

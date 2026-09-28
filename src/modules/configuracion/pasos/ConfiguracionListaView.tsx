@@ -18,7 +18,7 @@ import styles from "../bienvenida.module.css";
 
 /**
  * El cierre del asistente: la bienvenida de María. Sale de los artboards de
- * `bienvenida-maria/bienvenida/` —claro, oscuro y móvil— y de su `LEEME.md`.
+ * `mocks/bienvenida-maria/bienvenida/` —claro, oscuro y móvil— y de su `LEEME.md`.
  *
  * **Se muestra una sola vez por empresa** (0072). Al llegar:
  * - con la configuración a medias → al paso que falta;

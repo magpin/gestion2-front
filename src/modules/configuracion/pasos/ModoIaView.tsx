@@ -76,7 +76,7 @@ const clavesOmitidos = (empresaId: string | null) => `ia-omitidos:${empresaId ??
 /**
  * El modo IA del asistente de configuración: **un chat, en orden**, dentro de
  * la configuración (prototipos `IA`, `IAPensando` y `Completa` de
- * `docs/prototipos_asistente/`).
+ * `docs/mocks/prototipos_asistente/`).
  *
  * 1. Pide el RUT; cuando está leído y confirmado, la Cámara de Comercio; después
  *    la resolución. Uno a la vez. Un documento que no se tiene se puede saltar.

@@ -41,7 +41,7 @@ function usePunteroGrueso(): boolean {
 /**
  * El menú **+** del pie del chat. Pasos 3 y 5 de
  * `docs/planes/asistente-conversacion.md`, sobre el prototipo
- * `docs/componentes-asistente/MenuAgregar.dc.html`.
+ * `docs/mocks/componentes-asistente/MenuAgregar.dc.html`.
  *
  * **Todo lo que aparece funciona.** Dos secciones:
  * - **Subir**: «Subir documento» y, en el celular, «Tomar foto». Las dos abren

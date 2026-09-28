@@ -13,7 +13,7 @@ import {
 
 /**
  * La onda no se dibujó a ojo: se calcula. Estas pruebas la anclan a las
- * láminas de `maria-identidad/`, que es de donde salieron los números.
+ * láminas de `mocks/maria-identidad/`, que es de donde salieron los números.
  *
  * El primer trazo se comparó carácter por carácter contra el archivo original
  * —1 693 caracteres, los mismos 141 puntos— y coincide. Acá quedan fijados

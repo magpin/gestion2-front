@@ -28,7 +28,7 @@ const MARCAS = [10, 56, 104];
 /**
  * La burbuja de carga de una lectura en curso. Paso 2 de
  * `docs/planes/asistente-conversacion.md`, sobre el prototipo de
- * `docs/componentes-asistente/Carga.dc.html`.
+ * `docs/mocks/componentes-asistente/Carga.dc.html`.
  *
  * **Lo que dice sale de los eventos del backend, no de un temporizador.** El
  * prototipo movía todo con un reloj; acá cada pieza tiene su fuente:

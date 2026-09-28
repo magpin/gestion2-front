@@ -7,7 +7,7 @@ import { Maria } from "./Maria";
 import { useSemanaDeMaria } from "../hooks/usePendientes";
 
 /**
- * «María esta semana», en el tablero. Lámina `Aplicada` de `maria-identidad/`:
+ * «María esta semana», en el tablero. Lámina `Aplicada` de `mocks/maria-identidad/`:
  * cara de 24 px en reposo y tres cifras.
  *
  * «Asientos aprobados» y no «asentados»: todo lo que está ahí lo aprobó una

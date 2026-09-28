@@ -1,6 +1,6 @@
 /* La bienvenida de María al terminar la configuración.
  *
- * La secuencia sale de `bienvenida-maria/bienvenida/LEEME.md` §3: 3,1 s, todo
+ * La secuencia sale de `mocks/bienvenida-maria/bienvenida/LEEME.md` §3: 3,1 s, todo
  * en `transform` y `opacity`. Lo que es de María —el parpadeo, las ondas que
  * giran, la mirada— lo pone su componente; acá va lo que es de esta pantalla:
  * cómo entra, las dos ondas que se expanden y el fondo.

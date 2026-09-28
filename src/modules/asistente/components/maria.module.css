@@ -2,7 +2,7 @@
  *
  * Están juntas a propósito: repartirlas por componente hace que nadie pueda
  * mirar de una vez qué se mueve en la cara. Los valores salen tal cual de las
- * láminas de `maria-identidad/`; el plan que los explica es
+ * láminas de `mocks/maria-identidad/`; el plan que los explica es
  * `docs/planes/maria.md`.
  *
  * Todo es `transform` y `opacity` —lo que el navegador compone en GPU— y nada

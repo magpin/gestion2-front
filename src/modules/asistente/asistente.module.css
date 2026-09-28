@@ -89,7 +89,7 @@
 
 /* ------------------------------------------------------------------------
    La burbuja de carga (paso 2 de asistente-conversacion.md), del prototipo
-   docs/componentes-asistente/Carga.dc.html. Lo que se mueve acá es movimiento,
+   docs/mocks/componentes-asistente/Carga.dc.html. Lo que se mueve acá es movimiento,
    no información: el barrido del borde, el ecualizador, el haz sobre el
    documento. Lo que informa —el rótulo, los campos, el tiempo— sale de los
    eventos del backend.
@@ -208,7 +208,7 @@
 
 /* ------------------------------------------------------------------------
    El menú + (paso 3 de asistente-conversacion.md), del prototipo
-   docs/componentes-asistente/MenuAgregar.dc.html: abre hacia arriba desde el
+   docs/mocks/componentes-asistente/MenuAgregar.dc.html: abre hacia arriba desde el
    botón, las opciones entran escalonadas y el + gira 45°.
    ------------------------------------------------------------------------ */
 

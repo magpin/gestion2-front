@@ -18,7 +18,7 @@ import { ultimaEmpresa } from "../lib/ultimaEmpresa";
  * - Sin empresas y sin poder crearlas, se dice a quién pedirle acceso.
  *
  * Lo que se ve mientras tanto es la pantalla de carga de la lámina `Fuera` de
- * `maria-identidad/`: «Abriendo…» con las ondas, que es donde mejor lucen.
+ * `mocks/maria-identidad/`: «Abriendo…» con las ondas, que es donde mejor lucen.
  */
 export function EntrandoView() {
   const router = useRouter();
