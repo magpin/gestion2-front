@@ -360,10 +360,9 @@ export async function sumas(asiento: Locator): Promise<{ debito: string; credito
   return { debito: (await celdas.nth(1).innerText()).trim(), credito: (await celdas.nth(2).innerText()).trim() };
 }
 
-/** Libro → pestaña Retenciones. */
+/** Contabilidad → Retenciones, entrada propia del menú. */
 export async function irARetenciones(page: Page) {
-  await page.goto("/dashboard/contabilidad");
-  await page.getByRole("button", { name: "Retenciones", exact: true }).click();
+  await page.goto("/dashboard/retenciones");
   await expect(page.getByRole("heading", { name: "Tarifas de la ley" })).toBeVisible();
 }
 

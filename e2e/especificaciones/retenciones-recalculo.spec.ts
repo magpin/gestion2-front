@@ -239,9 +239,8 @@ test.describe("Motor de retenciones · recálculo por cambio de norma", () => {
     }
     await consola.context().close();
 
-    // 6. En la empresa: Libro → Retenciones → Diferencias por cambio de norma.
-    await page.goto("/dashboard/contabilidad");
-    await page.getByRole("button", { name: "Retenciones", exact: true }).click();
+    // 6. En la empresa: Contabilidad → Retenciones → Diferencias por cambio de norma.
+    await page.goto("/dashboard/retenciones");
     const bloque = page.locator("section").filter({
       has: page.getByRole("heading", { name: "Diferencias por cambio de norma" }),
     });

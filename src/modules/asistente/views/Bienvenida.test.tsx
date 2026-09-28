@@ -26,7 +26,7 @@ describe("Bienvenida", () => {
     );
     expect(tiene(container.innerHTML, "levanta")).toBe(true);
     expect(screen.getByText(/Te esperan 2 cosas/)).toHaveTextContent(
-      "1 factura leída sin registrar (Compras → Leídas) · 1 pedido leído sin facturar",
+      "1 factura leída sin registrar · 1 pedido leído sin facturar (María → Documentos leídos)",
     );
   });
 

@@ -28,7 +28,7 @@ const CLAVE = ["cuentas-bancarias"];
 /**
  * El maestro. Nada de "editar" acá —la única acción real es activar/
  * desactivar—, mismo criterio que `CajasSeccion`. El alta ("Nueva cuenta
- * bancaria") vive en `TesoreriaView`, no acá.
+ * bancaria") vive en `CajaBancosView`, no acá.
  */
 export function CuentasBancariasSeccion() {
   const queryClient = useQueryClient();

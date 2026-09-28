@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessagesSquare, X } from "lucide-react";
+import { MessagesSquare, ScanLine, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -782,9 +782,20 @@ function Pantalla({
               </span>
             </div>
           </div>
-          {hayPendientes && pendientes !== undefined && (
-            <PildoraPendientes pendientes={pendientes} />
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {hayPendientes && pendientes !== undefined && (
+              <PildoraPendientes pendientes={pendientes} />
+            )}
+            {/* Lo que María leyó y espera aprobación tiene su pantalla: se
+                llega desde acá y desde los atajos de Compras y Ventas. */}
+            <Link
+              href="/dashboard/asistente/leidos"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-card px-3 text-xs font-medium whitespace-nowrap transition-colors hover:bg-accent"
+            >
+              <ScanLine className="size-3.5" aria-hidden="true" />
+              Documentos leídos
+            </Link>
+          </div>
         </div>
         {children}
       </section>
@@ -797,13 +808,16 @@ const SUBTITULO = "Nada se asienta sin tu aprobación";
 
 /** «2 facturas leídas sin registrar · 1 pedido sin facturar», para el título. */
 function detalleDePendientes(p: Pendientes): string {
+  // Las facturas y los pedidos leídos están en el mismo lugar: se dice una
+  // vez, al final del último de los dos.
+  const dondeLeidos = " (María → Documentos leídos)";
   return [
     p.propuestas > 0 &&
       `${p.propuestas} ${p.propuestas === 1 ? "propuesta mía sin confirmar" : "propuestas mías sin confirmar"}`,
     p.facturas > 0 &&
-      `${p.facturas} ${p.facturas === 1 ? "factura leída sin registrar" : "facturas leídas sin registrar"} (Compras → Leídas)`,
+      `${p.facturas} ${p.facturas === 1 ? "factura leída sin registrar" : "facturas leídas sin registrar"}${p.pedidos > 0 ? "" : dondeLeidos}`,
     p.pedidos > 0 &&
-      `${p.pedidos} ${p.pedidos === 1 ? "pedido leído sin facturar" : "pedidos leídos sin facturar"} (Ventas → Pedidos leídos)`,
+      `${p.pedidos} ${p.pedidos === 1 ? "pedido leído sin facturar" : "pedidos leídos sin facturar"}${dondeLeidos}`,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -870,7 +884,7 @@ export function Bienvenida({
 
 /**
  * Revisar y aprobar una factura del lote, sin salir del chat: el mismo diálogo
- * de Compras → Leídas, con sus renglones y lo que falta contestar. Aprobar es
+ * de María → Documentos leídos, con sus renglones y lo que falta contestar. Aprobar es
  * registrar la compra ahí, como siempre; el lote se entera y la marca.
  */
 function RevisarLectura({

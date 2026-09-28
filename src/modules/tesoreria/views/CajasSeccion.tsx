@@ -35,8 +35,8 @@ const CLAVE = ["cajas"];
  * El responsable se elige en la misma fila: las cajas que crea el sistema
  * nacen sin él, y es a quien se le cobra un faltante.
  *
- * El alta ("Nueva caja") vive en `TesoreriaView`, no acá: es la acción de
- * la pantalla entera, igual que "Nuevo producto" en `InventarioView`.
+ * El alta ("Nueva caja") vive en `CajaBancosView`, junto al título del
+ * bloque, no acá.
  */
 export function CajasSeccion() {
   const queryClient = useQueryClient();

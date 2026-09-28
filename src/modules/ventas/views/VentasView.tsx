@@ -5,38 +5,32 @@ import {
   FileMinus,
   FilePlus,
   FileText,
-  History,
   ReceiptText,
-  ScanLine,
 } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { useTieneRol } from "@/core/store/authStore";
+import { AtajoLeidos } from "@/modules/asistente/components/AtajoLeidos";
 import { CotizacionesSeccion } from "./CotizacionesSeccion";
 import { FacturasSeccion } from "./FacturasSeccion";
 import { NotasCreditoSeccion } from "./NotasCreditoSeccion";
 import { NotasDebitoSeccion } from "./NotasDebitoSeccion";
-import { PedidosSeccion } from "./PedidosSeccion";
-import { VentasAnterioresSeccion } from "./VentasAnterioresSeccion";
+
 
 export type Seccion =
   | "Cotizaciones"
   | "Facturas"
   | "Notas crédito"
-  | "Notas débito"
-  | "Pedidos leídos"
-  | "Ventas anteriores";
+  | "Notas débito";
 
 const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Cotizaciones", FileText],
   ["Facturas", ReceiptText],
   ["Notas crédito", FileMinus],
   ["Notas débito", FilePlus],
-  ["Pedidos leídos", ScanLine],
-  ["Ventas anteriores", History],
 ];
 
-/** Qué crea el botón de la cabecera en cada pestaña. Pedidos leídos no tiene: se sube el archivo. */
+/** Qué crea el botón de la cabecera en cada pestaña. */
 const ETIQUETA_NUEVO: Partial<Record<Seccion, string>> = {
   Cotizaciones: "Nueva cotización",
   Facturas: "Nueva factura",
@@ -59,9 +53,6 @@ export function VentasView({ inicial = "Cotizaciones" }: { inicial?: Seccion } =
   // en la cabecera, arriba de las pestañas, y desde ahí no alcanzaría.
   const [creando, setCreando] = useState(false);
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
-  // Cargar las ventas del sistema anterior es armar la cartera de arranque:
-  // lo hacen los mismos que cargan el histórico por Excel.
-  const puedeCargarAnteriores = useTieneRol("DIRECTOR", "CONTADOR");
   const cerrarCreacion = () => setCreando(false);
 
   return (
@@ -81,18 +72,19 @@ export function VentasView({ inicial = "Cotizaciones" }: { inicial?: Seccion } =
           </p>
         </div>
 
-        {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
-          <BotonNuevo
-            etiqueta={ETIQUETA_NUEVO[seccion]!}
-            onClick={() => setCreando(true)}
-          />
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <AtajoLeidos tipo="pedidos" />
+          {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
+            <BotonNuevo
+              etiqueta={ETIQUETA_NUEVO[seccion]!}
+              onClick={() => setCreando(true)}
+            />
+          )}
+        </div>
       </header>
 
       <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
-        {SECCIONES.filter(
-          ([nombre]) => nombre !== "Ventas anteriores" || puedeCargarAnteriores,
-        ).map(([nombre, Icono]) => (
+        {SECCIONES.map(([nombre, Icono]) => (
           <button
             key={nombre}
             type="button"
@@ -133,10 +125,6 @@ export function VentasView({ inicial = "Cotizaciones" }: { inicial?: Seccion } =
           creando={creando}
           onCerrarCreacion={cerrarCreacion}
         />
-      )}
-      {seccion === "Pedidos leídos" && <PedidosSeccion />}
-      {seccion === "Ventas anteriores" && puedeCargarAnteriores && (
-        <VentasAnterioresSeccion />
       )}
     </div>
   );

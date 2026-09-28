@@ -231,9 +231,9 @@ function Atajos() {
         }
       />
       <Atajo
-        href="/dashboard/tesoreria"
+        href="/dashboard/caja-bancos"
         icono={Landmark}
-        titulo="Tesorería"
+        titulo="Caja y bancos"
         detalle={
           cajas === undefined || cuentasBancarias === undefined
             ? "…"
@@ -241,13 +241,13 @@ function Atajos() {
         }
       />
       <Atajo
-        href="/dashboard/catalogos/puc"
+        href="/dashboard/referencia"
         icono={Library}
         titulo="PUC"
         detalle="Decreto 2650 · 2 492 cuentas"
       />
       <Atajo
-        href="/dashboard/catalogos/ciiu"
+        href="/dashboard/referencia?catalogo=ciiu"
         icono={Briefcase}
         titulo="Actividades CIIU"
         detalle="Rev. 4 A.C. · 504 clases"

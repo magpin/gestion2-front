@@ -110,8 +110,8 @@ test.describe("Tesorería", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Cobrar" }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
 
-    await page.goto("/dashboard/tesoreria");
-    await page.getByRole("button", { name: "Libro", exact: true }).click();
+    await page.goto("/dashboard/caja-bancos");
+    await page.getByRole("button", { name: "Movimientos", exact: true }).click();
 
     // El cobro no se digita en tesorería: llega solo desde la factura.
     await expect(page.getByText("357.000").first()).toBeVisible();

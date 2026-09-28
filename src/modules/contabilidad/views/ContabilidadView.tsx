@@ -6,7 +6,6 @@ import {
   BookOpen,
   CalendarDays,
   FileText,
-  Percent,
   Plus,
   SearchCheck,
   ShieldCheck,
@@ -17,19 +16,17 @@ import { useTieneRol } from "@/core/store/authStore";
 import { FormularioAsiento } from "../components/FormularioAsiento";
 import { periodosApi } from "../services/contabilidad.service";
 import { AsientosSeccion } from "./AsientosSeccion";
-import { RetencionesSeccion } from "@/modules/retenciones/views/RetencionesSeccion";
 import { LibrosSeccion } from "./LibrosSeccion";
 import { PeriodosSeccion } from "./PeriodosSeccion";
 import { RevisionSeccion } from "./RevisionSeccion";
 
-type Seccion = "Asientos" | "Períodos" | "Libros" | "Revisión" | "Retenciones";
+type Seccion = "Asientos" | "Períodos" | "Libros" | "Revisión";
 
 const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Asientos", FileText],
   ["Períodos", CalendarDays],
   ["Libros", BookOpen],
   ["Revisión", SearchCheck],
-  ["Retenciones", Percent],
 ];
 
 /**
@@ -106,7 +103,6 @@ export function ContabilidadView() {
       {seccion === "Períodos" && <PeriodosSeccion />}
       {seccion === "Libros" && <LibrosSeccion />}
       {seccion === "Revisión" && <RevisionSeccion />}
-      {seccion === "Retenciones" && <RetencionesSeccion />}
 
       {/* La regla que explica por qué no hay botón de editar en ninguna fila. */}
       <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground print:hidden">

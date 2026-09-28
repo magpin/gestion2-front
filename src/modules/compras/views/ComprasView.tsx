@@ -1,30 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { FileMinus, FilePlus, ReceiptText, ScanLine } from "lucide-react";
+import { FileMinus, FilePlus, ReceiptText } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { useTieneRol } from "@/core/store/authStore";
+import { AtajoLeidos } from "@/modules/asistente/components/AtajoLeidos";
 import { FacturasCompraSeccion } from "./FacturasCompraSeccion";
-import { LecturasSeccion } from "./LecturasSeccion";
 import { NotasCompraSeccion } from "./NotasCompraSeccion";
 
-type Seccion = "Facturas" | "Notas crédito" | "Notas débito" | "Leídas";
+type Seccion = "Facturas" | "Notas crédito" | "Notas débito";
 
 const SECCIONES: Array<[Seccion, typeof ReceiptText]> = [
   ["Facturas", ReceiptText],
   ["Notas crédito", FileMinus],
   ["Notas débito", FilePlus],
-  ["Leídas", ScanLine],
 ];
 
-/**
- * Qué crea el botón de la cabecera en cada pestaña.
- *
- * `Leídas` no está: ahí no se crea nada. Lo que hay son propuestas —lo que
- * María entendió de una factura— y se registran una por una, después de
- * mirarlas. Un «nuevo» en esa pestaña prometería otra cosa.
- */
+/** Qué crea el botón de la cabecera en cada pestaña. */
 const ETIQUETA_NUEVO: Partial<Record<Seccion, string>> = {
   Facturas: "Nueva compra",
   "Notas crédito": "Nueva nota crédito",
@@ -67,12 +60,15 @@ export function ComprasView() {
           </p>
         </div>
 
-        {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
-          <BotonNuevo
-            etiqueta={ETIQUETA_NUEVO[seccion]}
-            onClick={() => setCreando(true)}
-          />
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <AtajoLeidos tipo="facturas" />
+          {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
+            <BotonNuevo
+              etiqueta={ETIQUETA_NUEVO[seccion]}
+              onClick={() => setCreando(true)}
+            />
+          )}
+        </div>
       </header>
 
       <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
@@ -117,7 +113,6 @@ export function ComprasView() {
           onCerrarCreacion={cerrarCreacion}
         />
       )}
-      {seccion === "Leídas" && <LecturasSeccion />}
     </div>
   );
 }

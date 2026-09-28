@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Check, Lock } from "lucide-react";
 
+import { useTieneRol } from "@/core/store/authStore";
 import { Marca } from "@/modules/landing/components/Marca";
 import type { ClavePaso, EstadoPaso, Paso } from "../types/configuracion.types";
 import { RUTA_PASO } from "./rutas";
@@ -52,6 +53,7 @@ export function Recorrido({
   modoIA = false,
   sinSalida = false,
 }: RecorridoProps) {
+  const puedeCargarAnteriores = useTieneRol("DIRECTOR", "CONTADOR");
   return (
     <aside
       className={`${styles.trama} hidden min-h-0 w-full shrink-0 flex-col gap-7 overflow-y-auto p-7 text-rail-foreground lg:flex lg:w-100`}
@@ -99,6 +101,16 @@ export function Recorrido({
             <span className="font-medium text-rail-foreground">Modo IA.</span> Los pasos se
             llenan a medida que la IA lee tus documentos. Vos confirmás cada uno.
           </p>
+        )}
+        {/* Se hace una vez, al empezar: por eso vive en la configuración y
+            no en Ventas. Solo con la empresa ya creada. */}
+        {!sinSalida && puedeCargarAnteriores && (
+          <Link
+            href="/dashboard/datos-anteriores"
+            className="text-[13px] text-rail-muted no-underline hover:text-rail-foreground"
+          >
+            Cargar ventas del sistema anterior
+          </Link>
         )}
         {!sinSalida && (
           <Link

@@ -4,18 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import {
+  BanknoteArrowDown,
+  BanknoteArrowUp,
   BookOpen,
-  Briefcase,
   ChartColumn,
+  ClipboardCheck,
+  FileChartColumn,
   Home,
   Landmark,
   Library,
   Package,
+  Percent,
+  Receipt,
   ReceiptText,
   Scale,
   Settings2,
   ShoppingCart,
   Sparkle,
+  Tags,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -34,6 +40,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { funcionActiva, type Funcion } from "@/core/config/funciones";
 import { useAuthStore } from "@/core/store/authStore";
 import { Maria } from "@/modules/asistente/components/Maria";
 import { ROLES_MARIA, usePendientes } from "@/modules/asistente/hooks/usePendientes";
@@ -52,16 +59,17 @@ interface Entrada {
    */
   roles?: RolCodigo[];
   /**
-   * El ícono va en naranja. Lo lleva **una sola entrada** —el asistente—, que es
-   * la excepción que el reglamento de color permite: el acento señala un punto,
-   * y si lo llevaran dos entradas dejaría de señalar ninguna.
-   */
-  acento?: boolean;
-  /**
    * En vez de un ícono, la cara del asistente. Es una sola entrada: la cara
    * distingue a María de los módulos, y repetirla dejaría de distinguir nada.
    */
   cara?: boolean;
+  /**
+   * Pieza nueva del menú: no se muestra hasta que su backend esté y se
+   * encienda (`core/config/funciones.ts`).
+   */
+  funcion?: Funcion;
+  /** Otras rutas que también la marcan activa. */
+  alias?: string[];
 }
 
 interface Grupo {
@@ -70,21 +78,20 @@ interface Grupo {
 }
 
 /**
- * El mapa del área de trabajo, en el orden en que se piensa el negocio: lo que
- * mueve plata primero, el libro que lo registra después, y al final lo que no
- * cambia nunca.
+ * El mapa del área de trabajo, en el orden en que se mueve la plata: lo que
+ * entra, lo que sale, dónde está, y después cómo lo registra el libro y cómo
+ * va el negocio. Lo que casi no se usa baja al pie.
  *
- * Los grupos son los del criterio de `docs/decisiones/arquitectura-modulos.md`:
- * misionales (ventas, compras, inventario, tesorería), transversales
- * (contabilidad y lo que la alimenta) y catálogos de referencia.
+ * El árbol completo, con de dónde viene cada pantalla, está en
+ * `docs/planes/menu-propuesto-ingresos-egresos.md`.
  */
 const GRUPOS: Grupo[] = [
   {
     entradas: [
       { href: "/dashboard", etiqueta: "Inicio", icono: Home },
       {
-        // Arriba de todo y fuera de los grupos, como en el prototipo: no es un
-        // módulo del negocio, es otra manera de entrar a todos.
+        // Arriba de todo y fuera de los grupos: no es un módulo del negocio,
+        // es otra manera de entrar a todos.
         //
         // Los mismos tres roles que «Configurar empresa», que son los que el
         // backend exige para escribir: el asistente no amplía permisos.
@@ -97,7 +104,7 @@ const GRUPOS: Grupo[] = [
     ],
   },
   {
-    etiqueta: "Operación",
+    etiqueta: "Ingresos",
     entradas: [
       {
         href: "/dashboard/ventas",
@@ -106,22 +113,66 @@ const GRUPOS: Grupo[] = [
         roles: ["DIRECTOR", "CONTADOR", "VENTAS", "CONSULTA"],
       },
       {
+        href: "/dashboard/cobros",
+        etiqueta: "Cobros",
+        icono: BanknoteArrowDown,
+        roles: ["DIRECTOR", "CONTADOR", "CAJA", "VENTAS", "CONSULTA"],
+        funcion: "cobros",
+      },
+    ],
+  },
+  {
+    etiqueta: "Egresos",
+    entradas: [
+      {
         href: "/dashboard/compras",
         etiqueta: "Compras",
         icono: ShoppingCart,
         roles: ["DIRECTOR", "CONTADOR", "COMPRAS", "CONSULTA"],
       },
       {
+        href: "/dashboard/gastos",
+        etiqueta: "Gastos",
+        icono: Receipt,
+        roles: ["DIRECTOR", "CONTADOR", "COMPRAS", "CAJA", "CONSULTA"],
+        funcion: "gastos",
+      },
+      {
+        href: "/dashboard/pagos",
+        etiqueta: "Pagos",
+        icono: BanknoteArrowUp,
+        roles: ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"],
+        funcion: "pagos",
+      },
+    ],
+  },
+  {
+    // Las dos mitades de lo que era Tesorería: operar y cuadrar.
+    etiqueta: "Dinero",
+    entradas: [
+      {
+        href: "/dashboard/caja-bancos",
+        etiqueta: "Caja y bancos",
+        icono: Landmark,
+        roles: ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"],
+      },
+      {
+        href: "/dashboard/control",
+        etiqueta: "Control",
+        icono: ClipboardCheck,
+        roles: ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"],
+      },
+    ],
+  },
+  {
+    // Consume lo que hacen Ventas y Compras: no mueve plata por sí mismo.
+    etiqueta: "Inventario",
+    entradas: [
+      {
         href: "/dashboard/inventario",
         etiqueta: "Inventario",
         icono: Package,
         roles: ["DIRECTOR", "CONTADOR", "INVENTARIO", "VENTAS", "COMPRAS", "CONSULTA"],
-      },
-      {
-        href: "/dashboard/tesoreria",
-        etiqueta: "Tesorería",
-        icono: Landmark,
-        roles: ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"],
       },
     ],
   },
@@ -132,6 +183,19 @@ const GRUPOS: Grupo[] = [
         href: "/dashboard/contabilidad",
         etiqueta: "Libro",
         icono: Scale,
+        roles: ["DIRECTOR", "CONTADOR", "CONSULTA"],
+      },
+      {
+        href: "/dashboard/conceptos",
+        etiqueta: "Conceptos",
+        icono: Tags,
+        roles: ["DIRECTOR", "CONTADOR"],
+        funcion: "conceptos",
+      },
+      {
+        href: "/dashboard/retenciones",
+        etiqueta: "Retenciones",
+        icono: Percent,
         roles: ["DIRECTOR", "CONTADOR", "CONSULTA"],
       },
       {
@@ -148,10 +212,17 @@ const GRUPOS: Grupo[] = [
     ],
   },
   {
-    // Lo que se saca de todo lo anterior. Los roles son la unión de los de
-    // cada reporte: quien no puede correr ninguno no ve la puerta.
+    // Lo que se saca de todo lo anterior. Los roles de Reportes son la unión
+    // de los de cada reporte: quien no puede correr ninguno no ve la puerta.
     etiqueta: "Análisis",
     entradas: [
+      {
+        href: "/dashboard/estados-financieros",
+        etiqueta: "Estados financieros",
+        icono: FileChartColumn,
+        roles: ["DIRECTOR", "CONTADOR", "CONSULTA"],
+        funcion: "estadosFinancieros",
+      },
       {
         href: "/dashboard/reportes",
         etiqueta: "Reportes",
@@ -160,26 +231,41 @@ const GRUPOS: Grupo[] = [
       },
     ],
   },
+];
+
+/**
+ * El pie: lo que no cambia nunca y lo que se hace una vez. A un clic, pero
+ * fuera del recorrido de todos los días.
+ */
+const PIE: Entrada[] = [
   {
+    href: "/dashboard/referencia",
     etiqueta: "Referencia",
-    entradas: [
-      { href: "/dashboard/catalogos/puc", etiqueta: "PUC", icono: Library },
-      {
-        href: "/dashboard/catalogos/ciiu",
-        etiqueta: "Actividades CIIU",
-        icono: Briefcase,
-      },
-    ],
+    icono: Library,
+    alias: ["/dashboard/catalogos"],
+  },
+  {
+    href: "/configuracion/empresa",
+    etiqueta: "Configurar empresa",
+    icono: Settings2,
+    roles: ["ADMIN_TENANT", "DIRECTOR", "CONTADOR"],
   },
 ];
 
-/** El asistente vive fuera del área de trabajo, pero se entra desde acá. */
-const CONFIGURACION: Entrada = {
-  href: "/configuracion/empresa",
-  etiqueta: "Configurar empresa",
-  icono: Settings2,
-  roles: ["ADMIN_TENANT", "DIRECTOR", "CONTADOR"],
-};
+/** Si la entrada se muestra, sin mirar si ya montó: esa espera es de la barra. */
+function entradaVisible(entrada: Entrada, roles: RolCodigo[]): boolean {
+  return (
+    (entrada.funcion === undefined || funcionActiva(entrada.funcion)) &&
+    (entrada.roles === undefined || entrada.roles.some((r) => roles.includes(r)))
+  );
+}
+
+/** Adónde puede ir quien tiene estos roles, en el orden del menú. Para las pruebas. */
+export function destinosVisibles(roles: RolCodigo[]): string[] {
+  return [...GRUPOS.flatMap((g) => g.entradas), ...PIE]
+    .filter((e) => entradaVisible(e, roles))
+    .map((e) => e.href);
+}
 
 /**
  * La navegación entre módulos.
@@ -208,8 +294,7 @@ export function BarraLateral() {
   );
 
   const puedeVer = (entrada: Entrada) =>
-    entrada.roles === undefined ||
-    (montado && entrada.roles.some((r) => roles.includes(r)));
+    (entrada.roles === undefined || montado) && entradaVisible(entrada, roles);
 
   // Solo se pide si la persona ve a María: el número es suyo.
   const pendientes = usePendientes(
@@ -218,10 +303,45 @@ export function BarraLateral() {
   const hayPendientes = (pendientes?.total ?? 0) > 0;
 
   // `/dashboard` es exacto; cualquier otra ruta también marca sus hijas.
-  const esActiva = (href: string) =>
+  const coincide = (href: string) =>
     href === "/dashboard"
       ? pathname === href
       : pathname === href || pathname.startsWith(`${href}/`);
+  const esActiva = (entrada: Entrada) =>
+    coincide(entrada.href) || (entrada.alias ?? []).some(coincide);
+
+  const boton = (entrada: Entrada) => (
+    <SidebarMenuItem key={entrada.href}>
+      <SidebarMenuButton
+        isActive={esActiva(entrada)}
+        tooltip={entrada.etiqueta}
+        render={<Link href={entrada.href} onClick={cerrarEnMovil} />}
+      >
+        {entrada.cara ? (
+          // 20 px, como en la lámina `Aplicada`. Con la barra plegada el número
+          // no entra: la cara pasa a «espera», con su distintivo ámbar, para
+          // que igual se note.
+          <Maria
+            estado={state === "collapsed" && hayPendientes ? "espera" : "reposo"}
+            tamano={20}
+          />
+        ) : (
+          <entrada.icono />
+        )}
+        <span>{entrada.etiqueta}</span>
+        {entrada.cara && hayPendientes && pendientes !== undefined && (
+          <span
+            aria-label={`${pendientes.total} pendientes`}
+            className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums group-data-[collapsible=icon]:hidden"
+          >
+            {pendientes.total}
+          </span>
+        )}
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+
+  const pie = PIE.filter(puedeVer);
 
   return (
     <Sidebar collapsible="icon">
@@ -257,60 +377,16 @@ export function BarraLateral() {
                 <SidebarGroupLabel>{grupo.etiqueta}</SidebarGroupLabel>
               )}
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {visibles.map((entrada) => (
-                    <SidebarMenuItem key={entrada.href}>
-                      <SidebarMenuButton
-                        isActive={esActiva(entrada.href)}
-                        tooltip={entrada.etiqueta}
-                        render={<Link href={entrada.href} onClick={cerrarEnMovil} />}
-                      >
-                        {entrada.cara ? (
-                          // 20 px, como en la lámina `Aplicada`. Con la barra
-                          // plegada el número no entra: la cara pasa a «espera»,
-                          // con su distintivo ámbar, para que igual se note.
-                          <Maria
-                            estado={state === "collapsed" && hayPendientes ? "espera" : "reposo"}
-                            tamano={20}
-                          />
-                        ) : (
-                          <entrada.icono
-                            className={entrada.acento ? "text-brand" : undefined}
-                            fill={entrada.acento ? "currentColor" : "none"}
-                          />
-                        )}
-                        <span>{entrada.etiqueta}</span>
-                        {entrada.cara && hayPendientes && pendientes !== undefined && (
-                          <span
-                            aria-label={`${pendientes.total} pendientes`}
-                            className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums group-data-[collapsible=icon]:hidden"
-                          >
-                            {pendientes.total}
-                          </span>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
+                <SidebarMenu>{visibles.map(boton)}</SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           );
         })}
       </SidebarContent>
 
-      {puedeVer(CONFIGURACION) && (
+      {pie.length > 0 && (
         <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip={CONFIGURACION.etiqueta}
-                render={<Link href={CONFIGURACION.href} onClick={cerrarEnMovil} />}
-              >
-                <CONFIGURACION.icono />
-                <span>{CONFIGURACION.etiqueta}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarMenu>{pie.map(boton)}</SidebarMenu>
         </SidebarFooter>
       )}
 

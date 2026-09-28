@@ -1,9 +1,12 @@
+import { redirect } from "next/navigation";
+
 import { VentasView } from "@/modules/ventas/views/VentasView";
 
 /**
- * `?seccion=pedidos` abre directo en «Pedidos leídos» y `?seccion=anteriores`
- * en «Ventas anteriores»: es adonde lleva el lote del chat cuando María leyó el
- * pedido de un cliente o facturas del sistema anterior.
+ * `?seccion=pedidos` y `?seccion=anteriores` eran las pestañas «Pedidos leídos»
+ * y «Ventas anteriores». Con el menú nuevo viven en María → Documentos leídos
+ * y en Configurar empresa → Datos anteriores; los enlaces viejos siguen
+ * llegando.
  */
 export default async function VentasPage({
   searchParams,
@@ -11,15 +14,7 @@ export default async function VentasPage({
   searchParams: Promise<{ [clave: string]: string | string[] | undefined }>;
 }) {
   const { seccion } = await searchParams;
-  return (
-    <VentasView
-      inicial={
-        seccion === "pedidos"
-          ? "Pedidos leídos"
-          : seccion === "anteriores"
-            ? "Ventas anteriores"
-            : undefined
-      }
-    />
-  );
+  if (seccion === "pedidos") redirect("/dashboard/asistente/leidos?tipo=pedidos");
+  if (seccion === "anteriores") redirect("/dashboard/datos-anteriores");
+  return <VentasView />;
 }

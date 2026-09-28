@@ -291,7 +291,7 @@ function FilaResultado({
           )}
           {esPedido || esVentaAnterior ? (
             <Link
-              href={`/dashboard/ventas?seccion=${esPedido ? "pedidos" : "anteriores"}`}
+              href={esPedido ? "/dashboard/asistente/leidos?tipo=pedidos" : "/dashboard/datos-anteriores"}
               className="inline-flex h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap"
             >
               {esPedido ? "Facturarlo en Ventas" : "Revisarlas y cargarlas"}

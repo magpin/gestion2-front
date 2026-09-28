@@ -37,8 +37,9 @@ const REFRESCO_MS = 2500;
 /**
  * Los pedidos que los clientes mandan, leídos por María.
  *
- * Hermana de «Leídas» en Compras, con una diferencia que viene de ventas: **una
- * factura de venta no tiene borrador** —nace emitida, con su consecutivo—. Así
+ * Hermana de las facturas leídas —las dos viven en María → Documentos
+ * leídos—, con una diferencia que viene de ventas: **una factura de venta no
+ * tiene borrador** —nace emitida, con su consecutivo—. Así
  * que lo que María arma no se registra desde acá: se abre en el formulario de
  * factura de siempre, ya lleno, y la persona revisa, corrige y emite.
  *
