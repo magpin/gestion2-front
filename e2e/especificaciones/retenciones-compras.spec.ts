@@ -589,7 +589,8 @@ test.describe("Motor de retenciones en compras", () => {
     await expect(fila, "neto: 10.190.000 − 20.000 − 28.500").toContainText(pesos(10_190_000 - 48_500));
     await fila.getByRole("button", { name: "Ver" }).click();
     const detalle = page.getByRole("dialog");
-    const ivaDetalle = detalle.getByText("IVA", { exact: true }).locator("..");
+    // La línea del resumen, no el encabezado «IVA» de la tabla de renglones.
+    const ivaDetalle = detalle.getByText("IVA", { exact: true }).last().locator("..");
     const totalDetalle = detalle.getByText("Total factura", { exact: true }).locator("..");
     await expect(ivaDetalle, "IVA de la compra sobre el AIU").toContainText(pesos(190_000));
     await expect(totalDetalle).toContainText(pesos(10_190_000));

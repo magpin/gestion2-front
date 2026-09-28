@@ -98,10 +98,12 @@ export interface CompraDocumentoLineaResumen {
 export interface CompraRetencionResumen {
   id: string;
   compra_documento_id: string;
-  concepto: ConceptoRetencion;
+  concepto: ConceptoRetencion | string;
   cuenta_id: string;
   base: string;
   valor: string;
+  /** El nombre del concepto de la ley (motor); las viejas no lo traen. */
+  concepto_nombre?: string | null;
 }
 
 export interface CompraDocumentoDetalle extends CompraDocumentoResumen {

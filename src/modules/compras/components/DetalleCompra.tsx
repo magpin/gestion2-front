@@ -145,7 +145,7 @@ export function DetalleCompra({
                       {documento.retenciones.map((r) => (
                         <tr key={r.id}>
                           <td className="px-4 py-3 text-sm font-medium">
-                            {etiquetaConcepto(r.concepto)}
+                            {r.concepto_nombre ?? etiquetaConcepto(r.concepto)}
                           </td>
                           <td className="px-4 py-3 text-right font-mono text-sm">
                             {formatCOP(Number(r.base))}
