@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test -c e2e/playwright.config.ts",
+    "e2e:qa": "playwright test -c e2e/playwright.qa.config.ts",
     "e2e:ver": "playwright test -c e2e/playwright.config.ts --headed",
     "e2e:ui": "playwright test -c e2e/playwright.config.ts --ui",
     "e2e:lento": "playwright test -c e2e/playwright.config.ts --headed --workers=1"
