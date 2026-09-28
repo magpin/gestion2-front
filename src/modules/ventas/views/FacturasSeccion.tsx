@@ -9,6 +9,7 @@ import {
   FilePlus,
   Loader2,
   Trash2,
+  TriangleAlert,
   Undo2,
 } from "lucide-react";
 
@@ -31,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
+import { avisoNotasVivas } from "@/lib/notas-vivas";
 import { avisarErrorVenta } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { VacioConMaria } from "@/modules/asistente/components/VacioConMaria";
@@ -104,6 +106,22 @@ export function FacturasSeccion({
     aviso.exito("Factura creada");
     onCerrarCreacion();
   });
+
+  // Con notas vivas no se anula: primero las notas. Se avisa antes de pedir
+  // el motivo; el backend lo rechaza igual si alguien se adelanta.
+  const anulacion = useQuery({
+    queryKey: [...CLAVE, porAnular?.id, "anulacion"],
+    queryFn: () => facturasApi.porId(porAnular!.id),
+    enabled: porAnular !== null,
+  });
+  const bloqueoPorNotas = avisoNotasVivas(
+    "factura",
+    anulacion.data?.notas?.map((n) => ({
+      tipo: n.tipo,
+      estado: n.estado,
+      numero: [n.prefijo, String(n.consecutivo)].filter(Boolean).join("-"),
+    })),
+  );
 
   const anular = useMutation({
     mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
@@ -424,15 +442,28 @@ export function FacturasSeccion({
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <label className="block text-sm font-medium">
-            Motivo de la anulación
-            <Textarea
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Por qué se anula"
-              className="mt-2 min-h-24 rounded-xl px-4 py-3"
-            />
-          </label>
+          {bloqueoPorNotas !== null ? (
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-[15px] leading-6"
+            >
+              <TriangleAlert
+                className="mt-1 size-4 shrink-0 text-warning"
+                aria-hidden="true"
+              />
+              <span>{bloqueoPorNotas}</span>
+            </div>
+          ) : (
+            <label className="block text-sm font-medium">
+              Motivo de la anulación
+              <Textarea
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Por qué se anula"
+                className="mt-2 min-h-24 rounded-xl px-4 py-3"
+              />
+            </label>
+          )}
 
           <AlertDialogFooter className="-mx-6 -mb-6 p-6">
             <AlertDialogCancel className="h-11 rounded-xl px-6">
@@ -440,7 +471,11 @@ export function FacturasSeccion({
             </AlertDialogCancel>
             <AlertDialogAction
               className="h-11 rounded-xl bg-danger px-6 text-white hover:bg-danger/90"
-              disabled={anular.isPending || motivo.trim().length < 3}
+              disabled={
+                anular.isPending ||
+                bloqueoPorNotas !== null ||
+                motivo.trim().length < 3
+              }
               onClick={() =>
                 porAnular &&
                 anular.mutate({ id: porAnular.id, motivo: motivo.trim() })

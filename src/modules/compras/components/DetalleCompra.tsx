@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
+import { mostrarCantidad } from "@/lib/numeros";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { PorQueRetencion } from "@/modules/retenciones/components/PorQueRetencion";
 import { CONCEPTOS_RETENCION } from "../types/compras.types";
@@ -100,7 +101,7 @@ export function DetalleCompra({
                           )}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
-                          {l.cantidad}
+                          {mostrarCantidad(l.cantidad)}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {formatCOP(Number(l.costo_unitario))}

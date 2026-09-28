@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCOP } from "@/lib/utils";
-import type {
-  CertezaConcepto,
-  ExplicacionRetencion,
-  PropuestaRenta as Propuesta,
-  RenglonPropuesto,
-  RespuestasRenta,
+import {
+  aiuSinPedir,
+  type CertezaConcepto,
+  type ExplicacionRetencion,
+  type PropuestaRenta as Propuesta,
+  type RenglonPropuesto,
+  type RespuestasRenta,
 } from "../types/retenciones.types";
 
 const CHIP: Record<CertezaConcepto, { texto: string; clase: string }> = {
@@ -36,6 +37,11 @@ const CHIP: Record<CertezaConcepto, { texto: string; clase: string }> = {
   },
 };
 
+const CHIP_TUYO = {
+  texto: "Lo dijiste vos",
+  clase: "border-border bg-muted text-foreground",
+};
+
 /** De dónde salió el concepto que quedó, para «¿Por qué?». */
 const ORIGEN_EXPLICADO: Record<string, string> = {
   CONFIRMADO: "ya me lo habías dicho",
@@ -46,12 +52,70 @@ const ORIGEN_EXPLICADO: Record<string, string> = {
   MANUAL: "lo elegiste vos",
 };
 
+/** Cada guarda del motor, en palabras (las claves son de las reglas del backend). */
 const FUNDAMENTO: Record<string, string> = {
+  // Renta
   pagador_es_agente: "Tu empresa es agente de retención",
   beneficiario_simple: "El proveedor está en el SIMPLE",
   beneficiario_no_contribuyente: "El proveedor no es contribuyente",
   beneficiario_autorretenedor: "El proveedor es autorretenedor",
+  pago_con_tarjeta: "Se pagó con tarjeta",
+  // IVA
+  pagador_agente_iva: "Tu empresa es agente de retención de IVA",
+  vendedor_responsable_iva: "El proveedor es responsable de IVA",
+  renglones_con_iva: "La factura trae IVA",
+  entre_agentes_1_2_5:
+    "Los dos son agentes de retención de IVA de los numerales 1, 2 o 5",
+  servicio_desde_el_exterior: "Es un servicio desde el exterior",
+  // ICA
+  agente_ica_en_municipio: "Tu empresa es agente de ReteICA en el municipio",
+  proveedor_no_contribuyente_ica:
+    "El proveedor no es contribuyente de ICA allí",
+  proveedor_autorretenedor_ica: "El proveedor es autorretenedor de ICA allí",
+  matriz_municipal: "La matriz del municipio ordena retener",
+  // Ventas
+  cliente_simple: "El cliente está en el SIMPLE",
+  vendedor_agente_renta: "Tu empresa es agente de retención de renta",
 };
+
+/**
+ * Una guarda en palabras. Una clave que todavía no está en el mapa no se
+ * muestra cruda: se le quitan los guiones bajos.
+ */
+export function fundamentoEnPalabras(regla: string): string {
+  const conocida = FUNDAMENTO[regla];
+  if (conocida !== undefined) return conocida;
+  const texto = regla.replace(/_/g, " ").trim().toLowerCase();
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+/**
+ * El chip y la razón de un renglón con el concepto que quedó. Si la persona
+ * cambió el que el motor vio claro o dedujo, ya no es «La vi clara»: es «Lo
+ * dijiste vos», y la razón vieja deja de valer.
+ */
+export function estadoRenglon(
+  r: RenglonPropuesto,
+  elegido: string | null,
+  nombreDe: (codigo: string | null) => string,
+): { chip: { texto: string; clase: string }; razon: string } {
+  const cambiado = elegido !== null && elegido !== r.concepto;
+  if (cambiado) {
+    return {
+      chip: CHIP_TUYO,
+      razon: `Elegiste ${nombreDe(elegido).toLowerCase()}. Al registrar lo aprendo para las próximas compras de este proveedor.`,
+    };
+  }
+  // El estado lo dice el servidor, que ya recalculó con lo contestado.
+  const chip = r.pendiente
+    ? r.origen === "IA"
+      ? { ...CHIP.DEDUCIDA, texto: "La deduje · IA" }
+      : CHIP[r.certeza]
+    : r.certeza === "CLARA"
+      ? CHIP.CLARA
+      : CHIP_TUYO;
+  return { chip, razon: r.razon };
+}
 
 /**
  * La retención en la fuente (renta) de una compra, **propuesta por el motor**
@@ -80,6 +144,14 @@ export function PropuestaRenta({
   editable?: boolean;
   etiquetaRenglon?: (orden: number) => string;
 }) {
+  // El AIU de un renglón que ya no lo pide no se manda: el IVA de ese renglón
+  // iría sobre un AIU que nadie ve (bug #16).
+  useEffect(() => {
+    if (cargando) return;
+    const quedan = aiuSinPedir(propuesta, respuestas.aiu ?? {});
+    if (quedan !== null) onCambiar({ ...respuestas, aiu: quedan });
+  }, [cargando, propuesta, respuestas, onCambiar]);
+
   const elegir = (orden: number, codigo: string) =>
     onCambiar({
       ...respuestas,
@@ -123,27 +195,33 @@ export function PropuestaRenta({
         <p className="text-sm text-muted-foreground">
           Completá el proveedor y las líneas para ver la retención.
         </p>
-      ) : propuesta.renglones.length === 0 ? (
-        // Una guarda cortó antes de clasificar: no hay nada que preguntar.
+      ) : propuesta.renglones.length === 0 &&
+        propuesta.retenciones.length === 0 ? (
+        // Una guarda cortó antes de clasificar y no quedó ninguna retención:
+        // no hay nada que preguntar ni que mostrar.
         <p className="rounded-2xl bg-muted/50 px-4 py-3 text-sm">
           {propuesta.motivo}
         </p>
       ) : (
         <>
-          <ul className="m-0 flex list-none flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border p-0">
-            {propuesta.renglones.map((r) => (
-              <FilaRenglon
-                key={r.orden}
-                renglon={r}
-                etiqueta={etiquetaRenglon(r.orden)}
-                elegido={respuestas.conceptos[r.orden] ?? r.elegido}
-                conceptos={propuesta.conceptos}
-                nombreDe={nombreDe}
-                editable={editable}
-                onElegir={(codigo) => elegir(r.orden, codigo)}
-              />
-            ))}
-          </ul>
+          {/* Sin renglones que clasificar puede haber retenciones igual: el
+              ReteIVA a un proveedor del SIMPLE no pide concepto. */}
+          {propuesta.renglones.length > 0 && (
+            <ul className="m-0 flex list-none flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border p-0">
+              {propuesta.renglones.map((r) => (
+                <FilaRenglon
+                  key={r.orden}
+                  renglon={r}
+                  etiqueta={etiquetaRenglon(r.orden)}
+                  elegido={respuestas.conceptos[r.orden] ?? r.elegido}
+                  conceptos={propuesta.conceptos}
+                  nombreDe={nombreDe}
+                  editable={editable}
+                  onElegir={(codigo) => elegir(r.orden, codigo)}
+                />
+              ))}
+            </ul>
+          )}
 
           {/* El convenio del país del proveedor del exterior (§8.15): se
               ofrece, y se aplica solo si la persona lo elige. */}
@@ -211,7 +289,7 @@ export function PropuestaRenta({
                     }
                   />
                   <span className="text-xs text-muted-foreground">
-                    Se retiene sobre el AIU, nunca menos del 10 % del renglón.
+                    El IVA y la retención van sobre el AIU, nunca menos del 10 % del renglón.
                   </span>
                 </label>
               ))}
@@ -322,17 +400,7 @@ function FilaRenglon({
   onElegir: (codigo: string) => void;
 }) {
   const [cambiando, setCambiando] = useState(false);
-  // El estado lo dice el servidor, que ya recalculó con lo contestado.
-  const chip = r.pendiente
-    ? r.origen === "IA"
-      ? { ...CHIP.DEDUCIDA, texto: "La deduje · IA" }
-      : CHIP[r.certeza]
-    : r.certeza === "CLARA"
-      ? CHIP.CLARA
-      : {
-          texto: "Lo dijiste vos",
-          clase: "border-border bg-muted text-foreground",
-        };
+  const { chip, razon } = estadoRenglon(r, elegido, nombreDe);
   const opciones = r.opciones
     ? conceptos.filter((c) => r.opciones!.includes(c.codigo))
     : conceptos;
@@ -351,7 +419,7 @@ function FilaRenglon({
           <span className="text-sm font-medium">{nombreDe(elegido)}</span>
         )}
       </div>
-      <p className="m-0 text-xs text-muted-foreground">{r.razon}</p>
+      <p className="m-0 text-xs text-muted-foreground">{razon}</p>
 
       {verSelector && (
         <div className="flex flex-wrap items-center gap-2">
@@ -379,6 +447,8 @@ function FilaRenglon({
               </Button>
             ))}
           <Select
+            // Sin `items`, el disparador muestra el código (EXT_GENERAL).
+            items={conceptos.map((c) => ({ value: c.codigo, label: c.nombre }))}
             value={r.pendiente ? undefined : (elegido ?? undefined)}
             onValueChange={(v) => {
               if (v) {
@@ -468,7 +538,7 @@ export function Explicacion({ e }: { e: ExplicacionRetencion }) {
     <ul className="m-0 mt-2 flex list-disc flex-col gap-1 pl-5 text-xs text-muted-foreground">
       {e.guardas.map((g) => (
         <li key={g.regla}>
-          {FUNDAMENTO[g.regla] ?? g.regla}: {g.resultado ? "sí" : "no"} (
+          {fundamentoEnPalabras(g.regla)}: {g.resultado ? "sí" : "no"} (
           {g.fundamento})
         </li>
       ))}

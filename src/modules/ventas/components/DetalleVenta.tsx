@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
+import { mostrarCantidad } from "@/lib/numeros";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleAsiento } from "@/modules/contabilidad/components/DetalleAsiento";
 import { PanelMaria } from "./PanelMaria";
@@ -109,7 +110,7 @@ export function DetalleVenta({
                           {l.producto_nombre}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
-                          {l.cantidad}
+                          {mostrarCantidad(l.cantidad)}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {formatCOP(Number(l.precio_unitario))}

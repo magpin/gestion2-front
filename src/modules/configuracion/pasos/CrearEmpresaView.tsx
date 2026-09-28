@@ -389,7 +389,13 @@ export function CrearEmpresaView() {
                     etiqueta="Tipo de persona"
                     ayuda={modo === "IA" && identidad?.tipoPersona ? "Del RUT" : undefined}
                   >
+                    {/* `items`: sin él, el cuadro cerrado muestra el código
+                        («JURIDICA») y no la palabra. */}
                     <Select
+                      items={[
+                        { value: "JURIDICA", label: "Jurídica" },
+                        { value: "NATURAL", label: "Natural" },
+                      ]}
                       value={form.watch("tipoPersona")}
                       onValueChange={(v) =>
                         form.setValue("tipoPersona", v as Datos["tipoPersona"])
@@ -479,6 +485,11 @@ export function CrearEmpresaView() {
                 <div className="grid gap-3 sm:grid-cols-[1fr_152px]">
                   <Campo id="grupoNiif" etiqueta="Grupo NIIF" ayuda="Grupo 2 es lo habitual">
                     <Select
+                      items={[
+                        { value: "GRUPO_1", label: "Grupo 1 · NIIF plenas" },
+                        { value: "GRUPO_2", label: "Grupo 2 · NIIF para pymes" },
+                        { value: "GRUPO_3", label: "Grupo 3 · Microempresas" },
+                      ]}
                       value={form.watch("grupoNiif")}
                       onValueChange={(v) => form.setValue("grupoNiif", v as Datos["grupoNiif"])}
                     >

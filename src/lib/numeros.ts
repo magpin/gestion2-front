@@ -84,3 +84,21 @@ export function leerNumero(
 export function esEntero(valor: string): boolean {
   return valor.trim() === "" || Number.isInteger(Number(valor));
 }
+
+/**
+ * Una cantidad guardada, como se lee: «4.000000» → «4», «1.500000» → «1,5»,
+ * «12000.000000» → «12.000».
+ *
+ * La base guarda las cantidades con seis decimales (`DECIMALES_CANTIDAD`) para
+ * las unidades fraccionables; en pantalla sobran los ceros de la derecha. No se
+ * redondea nada: si la cantidad trae decimales, se ven, sea cual sea la unidad.
+ */
+export function mostrarCantidad(valor: string | null | undefined): string {
+  if (valor == null || valor.trim() === "") return "—";
+  const limpio = valor.trim();
+  if (!/^-?\d+(\.\d+)?$/.test(limpio)) return limpio;
+  const sinCeros = limpio.includes(".")
+    ? limpio.replace(/0+$/, "").replace(/\.$/, "")
+    : limpio;
+  return mostrarNumero(sinCeros === "-0" ? "0" : sinCeros);
+}

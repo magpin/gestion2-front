@@ -84,3 +84,22 @@ export const llaveDe = (e: Eleccion): string =>
     : e.tipo === "CORTE"
       ? e.corte
       : e.atajo;
+
+/**
+ * De qué habla cada reporte de rango, para decirlo en la ventana de período
+ * («Vas a ver: Retenciones del 1 al 30 de septiembre») y cuando sale vacío
+ * («No hay retenciones entre…»). Cada reporte nombra lo suyo: el 350 no es un
+ * reporte de ventas.
+ */
+const QUE_MUESTRA: Record<ClaveReporte, { titulo: string; vacio: string }> = {
+  VENTAS_POR_CLIENTE: { titulo: "Ventas", vacio: "ventas" },
+  ANTIGUEDAD_CARTERA: { titulo: "Cartera", vacio: "cartera" },
+  RETENCIONES_350: { titulo: "Retenciones", vacio: "retenciones" },
+  RETEICA: { titulo: "ReteICA", vacio: "retenciones de ICA" },
+  CERTIFICADOS_RETENCION: {
+    titulo: "Certificados de retención",
+    vacio: "retenciones para certificar",
+  },
+};
+
+export const queMuestra = (reporte: ClaveReporte) => QUE_MUESTRA[reporte];

@@ -106,7 +106,7 @@ function BloqueDian({ imp, pendiente }: { imp: EstadoImpuestos; pendiente: boole
             <div className="flex min-w-0 flex-col gap-1">
               <span className="text-sm font-medium">{p.pregunta}</span>
               <span className="text-xs text-muted-foreground">{p.ayuda}</span>
-              <Origen pregunta={p} confirmado={imp.confirmadoEn !== null} />
+              <Origen pregunta={p} />
             </div>
             <SegmentadoSiNo
               etiquetaGrupo={p.pregunta}
@@ -141,13 +141,7 @@ function BloqueDian({ imp, pendiente }: { imp: EstadoImpuestos; pendiente: boole
 }
 
 /** De dónde salió la respuesta: el RUT, o lo que contestó la persona. */
-function Origen({
-  pregunta,
-  confirmado,
-}: {
-  pregunta: EstadoImpuestos["preguntas"][number];
-  confirmado: boolean;
-}) {
+function Origen({ pregunta }: { pregunta: EstadoImpuestos["preguntas"][number] }) {
   if (pregunta.fuente !== null) {
     return (
       <span className="text-[11px] text-muted-foreground">
@@ -157,7 +151,8 @@ function Origen({
       </span>
     );
   }
-  if (pregunta.respuesta === false && confirmado) {
+  // Un «No» sin código en el RUT solo llega si la persona lo contestó (o confirmó el paso).
+  if (pregunta.respuesta === false) {
     return <span className="text-[11px] text-muted-foreground">Lo contestaste vos.</span>;
   }
   return null;

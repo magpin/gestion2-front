@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { leerVisor, rutaDelVisor } from "./eleccion";
+import { leerVisor, queMuestra, rutaDelVisor } from "./eleccion";
 import { deTextoAIso, paginasCorto, rangoCorto, rangoLargo, ultimaVez } from "./fechas";
 
 describe("las fechas en palabras", () => {
@@ -73,5 +73,14 @@ describe("la elección viaja en la URL", () => {
       tipo: "ATAJO_CORTE",
       atajo: "HOY",
     });
+  });
+});
+
+describe("de qué habla cada reporte", () => {
+  it("los de retenciones no dicen «ventas»", () => {
+    expect(queMuestra("RETENCIONES_350").titulo).toBe("Retenciones");
+    expect(queMuestra("RETEICA").vacio).toBe("retenciones de ICA");
+    expect(queMuestra("CERTIFICADOS_RETENCION").titulo).toBe("Certificados de retención");
+    expect(queMuestra("VENTAS_POR_CLIENTE").titulo).toBe("Ventas");
   });
 });

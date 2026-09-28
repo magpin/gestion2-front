@@ -35,10 +35,16 @@ export function porciento(fraccion: number, decimales = 0): string {
   })} %`;
 }
 
+// Una fecha sin hora (`aaaa-mm-dd`, una columna `date`) es un día del
+// calendario: `new Date` la deja a la medianoche UTC y pasada a Bogotá saldría
+// el día anterior. Esa se escribe en UTC, tal cual; un instante, en Colombia.
+const SIN_HORA = /^\d{4}-\d{2}-\d{2}$/;
+
 const partes = (iso: string, opciones: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat("es-CO", { timeZone: ZONA, ...opciones }).format(
-    new Date(iso),
-  );
+  new Intl.DateTimeFormat("es-CO", {
+    timeZone: SIN_HORA.test(iso) ? "UTC" : ZONA,
+    ...opciones,
+  }).format(new Date(iso));
 
 /** `22/09/2026`. */
 export function fecha(iso: string | null | undefined): string {

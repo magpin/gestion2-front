@@ -26,7 +26,7 @@ import { HojaIframe } from "../components/HojaIframe";
 import { ModalPeriodo } from "../components/ModalPeriodo";
 import { llavesReportes, useAtajos, useHoja, useListaReportes } from "../hooks/useReportes";
 import { ICONO_AREA } from "../lib/areas";
-import { leerVisor, rutaDelVisor } from "../lib/eleccion";
+import { leerVisor, queMuestra, rutaDelVisor } from "../lib/eleccion";
 import { fechaLarga, rangoLargo } from "../lib/fechas";
 import styles from "../reportes.module.css";
 import { reportesService } from "../services/reportes.service";
@@ -232,6 +232,7 @@ function Visor({ reporte, eleccion }: { reporte: ClaveReporte; eleccion: Eleccio
           />
         ) : vacia && hoja.data ? (
           <SinDatos
+            reporte={reporte}
             parametro={conocido.parametro}
             hoja={hoja.data}
             onCambiar={() => setCambiando(true)}
@@ -251,7 +252,7 @@ function Visor({ reporte, eleccion }: { reporte: ClaveReporte; eleccion: Eleccio
       {cambiando && (
         <ModalPeriodo
           abierto
-          reporte={conocido}
+          reporte={{ ...conocido, clave: reporte }}
           inicial={eleccion}
           onCerrar={() => setCambiando(false)}
           onVer={(e) => {
@@ -582,23 +583,26 @@ function Corriendo({ onCancelar, horizontal }: { onCancelar: () => void; horizon
 }
 
 function SinDatos({
+  reporte,
   parametro,
   hoja,
   onCambiar,
 }: {
+  reporte: ClaveReporte;
   parametro: Parametro;
   hoja: HojaEnPantalla;
   onCambiar: () => void;
 }) {
   const esRango = parametro === "RANGO";
   const cuando = rangoLargo(hoja.desde, hoja.hasta).replace(/^del /, "");
+  const que = queMuestra(reporte).vacio;
   const titulo = esRango
     ? hoja.desde === hoja.hasta
-      ? `No hay ventas el ${cuando}`
-      : `No hay ventas entre el ${cuando.replace(" al ", " y el ")}`
+      ? `No hay ${que} el ${cuando}`
+      : `No hay ${que} entre el ${cuando.replace(" al ", " y el ")}`
     : `Nadie tiene saldo por cobrar al ${fechaLarga(hoja.desde)}`;
   const texto = esRango
-    ? `El reporte corrió bien: en ese rango no hay facturas.${
+    ? `El reporte corrió bien: en ese rango no hay ${reporte === "VENTAS_POR_CLIENTE" ? "facturas" : que}.${
         hoja.relativo ? "" : " Las fechas están escritas a mano."
       }`
     : "El reporte corrió bien: a esa fecha no hay facturas con saldo pendiente.";

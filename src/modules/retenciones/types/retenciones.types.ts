@@ -195,6 +195,28 @@ export const respuestasRentaVacias = (): RespuestasRenta => ({
   convenios: {},
 });
 
+/**
+ * El AIU que quedó escrito en un renglón que ya no lo pide —cambió su
+ * concepto—, fuera. El IVA de ese renglón se liquida sobre el AIU (art. 462-1
+ * ET, bug #16): uno viejo que nadie ve lo bajaría sin razón. `null` si no hay
+ * nada que quitar.
+ */
+export function aiuSinPedir(
+  p: PropuestaRenta | undefined,
+  aiu: Record<number, string>,
+): Record<number, string> | null {
+  if (p === undefined) return null;
+  const piden = new Set(
+    p.renglones.filter((r) => r.pideAiu === true).map((r) => r.orden),
+  );
+  const quedan = Object.fromEntries(
+    Object.entries(aiu).filter(([orden]) => piden.has(Number(orden))),
+  );
+  return Object.keys(quedan).length === Object.keys(aiu).length
+    ? null
+    : quedan;
+}
+
 /** Lo que va al backend, a partir de lo contestado. */
 export function aEnvioRenta(r: RespuestasRenta): {
   conceptosRenta?: Array<{ orden: number; conceptoCodigo: string }>;

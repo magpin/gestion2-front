@@ -8,6 +8,7 @@ import {
   FilePlus,
   Loader2,
   Trash2,
+  TriangleAlert,
   Undo2,
 } from "lucide-react";
 
@@ -30,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
+import { avisoNotasVivas } from "@/lib/notas-vivas";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { VacioConMaria } from "@/modules/asistente/components/VacioConMaria";
 import { DetalleCompra } from "../components/DetalleCompra";
@@ -114,6 +116,16 @@ export function FacturasCompraSeccion({
     enabled: porAnular !== null,
   });
   const ajustesAnulables = anulacion.data?.ajustes_retencion ?? [];
+  // Con notas vivas no se anula: primero las notas. Se avisa antes de pedir
+  // el motivo; el backend lo rechaza igual si alguien se adelanta.
+  const bloqueoPorNotas = avisoNotasVivas(
+    "compra",
+    anulacion.data?.notas?.map((n) => ({
+      tipo: n.tipo,
+      estado: n.estado,
+      numero: n.numero_factura_proveedor,
+    })),
+  );
 
   const anular = useMutation({
     mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
@@ -241,7 +253,10 @@ export function FacturasCompraSeccion({
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left">
+            {/* 720 y no 900: con el menú lateral abierto, en una pantalla de
+                1280 el área útil ronda los 780 px, y con 900 la tabla quedaba
+                corrida —Acciones fuera de vista o el N.° cortado—. */}
+            <table className="w-full min-w-[720px] text-left">
               <thead className="border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                 <tr>
                   {[
@@ -271,10 +286,10 @@ export function FacturasCompraSeccion({
                     className="cursor-pointer transition-colors hover:bg-muted/40"
                     onClick={() => setDetalleId(c.id)}
                   >
-                    <td className="px-5 py-5 font-mono text-sm font-bold">
+                    <td className="whitespace-nowrap px-5 py-5 font-mono text-sm font-bold">
                       {c.numero_factura_proveedor}
                     </td>
-                    <td className="px-5 py-5 text-sm text-muted-foreground">
+                    <td className="whitespace-nowrap px-5 py-5 text-sm text-muted-foreground">
                       {formatFecha(c.fecha)}
                     </td>
                     <td className="px-5 py-5 text-sm font-medium">
@@ -283,7 +298,7 @@ export function FacturasCompraSeccion({
                         {c.tercero_identificacion}
                       </span>
                     </td>
-                    <td className="px-5 py-5 font-mono text-sm font-semibold">
+                    <td className="whitespace-nowrap px-5 py-5 font-mono text-sm font-semibold">
                       {formatCOP(Number(c.neto_a_pagar))}
                     </td>
                     <td className="px-5 py-5">
@@ -303,7 +318,7 @@ export function FacturasCompraSeccion({
                       </span>
                     </td>
                     <td
-                      className="px-5 py-5"
+                      className="px-3 py-5"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-center justify-end gap-1">
@@ -418,15 +433,28 @@ export function FacturasCompraSeccion({
             )}
           </AlertDialogHeader>
 
-          <label className="block text-sm font-medium">
-            Motivo de la anulación
-            <Textarea
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Por qué se anula"
-              className="mt-2 min-h-24 rounded-xl px-4 py-3"
-            />
-          </label>
+          {bloqueoPorNotas !== null ? (
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-[15px] leading-6"
+            >
+              <TriangleAlert
+                className="mt-1 size-4 shrink-0 text-warning"
+                aria-hidden="true"
+              />
+              <span>{bloqueoPorNotas}</span>
+            </div>
+          ) : (
+            <label className="block text-sm font-medium">
+              Motivo de la anulación
+              <Textarea
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Por qué se anula"
+                className="mt-2 min-h-24 rounded-xl px-4 py-3"
+              />
+            </label>
+          )}
 
           <AlertDialogFooter className="-mx-6 -mb-6 p-6">
             <AlertDialogCancel className="h-11 rounded-xl px-6">
@@ -434,7 +462,11 @@ export function FacturasCompraSeccion({
             </AlertDialogCancel>
             <AlertDialogAction
               className="h-11 rounded-xl bg-danger px-6 text-white hover:bg-danger/90"
-              disabled={anular.isPending || motivo.trim().length < 3}
+              disabled={
+                anular.isPending ||
+                bloqueoPorNotas !== null ||
+                motivo.trim().length < 3
+              }
               onClick={() =>
                 porAnular &&
                 anular.mutate({ id: porAnular.id, motivo: motivo.trim() })

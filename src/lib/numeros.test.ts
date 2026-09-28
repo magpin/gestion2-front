@@ -4,6 +4,7 @@ import {
   admiteDecimales,
   esEntero,
   leerNumero,
+  mostrarCantidad,
   mostrarNumero,
 } from "./numeros";
 
@@ -98,5 +99,29 @@ describe("admiteDecimales y esEntero", () => {
     expect(esEntero("3")).toBe(true);
     expect(esEntero("")).toBe(true);
     expect(esEntero("1.5")).toBe(false);
+  });
+});
+
+describe("mostrarCantidad", () => {
+  it("quita los ceros que guarda la base: «4.000000» es 4", () => {
+    expect(mostrarCantidad("4.000000")).toBe("4");
+    expect(mostrarCantidad("4")).toBe("4");
+  });
+
+  it("una cantidad fraccionada se ve con coma y sin ceros de más", () => {
+    expect(mostrarCantidad("1.500000")).toBe("1,5");
+    expect(mostrarCantidad("0.250000")).toBe("0,25");
+  });
+
+  it("pone el punto de mil", () => {
+    expect(mostrarCantidad("12000.000000")).toBe("12.000");
+    expect(mostrarCantidad("1200")).toBe("1.200");
+    expect(mostrarCantidad("-3.000000")).toBe("-3");
+  });
+
+  it("sin valor pone la raya y lo raro se muestra tal cual", () => {
+    expect(mostrarCantidad(null)).toBe("—");
+    expect(mostrarCantidad("")).toBe("—");
+    expect(mostrarCantidad("abc")).toBe("abc");
   });
 });

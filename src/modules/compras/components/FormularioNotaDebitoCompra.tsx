@@ -168,7 +168,9 @@ export function FormularioNotaDebitoCompra({
         }
       }}
     >
-      <DialogContent size="lg">
+      {/* `xl` como el formulario de compra: lleva el mismo editor de líneas,
+          y en `lg` la columna del IVA quedaba cortada a la derecha. */}
+      <DialogContent size="xl">
         <DialogHeader>
           <div>
             <DialogTitle>Nota débito del proveedor</DialogTitle>

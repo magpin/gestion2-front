@@ -16,7 +16,16 @@ export function formatCOP(valor: number | null | undefined): string {
   }).format(valor ?? 0);
 }
 
-// Formatea una fecha ISO del backend a "dd MMM yyyy" en locale es. Devuelve "—" si no hay fecha.
+// Formatea una fecha del backend a "dd MMM yyyy" en locale es. Devuelve "—" si no hay fecha.
+//
+// Hay dos clases de fecha y cada una se lee distinto:
+// - Una fecha sin hora (`AAAA-MM-DD`, lo que la API devuelve para las columnas
+//   `date`: la fecha de una factura, de un asiento) es un día del calendario.
+//   `parseISO` la deja a la medianoche LOCAL, así que sale el mismo día en
+//   cualquier zona. Con `new Date("AAAA-MM-DD")` quedaría a la medianoche UTC y
+//   en Colombia (UTC-5) saldría el día anterior.
+// - Un instante (`creado_en`, `cerrado_en`: trae hora y zona) se muestra en la
+//   zona del navegador, que es lo correcto.
 export function formatFecha(isoFecha: string | null | undefined): string {
   if (!isoFecha) {
     return "—";
