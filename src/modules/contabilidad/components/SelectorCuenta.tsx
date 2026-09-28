@@ -31,15 +31,21 @@ export function SelectorCuenta({
   valor,
   onElegir,
   invalido,
+  clases,
 }: {
   valor: CuentaEmpresa | null;
   onElegir: (cuenta: CuentaEmpresa) => void;
   invalido?: boolean;
+  /**
+   * Solo cuentas de estas clases del PUC (el primer dígito). Un concepto de
+   * gasto, por ejemplo, solo puede ir a la clase 5.
+   */
+  clases?: string[];
 }) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
 
-  const { data: cuentas = [], isFetching } = useQuery({
+  const { data: todas = [], isFetching } = useQuery({
     queryKey: ["plan-cuentas", "auxiliares", busqueda],
     queryFn: () =>
       planCuentasApi.listar({
@@ -49,6 +55,8 @@ export function SelectorCuenta({
     enabled: abierto,
     staleTime: 5 * 60_000,
   });
+  const cuentas =
+    clases === undefined ? todas : todas.filter((c) => clases.includes(c.codigo[0]));
 
   return (
     <Popover open={abierto} onOpenChange={setAbierto}>
