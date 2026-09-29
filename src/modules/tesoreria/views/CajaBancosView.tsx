@@ -14,6 +14,7 @@ import {
   DialogoNuevaCaja,
   DialogoNuevaCuentaBancaria,
 } from "../components/DialogosAltaTesoreria";
+import { ArranqueSaldos } from "../components/ArranqueSaldos";
 import { BancosResumen } from "../components/BancosResumen";
 import { CajaHoy } from "../components/CajaHoy";
 import { MovimientosJuntos } from "../components/MovimientosJuntos";
@@ -78,6 +79,8 @@ export function CajaBancosView() {
         )}
         {seccion === "Bancos" && puedeCrear && <BotonNuevo etiqueta="Agregar cuenta" onClick={() => setCreandoCuenta(true)} />}
       </header>
+
+      <ArranqueSaldos onAgregarCuenta={puedeCrear ? () => setCreandoCuenta(true) : undefined} />
 
       <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
         {SECCIONES.map(([nombre, Icono]) => (
