@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { useQuieto } from "@/hooks/useQuieto";
 import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
@@ -36,6 +37,8 @@ export function CompraNuevaView() {
     enabled: pedido !== null,
     retry: false,
     staleTime: 30_000,
+    // El error se muestra en el resumen, no en un aviso que tapa la página.
+    meta: SILENCIOSO,
   });
 
   const crear = useMutation({

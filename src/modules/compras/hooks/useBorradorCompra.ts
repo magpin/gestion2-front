@@ -111,6 +111,10 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
     if (proveedor === null) return "Elegí el proveedor.";
     if (fecha === "") return "Elegí la fecha.";
     if (!soporte && numeroFactura.trim() === "") return "Escribí el número de la factura del proveedor.";
+    // Lo mismo que exige el backend: un CUFE a medias no sirve para encontrarla.
+    const largoCufe = cufe.trim().length;
+    if (!soporte && largoCufe > 0 && (largoCufe < 20 || largoCufe > 200))
+      return "El CUFE tiene entre 20 y 200 caracteres: copialo completo o dejalo vacío.";
     if (lineas.length === 0) return "Agregá al menos una línea.";
     if (incompletas.length > 0)
       return `Falta decir qué se compró en ${nombrar(incompletas)}: el producto, o la cuenta y el detalle del gasto.`;

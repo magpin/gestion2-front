@@ -55,7 +55,10 @@ test.describe("Pantallas complementarias", () => {
     await page.getByLabel("Buscar proveedor").fill("Distribuidora");
     await page.getByRole("button", { name: /Distribuidora del Valle/ }).first().click();
     await page.getByLabel("N.° factura proveedor").fill(`FP-${Date.now().toString().slice(-6)}`);
-    await page.getByLabel("CUFE (opcional)").fill("a41f9c07e2prueba");
+    // Un CUFE corto no se acepta: se dice antes de pedir el resumen.
+    await page.getByLabel("CUFE (opcional)").fill("a41f9c07e2");
+    await expect(page.getByText(/El CUFE tiene entre 20 y 200 caracteres/)).toBeVisible();
+    await page.getByLabel("CUFE (opcional)").fill("a41f9c07e2b8d3f1c6a094e7d2b5c8f1a3e6d9b0");
 
     await page.getByRole("button", { name: /Seleccione un producto/ }).click();
     await page.getByLabel("Buscar producto").fill(e.producto.codigo);
@@ -114,6 +117,9 @@ test.describe("Pantallas complementarias", () => {
 
   test("María arma la depreciación y explica la cuenta", async ({ page, request }) => {
     await hacerContador(request, e);
+    // Los roles se leen al entrar: se sale y se vuelve a entrar.
+    await page.context().clearCookies();
+    await page.evaluate(() => localStorage.clear());
     await entrarAlProducto(page, e);
     await page.goto("/dashboard/contabilidad/comprobante");
 
@@ -160,8 +166,8 @@ test.describe("Móvil", () => {
 
     const dialogo = page.getByRole("dialog");
     await expect(dialogo).toBeVisible();
-    const caja = await dialogo.boundingBox();
-    expect(caja?.width).toBe(390);
+    // Después de la animación de entrada, de borde a borde.
+    await expect.poll(async () => Math.round((await dialogo.boundingBox())?.width ?? 0)).toBe(390);
     await page.screenshot({ path: "e2e/.capturas/movil-gasto.png" });
   });
 });

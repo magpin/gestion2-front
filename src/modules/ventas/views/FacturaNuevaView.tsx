@@ -7,6 +7,7 @@ import { AlertTriangle, ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
+import { SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { useQuieto } from "@/hooks/useQuieto";
 import { aviso } from "@/lib/avisos";
 import { cn, formatCOP, formatFecha } from "@/lib/utils";
@@ -52,6 +53,8 @@ export function FacturaNuevaView() {
     enabled: pedido !== null,
     retry: false,
     staleTime: 30_000,
+    // El error se muestra en el resumen, no en un aviso que tapa la página.
+    meta: SILENCIOSO,
   });
 
   const emitir = useEmitirFactura(facturasApi.crear, async (f) => {
