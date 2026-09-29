@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Loader2, Pencil, Plus } from "lucide-react";
 
@@ -34,6 +34,7 @@ export function SelectorProducto({
 }) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const campoBusqueda = useRef<HTMLInputElement>(null);
   // El diálogo se abre CERRANDO el popover: dentro del `PopoverContent` se
   // desmontaría con él en el mismo clic.
   const [editando, setEditando] = useState<ProductoEnEdicion>(null);
@@ -106,10 +107,17 @@ export function SelectorProducto({
             align: "shift",
             fallbackAxisSide: "none",
           }}
+          // El foco va al buscador sin mover la página: con `autoFocus` el
+          // navegador subía la pantalla antes de que el buscador quedara en
+          // su sitio.
+          initialFocus={() => {
+            campoBusqueda.current?.focus({ preventScroll: true });
+            return false;
+          }}
         >
           <div className="border-b border-border p-3">
             <Input
-              autoFocus
+              ref={campoBusqueda}
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               onKeyDown={(e) => {
