@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Sparkles } from "lucide-react";
+import { Camera, Loader2, Sparkles } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { ErrorDeCampo } from "@/components/shared/ErrorDeCampo";
@@ -18,9 +19,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useAuthStore } from "@/core/store/authStore";
 import { useQuieto } from "@/hooks/useQuieto";
 import { aviso } from "@/lib/avisos";
 import { cn, formatCOP } from "@/lib/utils";
+import { ROLES_MARIA } from "@/modules/asistente/hooks/usePendientes";
 import { lineaCompraVacia, type LineaCompraBorrador } from "@/modules/compras/components/EditorLineasCompra";
 import { SelectorProveedor } from "@/modules/compras/components/SelectorProveedor";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
@@ -68,7 +71,7 @@ export function RegistrarGastoDialog({
 }) {
   return (
     <Dialog open={abierto} onOpenChange={(a) => !a && onCerrar()}>
-      <DialogContent size="lg">
+      <DialogContent size="pantalla">
         {abierto && <Formulario onCerrar={onCerrar} onConFactura={onConFactura} />}
       </DialogContent>
     </Dialog>
@@ -83,6 +86,7 @@ function Formulario({
   onConFactura: (compra: CompraDesdeGasto) => void;
 }) {
   const queryClient = useQueryClient();
+  const veMaria = useAuthStore((s) => ROLES_MARIA.some((r) => s.roles.includes(r)));
   const [descripcion, setDescripcion] = useState("");
   const [tercero, setTercero] = useState<TerceroResumen | null>(null);
   const [concepto, setConcepto] = useState<Concepto | null>(null);
@@ -184,6 +188,18 @@ function Formulario({
       </DialogHeader>
 
       <DialogBody className="flex flex-col gap-5">
+        {/* La foto del recibo la lee María en su lectura de documentos (§1.4):
+            no hay una lectura aparte para el gasto. */}
+        {veMaria && (
+          <Link
+            href="/dashboard/asistente"
+            className="flex flex-col items-center gap-1 rounded-2xl border border-dashed border-border px-4 py-5 text-center hover:bg-accent sm:flex-row sm:gap-3 sm:py-3 sm:text-left"
+          >
+            <Camera className="size-5 text-muted-foreground" />
+            <span className="text-sm font-semibold">Tomar foto del recibo</span>
+            <span className="text-xs text-muted-foreground">María lo lee y arma la compra</span>
+          </Link>
+        )}
         <div className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
           <Campo id="gasto-descripcion" etiqueta="Qué se pagó">
             <Input
@@ -311,23 +327,25 @@ function Formulario({
               ? "Se abre la compra con esto puesto: falta el número de la factura."
               : "Queda como pago sin factura en Pagos.")}
         </p>
+        {/* En el móvil, un solo botón de ancho completo: la X de arriba cancela. */}
         <div className="flex gap-3">
-          <Button type="button" variant="outline" className="h-12 rounded-xl px-6" onClick={onCerrar}>
+          <Button type="button" variant="outline" className="hidden h-12 rounded-xl px-6 sm:inline-flex" onClick={onCerrar}>
             Cancelar
           </Button>
           {porCompras ? (
-            <Button type="button" className="h-12 rounded-xl px-6" onClick={siEstaBien(seguirEnCompras)}>
+            <Button type="button" className="h-12 w-full rounded-xl px-6 sm:w-auto" onClick={siEstaBien(seguirEnCompras)}>
               Seguir en Compras
             </Button>
           ) : (
             <Button
               type="button"
-              className="h-12 rounded-xl px-6"
+              className="h-12 w-full rounded-xl px-6 sm:w-auto"
               disabled={guardar.isPending}
               onClick={siEstaBien(() => guardar.mutate())}
             >
               {guardar.isPending && <Loader2 className="size-4 animate-spin" />}
               Guardar gasto
+              {Number(valor) > 0 && <span className="font-mono">· {formatCOP(Number(valor))}</span>}
             </Button>
           )}
         </div>

@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, CalendarClock, FileText, HandCoins, ListFilter, Loader2, Receipt, ReceiptText, Wallet } from "lucide-react";
+import { ArrowLeftRight, CalendarClock, FileText, HandCoins, ListFilter, Loader2, Receipt, ReceiptText, Search, Wallet } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { funcionActiva } from "@/core/config/funciones";
+import { DeclaracionesPorPagar } from "@/modules/impuestos/components/DeclaracionesPorPagar";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
@@ -22,14 +24,21 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
-import { formatCOP } from "@/lib/utils";
+import { formatCOP, hoyEnColombia } from "@/lib/utils";
+import { BotonImprimir } from "@/components/shared/BotonImprimir";
+import { NavegadorMes } from "@/components/shared/NavegadorMes";
+import { Input } from "@/components/ui/input";
+import { nombreMes } from "@/modules/gastos/lib/mes";
+import { fechaCorta } from "@/modules/impuestos/lib/impuestos";
+import { ResumenPorMedio } from "@/modules/tesoreria/components/ResumenPorMedio";
 import { ListaMovimientosConcepto } from "@/modules/tesoreria/components/ListaMovimientosConcepto";
 import { MovimientoConceptoDialog } from "@/modules/tesoreria/components/MovimientoConceptoDialog";
-import { AnticiposProveedor } from "../components/AnticiposProveedor";
+import { AnticiposGlobales, PROVEEDORES } from "@/modules/tesoreria/components/AnticiposGlobales";
+import { ListaCruces } from "../components/AnticiposProveedor";
 import { ComprobanteEgresoDialog, type ProveedorInicial } from "../components/ComprobanteEgresoDialog";
 import { PagosProgramados } from "../components/PagosProgramados";
 import { pagosApi } from "../services/pagos.service";
-import { NOMBRE_TRAMO, TRAMOS, type ComprobanteEgreso, type TramoPago } from "../types/pagos.types";
+import { NOMBRE_TIPO_EGRESO, NOMBRE_TRAMO, TRAMOS, type ComprobanteEgreso, type TipoEgreso, type TramoPago } from "../types/pagos.types";
 
 type Seccion = "Por pagar" | "Comprobantes" | "Programados" | "Sin factura" | "Anticipos";
 
@@ -87,14 +96,15 @@ export function PagosView() {
         {boton}
       </header>
 
-      <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
+      {/* En el móvil las pestañas se desplazan de lado: partidas en dos líneas no se leen. */}
+      <nav className="mb-7 flex gap-2 overflow-x-auto rounded-2xl border border-border bg-card p-2 shadow-sm md:flex-wrap">
         {SECCIONES.map(([nombre, Icono]) => (
           <button
             key={nombre}
             type="button"
             aria-current={seccion === nombre ? "page" : undefined}
             onClick={() => setSeccion(nombre)}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+            className={`flex shrink-0 items-center whitespace-nowrap md:flex-1 justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
               seccion === nombre ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
             }`}
           >
@@ -117,7 +127,12 @@ export function PagosView() {
         />
       )}
       {seccion === "Sin factura" && <ListaMovimientosConcepto direccion="SALIDA" puedeAnular={puedePagar} />}
-      {seccion === "Anticipos" && <AnticiposProveedor puedeCruzar={puedePagar} />}
+      {seccion === "Anticipos" && (
+        <div className="flex flex-col gap-7">
+          <AnticiposGlobales lado={PROVEEDORES} puedeMover={puedePagar} />
+          <ListaCruces puedeAnular={puedePagar} />
+        </div>
+      )}
 
       <ComprobanteEgresoDialog
         abierto={comprobante !== null}
@@ -188,9 +203,14 @@ function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void
         </div>
       </section>
 
+      {funcionActiva("impuestos") && (
+        <div className="mb-7">
+          <DeclaracionesPorPagar />
+        </div>
+      )}
       {proveedores.length === 0 ? (
         <EmptyState
-          titulo={tramo ? "Nada en este tramo" : "No le debés a nadie"}
+          titulo={tramo ? "Nada en este tramo" : "No le debés a ningún proveedor"}
           descripcion={
             tramo
               ? "Ninguna compra pendiente vence en ese tramo."
@@ -201,7 +221,55 @@ function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void
           accionSecundaria={tramo ? { label: "Ver todo", onClick: () => setTramo(null) } : undefined}
         />
       ) : (
-        <div className="flex flex-col gap-4">
+        <>
+        {/* En el móvil (pantalla 67), una tarjeta por factura, en el orden en
+            que vencen. En pantallas grandes, la tabla por proveedor. */}
+        <ul className="flex flex-col gap-3 md:hidden">
+          {proveedores
+            .flatMap((p) => p.compras.map((c) => ({ ...c, proveedor: p })))
+            .sort((x, y) => x.venceEfectivo.localeCompare(y.venceEfectivo))
+            .map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center justify-between gap-3 rounded-3xl border border-border bg-card px-4 py-4 shadow-sm"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{c.proveedor.nombre}</p>
+                  <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                    <span
+                      className={
+                        c.tramo === "VENCIDO"
+                          ? "rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 font-medium text-foreground"
+                          : undefined
+                      }
+                    >
+                      {c.tramo === "VENCIDO" ? "Venció" : "Vence"} {c.venceEfectivo}
+                    </span>
+                    {c.descuentoSugerido > 0 && (
+                      <span className="rounded-full border border-success/40 bg-success/10 px-2 py-0.5 font-medium text-foreground">
+                        Pronto pago hasta el {c.descuentoHasta}
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{c.numero}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <span className="font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(c.pendiente)}</span>
+                  {onPagar && (
+                    <Button
+                      type="button"
+                      variant={c.tramo === "VENCIDO" ? "default" : "outline"}
+                      className="h-9 rounded-lg px-4"
+                      onClick={() => onPagar({ id: c.proveedor.terceroId, nombre: c.proveedor.nombre })}
+                    >
+                      Pagar
+                    </Button>
+                  )}
+                </div>
+              </li>
+            ))}
+        </ul>
+        <div className="hidden flex-col gap-4 md:flex">
           {proveedores.map((p) => (
             <section key={p.terceroId} className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
@@ -255,16 +323,36 @@ function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void
             </section>
           ))}
         </div>
+        </>
       )}
     </>
   );
 }
 
+const TIPOS: Array<TipoEgreso | null> = [null, "PROVEEDOR", "SIN_FACTURA", "NO_GASTO", "IMPUESTO"];
+
+const TONO_TIPO: Record<TipoEgreso, string> = {
+  PROVEEDOR: "border-border bg-muted",
+  SIN_FACTURA: "border-warning/30 bg-warning/15",
+  NO_GASTO: "border-info/30 bg-info/15",
+  IMPUESTO: "border-info/30 bg-info/10",
+};
+
+/**
+ * Todo lo que salió en el mes (PC12): los comprobantes de egreso a
+ * proveedores, lo que se pagó por concepto y las declaraciones, con el
+ * resumen por caja y cuenta y un filtro por tipo.
+ */
 function Comprobantes({ puedeAnular }: { puedeAnular: boolean }) {
-  const [anulando, setAnulando] = useState<ComprobanteEgreso | null>(null);
+  const mesHoy = hoyEnColombia().slice(0, 7);
+  const [mes, setMes] = useState(mesHoy);
+  const [medio, setMedio] = useState<string | null>(null);
+  const [tipo, setTipo] = useState<TipoEgreso | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [anulando, setAnulando] = useState<Anulable | null>(null);
   const consulta = useQuery({
-    queryKey: ["comprobantes-egreso"],
-    queryFn: pagosApi.comprobantes,
+    queryKey: ["pagos", "egresos", mes],
+    queryFn: () => pagosApi.egresos(mes),
     meta: SILENCIOSO,
   });
   const data = consulta.data;
@@ -276,83 +364,164 @@ function Comprobantes({ puedeAnular }: { puedeAnular: boolean }) {
       <SkeletonTable />
     );
   }
-  if (data.length === 0) {
-    return (
-      <EmptyState
-        titulo="Sin comprobantes todavía"
-        descripcion="Cada pago que registres queda acá con su número. Se paga desde Por pagar o desde la compra."
-        icon={ReceiptText}
-      />
-    );
-  }
+
+  const q = busqueda.trim().toLowerCase();
+  const visibles = data.egresos.filter(
+    (e) =>
+      (medio === null || e.medioId === medio) &&
+      (tipo === null || e.tipo === tipo) &&
+      (q === "" ||
+        e.numero.toLowerCase().includes(q) ||
+        (e.tercero ?? "").toLowerCase().includes(q) ||
+        e.detalle.toLowerCase().includes(q)),
+  );
+  const r = data.resumen;
+  const mesTexto = nombreMes(mes).split(" ")[0].toLowerCase();
+  const conGmf = data.egresos.some((e) => e.gmf > 0);
 
   return (
     <>
-      <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
-        <table className="w-full min-w-[860px] text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              <th className="px-5 py-3">Comprobante</th>
-              <th className="px-5 py-3">Fecha</th>
-              <th className="px-5 py-3">Proveedor</th>
-              <th className="px-5 py-3">Salió de</th>
-              <th className="px-5 py-3">Compras</th>
-              <th className="px-5 py-3 text-right">Salió</th>
-              {puedeAnular && <th className="px-5 py-3" />}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((c) => (
-              <tr key={c.id} className={`border-t border-border ${c.estado === "ANULADO" ? "text-muted-foreground" : ""}`}>
-                <td className="px-5 py-3 font-mono font-semibold">
-                  {c.numero}
-                  {c.estado === "ANULADO" && (
-                    <span
-                      title={c.motivoAnulacion ?? undefined}
-                      className="ml-2 rounded-full border border-border px-2 py-0.5 font-sans text-[11px] font-medium"
-                    >
-                      Anulado
-                    </span>
-                  )}
-                </td>
-                <td className="px-5 py-3 whitespace-nowrap">{c.fecha}</td>
-                <td className="px-5 py-3">{c.terceroNombre}</td>
-                <td className="px-5 py-3">{c.destino}</td>
-                <td className="px-5 py-3 font-mono text-xs">
-                  {c.aplicaciones.map((a) => a.compra).join(", ")}
-                  {c.anticipo > 0 && <span className="block font-sans">+ anticipo {formatCOP(c.anticipo)}</span>}
-                </td>
-                <td className="px-5 py-3 text-right font-mono font-semibold whitespace-nowrap tabular-nums">
-                  {formatCOP(c.total + c.anticipo - c.retencionAnticipo)}
-                  {c.gmf > 0 && (
-                    <span className="block text-xs font-normal text-muted-foreground">4×1000 {formatCOP(c.gmf)}</span>
-                  )}
-                </td>
-                {puedeAnular && (
-                  <td className="px-5 py-3 text-right">
-                    {c.estado === "VIGENTE" && (
-                      <Button type="button" variant="outline" className="h-9 rounded-lg px-3" onClick={() => setAnulando(c)}>
-                        Anular
-                      </Button>
-                    )}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <ResumenPorMedio
+        titulo={`Salió en ${mesTexto}`}
+        pie={`${r.cantidad} ${r.cantidad === 1 ? "egreso" : "egresos"}${conGmf ? " · incluye el 4×1000" : ""}`}
+        resumen={r}
+        medio={medio}
+        onMedio={setMedio}
+        palabra={["egreso", "egresos"]}
+      />
+
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-60 flex-1">
+          <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar por tercero, comprobante o factura"
+            aria-label="Buscar egreso"
+            className="h-11 rounded-xl pl-10"
+          />
+        </div>
+        <NavegadorMes
+          mes={mes}
+          maximo={mesHoy}
+          onMes={(m) => {
+            setMes(m);
+            setMedio(null);
+          }}
+        />
       </div>
+      <div className="mb-4 flex flex-wrap gap-1.5" role="group" aria-label="Tipo de egreso">
+        {TIPOS.map((t) => (
+          <button
+            key={t ?? "todos"}
+            type="button"
+            aria-pressed={tipo === t}
+            onClick={() => setTipo(t)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              tipo === t ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-accent"
+            }`}
+          >
+            {t === null ? "Todos" : NOMBRE_TIPO_EGRESO[t]}
+          </button>
+        ))}
+      </div>
+
+      {visibles.length === 0 ? (
+        <EmptyState
+          titulo={data.egresos.length === 0 ? `Nada salió en ${mesTexto}` : "Nada coincide"}
+          descripcion={
+            data.egresos.length === 0
+              ? "Cada pago que registres queda acá con su número: a proveedores, sin factura y de impuestos."
+              : "Ningún egreso del mes coincide con la búsqueda, el tipo o el medio elegido."
+          }
+          icon={data.egresos.length === 0 ? ReceiptText : ListFilter}
+          accionSecundaria={
+            data.egresos.length === 0
+              ? undefined
+              : {
+                  label: "Ver todos",
+                  onClick: () => {
+                    setBusqueda("");
+                    setMedio(null);
+                    setTipo(null);
+                  },
+                }
+          }
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
+          <table className="w-full min-w-[860px] text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                <th className="px-5 py-3">Comprobante</th>
+                <th className="px-5 py-3">Pagado a</th>
+                <th className="px-5 py-3">Tipo</th>
+                <th className="px-5 py-3">Salió de</th>
+                <th className="px-5 py-3 text-right">Valor</th>
+                <th className="px-5 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {visibles.map((e) => {
+                const anulado = e.estado === "ANULADO";
+                return (
+                  <tr key={`${e.origen}-${e.id}`} className={`border-t border-border ${anulado ? "text-muted-foreground" : ""}`}>
+                    <td className="px-5 py-3">
+                      <p className={`font-mono font-semibold ${anulado ? "line-through" : ""}`}>{e.numero}</p>
+                      <p className="text-xs text-muted-foreground">{fechaCorta(e.fecha)}</p>
+                    </td>
+                    <td className="px-5 py-3">
+                      <p className="font-medium">{e.tercero ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">{e.detalle}</p>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${TONO_TIPO[e.tipo]}`}>
+                        {anulado ? "Anulado" : NOMBRE_TIPO_EGRESO[e.tipo]}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">{e.destino}</td>
+                    <td className={`px-5 py-3 text-right font-mono font-semibold whitespace-nowrap tabular-nums ${anulado ? "line-through" : ""}`}>
+                      {formatCOP(e.valor)}
+                      {e.gmf > 0 && <span className="block text-xs font-normal text-muted-foreground">+ 4×1000 {formatCOP(e.gmf)}</span>}
+                    </td>
+                    <td className="px-5 py-3">
+                      {/* Los de proveedores se anulan con su comprobante; los sin factura, en su pestaña; los impuestos no se anulan. */}
+                      {e.origen === "COMPROBANTE" && (
+                        <div className="flex justify-end gap-2">
+                          {puedeAnular && !anulado && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-9 rounded-lg px-3"
+                              onClick={() => setAnulando({ id: e.id, numero: e.numero, destino: e.destino })}
+                            >
+                              Anular
+                            </Button>
+                          )}
+                          <BotonImprimir ruta={`/documentos/comprobantes-egreso/${e.id}/pdf`} nombre={e.numero} />
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
       <DialogoAnular comprobante={anulando} onCerrar={() => setAnulando(null)} />
     </>
   );
 }
+
+type Anulable = Pick<ComprobanteEgreso, "id" | "numero" | "destino">;
 
 /**
  * Anular devuelve cada pago por la devolución de siempre: la plata vuelve al
  * mismo medio, las compras vuelven a deber y la retención del anticipo se
  * reversa. Si el anticipo ya se cruzó, primero se anula el cruce.
  */
-function DialogoAnular({ comprobante, onCerrar }: { comprobante: ComprobanteEgreso | null; onCerrar: () => void }) {
+function DialogoAnular({ comprobante, onCerrar }: { comprobante: Anulable | null; onCerrar: () => void }) {
   const queryClient = useQueryClient();
   const [motivo, setMotivo] = useState("");
   const anular = useMutation({

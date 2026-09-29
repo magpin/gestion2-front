@@ -32,7 +32,24 @@ export function TableroPlata({ datos }: { datos: Tablero | undefined }) {
     <div className="flex flex-col gap-6">
       <PlataHoy datos={datos} />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* En el móvil (pantalla 66), las dos cuentas lado a lado y en corto: el
+          detalle está a un toque, en Cobros y en Pagos. */}
+      <div className="grid grid-cols-2 gap-3 md:hidden">
+        <TarjetaCorta
+          etiqueta="Te deben"
+          valor={datos.teDeben.total}
+          vencido={datos.teDeben.vencido}
+          href={funcionActiva("cobros") ? "/dashboard/cobros" : "/dashboard/ventas"}
+        />
+        <TarjetaCorta
+          etiqueta="Debés"
+          valor={datos.debes.total}
+          vencido={datos.debes.vencido}
+          href={funcionActiva("pagos") ? "/dashboard/pagos" : "/dashboard/compras"}
+        />
+      </div>
+
+      <div className="hidden gap-6 md:grid md:grid-cols-2">
         <TarjetaCuenta
           etiqueta="Te deben"
           valor={datos.teDeben.total}
@@ -79,25 +96,58 @@ function PlataHoy({ datos }: { datos: Tablero }) {
   const { total, lugares } = datos.plataHoy;
   return (
     <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-      <div className="flex flex-wrap items-end justify-between gap-3 px-6 py-5">
+      <div className="flex flex-wrap items-end justify-between gap-3 px-4 py-5 sm:px-6">
         <div>
           <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Plata hoy · caja + bancos</h2>
           <p className="font-mono text-3xl font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums">{formatCOP(total)}</p>
         </div>
-        <Enlace href="/dashboard/caja-bancos">Ver caja y bancos</Enlace>
+        <span className="hidden sm:inline">
+          <Enlace href="/dashboard/caja-bancos">Ver caja y bancos</Enlace>
+        </span>
       </div>
       {lugares.length > 0 && (
         <ul className="grid border-t border-border sm:grid-cols-2 lg:grid-cols-4">
           {lugares.map((l) => (
-            <li key={l.id} className="border-b border-border px-6 py-4 sm:border-r">
-              <p className="truncate text-sm font-semibold">{l.nombre}</p>
-              <p className="text-xs text-muted-foreground">{l.medio === "CAJA" ? "Efectivo" : "Banco"}</p>
-              <p className="mt-1 font-mono text-lg font-semibold whitespace-nowrap tabular-nums">{formatCOP(l.saldo)}</p>
+            // En el móvil, una fila por lugar: nombre a la izquierda, saldo a la derecha.
+            <li
+              key={l.id}
+              className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 last:border-b-0 sm:block sm:border-r sm:px-6 sm:py-4 sm:last:border-b"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{l.nombre}</p>
+                <p className="hidden text-xs text-muted-foreground sm:block">{l.medio === "CAJA" ? "Efectivo" : "Banco"}</p>
+              </div>
+              <p className="font-mono text-sm font-semibold whitespace-nowrap tabular-nums sm:mt-1 sm:text-lg">{formatCOP(l.saldo)}</p>
             </li>
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+/** «Te deben» o «Debés» en corto, para el móvil: el total y lo vencido. */
+function TarjetaCorta({
+  etiqueta,
+  valor,
+  vencido,
+  href,
+}: {
+  etiqueta: string;
+  valor: number;
+  vencido: number;
+  href: string;
+}) {
+  return (
+    <Link href={href} className="flex flex-col gap-2 rounded-3xl border border-border bg-card px-4 py-4 shadow-sm">
+      <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{etiqueta}</h2>
+      <p className="font-mono text-lg font-semibold tracking-[-0.02em] whitespace-nowrap tabular-nums">{formatCOP(valor)}</p>
+      {vencido > 0 && (
+        <span className="w-fit rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 font-mono text-[11px] font-medium whitespace-nowrap">
+          {formatCOP(vencido)} vencido
+        </span>
+      )}
+    </Link>
   );
 }
 
@@ -300,7 +350,7 @@ function BotonAlerta({ href, children }: { href: string; children: ReactNode }) 
   return (
     <Link
       href={href}
-      className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-accent"
+      className="w-full shrink-0 rounded-lg border border-border bg-card px-3 py-2 text-center text-xs font-semibold transition-colors hover:bg-accent sm:w-auto sm:py-1.5"
     >
       {children}
     </Link>
