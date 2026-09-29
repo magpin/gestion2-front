@@ -54,7 +54,13 @@ export function CompraNuevaView() {
   const accion = b.soporte ? "Registrar documento soporte" : "Registrar compra";
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    // Una región con el nombre del documento: se lee igual que el diálogo que
+    // reemplaza, y desaparece al guardar.
+    <div
+      role="region"
+      aria-label={b.soporte ? "Documento soporte" : "Nueva compra"}
+      className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16"
+    >
       <header className="mb-8">
         <Link
           href="/dashboard/compras"

@@ -16,5 +16,6 @@ export default async function VentasPage({
   const { seccion } = await searchParams;
   if (seccion === "pedidos") redirect("/dashboard/asistente/leidos?tipo=pedidos");
   if (seccion === "anteriores") redirect("/dashboard/datos-anteriores");
-  return <VentasView />;
+  // Al volver de emitir una factura (la página de la Fase 8), a sus facturas.
+  return <VentasView inicial={seccion === "facturas" ? "Facturas" : undefined} />;
 }

@@ -60,14 +60,16 @@ export function FacturaNuevaView() {
   const emitir = useEmitirFactura(facturasApi.crear, async (f) => {
     await queryClient.invalidateQueries({ queryKey: ["facturas"] });
     aviso.exito(`Factura ${f.prefijo ?? ""}${f.consecutivo} emitida`);
-    router.push("/dashboard/ventas");
+    router.push("/dashboard/ventas?seccion=facturas");
   });
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    // Una región con el nombre del documento: se lee igual que el diálogo que
+    // reemplaza, y desaparece al emitir.
+    <div role="region" aria-label="Nueva factura" className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
       <header className="mb-8">
         <Link
-          href="/dashboard/ventas"
+          href="/dashboard/ventas?seccion=facturas"
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
@@ -137,7 +139,7 @@ export function FacturaNuevaView() {
           <Button
             variant="outline"
             className="h-12 rounded-xl px-6"
-            render={<Link href="/dashboard/ventas" />}
+            render={<Link href="/dashboard/ventas?seccion=facturas" />}
           >
             Cancelar
           </Button>
