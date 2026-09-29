@@ -206,7 +206,7 @@ export function EditorLineasVenta({
         <table className="w-full min-w-[900px] border-collapse text-left text-sm">
           <thead className="border-y border-border">
             <tr>
-              <th scope="col" className={cn(th, "pl-6")}>Qué</th>
+              <th scope="col" className={cn(th, "min-w-72 pl-6")}>Qué</th>
               <th scope="col" className={th}>Tipo y a dónde va</th>
               <th scope="col" className={cn(th, "text-right")}>Cant.</th>
               <th scope="col" className={cn(th, "text-right")}>Precio</th>

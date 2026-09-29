@@ -75,21 +75,22 @@ export function SelectorProducto({
         <PopoverTrigger
           render={<Button type="button" variant="outline" />}
           aria-invalid={invalido || undefined}
-          className="h-11 w-full justify-between rounded-xl px-4 font-normal aria-invalid:border-danger"
+          className="h-auto min-h-11 w-full justify-between rounded-xl px-4 py-2 text-left font-normal whitespace-normal aria-invalid:border-danger"
         >
-          <span
-            className={cn("truncate", valor ? "" : "text-muted-foreground")}
-          >
-            {valor ? (
-              <>
-                <span className="font-mono text-xs">{valor.codigo}</span>
-                <span className="mx-2 text-muted-foreground">·</span>
-                {valor.nombre}
-              </>
-            ) : (
-              "Seleccione un producto"
-            )}
-          </span>
+          {/* El nombre entero, en hasta dos líneas, y el código debajo: en la
+              tabla de líneas la celda es angosta y el nombre cortado no se lee. */}
+          {valor ? (
+            <span className="flex min-w-0 flex-col">
+              <span className="line-clamp-2 text-sm">{valor.nombre}</span>
+              <span className="font-mono text-xs text-muted-foreground">
+                {valor.codigo}
+              </span>
+            </span>
+          ) : (
+            <span className="truncate text-muted-foreground">
+              Seleccione un producto
+            </span>
+          )}
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
 
