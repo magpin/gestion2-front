@@ -229,7 +229,7 @@ export function ComprobanteManualView() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div className="w-full">
       <header className="mb-8">
         <Link
           href="/dashboard/contabilidad"
@@ -528,7 +528,7 @@ export function ComprobanteManualView() {
               Antes de contabilizar
             </p>
             <ul className="flex flex-col gap-2">
-              <Chequeo bien={cuadre.cuadra && lineas.length >= 2}>
+              <Chequeo bien={lineas.length >= 2 && cuadre.totalDebito > 0 ? cuadre.cuadra : null}>
                 Débitos y créditos cuadran
               </Chequeo>
               <Chequeo

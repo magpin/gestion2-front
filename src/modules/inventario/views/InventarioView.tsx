@@ -75,7 +75,7 @@ export function InventarioView() {
   const [creando, setCreando] = useState(false);
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div className="w-full">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
           <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-text">
@@ -109,7 +109,7 @@ export function InventarioView() {
             type="button"
             aria-current={seccion === nombre ? "page" : undefined}
             onClick={() => setSeccion(nombre)}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+            className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
               seccion === nombre
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent"

@@ -137,7 +137,7 @@ export function TercerosView() {
     estado === "Inactivo" ? datos.filter((t) => !t.activo) : datos;
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div className="w-full">
       {/* El botón de crear vive en el encabezado, lejos de los filtros: es la
           acción de la pantalla, no una forma más de acotar la lista. */}
       <header className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">

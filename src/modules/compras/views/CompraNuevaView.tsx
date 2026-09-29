@@ -59,7 +59,7 @@ export function CompraNuevaView() {
     <div
       role="region"
       aria-label={b.soporte ? "Documento soporte" : "Nueva compra"}
-      className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16"
+      className="w-full"
     >
       <header className="mb-8">
         <Link

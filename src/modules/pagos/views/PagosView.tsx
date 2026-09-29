@@ -74,12 +74,15 @@ export function PagosView() {
       puedePagar && <BotonNuevo etiqueta="Nuevo pago sin factura" onClick={() => setEgreso(true)} />
     ) : (
       puedePagar && (
-        <BotonNuevo etiqueta="Nuevo comprobante de egreso" onClick={() => setComprobante({ proveedor: null })} />
+        <BotonNuevo
+          etiqueta={seccion === "Anticipos" ? "Dar un anticipo" : "Nuevo comprobante de egreso"}
+          onClick={() => setComprobante({ proveedor: null })}
+        />
       )
     );
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div className="w-full">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
           <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
@@ -169,7 +172,7 @@ function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void
 
   return (
     <>
-      <section className="mb-7 rounded-3xl border border-border bg-card shadow-sm">
+      <section className="mb-7 overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-end justify-between gap-5 px-6 py-5">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Les debés</p>

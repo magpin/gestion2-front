@@ -10,7 +10,7 @@ import { RetencionesSeccion } from "./RetencionesSeccion";
  */
 export function RetencionesView() {
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div className="w-full">
       <header className="mb-8">
         <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
           <span className="size-2 rounded-full bg-brand" />

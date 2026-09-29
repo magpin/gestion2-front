@@ -22,6 +22,15 @@ import { rutApi } from "@/modules/catalogos/services/catalogos.service";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import type { TerceroDetalle } from "../types/terceros.types";
 
+/** El plazo habitual en días (PC25): vacío, o un entero de 0 a 365. */
+const diasDePlazo = z.union([
+  z.literal(""),
+  z
+    .string()
+    .regex(/^\d{1,3}$/, "Días enteros")
+    .refine((v) => Number(v) <= 365, "Máximo 365"),
+]);
+
 const esquema = z
   .object({
     tipoPersona: z.enum(["NATURAL", "JURIDICA"]),
@@ -44,8 +53,8 @@ const esquema = z
     esCliente: z.boolean(),
     esProveedor: z.boolean(),
     esEmpleado: z.boolean(),
-    diasPlazoCliente: z.union([z.literal(""), z.string().regex(/^d{1,3}$/, "Días enteros").refine((v) => Number(v) <= 365, "Máximo 365")]),
-    diasPlazoProveedor: z.union([z.literal(""), z.string().regex(/^d{1,3}$/, "Días enteros").refine((v) => Number(v) <= 365, "Máximo 365")]),
+    diasPlazoCliente: diasDePlazo,
+    diasPlazoProveedor: diasDePlazo,
     responsableIva: z.boolean(),
     esAgenteRetenedor: z.boolean(),
     esAutorretenedor: z.boolean(),

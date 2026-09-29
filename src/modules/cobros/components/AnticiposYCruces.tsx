@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
@@ -330,14 +329,9 @@ export function ListaCruces({ puedeAnular }: { puedeAnular: boolean }) {
       <SkeletonTable />
     );
   }
-  if (cruces.length === 0) {
-    return (
-      <EmptyState
-        titulo="Todavía no hay cruces"
-        descripcion="Elegí un cliente arriba y aplicá su anticipo o saldo a favor a una factura que deba: cada cruce queda acá."
-      />
-    );
-  }
+  // Sin cruces no se dice nada: la lista de anticipos de arriba ya explica
+  // qué hacer, y un segundo estado vacío solo confunde.
+  if (cruces.length === 0) return null;
 
   return (
     <>

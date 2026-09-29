@@ -45,7 +45,7 @@ export function ImpuestosView({ inicial = "calendario" }: { inicial?: Pestana })
   const visibles = PESTANAS.filter((p) => p.funcion === undefined || funcionActiva(p.funcion));
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div className="w-full">
       <header className="mb-8">
         <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
           <span className="size-2 rounded-full bg-brand" />
@@ -69,7 +69,7 @@ export function ImpuestosView({ inicial = "calendario" }: { inicial?: Pestana })
             type="button"
             aria-current={pestana === id ? "page" : undefined}
             onClick={() => setPestana(id)}
-            className={`flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors ${
+            className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
               pestana === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
             }`}
           >

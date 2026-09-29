@@ -66,7 +66,7 @@ export function FacturaNuevaView() {
   return (
     // Una región con el nombre del documento: se lee igual que el diálogo que
     // reemplaza, y desaparece al emitir.
-    <div role="region" aria-label="Nueva factura" className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div role="region" aria-label="Nueva factura" className="w-full">
       <header className="mb-8">
         <Link
           href="/dashboard/ventas?seccion=facturas"

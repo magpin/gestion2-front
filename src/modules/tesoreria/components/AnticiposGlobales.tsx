@@ -55,6 +55,8 @@ interface Lado {
   /** «Anticipos por aplicar». */
   titulo: string;
   explicacion: string;
+  /** Lo que se dice cuando no hay nada: cada lado explica lo suyo. */
+  vacio: { titulo: string; descripcion: string };
   unidad: [string, string];
   columnaTotal: string;
   columnaPendiente: string;
@@ -85,6 +87,10 @@ export const CLIENTES: Lado = {
   pideMotivo: true,
   titulo: "Anticipos por aplicar",
   explicacion: "Plata de clientes que todavía no es venta. Está en 280505 hasta que factures o la devuelvas.",
+  vacio: {
+    titulo: "No hay anticipos pendientes",
+    descripcion: "Cuando un cliente deje plata sin factura, registrala con un recibo de caja como anticipo y aparece acá.",
+  },
   unidad: ["cliente", "clientes"],
   columnaTotal: "Recibido",
   columnaPendiente: "Por aplicar",
@@ -129,6 +135,10 @@ export const PROVEEDORES: Lado = {
   pideMotivo: true,
   titulo: "Anticipos por legalizar",
   explicacion: "Plata que ya diste y todavía no tiene factura. Está en 133005 hasta que llegue la compra o te la devuelvan.",
+  vacio: {
+    titulo: "No hay anticipos pendientes",
+    descripcion: "Cuando le des plata a un proveedor antes de la factura, registrala como anticipo en el comprobante de egreso.",
+  },
   unidad: ["proveedor", "proveedores"],
   columnaTotal: "Anticipo",
   columnaPendiente: "Por legalizar",
@@ -181,6 +191,11 @@ export const SALDOS_A_FAVOR: Lado = {
   titulo: "Saldos a favor de clientes",
   explicacion:
     "Una nota crédito sobre una factura que ya estaba pagada deja plata a favor del cliente: se cruza con otra factura suya o se le devuelve.",
+  vacio: {
+    titulo: "Ningún cliente tiene saldo a favor",
+    descripcion:
+      "Aparece acá cuando una nota crédito cae sobre una factura que ya estaba pagada: esa plata se cruza con otra factura del cliente o se le devuelve desde Pagos.",
+  },
   unidad: ["cliente", "clientes"],
   columnaTotal: "A favor",
   columnaPendiente: "Por aplicar",
@@ -263,15 +278,7 @@ export function AnticiposGlobales({ lado, puedeMover }: { lado: Lado; puedeMover
         </section>
 
         {data.anticipos.length === 0 ? (
-          <EmptyState
-            titulo="No hay anticipos pendientes"
-            descripcion={
-              lado.devolucionSale
-                ? "Cuando un cliente deje plata sin factura, registrala con un recibo de caja como anticipo y aparece acá."
-                : "Cuando le des plata a un proveedor antes de la factura, registrala como anticipo en el comprobante de egreso."
-            }
-            icon={Wallet}
-          />
+          <EmptyState titulo={lado.vacio.titulo} descripcion={lado.vacio.descripcion} icon={Wallet} />
         ) : (
           <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
             <table className="w-full min-w-[640px] text-sm">
