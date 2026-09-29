@@ -1,26 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { History, Landmark, Plus } from "lucide-react";
+import { ArrowLeftRight, History, Landmark, Plus } from "lucide-react";
 
+import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { Button } from "@/components/ui/button";
+import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
 import {
   DialogoNuevaCaja,
   DialogoNuevaCuentaBancaria,
 } from "../components/DialogosAltaTesoreria";
 import { SaldosTesoreria } from "../components/SaldosTesoreria";
+import { ListaTraslados, TrasladoDialog } from "../components/Traslados";
 import { usePrepararTesoreria } from "../hooks/usePrepararTesoreria";
 import { CajasSeccion } from "./CajasSeccion";
 import { CuentasBancariasSeccion } from "./CuentasBancariasSeccion";
 import { LibroBancoSeccion } from "./LibroBancoSeccion";
 import { LibroCajaSeccion } from "./LibroCajaSeccion";
 
-type Seccion = "Saldos" | "Movimientos";
+type Seccion = "Saldos" | "Movimientos" | "Traslados";
 
 const SECCIONES: Array<[Seccion, typeof Landmark]> = [
   ["Saldos", Landmark],
   ["Movimientos", History],
+  // Pieza nueva del menú: se ve cuando su interruptor está encendido.
+  ...(funcionActiva("traslados") ? [["Traslados", ArrowLeftRight] as [Seccion, typeof Landmark]] : []),
 ];
 
 /**
@@ -29,7 +34,8 @@ const SECCIONES: Array<[Seccion, typeof Landmark]> = [
  *
  * Son las mismas secciones de antes, juntas por lo que responden y no por el
  * instrumento: «Saldos» reúne cajas y cuentas bancarias; «Movimientos», los dos
- * libros. La otra mitad —arqueo, corte, extractos, conciliación— es Control.
+ * libros; «Traslados», la plata que pasa de una caja o cuenta a otra. La otra
+ * mitad —arqueo, corte, extractos, conciliación— es Control.
  */
 export function CajaBancosView() {
   usePrepararTesoreria();
@@ -38,6 +44,7 @@ export function CajaBancosView() {
   const [seccion, setSeccion] = useState<Seccion>("Saldos");
   const [creandoCaja, setCreandoCaja] = useState(false);
   const [creandoCuenta, setCreandoCuenta] = useState(false);
+  const [trasladando, setTrasladando] = useState(false);
 
   return (
     <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
@@ -54,6 +61,9 @@ export function CajaBancosView() {
             Dónde está la plata: cada caja y cada cuenta, y lo que entró y salió de ellas.
           </p>
         </div>
+        {seccion === "Traslados" && puedeCrear && (
+          <BotonNuevo etiqueta="Nuevo traslado" onClick={() => setTrasladando(true)} />
+        )}
       </header>
 
       <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
@@ -110,6 +120,9 @@ export function CajaBancosView() {
         </div>
       )}
 
+      {seccion === "Traslados" && <ListaTraslados puedeAnular={puedeCrear} />}
+
+      <TrasladoDialog abierto={trasladando} onCerrar={() => setTrasladando(false)} />
       <DialogoNuevaCaja abierto={creandoCaja} onCerrar={() => setCreandoCaja(false)} />
       <DialogoNuevaCuentaBancaria abierto={creandoCuenta} onCerrar={() => setCreandoCuenta(false)} />
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuieto } from "@/hooks/useQuieto";
 import { aviso } from "@/lib/avisos";
 import { formatCOP } from "@/lib/utils";
 import {
@@ -45,16 +46,6 @@ const hoy = (): string => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-
-/** El valor, pero solo cuando dejó de cambiar un rato: para no consultar en cada tecla. */
-function useQuieto<T>(valor: T, ms = 400): T {
-  const [quieto, setQuieto] = useState(valor);
-  useEffect(() => {
-    const t = setTimeout(() => setQuieto(valor), ms);
-    return () => clearTimeout(t);
-  }, [valor, ms]);
-  return quieto;
-}
 
 export interface ProveedorInicial {
   id: string;
