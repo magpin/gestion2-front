@@ -68,6 +68,8 @@ interface Entrada {
    * encienda (`core/config/funciones.ts`).
    */
   funcion?: Funcion;
+  /** La entrada vieja que se retira cuando se prende su reemplazo: Retenciones cuando llega Impuestos. */
+  hastaQue?: Funcion;
   /** Otras rutas que también la marcan activa. */
   alias?: string[];
 }
@@ -197,6 +199,16 @@ const GRUPOS: Grupo[] = [
         etiqueta: "Retenciones",
         icono: Percent,
         roles: ["DIRECTOR", "CONTADOR", "CONSULTA"],
+        hastaQue: "impuestos",
+      },
+      {
+        // Retenciones, más el calendario, las declaraciones y su pago (PC6).
+        href: "/dashboard/impuestos",
+        etiqueta: "Impuestos",
+        icono: Percent,
+        roles: ["DIRECTOR", "CONTADOR", "CONSULTA"],
+        funcion: "impuestos",
+        alias: ["/dashboard/retenciones"],
       },
       {
         href: "/dashboard/plan-cuentas",
@@ -256,6 +268,7 @@ const PIE: Entrada[] = [
 function entradaVisible(entrada: Entrada, roles: RolCodigo[]): boolean {
   return (
     (entrada.funcion === undefined || funcionActiva(entrada.funcion)) &&
+    (entrada.hastaQue === undefined || !funcionActiva(entrada.hastaQue)) &&
     (entrada.roles === undefined || entrada.roles.some((r) => roles.includes(r)))
   );
 }

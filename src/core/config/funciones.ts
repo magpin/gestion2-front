@@ -16,7 +16,17 @@ export type Funcion =
   | "gastos"
   | "conceptos"
   | "estadosFinancieros"
-  | "traslados";
+  | "traslados"
+  | "impuestos"
+  | "iva"
+  | "ica"
+  | "renta"
+  /** La compra nueva como página, con resumen y asiento previo (Fase 7). */
+  | "compraPagina"
+  /** La factura nueva como página, con servicios, resumen y asiento previo (Fase 8). */
+  | "facturaPagina"
+  /** El comprobante manual como página, con plantillas y soporte (Fase 9). */
+  | "comprobanteAsistido";
 
 const encendidas = new Set(
   (process.env.NEXT_PUBLIC_FUNCIONES ?? "")

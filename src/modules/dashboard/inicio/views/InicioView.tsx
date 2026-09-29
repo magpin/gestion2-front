@@ -25,6 +25,7 @@ import type { LucideIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
+import { AvisoImpuestosInicio } from "@/modules/impuestos/components/AvisoImpuestosInicio";
 import { buttonVariants } from "@/components/ui/button";
 import { funcionActiva } from "@/core/config/funciones";
 import { useAuthStore } from "@/core/store/authStore";
@@ -128,6 +129,8 @@ export function InicioView() {
             Cuánta plata hay, quién te debe, a quién le debés y cómo va el mes.
           </p>
         </header>
+
+        {funcionActiva("impuestos") && <AvisoImpuestosInicio />}
 
         {tablero.data === undefined && tablero.isError ? (
           <ErrorCarga

@@ -6,6 +6,8 @@ import { Check, ChevronDown, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { funcionActiva } from "@/core/config/funciones";
+import { BloquePeriodicidad } from "@/modules/impuestos/components/BloquePeriodicidad";
 import { AsistenteShell } from "../components/AsistenteShell";
 import { Bloque } from "../components/Bloque";
 import { BloqueResponsabilidades } from "../components/BloqueResponsabilidadesRut";
@@ -72,6 +74,7 @@ export function PasoImpuestos() {
 
           <BloqueDian imp={imp} pendiente={falta("iva")} />
           <BloqueIca imp={imp} pendiente={falta("ica")} />
+          {funcionActiva("impuestos") && <BloquePeriodicidad />}
           <BloqueResumen imp={imp} pendiente={falta("confirmar")} />
         </div>
       )}
