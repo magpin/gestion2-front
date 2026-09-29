@@ -227,8 +227,8 @@ function Formulario({
           <DialogTitle>{entra ? "Ingreso sin factura" : "Pago sin factura"}</DialogTitle>
           <DialogDescription>
             {entra
-              ? "Plata que entra sin una factura de venta: intereses, un préstamo, una recuperación. Si le vendiste algo a alguien, eso va con factura en Ventas."
-              : "Lo financiero y lo que no es gasto: una cuota, la nómina, la PILA, un préstamo a un socio. Lo que lleva factura (un activo, un flete) va por Compras; los impuestos, desde Impuestos."}
+              ? "Plata sin factura: un aporte de un socio, un préstamo, intereses, un reintegro. El cobro de una factura no va aquí: va con recibo de caja en Cobros, y así no se cuenta dos veces."
+              : "Plata sin factura: una cuota de un préstamo, intereses, la nómina, la PILA, un retiro de un socio. El pago a un proveedor no va aquí: va con comprobante de egreso en Pagos, y así no se cuenta dos veces."}
           </DialogDescription>
         </div>
         <DialogCloseIcon />
