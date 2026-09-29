@@ -13,7 +13,7 @@ import { IvaTab } from "../components/IvaTab";
 import { PagarDeclaracionDialog } from "../components/PagarDeclaracionDialog";
 import { PresentarDialog } from "../components/PresentarDialog";
 import { RentaTab } from "../components/RentaTab";
-import { RetencionTab } from "../components/RetencionTab";
+import { CabeceraRetencion, RetencionTab } from "../components/RetencionTab";
 import { fechaCorta } from "../lib/impuestos";
 import type { FilaCalendario } from "../types/impuestos.types";
 
@@ -46,7 +46,10 @@ export function ImpuestosView({ inicial = "calendario" }: { inicial?: Pestana })
 
   return (
     <div className="w-full">
-      <header className="mb-8">
+      {pestana === "retencion" ? (
+        <CabeceraRetencion mes={mes} onPagar={setPagando} />
+      ) : (
+        <header className="mb-8">
         <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
           <span className="size-2 rounded-full bg-brand" />
           Contabilidad / Impuestos · {fechaCorta(hoy)}
@@ -57,7 +60,8 @@ export function ImpuestosView({ inicial = "calendario" }: { inicial?: Pestana })
         <p className="mt-2 text-sm text-muted-foreground">
           Lo que se le debe a la DIAN y al municipio, cuándo vence y en qué va cada declaración.
         </p>
-      </header>
+        </header>
+      )}
 
       <nav
         className="mb-7 grid grid-cols-1 gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm sm:[grid-template-columns:var(--columnas)]"
@@ -90,7 +94,7 @@ export function ImpuestosView({ inicial = "calendario" }: { inicial?: Pestana })
         />
       )}
       {pestana === "retencion" && (
-        <RetencionTab mes={mes} onMes={setMes} mesMaximo={mesActual} onPresentar={setPresentando} onPagar={setPagando} />
+        <RetencionTab mes={mes} onMes={setMes} mesMaximo={mesActual} onPresentar={setPresentando} />
       )}
       {pestana === "iva" && <IvaTab onPresentar={setPresentando} onPagar={setPagando} />}
       {pestana === "renta" && <RentaTab onPresentar={setPresentando} onPagar={setPagando} />}

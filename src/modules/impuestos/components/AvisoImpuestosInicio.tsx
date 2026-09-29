@@ -59,7 +59,7 @@ export function AvisoImpuestosInicio() {
     VENCIDA: d
       ? "Ya corren intereses de mora: MUISCA liquida el valor a pagar hoy."
       : "Ya corren intereses de mora y sanción por extemporaneidad: presentala cuanto antes.",
-    PAGADA: `${d?.recibo490 ? `Con el recibo 490 · ${d.recibo490}. ` : ""}El aviso se va solo en unos días.`,
+    PAGADA: `${d?.egreso ? `Pagada ${d.egreso}${d.recibo490 ? ` con el ${fila.municipio ? "recibo" : "recibo 490"}` : ""}. ` : d?.recibo490 ? `Con el recibo · ${d.recibo490}. ` : ""}El aviso se va solo en unos días.`,
   };
   const puedePagar = paga && d !== null && d.estado === "PRESENTADA";
 

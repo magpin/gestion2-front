@@ -31,3 +31,15 @@ export interface CrearTrasladoInput {
   /** El banco no lo cobró aunque la regla diga que sí. */
   sinGmf?: boolean;
 }
+
+/** Antes de guardar: el 4×1000, el número que le toca y las cuentas del asiento. */
+export interface PreviaTraslado {
+  causa: boolean;
+  gmf: number;
+  numero: string;
+  cuentas: {
+    origen: { codigo: string; nombre: string } | null;
+    destino: { codigo: string; nombre: string } | null;
+    gmf: { codigo: string; nombre: string } | null;
+  };
+}

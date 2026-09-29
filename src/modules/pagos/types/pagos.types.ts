@@ -148,7 +148,7 @@ export const NOMBRE_TIPO_EGRESO: Record<TipoEgreso, string> = {
 
 export interface Egreso {
   id: string;
-  origen: "COMPROBANTE" | "CONCEPTO" | "DECLARACION" | "CUOTA";
+  origen: "COMPROBANTE" | "CONCEPTO" | "DEVOLUCION" | "DECLARACION" | "CUOTA";
   /** «EG-000074», o el número del asiento cuando no hay comprobante de egreso. */
   numero: string;
   fecha: string;

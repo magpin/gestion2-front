@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import { ArrowLeftRight, History, Landmark, Plus, Wallet } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { Button } from "@/components/ui/button";
 import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
+import { hoyEnColombia } from "@/lib/utils";
 import {
   DialogoNuevaCaja,
   DialogoNuevaCuentaBancaria,
@@ -59,12 +62,15 @@ export function CajaBancosView() {
           <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
             <span className="size-2 rounded-full bg-brand" />
             Dinero
+            <span className="font-semibold normal-case tracking-normal text-muted-foreground">
+              · {format(parseISO(hoyEnColombia()), "EEEE d MMM", { locale: es }).replace(".", "")}
+            </span>
           </div>
           <h1 className="text-4xl font-semibold tracking-[-0.04em]">
             Caja y bancos<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Dónde está la plata: cada caja y cada cuenta, y lo que entró y salió de ellas.
+            La plata en efectivo y la plata en el banco, cada una en su pestaña.
           </p>
         </div>
         {(seccion === "Traslados" || seccion === "Movimientos") && puedeCrear && (
@@ -97,7 +103,7 @@ export function CajaBancosView() {
 
       {seccion === "Caja" && (
         <div className="flex flex-col gap-10">
-          <CajaHoy onVerMovimientos={() => setSeccion("Movimientos")} />
+          <CajaHoy onVerMovimientos={() => setSeccion("Movimientos")} onAgregar={puedeCrear ? () => setCreandoCaja(true) : undefined} />
           <section>
             <TituloBloque
               titulo="Todas las cajas"

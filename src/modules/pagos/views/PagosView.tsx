@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, CalendarClock, FileText, HandCoins, ListFilter, Loader2, Receipt, ReceiptText, Search, Wallet } from "lucide-react";
+import { ArrowLeftRight, CalendarClock, FileText, ListFilter, Loader2, Receipt, ReceiptText, Search, Wallet } from "lucide-react";
+
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
+import { CabeceraPagina } from "@/components/shared/CabeceraPagina";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { funcionActiva } from "@/core/config/funciones";
-import { DeclaracionesPorPagar } from "@/modules/impuestos/components/DeclaracionesPorPagar";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
@@ -37,8 +39,9 @@ import { AnticiposGlobales, PROVEEDORES } from "@/modules/tesoreria/components/A
 import { ListaCruces } from "../components/AnticiposProveedor";
 import { ComprobanteEgresoDialog, type ProveedorInicial } from "../components/ComprobanteEgresoDialog";
 import { PagosProgramados } from "../components/PagosProgramados";
+import { PorPagarLista } from "../components/PorPagarLista";
 import { pagosApi } from "../services/pagos.service";
-import { NOMBRE_TIPO_EGRESO, NOMBRE_TRAMO, TRAMOS, type ComprobanteEgreso, type TipoEgreso, type TramoPago } from "../types/pagos.types";
+import { NOMBRE_TIPO_EGRESO, type ComprobanteEgreso, type TipoEgreso } from "../types/pagos.types";
 
 type Seccion = "Por pagar" | "Comprobantes" | "Programados" | "Sin factura" | "Anticipos";
 
@@ -83,21 +86,13 @@ export function PagosView() {
 
   return (
     <div className="w-full">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
-        <div>
-          <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
-            <span className="size-2 rounded-full bg-brand" />
-            Egresos
-          </div>
-          <h1 className="text-4xl font-semibold tracking-[-0.04em]">
-            Pagos<span className="text-brand">.</span>
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Lo que les debés a los proveedores y cada peso que sale, con su comprobante de egreso.
-          </p>
-        </div>
-        {boton}
-      </header>
+      <CabeceraPagina
+        ruta={[{ etiqueta: "Egresos" }, { etiqueta: "Pagos" }]}
+        cuando={format(parseISO(hoyEnColombia()), "EEEE d MMM", { locale: es }).replace(".", "")}
+        titulo="Pagos"
+        subtitulo="Lo que le debés a proveedores, a la DIAN y al municipio, en una sola lista."
+        derecha={boton}
+      />
 
       {/* En el móvil las pestañas se desplazan de lado: partidas en dos líneas no se leen. */}
       <nav className="mb-7 flex gap-2 overflow-x-auto rounded-2xl border border-border bg-card p-2 shadow-sm md:flex-wrap">
@@ -118,7 +113,7 @@ export function PagosView() {
       </nav>
 
       {seccion === "Por pagar" && (
-        <PorPagar onPagar={puedePagar ? (proveedor) => setComprobante({ proveedor }) : undefined} />
+        <PorPagarLista onPagar={puedePagar ? (proveedor) => setComprobante({ proveedor }) : undefined} />
       )}
       {seccion === "Comprobantes" && <Comprobantes puedeAnular={puedePagar} />}
       {seccion === "Programados" && (
@@ -144,191 +139,6 @@ export function PagosView() {
       />
       <MovimientoConceptoDialog abierto={egreso} direccion="SALIDA" onCerrar={() => setEgreso(false)} />
     </div>
-  );
-}
-
-function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void }) {
-  const [tramo, setTramo] = useState<TramoPago | null>(null);
-  const { data, isError, error, refetch } = useQuery({
-    queryKey: ["pagos", "por-pagar"],
-    queryFn: pagosApi.porPagar,
-    meta: SILENCIOSO,
-  });
-
-  if (data === undefined) {
-    return isError ? (
-      <ErrorCarga error={error} titulo="No se pudo leer lo que falta pagar" onReintentar={refetch} />
-    ) : (
-      <SkeletonTable />
-    );
-  }
-
-  const proveedores = data.proveedores
-    .map((p) => {
-      const compras = tramo === null ? p.compras : p.compras.filter((c) => c.tramo === tramo);
-      return { ...p, compras, total: compras.reduce((t, c) => t + c.pendiente, 0) };
-    })
-    .filter((p) => p.compras.length > 0);
-
-  return (
-    <>
-      <section className="mb-7 overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap items-end justify-between gap-5 px-6 py-5">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Les debés</p>
-            <p className="font-mono text-3xl font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums">
-              {formatCOP(data.total)}
-            </p>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {data.compras} {data.compras === 1 ? "compra" : "compras"} · {data.proveedores.length}{" "}
-            {data.proveedores.length === 1 ? "proveedor" : "proveedores"}
-          </p>
-        </div>
-        <div className="grid gap-px border-t border-border bg-border sm:grid-cols-2 lg:grid-cols-5">
-          {TRAMOS.map((t) => (
-            <button
-              key={t}
-              type="button"
-              aria-pressed={tramo === t}
-              onClick={() => setTramo(tramo === t ? null : t)}
-              className={`px-6 py-4 text-left transition-colors ${tramo === t ? "bg-accent" : "bg-card hover:bg-accent/60"}`}
-            >
-              <p className="flex items-center gap-2 text-sm font-semibold">
-                {t === "VENCIDO" && <span className="size-2 rounded-full bg-warning" />}
-                {NOMBRE_TRAMO[t]}
-              </p>
-              <p className="mt-1 font-mono text-lg font-semibold whitespace-nowrap tabular-nums">
-                {formatCOP(data.tramos[t])}
-              </p>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {funcionActiva("impuestos") && (
-        <div className="mb-7">
-          <DeclaracionesPorPagar />
-        </div>
-      )}
-      {proveedores.length === 0 ? (
-        <EmptyState
-          titulo={tramo ? "Nada en este tramo" : "No le debés a ningún proveedor"}
-          descripcion={
-            tramo
-              ? "Ninguna compra pendiente vence en ese tramo."
-              : "Cuando registrés una compra a crédito, aparece acá con su vencimiento."
-          }
-          icon={tramo ? ListFilter : HandCoins}
-          accion={tramo ? undefined : { label: "Registrar compra", href: "/dashboard/compras" }}
-          accionSecundaria={tramo ? { label: "Ver todo", onClick: () => setTramo(null) } : undefined}
-        />
-      ) : (
-        <>
-        {/* En el móvil (pantalla 67), una tarjeta por factura, en el orden en
-            que vencen. En pantallas grandes, la tabla por proveedor. */}
-        <ul className="flex flex-col gap-3 md:hidden">
-          {proveedores
-            .flatMap((p) => p.compras.map((c) => ({ ...c, proveedor: p })))
-            .sort((x, y) => x.venceEfectivo.localeCompare(y.venceEfectivo))
-            .map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center justify-between gap-3 rounded-3xl border border-border bg-card px-4 py-4 shadow-sm"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-semibold">{c.proveedor.nombre}</p>
-                  <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                    <span
-                      className={
-                        c.tramo === "VENCIDO"
-                          ? "rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 font-medium text-foreground"
-                          : undefined
-                      }
-                    >
-                      {c.tramo === "VENCIDO" ? "Venció" : "Vence"} el {fechaCorta(c.venceEfectivo)}
-                    </span>
-                    {c.descuentoSugerido > 0 && (
-                      <span className="rounded-full border border-success/40 bg-success/10 px-2 py-0.5 font-medium text-foreground">
-                        Pronto pago hasta el {c.descuentoHasta ? fechaCorta(c.descuentoHasta) : ""}
-                      </span>
-                    )}
-                  </p>
-                  <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{c.numero}</p>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-2">
-                  <span className="font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(c.pendiente)}</span>
-                  {onPagar && (
-                    <Button
-                      type="button"
-                      variant={c.tramo === "VENCIDO" ? "default" : "outline"}
-                      className="h-9 rounded-lg px-4"
-                      onClick={() => onPagar({ id: c.proveedor.terceroId, nombre: c.proveedor.nombre })}
-                    >
-                      Pagar
-                    </Button>
-                  )}
-                </div>
-              </li>
-            ))}
-        </ul>
-        <div className="hidden flex-col gap-4 md:flex">
-          {proveedores.map((p) => (
-            <section key={p.terceroId} className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-                <div>
-                  <p className="font-semibold">{p.nombre}</p>
-                  <p className="font-mono text-xs text-muted-foreground">{p.identificacion}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="font-mono text-lg font-semibold whitespace-nowrap tabular-nums">{formatCOP(p.total)}</span>
-                  {onPagar && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-9 rounded-lg px-4"
-                      onClick={() => onPagar({ id: p.terceroId, nombre: p.nombre })}
-                    >
-                      Pagar
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-sm">
-                  <tbody>
-                    {p.compras.map((c) => (
-                      <tr key={c.id} className="border-t border-border">
-                        <td className="px-5 py-2.5 font-mono font-semibold">{c.numero}</td>
-                        <td className="px-5 py-2.5 whitespace-nowrap">
-                          <span
-                            className={
-                              c.tramo === "VENCIDO"
-                                ? "rounded-full border border-warning/40 bg-warning/15 px-2.5 py-0.5 text-xs font-medium"
-                                : "text-muted-foreground"
-                            }
-                          >
-                            Vence {c.venceEfectivo}
-                          </span>
-                        </td>
-                        <td className="px-5 py-2.5 text-xs text-muted-foreground">
-                          {c.descuentoSugerido > 0 &&
-                            `Pronto pago: ${formatCOP(c.descuentoSugerido)} hasta el ${c.descuentoHasta}`}
-                        </td>
-                        <td className="px-5 py-2.5 text-right font-mono whitespace-nowrap tabular-nums">
-                          {formatCOP(c.pendiente)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          ))}
-        </div>
-        </>
-      )}
-    </>
   );
 }
 

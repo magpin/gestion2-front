@@ -29,7 +29,9 @@ import { Campo } from "@/modules/configuracion/components/Campo";
 import { cuentasBancariasApi } from "@/modules/tesoreria/services/bancos.service";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { agruparPorSemana, proyectarCuentas } from "../lib/semanas";
+import { MovimientoConceptoDialog } from "@/modules/tesoreria/components/MovimientoConceptoDialog";
 import { pagosApi } from "../services/pagos.service";
+import { ComprobanteEgresoDialog } from "./ComprobanteEgresoDialog";
 import type { PagoProgramado, Recurrencia } from "../types/pagos.types";
 
 /** Hoy en Colombia, no en el reloj del navegador: es la fecha que acepta el backend. */
@@ -57,6 +59,8 @@ export function PagosProgramados({
 }) {
   const queryClient = useQueryClient();
   const [todos, setTodos] = useState(false);
+  // «Registrar pago»: el comprobante (proveedor) o el pago sin factura, y al guardar queda pagado.
+  const [pagando, setPagando] = useState<PagoProgramado | null>(null);
   // El nuevo lo abre la vista (su botón de arriba) o el vacío de acá.
   const [nuevoDesdeVacio, setNuevoDesdeVacio] = useState(false);
   const abiertoNuevo = nuevo || nuevoDesdeVacio;
@@ -130,6 +134,11 @@ export function PagosProgramados({
         <span className="font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(p.valor)}</span>
         {p.estado === "PENDIENTE" && (puedePagar || puedeProgramar) && (
           <div className="flex gap-2">
+            {puedePagar && (
+              <Button type="button" className="h-9 rounded-lg px-3" disabled={cambiar.isPending} onClick={() => setPagando(p)}>
+                Registrar pago
+              </Button>
+            )}
             {puedePagar && (
               <Button type="button" variant="outline" className="h-9 rounded-lg px-3" disabled={cambiar.isPending} onClick={() => cambiar.mutate({ p, accion: "pagado" })}>
                 Ya se pagó
@@ -234,6 +243,20 @@ export function PagosProgramados({
           )}
         </div>
       )}
+      <ComprobanteEgresoDialog
+        abierto={pagando !== null && pagando.terceroId !== null && pagando.conceptoId === null}
+        proveedor={pagando?.terceroId ? { id: pagando.terceroId, nombre: pagando.terceroNombre ?? "" } : null}
+        compraId={pagando?.compraId ?? undefined}
+        onCerrar={() => setPagando(null)}
+        onRegistrado={() => pagando && cambiar.mutate({ p: pagando, accion: "pagado" })}
+      />
+      <MovimientoConceptoDialog
+        abierto={pagando !== null && !(pagando.terceroId !== null && pagando.conceptoId === null)}
+        direccion="SALIDA"
+        inicial={pagando ? { detalle: pagando.descripcion, conceptoId: pagando.conceptoId, valor: pagando.valor } : undefined}
+        onCerrar={() => setPagando(null)}
+        onRegistrado={() => pagando && cambiar.mutate({ p: pagando, accion: "pagado" })}
+      />
       <Dialog open={abiertoNuevo} onOpenChange={(a) => !a && cerrarNuevo()}>
         <DialogContent>{abiertoNuevo && <FormularioProgramado onCerrar={cerrarNuevo} />}</DialogContent>
       </Dialog>

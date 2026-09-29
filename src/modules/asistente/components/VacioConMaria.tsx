@@ -39,13 +39,16 @@ export function VacioConMaria({
   return (
     <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
       {veMaria && <Maria estado="reposo" tamano={56} />}
-      <p className="text-lg font-semibold">{titulo}</p>
+      <p className="text-lg font-semibold">
+        {titulo}
+        <span className="text-brand">.</span>
+      </p>
       <p className="max-w-md text-sm leading-6 text-muted-foreground">
         {veMaria ? invitacion : sinMaria}
       </p>
       {veMaria && (
-        <Link href="/dashboard/asistente" className={buttonVariants({ variant: "outline" })}>
-          Ir con María
+        <Link href="/dashboard/asistente" className={buttonVariants()}>
+          Subir documentos
         </Link>
       )}
     </div>

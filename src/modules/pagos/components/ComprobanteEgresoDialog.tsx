@@ -67,12 +67,15 @@ export function ComprobanteEgresoDialog({
   proveedor,
   compraId,
   onCerrar,
+  onRegistrado,
 }: {
   abierto: boolean;
   proveedor?: ProveedorInicial | null;
   /** La compra desde la que se abrió: arranca marcada por su saldo. */
   compraId?: string;
   onCerrar: () => void;
+  /** Después de guardar, antes de cerrar: el programado lo usa para quedar pagado. */
+  onRegistrado?: () => void;
 }) {
   return (
     <Dialog open={abierto} onOpenChange={(a) => !a && onCerrar()}>
@@ -83,6 +86,7 @@ export function ComprobanteEgresoDialog({
             proveedorInicial={proveedor ?? null}
             compraId={compraId}
             onCerrar={onCerrar}
+            onRegistrado={onRegistrado}
           />
         )}
       </DialogContent>
@@ -94,10 +98,12 @@ function Contenido({
   proveedorInicial,
   compraId,
   onCerrar,
+  onRegistrado,
 }: {
   proveedorInicial: ProveedorInicial | null;
   compraId?: string;
   onCerrar: () => void;
+  onRegistrado?: () => void;
 }) {
   const queryClient = useQueryClient();
   const [proveedor, setProveedor] = useState<TerceroResumen | null>(
@@ -192,6 +198,7 @@ function Contenido({
         `Comprobante ${c.numero} registrado`,
         `Salieron ${formatCOP(c.total)}${c.gmf > 0 ? ` más ${formatCOP(c.gmf)} de 4×1000` : ""}.`,
       );
+      onRegistrado?.();
       onCerrar();
     },
     onError: (e: unknown) => aviso.falla(e),

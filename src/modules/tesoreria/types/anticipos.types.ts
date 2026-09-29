@@ -26,6 +26,7 @@ export interface AnticipoAProveedor {
   identificacion: string;
   /** «EG-000068». */
   comprobante: string | null;
+  comprobanteId: string | null;
   fecha: string;
   detalle: string;
   anticipo: number;
@@ -34,6 +35,8 @@ export interface AnticipoAProveedor {
   devuelto: number;
   porLegalizar: number;
   comprasPendientes: number;
+  /** La primera compra por pagar: «Llegó la factura FC-771». */
+  primeraCompra: string | null;
 }
 
 export interface DevolucionAnticipo {

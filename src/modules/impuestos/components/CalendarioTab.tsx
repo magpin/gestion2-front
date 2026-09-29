@@ -48,10 +48,11 @@ export function CalendarioTab({
       <PorPagar datos={data} />
       {data.filas.length === 0 ? (
         <EmptyState
-          titulo="Nada que declarar todavía"
-          descripcion="Según el RUT de la empresa, no hay obligaciones que se causen solas. Revisá las responsabilidades en Configurar empresa → Impuestos."
+          titulo="Falta tu RUT"
+          descripcion="Con el RUT, María arma el calendario con tus fechas y tus responsabilidades."
           icon={CalendarDays}
-          accion={{ label: "Ir a Configurar empresa", href: "/configuracion/impuestos" }}
+          accion={{ label: "Subir RUT", href: "/configuracion/ia" }}
+          accionSecundaria={{ label: "Marcarlas a mano", href: "/configuracion/impuestos" }}
         />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
@@ -194,8 +195,13 @@ function Fila({
             Ya la presenté
           </Button>
         )}
-        {estado === "PAGADA" && f.declaracion?.recibo490 && (
-          <span className="font-mono text-xs text-muted-foreground">{f.municipio ? "Recibo" : "490"} · {f.declaracion.recibo490}</span>
+        {estado === "PAGADA" && (f.declaracion?.egreso || f.declaracion?.recibo490) && (
+          <span
+            className="font-mono text-[13px] whitespace-nowrap text-muted-foreground"
+            title={f.declaracion.recibo490 ? `${f.municipio ? "Recibo" : "Recibo 490"} · ${f.declaracion.recibo490}` : undefined}
+          >
+            {f.declaracion.egreso ?? f.declaracion.recibo490}
+          </span>
         )}
         {estado === "CAUSANDOSE" && f.obligacion === "RETENCION" && (
           <button type="button" onClick={() => onVerRetencion(f.periodo)} className="text-xs font-semibold hover:underline">

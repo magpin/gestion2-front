@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
 import { aviso } from "@/lib/avisos";
@@ -102,6 +103,36 @@ export function BloquePeriodicidad() {
             </div>
           )}
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="mb-1.5 text-sm font-medium">Renta</p>
+              <p className="rounded-xl bg-muted px-4 py-2.5 text-sm">
+                {data.regimenSimple
+                  ? "La reemplaza el régimen simple"
+                  : data.declaraRenta
+                    ? `Anual · persona ${data.tipoPersona === "JURIDICA" ? "jurídica" : "natural"} · ${data.granContribuyente ? 3 : 2} cuotas`
+                    : "No: el RUT no tiene la responsabilidad 05"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Formulario 110.</p>
+            </div>
+            <div>
+              <p className="mb-1.5 text-sm font-medium">ICA</p>
+              {data.ica.length === 0 ? (
+                <p className="rounded-xl bg-muted px-4 py-2.5 text-sm">Sin sedes con municipio</p>
+              ) : (
+                <ul className="flex flex-col gap-1.5 text-sm">
+                  {data.ica.map((m) => (
+                    <li key={m.codigo} className="flex justify-between rounded-xl bg-muted px-4 py-2.5">
+                      <span>{m.nombre}</span>
+                      <span className="text-muted-foreground">anual</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-1 text-xs text-muted-foreground">Uno por cada municipio donde hay sede.</p>
+            </div>
+          </div>
+
           {data.reteica.length > 0 && (
             <div>
               <p className="mb-2 text-sm font-medium">ReteICA</p>
@@ -116,6 +147,16 @@ export function BloquePeriodicidad() {
               <p className="mt-1 text-xs text-muted-foreground">La periodicidad la pone el acuerdo de cada municipio.</p>
             </div>
           )}
+
+          {/* La tabla «Retenciones que practicás» del lienzo 15 vive en Impuestos (PC6):
+              ahí se ven y se ajustan las tarifas, las bases en UVT y las cuentas. */}
+          <p className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
+            Las retenciones que practicás —tarifa, base mínima en UVT y en pesos, y cuenta— están en{" "}
+            <Link href="/dashboard/impuestos?pestana=tarifas" className="font-semibold text-foreground hover:underline">
+              Impuestos → Tarifas y terceros
+            </Link>
+            .
+          </p>
         </div>
       )}
     </Bloque>

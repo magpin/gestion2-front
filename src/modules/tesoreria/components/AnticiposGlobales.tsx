@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Wallet, X } from "lucide-react";
 
+import { BotonImprimir } from "@/components/shared/BotonImprimir";
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
@@ -34,6 +35,10 @@ interface Anticipo {
   total: number;
   pendiente: number;
   documentosPendientes: number;
+  /** El comprobante que lo pagó, para «Ver» (solo proveedores). */
+  comprobanteId?: string | null;
+  /** El documento con el que ya se puede legalizar: «FC-771». */
+  primerDocumento?: string | null;
 }
 
 /** Una factura o compra con saldo, a la que se aplica el anticipo. */
@@ -66,6 +71,8 @@ interface Lado {
   columnaPendiente: string;
   /** «Cruzar», «Legalizar». */
   accion: string;
+  /** Proveedores (lienzo 28): columna Estado, la factura antes del anticipo y «Legalizar con FC-771». */
+  conEstado?: boolean;
   /** Qué se hace cuando todavía no hay factura. */
   sinDocumento: { etiqueta: string; href: string } | null;
   esperando: string;
@@ -151,6 +158,7 @@ export const PROVEEDORES: Lado = {
   columnaTotal: "Anticipo",
   columnaPendiente: "Por legalizar",
   accion: "Legalizar",
+  conEstado: true,
   sinDocumento: null,
   esperando: "esperando la factura",
   cuenta: { codigo: "133005", nombre: "Anticipos a proveedores" },
@@ -169,6 +177,8 @@ export const PROVEEDORES: Lado = {
         terceroId: a.terceroId,
         tercero: a.tercero,
         documento: a.comprobante,
+        comprobanteId: a.comprobanteId,
+        primerDocumento: a.primeraCompra,
         fecha: a.fecha,
         detalle: a.detalle,
         total: a.anticipo,
@@ -295,9 +305,22 @@ export function AnticiposGlobales({ lado, puedeMover }: { lado: Lado; puedeMover
               <thead>
                 <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                   <th className="px-5 py-3">{lado.unidad[0]}</th>
-                  <th className="px-3 py-3 text-right">{lado.columnaTotal}</th>
-                  <th className="px-3 py-3 text-right">{lado.columnaPendiente}</th>
-                  {puedeMover && <th className="px-5 py-3" />}
+                  {lado.conEstado ? (
+                    <>
+                      <th className="px-3 py-3">Estado</th>
+                      <th className="px-3 py-3 text-right">{lado.columnaTotal}</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-3 py-3 text-right">{lado.columnaTotal}</th>
+                      <th className="px-3 py-3 text-right">{lado.columnaPendiente}</th>
+                    </>
+                  )}
+                  {puedeMover && (
+                    <th className="px-5 py-3">
+                      <span className="sr-only">Acciones</span>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -308,13 +331,49 @@ export function AnticiposGlobales({ lado, puedeMover }: { lado: Lado; puedeMover
                       <td className="px-5 py-3">
                         <p className="font-semibold">{a.tercero}</p>
                         <p className="text-xs text-muted-foreground">
-                          {[a.documento, fechaCorta(a.fecha).toLowerCase(), a.documentosPendientes > 0 ? `${a.documentosPendientes} ${lado.pendiente[a.documentosPendientes === 1 ? 0 : 1]}` : lado.esperando]
+                          {[
+                            a.documento,
+                            fechaCorta(a.fecha).toLowerCase(),
+                            a.detalle || null,
+                            lado.conEstado
+                              ? null
+                              : a.documentosPendientes > 0
+                                ? `${a.documentosPendientes} ${lado.pendiente[a.documentosPendientes === 1 ? 0 : 1]}`
+                                : lado.esperando,
+                          ]
                             .filter(Boolean)
                             .join(" · ")}
                         </p>
                       </td>
-                      <td className="px-3 py-3 text-right font-mono whitespace-nowrap tabular-nums">{formatCOP(a.total)}</td>
-                      <td className="px-3 py-3 text-right font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(a.pendiente)}</td>
+                      {lado.conEstado ? (
+                        <>
+                          <td className="px-3 py-3">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap",
+                                a.documentosPendientes > 0 ? "border-success/30 bg-success/15" : "border-border bg-muted",
+                              )}
+                            >
+                              {a.documentosPendientes > 0
+                                ? a.primerDocumento
+                                  ? `Llegó la factura ${a.primerDocumento}`
+                                  : "Llegó la factura"
+                                : "Esperando la factura"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 text-right font-mono font-semibold whitespace-nowrap tabular-nums">
+                            {formatCOP(a.pendiente)}
+                            {a.pendiente !== a.total && (
+                              <span className="block text-xs font-normal text-muted-foreground">de {formatCOP(a.total)}</span>
+                            )}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-3 py-3 text-right font-mono whitespace-nowrap tabular-nums">{formatCOP(a.total)}</td>
+                          <td className="px-3 py-3 text-right font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(a.pendiente)}</td>
+                        </>
+                      )}
                       {puedeMover && (
                         <td className="px-5 py-3">
                           <div className="flex justify-end gap-2">
@@ -322,11 +381,17 @@ export function AnticiposGlobales({ lado, puedeMover }: { lado: Lado; puedeMover
                               <Button type="button" className="h-9 rounded-lg px-4" onClick={() => setPanel({ tipo: "CRUZAR", anticipo: a })}>
                                 {lado.accion}
                               </Button>
+                            ) : lado.sinDocumento ? (
+                              <Button variant="outline" className="h-9 rounded-lg px-4" render={<Link href={lado.sinDocumento.href} />}>
+                                {lado.sinDocumento.etiqueta}
+                              </Button>
                             ) : (
-                              lado.sinDocumento && (
-                                <Button variant="outline" className="h-9 rounded-lg px-4" render={<Link href={lado.sinDocumento.href} />}>
-                                  {lado.sinDocumento.etiqueta}
-                                </Button>
+                              a.comprobanteId && (
+                                <BotonImprimir
+                                  ruta={`/documentos/comprobantes-egreso/${a.comprobanteId}/pdf`}
+                                  nombre={a.documento ?? "comprobante"}
+                                  etiqueta="Ver"
+                                />
                               )
                             )}
                             <Button type="button" variant="outline" className="h-9 rounded-lg px-4" onClick={() => setPanel({ tipo: "DEVOLVER", anticipo: a })}>
@@ -427,7 +492,11 @@ function PanelCruce({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: Antici
   });
 
   return (
-    <Marco titulo={`${lado.accion} ${lado.nombreOrigen.toLowerCase()} con factura`} subtitulo={anticipo.tercero} onCerrar={onCerrar}>
+    <Marco
+      titulo={lado.conEstado ? `${lado.accion} ${lado.nombreOrigen.toLowerCase()}` : `${lado.accion} ${lado.nombreOrigen.toLowerCase()} con factura`}
+      subtitulo={lado.conEstado && elegido ? `${anticipo.tercero} · ${elegido.numero}` : anticipo.tercero}
+      onCerrar={onCerrar}
+    >
       {docs.data === undefined ? (
         docs.isError ? (
           <ErrorCarga sinMarco error={docs.error} titulo="No se pudieron leer las facturas" onReintentar={docs.refetch} />
@@ -458,26 +527,31 @@ function PanelCruce({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: Antici
               ))}
             </ul>
           )}
-          <div className="overflow-hidden rounded-2xl border border-border text-sm">
-            <div className="flex justify-between gap-3 px-4 py-3">
+          <div className="flex flex-col overflow-hidden rounded-2xl border border-border text-sm">
+            {/* El proveedor ve primero la factura y le resta el anticipo; el cliente, al revés. */}
+            <div className={cn("flex justify-between gap-3 px-4 py-3", lado.conEstado && elegido && "order-2 border-t border-border")}>
               <span>
                 <span className="font-semibold">
                   {lado.nombreOrigen} {anticipo.documento ?? ""}
                 </span>
-                <span className="block text-xs text-muted-foreground">Del {fechaCorta(anticipo.fecha).toLowerCase()}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {lado.conEstado ? "Dado" : "Del"} el {fechaCorta(anticipo.fecha).toLowerCase()}
+                </span>
               </span>
-              <span className="font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(anticipo.pendiente)}</span>
+              <span className="font-mono font-semibold whitespace-nowrap tabular-nums">
+                {lado.conEstado && elegido ? `− ${formatCOP(monto)}` : formatCOP(anticipo.pendiente)}
+              </span>
             </div>
             {elegido && (
               <>
-                <div className="flex justify-between gap-3 border-t border-border px-4 py-3">
+                <div className={cn("flex justify-between gap-3 px-4 py-3", lado.conEstado ? "order-1" : "border-t border-border")}>
                   <span>
                     <span className="font-semibold">Factura {elegido.numero}</span>
                     <span className="block text-xs text-muted-foreground">Vence el {fechaCorta(elegido.venceEfectivo).toLowerCase()}</span>
                   </span>
                   <span className="font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(elegido.pendiente)}</span>
                 </div>
-                <div className="flex justify-between gap-3 border-t border-border bg-muted px-4 py-3">
+                <div className="order-3 flex justify-between gap-3 border-t border-border bg-muted px-4 py-3">
                   <span className="font-semibold">{lado.queda}</span>
                   <span className="font-mono text-base font-bold whitespace-nowrap tabular-nums">{formatCOP(Math.max(0, elegido.pendiente - monto))}</span>
                 </div>
@@ -503,12 +577,14 @@ function PanelCruce({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: Antici
             />
           )}
           <p className="rounded-2xl bg-muted px-4 py-3 text-xs text-muted-foreground">
-            No entra ni sale plata: solo se descuenta de lo que {lado.devolucionSale ? "te debe" : "le debés"}.
+            {lado.conEstado && elegido
+              ? `Los ${formatCOP(Math.max(0, elegido.pendiente - monto))} quedan en Por pagar con el vencimiento de la factura.`
+              : `No entra ni sale plata: solo se descuenta de lo que ${lado.devolucionSale ? "te debe" : "le debés"}.`}
             {!lado.anticipoAlDebito && " Si el anticipo tuvo retención, se reversa en proporción: la compra retiene sobre su propia base."}
           </p>
           <Button type="button" className="h-12 rounded-xl" disabled={problema !== null || cruzar.isPending} onClick={() => cruzar.mutate()}>
             {cruzar.isPending && <Loader2 className="size-4 animate-spin" />}
-            {problema ?? `${lado.accion} ${formatCOP(monto)}`}
+            {problema ?? (lado.conEstado && elegido ? `${lado.accion} con ${elegido.numero}` : `${lado.accion} ${formatCOP(monto)}`)}
           </Button>
         </div>
       )}

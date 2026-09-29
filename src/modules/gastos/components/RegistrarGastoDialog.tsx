@@ -90,7 +90,7 @@ function Formulario({
   const [descripcion, setDescripcion] = useState("");
   const [tercero, setTercero] = useState<TerceroResumen | null>(null);
   const [concepto, setConcepto] = useState<Concepto | null>(null);
-  const [conFactura, setConFactura] = useState(true);
+  const [conFactura, setConFactura] = useState(false);
   const [fecha, setFecha] = useState(hoy());
   const [valor, setValor] = useState("");
   const [medio, setMedio] = useState<Medio>("CAJA");
@@ -188,6 +188,31 @@ function Formulario({
       </DialogHeader>
 
       <DialogBody className="flex flex-col gap-5">
+        {/* Lienzo 68: la pregunta va primero. «Sin factura» es lo de todos los
+            días (un flete, un domicilio); si el concepto pide soporte, pasa a Compras. */}
+        <div>
+          <p className="mb-2 text-sm font-medium">¿Tiene factura?</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Opcion
+              elegida={!porCompras}
+              deshabilitada={concepto !== null && !sinFacturaVale}
+              onElegir={() => setConFactura(false)}
+              titulo="Sin factura"
+              detalle={
+                concepto !== null && !sinFacturaVale
+                  ? "Este gasto lleva factura o documento soporte: va por Compras."
+                  : "Sale por Pagos: intereses, impuestos, lo que no lleva soporte."
+              }
+            />
+            <Opcion
+              elegida={porCompras}
+              onElegir={() => setConFactura(true)}
+              titulo="Con factura o documento soporte"
+              detalle="Sigue en Compras, con su IVA y su retención."
+            />
+          </div>
+        </div>
+
         {/* La foto del recibo la lee María en su lectura de documentos (§1.4):
             no hay una lectura aparte para el gasto. */}
         {veMaria && (
@@ -261,29 +286,6 @@ function Formulario({
             {concepto.operacional ? "Gasto de la operación" : "No es de la operación"}
           </p>
         )}
-
-        <div>
-          <p className="mb-2 text-sm font-medium">¿Tiene factura?</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Opcion
-              elegida={porCompras}
-              onElegir={() => setConFactura(true)}
-              titulo="Con factura o documento soporte"
-              detalle="Sigue en Compras, con su IVA y su retención."
-            />
-            <Opcion
-              elegida={!porCompras}
-              deshabilitada={concepto !== null && !sinFacturaVale}
-              onElegir={() => setConFactura(false)}
-              titulo="Sin factura"
-              detalle={
-                concepto !== null && !sinFacturaVale
-                  ? "Este gasto lleva factura o documento soporte: va por Compras."
-                  : "Sale por Pagos: intereses, impuestos, lo que no lleva soporte."
-              }
-            />
-          </div>
-        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo id="gasto-valor" etiqueta={porCompras ? "Valor antes de IVA (opcional)" : "Valor"}>

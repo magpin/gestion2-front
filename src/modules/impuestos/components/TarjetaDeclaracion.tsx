@@ -30,10 +30,17 @@ export function TarjetaDeclaracion({
         <p className="font-mono font-semibold whitespace-nowrap tabular-nums">{fila.valor === null ? "—" : formatCOP(fila.valor)}</p>
       </div>
       <span className={cn("mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium", CLASES_TONO[e.tono])}>{e.texto}</span>
-      {fila.declaracion?.recibo490 && (
+      {fila.declaracion?.egreso ? (
         <p className="mt-2 font-mono text-xs text-muted-foreground">
-          {fila.municipio ? "Recibo" : "Recibo 490"} · {fila.declaracion.recibo490}
+          {fila.declaracion.egreso}
+          {fila.declaracion.recibo490 && ` · ${fila.municipio ? "recibo" : "recibo 490"} ${fila.declaracion.recibo490}`}
         </p>
+      ) : (
+        fila.declaracion?.recibo490 && (
+          <p className="mt-2 font-mono text-xs text-muted-foreground">
+            {fila.municipio ? "Recibo" : "Recibo 490"} · {fila.declaracion.recibo490}
+          </p>
+        )
       )}
       <div className="mt-3 flex flex-col gap-2">
         {estado === "POR_PRESENTAR" && presenta && (

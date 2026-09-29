@@ -16,3 +16,9 @@ export function moverMes(mes: string, pasos: number): string {
   const d = new Date(anio, numero - 1 + pasos, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
+
+/** El último día del mes: «2026-09» → «2026-09-30». */
+export function finDeMes(mes: string): string {
+  const [anio, numero] = mes.split("-").map(Number);
+  return `${mes}-${String(new Date(anio, numero, 0).getDate()).padStart(2, "0")}`;
+}

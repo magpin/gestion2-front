@@ -21,6 +21,13 @@ export interface Declaracion {
   intereses: number;
   gmf: number;
   asientoId: string | null;
+  /** El número del egreso con que se pagó (E28), el de Pagos → Comprobantes. */
+  egreso: string | null;
+  /** Quién la registró como presentada y quién registró el pago. */
+  presentadaPor: string | null;
+  pagadaPor: string | null;
+  /** Si el pago por banco ya se concilió; `null` si no se pagó por banco. */
+  conciliada: boolean | null;
   /** Renta: el impuesto neto del 110. */
   impuestoNeto: number | null;
   /** Renta: el anticipo que se liquidó para el año siguiente. */
@@ -90,6 +97,10 @@ export interface Renglon350 {
   pn: Cifra350 | null;
   unico: Cifra350 | null;
   vacio: boolean;
+  /** Cuántos documentos suman en el renglón. */
+  documentos: number;
+  /** «2,5 %» si todo el renglón va a la misma tarifa; `null` si hay varias. */
+  tarifa: string | null;
 }
 
 export interface Formulario350 {

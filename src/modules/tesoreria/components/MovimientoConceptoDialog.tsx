@@ -52,19 +52,33 @@ export function admiteSinFactura(c: Concepto): boolean {
  * Un ingreso o un egreso sin factura: se elige el concepto, nunca la cuenta.
  * Ingresos → Cobros «Ingresos sin factura»; Egresos → Pagos «Sin factura».
  */
+/** Lo que ya se sabe del pago, si viene de un programado. */
+export interface InicialMovimiento {
+  detalle: string;
+  conceptoId: string | null;
+  valor: number;
+}
+
 export function MovimientoConceptoDialog({
   abierto,
   direccion,
   onCerrar,
+  inicial,
+  onRegistrado,
 }: {
   abierto: boolean;
   direccion: Direccion;
   onCerrar: () => void;
+  inicial?: InicialMovimiento;
+  /** Después de guardar, antes de cerrar: el programado lo usa para quedar pagado. */
+  onRegistrado?: () => void;
 }) {
   return (
     <Dialog open={abierto} onOpenChange={(a) => !a && onCerrar()}>
       <DialogContent size="lg">
-        {abierto && <Formulario direccion={direccion} onCerrar={onCerrar} />}
+        {abierto && (
+          <Formulario direccion={direccion} onCerrar={onCerrar} inicial={inicial} onRegistrado={onRegistrado} />
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -113,21 +127,38 @@ type TipoRetencion = keyof typeof NOMBRE_RETENCION;
 let siguienteClave = 1;
 const lineaNueva = (concepto: Concepto | null = null, etiqueta?: string): Linea => ({ clave: siguienteClave++, concepto, valor: "", etiqueta });
 
-function Formulario({ direccion, onCerrar }: { direccion: Direccion; onCerrar: () => void }) {
+function Formulario({
+  direccion,
+  onCerrar,
+  inicial,
+  onRegistrado,
+}: {
+  direccion: Direccion;
+  onCerrar: () => void;
+  inicial?: InicialMovimiento;
+  onRegistrado?: () => void;
+}) {
   const queryClient = useQueryClient();
   const entra = direccion === "ENTRADA";
   const [fecha, setFecha] = useState(hoy());
-  const [lineas, setLineas] = useState<Linea[]>(() => [lineaNueva()]);
+  const [lineasElegidas, setLineas] = useState<Linea[]>(() => [
+    inicial ? { ...lineaNueva(), valor: String(inicial.valor) } : lineaNueva(),
+  ]);
   const [plantilla, setPlantilla] = useState<string | null>(null);
   const [tercero, setTercero] = useState<TerceroResumen | null>(null);
   const [medio, setMedio] = useState<Medio>(entra ? "BANCO" : "CAJA");
   const [caja, setCaja] = useState<CajaResumen | null>(null);
   const [cuenta, setCuenta] = useState<CuentaBancariaResumen | null>(null);
-  const [detalle, setDetalle] = useState("");
+  const [detalle, setDetalle] = useState(inicial?.detalle ?? "");
   const [conRetencion, setConRetencion] = useState(false);
   const [tipoRetencion, setTipoRetencion] = useState<TipoRetencion>("RENTA");
   const [retencion, setRetencion] = useState("");
   const { data: conceptos = [] } = useQuery({ queryKey: ["conceptos", false], queryFn: () => conceptosApi.listar() });
+  // El concepto del programado va en la primera línea mientras no se elija otro.
+  const conceptoInicial = inicial?.conceptoId ? (conceptos.find((x) => x.id === inicial.conceptoId) ?? null) : null;
+  const lineas = lineasElegidas.map((l, i) =>
+    i === 0 && l.concepto === null && conceptoInicial ? { ...l, concepto: conceptoInicial } : l,
+  );
 
   const total = lineas.reduce((t, l) => t + (Number(l.valor) || 0), 0);
   const retenido = entra && conRetencion ? Number(retencion) || 0 : 0;
@@ -183,6 +214,7 @@ function Formulario({ direccion, onCerrar }: { direccion: Direccion; onCerrar: (
         ),
       );
       aviso.exito(entra ? "Ingreso registrado" : "Pago registrado", formatCOP(mueve));
+      onRegistrado?.();
       onCerrar();
     },
     onError: (e: unknown) => aviso.falla(e),

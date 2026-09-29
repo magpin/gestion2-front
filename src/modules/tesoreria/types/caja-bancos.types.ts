@@ -7,12 +7,21 @@ export interface MovimientoDelDia {
   concepto: string;
   /** El número del asiento: «CE-000074». */
   documento: string | null;
+  /** Con quién: «Transportes Rápido Urabá». */
+  tercero: string | null;
   entra: number;
   sale: number;
 }
 
 export interface DiaDeCaja {
-  caja: { id: string; nombre: string; tipo: "PRINCIPAL" | "MENOR"; responsable: string | null };
+  caja: {
+    id: string;
+    nombre: string;
+    tipo: "PRINCIPAL" | "MENOR";
+    responsable: string | null;
+    /** El municipio de su sede. */
+    sede: string | null;
+  };
   fecha: string;
   saldo: number;
   abrioCon: number;
@@ -31,6 +40,7 @@ export interface MovimientoTesoreria {
   cuenta: string;
   concepto: string;
   documento: string | null;
+  tercero: string | null;
   entra: number;
   sale: number;
   /** El saldo de esa cuenta después del movimiento. */

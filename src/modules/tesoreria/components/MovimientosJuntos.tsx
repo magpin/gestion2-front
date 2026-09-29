@@ -74,7 +74,19 @@ export function MovimientosJuntos({ cuentaInicial }: { cuentaInicial?: string | 
       </div>
 
       {visibles.length === 0 ? (
-        <EmptyState titulo="Nada se movió en esas fechas" descripcion="Cambiá las fechas o la cuenta para ver otros movimientos." icon={History} />
+        <EmptyState
+          titulo="Nada con esos filtros"
+          descripcion={`No hubo movimientos${cuenta === null ? "" : ` en ${cuentas.find(([id]) => id === cuenta)?.[1] ?? "esa cuenta"}`} del ${fechaCorta(desde).toLowerCase()} al ${fechaCorta(hasta).toLowerCase()}.`}
+          icon={History}
+          accionSecundaria={{
+            label: "Limpiar filtros",
+            onClick: () => {
+              setCuenta(null);
+              setDesde(menosDias(hoy, 6));
+              setHasta(hoy);
+            },
+          }}
+        />
       ) : (
         <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
           <table className="w-full min-w-[860px] text-sm">
@@ -101,7 +113,10 @@ export function MovimientosJuntos({ cuentaInicial }: { cuentaInicial?: string | 
                     <tr key={m.id} className="border-t border-border">
                       <td className="px-5 py-2.5 font-mono text-xs text-muted-foreground">{m.hora}</td>
                       <td className="px-3 py-2.5">{m.cuenta}</td>
-                      <td className="px-3 py-2.5">{m.concepto}</td>
+                      <td className="px-3 py-2.5">
+                        {m.concepto}
+                        {m.tercero && <span className="block text-xs text-muted-foreground">{m.tercero}</span>}
+                      </td>
                       <td className="px-3 py-2.5 font-mono text-xs">{m.documento ?? "—"}</td>
                       <td className="px-3 py-2.5 text-right font-mono whitespace-nowrap text-success tabular-nums">{m.entra > 0 ? formatCOP(m.entra) : ""}</td>
                       <td className="px-3 py-2.5 text-right font-mono whitespace-nowrap tabular-nums">{m.sale > 0 ? formatCOP(m.sale) : ""}</td>

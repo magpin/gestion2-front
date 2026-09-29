@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeftRight, Check, ClipboardCheck, HandCoins, TriangleAlert, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Check, ClipboardCheck, TriangleAlert, Wallet } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
@@ -11,6 +11,7 @@ import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import { useTieneRol } from "@/core/store/authStore";
 import { cn, formatCOP } from "@/lib/utils";
+import { Maria } from "@/modules/asistente/components/Maria";
 import { fechaCorta } from "@/modules/impuestos/lib/impuestos";
 import { useCajaPrincipal } from "./CajaPrincipal";
 import { MovimientoConceptoDialog } from "./MovimientoConceptoDialog";
@@ -19,12 +20,15 @@ import { cajaBancosApi } from "../services/caja-bancos.service";
 import { cajasApi } from "../services/tesoreria.service";
 import type { DiaDeCaja } from "../types/caja-bancos.types";
 
+/** Desde cuánto efectivo María sugiere llevar una parte al banco (lienzo 33). */
+const SALDO_ALTO = 1_500_000;
+
 /**
  * Caja y bancos → Caja (lienzo «Caja»): la caja principal por defecto, con un
  * selector para la menor y las de otras sedes (PC7); lo que hay, con qué abrió
  * el día, lo que entró y salió, el último arqueo y lo que pasó hoy.
  */
-export function CajaHoy({ onVerMovimientos }: { onVerMovimientos: () => void }) {
+export function CajaHoy({ onVerMovimientos, onAgregar }: { onVerMovimientos: () => void; onAgregar?: () => void }) {
   const { caja: principal, cargando } = useCajaPrincipal();
   const { data: cajas = [] } = useQuery({ queryKey: ["cajas"], queryFn: () => cajasApi.listar(), meta: SILENCIOSO });
   const activas = cajas.filter((c) => c.activa);
@@ -41,9 +45,11 @@ export function CajaHoy({ onVerMovimientos }: { onVerMovimientos: () => void }) 
   if (cajaId === null) {
     return (
       <EmptyState
-        titulo="Todavía no hay cajas"
-        descripcion="Creá la caja principal abajo, en «Todas las cajas», con el efectivo que hay hoy."
+        titulo="Todavía no hay cajas ni cuentas"
+        descripcion="Agregá la caja de la oficina y tus cuentas de banco con el saldo que tienen hoy."
         icon={Wallet}
+        accion={onAgregar ? { label: "Agregar caja o cuenta", onClick: onAgregar } : undefined}
+        accionSecundaria={{ label: "Subir extracto", href: "/dashboard/control" }}
       />
     );
   }
@@ -88,13 +94,15 @@ function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: ()
   const a = d.ultimoArqueo;
 
   return (
-    <>
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <div className="flex min-w-0 flex-1 flex-col gap-6">
       <section className="rounded-3xl border border-border bg-card px-6 py-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">{d.caja.nombre}</h2>
             <p className="text-xs text-muted-foreground">
               Efectivo{d.caja.tipo === "MENOR" ? " · caja menor" : ""}
+              {d.caja.sede ? ` · ${d.caja.sede}` : ""}
               {d.caja.responsable ? ` · la maneja ${d.caja.responsable}` : ""}
             </p>
           </div>
@@ -133,10 +141,10 @@ function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: ()
         </ul>
         {puedeMover && (
           <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Accion icono={HandCoins} principal onClick={() => setDialogo("ENTRADA")}>
+            <Accion icono={ArrowDownLeft} principal onClick={() => setDialogo("ENTRADA")}>
               Entró plata
             </Accion>
-            <Accion icono={HandCoins} onClick={() => setDialogo("SALIDA")}>
+            <Accion icono={ArrowUpRight} onClick={() => setDialogo("SALIDA")}>
               Salió plata
             </Accion>
             <Button variant="outline" className="h-auto flex-col gap-1.5 rounded-2xl py-4" render={<Link href="/dashboard/control" />}>
@@ -163,7 +171,13 @@ function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: ()
               <span className="w-12 font-mono text-xs text-muted-foreground">{m.hora}</span>
               <span className="min-w-0 flex-1">
                 <span className="block font-medium">{m.concepto}</span>
-                {m.documento && <span className="font-mono text-xs text-muted-foreground">{m.documento}</span>}
+                {(m.tercero || m.documento) && (
+                  <span className="text-xs text-muted-foreground">
+                    {m.tercero}
+                    {m.tercero && m.documento && " · "}
+                    {m.documento && <span className="font-mono">{m.documento}</span>}
+                  </span>
+                )}
               </span>
               <span className={cn("font-mono font-semibold whitespace-nowrap tabular-nums", m.entra > 0 && "text-success")}>
                 {m.entra > 0 ? `+ ${formatCOP(m.entra)}` : `− ${formatCOP(m.sale)}`}
@@ -177,14 +191,34 @@ function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: ()
           </li>
         </ul>
       </section>
+      </div>
+
+      <aside className="w-full lg:w-80 lg:shrink-0">
+        <section className="rounded-3xl border border-border bg-card px-5 py-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-2.5">
+            <Maria estado="reposo" tamano={28} />
+            <div>
+              <p className="text-sm font-semibold">María</p>
+              <p className="text-xs text-muted-foreground">Ve lo mismo que vos</p>
+            </div>
+          </div>
+          {d.saldo > SALDO_ALTO && (
+            <p className="mb-2 text-sm">
+              Hay más de <span className="font-mono font-semibold">{formatCOP(SALDO_ALTO)}</span> en efectivo. Si no los vas a
+              usar esta semana, llevá una parte al banco.
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground">Contá la caja al cerrar el día.</p>
+        </section>
+      </aside>
 
       <MovimientoConceptoDialog
         abierto={dialogo === "ENTRADA" || dialogo === "SALIDA"}
         direccion={dialogo === "SALIDA" ? "SALIDA" : "ENTRADA"}
         onCerrar={() => setDialogo(null)}
       />
-      <TrasladoDialog abierto={dialogo === "TRASLADO"} onCerrar={() => setDialogo(null)} />
-    </>
+      <TrasladoDialog abierto={dialogo === "TRASLADO"} onCerrar={() => setDialogo(null)} desdeCaja={d.caja.id} />
+    </div>
   );
 }
 

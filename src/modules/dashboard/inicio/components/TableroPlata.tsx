@@ -85,7 +85,10 @@ export function TableroPlata({ datos }: { datos: Tablero | undefined }) {
       </div>
 
       <div className={cn("grid gap-6", datos.resultadoMes !== null && "lg:grid-cols-[2fr_1fr]")}>
-        <Semana datos={datos} />
+        {/* En el móvil (lienzo 66) no va: la plata y lo que se debe caben primero. */}
+        <div className="max-md:hidden">
+          <Semana datos={datos} />
+        </div>
         {datos.resultadoMes !== null && <ResultadoMes resultado={datos.resultadoMes} />}
       </div>
     </div>
