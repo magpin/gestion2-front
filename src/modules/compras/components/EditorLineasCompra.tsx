@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
-import { SelectorCuenta } from "@/modules/contabilidad/components/SelectorCuenta";
+import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
+import type { Concepto } from "@/modules/conceptos/types/conceptos.types";
 import { SelectorProducto } from "@/modules/inventario/components/SelectorProducto";
-import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 import type { ProductoResumen } from "@/modules/inventario/types/inventario.types";
 
 /** Una línea mientras se edita. Cantidad y costo son texto: vacío es "sin llenar", no cero. */
@@ -24,8 +24,11 @@ export interface LineaCompraBorrador {
    */
   tipo: "PRODUCTO" | "GASTO";
   producto: ProductoResumen | null;
-  /** Solo en las de gasto: contra qué cuenta se debita. */
-  cuenta: CuentaEmpresa | null;
+  /**
+   * Solo en las de gasto: qué es («Arriendo», «Transporte, fletes y
+   * acarreos»). La cuenta la pone el concepto: nadie elige un código.
+   */
+  concepto: Concepto | null;
   /** Solo en las de gasto: qué fue. Sin esto la línea es un código y un número. */
   detalle: string;
   /** Solo en las de gasto: la tarifa la dice la factura, no un catálogo. */
@@ -47,7 +50,7 @@ export function lineaCompraVacia(
     clave: Date.now() + Math.random(),
     tipo,
     producto: null,
-    cuenta: null,
+    concepto: null,
     detalle: "",
     // La corriente. Quien registra la cambia si la factura dice otra cosa.
     ivaTarifa: "19",
@@ -61,7 +64,7 @@ export function lineaCompraVacia(
 export function lineaCompleta(l: LineaCompraBorrador): boolean {
   return l.tipo === "PRODUCTO"
     ? l.producto !== null
-    : l.cuenta !== null && l.detalle.trim().length >= 2;
+    : l.concepto !== null && l.detalle.trim().length >= 2;
 }
 
 /**
@@ -134,7 +137,7 @@ export function EditorLineasCompra({
                               // producto elegido en una línea de gasto es
                               // guardar algo que ya no se va a usar.
                               producto: null,
-                              cuenta: null,
+                              concepto: null,
                               detalle: "",
                             })
                           }
@@ -157,10 +160,18 @@ export function EditorLineasCompra({
                       />
                     ) : (
                       <>
-                        <SelectorCuenta
-                          valor={l.cuenta}
-                          onElegir={(cuenta) => actualizar(l.clave, { cuenta })}
+                        <SelectorConcepto
+                          tipos={["GASTO", "COSTO", "NO_GASTO"]}
+                          valor={l.concepto}
+                          onElegir={(concepto) => actualizar(l.clave, { concepto })}
+                          // Solo los que tienen cuenta: sin ella no hay contra qué debitar.
+                          filtro={(c) => c.cuenta !== null}
                         />
+                        {l.concepto?.cuenta && (
+                          <p className="-mt-1 text-xs text-muted-foreground">
+                            Va a {l.concepto.cuenta.codigo} · {l.concepto.cuenta.nombre}
+                          </p>
+                        )}
                         <Input
                           value={l.detalle}
                           onChange={(e) =>

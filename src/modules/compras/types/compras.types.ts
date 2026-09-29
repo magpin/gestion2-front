@@ -84,6 +84,8 @@ export interface CompraDocumentoLineaResumen {
   cuenta_id: string;
   cuenta_codigo: string;
   cuenta_nombre: string;
+  /** El concepto de una línea de gasto elegida por concepto. */
+  concepto_nombre?: string | null;
   /** Qué se compró, cuando no es un producto. */
   detalle: string | null;
   cantidad: string;
@@ -134,6 +136,8 @@ export interface LineaCompraInput {
   productoId?: string;
   /** Contra qué cuenta se debita el gasto. Excluyente con `productoId`. */
   cuentaId?: string;
+  /** Lo normal en una línea de gasto: el concepto, y la cuenta la pone él. */
+  conceptoId?: string;
   /** Qué se compró, cuando no es un producto. Obligatorio en las de gasto. */
   detalle?: string;
   /** La tarifa del gasto: no hay producto que la diga. */
@@ -220,8 +224,7 @@ export interface CrearNotaCreditoCompraInput {
 /** Una línea de nota débito: un producto, o un gasto (un flete, un interés). */
 export type LineaNotaDebitoCompraInput =
   | { productoId: string; cantidad: number; costoUnitario: number }
-  | {
-      cuentaId: string;
+  | ({ cuentaId: string } | { conceptoId: string }) & {
       detalle: string;
       ivaTarifa: number;
       cantidad: number;

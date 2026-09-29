@@ -96,6 +96,7 @@ export function DetalleCompra({
                           {l.producto_nombre ?? l.detalle}
                           {l.producto_nombre === null && (
                             <span className="mt-0.5 block font-mono text-xs font-normal text-muted-foreground">
+                              {l.concepto_nombre ? `${l.concepto_nombre} · ` : ""}
                               {l.cuenta_codigo} · {l.cuenta_nombre}
                             </span>
                           )}

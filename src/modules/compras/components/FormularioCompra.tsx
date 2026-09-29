@@ -60,18 +60,24 @@ export function FormularioCompra({
   onCerrar,
   onGuardar,
   guardando,
+  inicial,
 }: {
   abierto: boolean;
   onCerrar: () => void;
   onGuardar: (datos: CrearCompraInput) => void;
   guardando: boolean;
+  /**
+   * Con qué arranca: «Registrar gasto» en Gastos abre la compra con el
+   * proveedor y la línea de gasto ya puestos. Se lee al montar.
+   */
+  inicial?: { proveedor: TerceroResumen | null; lineas: LineaCompraBorrador[] };
 }) {
-  const [proveedor, setProveedor] = useState<TerceroResumen | null>(null);
+  const [proveedor, setProveedor] = useState<TerceroResumen | null>(inicial?.proveedor ?? null);
   const [fecha, setFecha] = useState(hoy());
   const [numeroFactura, setNumeroFactura] = useState("");
-  const [lineas, setLineas] = useState<LineaCompraBorrador[]>([
-    lineaCompraVacia(),
-  ]);
+  const [lineas, setLineas] = useState<LineaCompraBorrador[]>(
+    inicial?.lineas ?? [lineaCompraVacia()],
+  );
   // Dónde se recibe la compra: decide dónde se causa la ReteICA. Solo se
   // pregunta si la empresa tiene sedes en más de un municipio.
   const [municipio, setMunicipio] = useState("");
@@ -166,7 +172,7 @@ export function FormularioCompra({
               sinIva: l.sinIva || undefined,
             }
           : {
-              cuentaId: l.cuenta!.id,
+              conceptoId: l.concepto!.id,
               detalle: l.detalle.trim(),
               ivaTarifa: Number(l.ivaTarifa),
               cantidad: Number(l.cantidad),

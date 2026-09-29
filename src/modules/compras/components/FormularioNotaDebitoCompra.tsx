@@ -97,7 +97,7 @@ export function FormularioNotaDebitoCompra({
             costoUnitario: Number(l.costoUnitario),
           }
         : {
-            cuentaId: l.cuenta!.id,
+            conceptoId: l.concepto!.id,
             detalle: l.detalle.trim(),
             ivaTarifa: Number(l.ivaTarifa),
             cantidad: Number(l.cantidad),
