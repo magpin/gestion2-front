@@ -19,8 +19,6 @@ import {
 } from "../components/EditorLineasVenta";
 import type { CrearFacturaInput } from "../types/ventas.types";
 
-/** Los plazos que se ofrecen, en días. El del cliente se suma si no está. */
-export const PLAZOS = [0, 8, 15, 30, 45, 60, 90];
 
 /** Una retención que el cliente nos practica, mientras se edita. */
 export interface RetencionBorrador {

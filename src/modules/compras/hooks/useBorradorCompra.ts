@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { useTieneRol } from "@/core/store/authStore";
 import { admiteDecimales, esEntero } from "@/lib/numeros";
+import { hoyEnColombia } from "@/lib/utils";
 import { useSimulacionRenta } from "@/modules/retenciones/hooks/useSimulacionRenta";
 import { retencionesApi } from "@/modules/retenciones/services/retenciones.service";
 import {
@@ -22,10 +23,16 @@ import type { CrearCompraInput } from "../types/compras.types";
 
 export type ClaseDocumento = "FACTURA_ELECTRONICA" | "DOCUMENTO_SOPORTE";
 
-const hoy = (): string => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+/** Hoy en Colombia: la fecha que acepta el backend. */
+const hoy = (): string => hoyEnColombia();
+
+/** La línea con la que arranca cada clase: mercancía en la factura, un gasto sin IVA en el soporte. */
+const lineaInicial = (clase: ClaseDocumento): LineaCompraBorrador =>
+  clase === "DOCUMENTO_SOPORTE" ? { ...lineaCompraVacia("GASTO"), ivaTarifa: "0" } : lineaCompraVacia();
+
+/** Una línea recién puesta, sin nada escrito: se puede reemplazar al cambiar de clase. */
+const sinTocar = (l: LineaCompraBorrador) =>
+  l.producto === null && l.concepto === null && l.detalle.trim() === "" && l.costoUnitario.trim() === "";
 
 /** Con qué arranca: «Registrar gasto» abre la compra con el proveedor y la línea puestos. */
 export interface InicioCompra {
@@ -40,10 +47,17 @@ export interface InicioCompra {
  * compra nueva: los dos tienen que validar y armar el envío igual.
  */
 export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
-  const [proveedor, setProveedor] = useState<TerceroResumen | null>(inicial?.proveedor ?? null);
+  const [proveedor, setProveedorCrudo] = useState<TerceroResumen | null>(inicial?.proveedor ?? null);
+  // El plazo sale del proveedor (PC25) y se puede cambiar: el vence lo calcula
+  // el sistema con él (plan 7.2).
+  const [plazo, setPlazo] = useState(inicial?.proveedor?.diasPlazoProveedor != null ? String(inicial.proveedor.diasPlazoProveedor) : "30");
+  const setProveedor = (t: TerceroResumen | null) => {
+    setProveedorCrudo(t);
+    if (t?.diasPlazoProveedor != null) setPlazo(String(t.diasPlazoProveedor));
+  };
   const [fecha, setFecha] = useState(hoy());
   const [numeroFactura, setNumeroFactura] = useState("");
-  const [clase, setClase] = useState<ClaseDocumento>("FACTURA_ELECTRONICA");
+  const [clase, setClaseCruda] = useState<ClaseDocumento>("FACTURA_ELECTRONICA");
   const [cufe, setCufe] = useState("");
   const [lineas, setLineas] = useState<LineaCompraBorrador[]>(inicial?.lineas ?? [lineaCompraVacia()]);
   // Dónde se recibe la compra: decide dónde se causa la ReteICA. Solo se
@@ -57,6 +71,7 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
   const [renta, setRenta] = useState(respuestasRentaVacias);
   const [conTarjeta, setConTarjeta] = useState(false);
   const [formaPago, setFormaPago] = useState(formaPagoVacia);
+  const [conPronto, setConPronto] = useState(false);
   const [prontoPct, setProntoPct] = useState("");
   const [prontoHasta, setProntoHasta] = useState("");
   // Pagar de contado saca plata de una caja o un banco: el backend lo rechaza
@@ -64,23 +79,23 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
   const puedePagar = useTieneRol("CAJA", "DIRECTOR");
   const soporte = clase === "DOCUMENTO_SOPORTE";
 
-  // El plazo del proveedor propone el vence (PC25). Si la persona lo cambió a
-  // mano, se respeta: solo se reemplaza el que puso la propuesta anterior.
-  const venceSugerido = venceConPlazo(fecha, proveedor?.diasPlazoProveedor);
-  const ultimoSugerido = useRef<string | null>(null);
-  useEffect(() => {
-    if (formaPago.modo !== "CREDITO" || venceSugerido === null) return;
-    setFormaPago((f) =>
-      f.vence === "" || f.vence === ultimoSugerido.current ? { ...f, vence: venceSugerido } : f,
-    );
-    ultimoSugerido.current = venceSugerido;
-  }, [venceSugerido, formaPago.modo]);
+  const vence = formaPago.modo === "CREDITO" ? venceConPlazo(fecha, Number(plazo)) : null;
+  const plazoHabitual = proveedor?.diasPlazoProveedor ?? null;
+
+  // Cambiar de clase cambia la línea con la que se arranca, si nadie la tocó:
+  // el soporte es un gasto sin IVA; la factura, mercancía (pantallas 09 y 10).
+  const setClase = (c: ClaseDocumento) => {
+    setClaseCruda(c);
+    setLineas((ls) => (ls.length === 1 && sinTocar(ls[0]) ? [lineaInicial(c)] : ls));
+  };
 
   const limpiar = () => {
     setProveedor(null);
     setFecha(hoy());
     setNumeroFactura("");
-    setClase("FACTURA_ELECTRONICA");
+    setClaseCruda("FACTURA_ELECTRONICA");
+    setPlazo("30");
+    setConPronto(false);
     setCufe("");
     setLineas([lineaCompraVacia()]);
     setMunicipio("");
@@ -89,7 +104,6 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
     setFormaPago(formaPagoVacia());
     setProntoPct("");
     setProntoHasta("");
-    ultimoSugerido.current = null;
   };
 
   // Una línea está incompleta por razones distintas según lo que sea: a la
@@ -124,7 +138,7 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
     if (sinCosto.length > 0) return `El costo unitario tiene que ser válido en ${nombrar(sinCosto)}.`;
     return (
       problemaFormaPago(formaPago) ??
-      (formaPago.modo === "CREDITO" ? problemaProntoPago(prontoPct, prontoHasta, fecha) : null)
+      (formaPago.modo === "CREDITO" && conPronto ? problemaProntoPago(prontoPct, prontoHasta, fecha) : null)
     );
   };
 
@@ -181,7 +195,8 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
       ...(conTarjeta && { pagadaConTarjeta: true }),
       ...(municipio !== "" && { municipioCodigo: municipio }),
       ...aFormaPago(formaPago),
-      ...(formaPago.modo === "CREDITO" && aEnvioProntoPago(prontoPct, prontoHasta)),
+      ...(vence !== null && { vence }),
+      ...(formaPago.modo === "CREDITO" && conPronto && aEnvioProntoPago(prontoPct, prontoHasta)),
     };
   };
 
@@ -196,10 +211,11 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
     renta, setRenta,
     conTarjeta, setConTarjeta,
     formaPago, setFormaPago,
+    conPronto, setConPronto,
     prontoPct, setProntoPct,
+    plazo, setPlazo, plazoHabitual, vence,
     prontoHasta, setProntoHasta,
     puedePagar,
-    venceSugerido,
     simulacion,
     problema,
     datos,

@@ -196,6 +196,182 @@ export function EditorLineasVenta({
   const quitar = (clave: number) =>
     onCambiar(lineas.filter((l) => l.clave !== clave));
 
+  // La página de la factura (pantalla 13) lleva la tabla del diseño: qué,
+  // tipo y a dónde va, cantidad, precio, IVA y subtotal, con las dos maneras
+  // de agregar al pie. La cotización y las notas siguen con la de siempre.
+  if (conConceptos) {
+    const th = "px-3 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground";
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+          <thead className="border-y border-border">
+            <tr>
+              <th scope="col" className={cn(th, "pl-6")}>Qué</th>
+              <th scope="col" className={th}>Tipo y a dónde va</th>
+              <th scope="col" className={cn(th, "text-right")}>Cant.</th>
+              <th scope="col" className={cn(th, "text-right")}>Precio</th>
+              {responsable && <th scope="col" className={cn(th, "text-right")}>IVA</th>}
+              <th scope="col" className={cn(th, "text-right")}>Subtotal</th>
+              <th scope="col" className="w-12 pr-6" />
+            </tr>
+          </thead>
+          <tbody>
+            {lineas.map((l, i) => {
+              const c = l.concepto ?? null;
+              const esServicio = c?.cuenta?.codigo.startsWith("41") ?? true;
+              return (
+                <tr key={l.clave} className="border-b border-border align-top">
+                  <td className="py-3.5 pr-3 pl-6">
+                    {l.tipo === "CONCEPTO" ? (
+                      <div className="flex flex-col gap-1">
+                        <Input
+                          value={l.detalle ?? ""}
+                          onChange={(e) => actualizar(l.clave, { detalle: e.target.value })}
+                          placeholder="Qué se cobró: transporte a Turbo, arriendo de octubre…"
+                          maxLength={200}
+                          className="h-11 rounded-xl px-4"
+                          aria-label={`Detalle de la línea ${i + 1}`}
+                        />
+                        <p className="text-xs text-muted-foreground">{esServicio ? "Servicio" : "Otro ingreso"}</p>
+                      </div>
+                    ) : (
+                      <>
+                        <SelectorProducto
+                          valor={l.producto}
+                          onElegir={(producto) => actualizar(l.clave, { producto, precioUnitario: "" })}
+                        />
+                        {mostrarExistencia && l.producto && <Existencia producto={l.producto} />}
+                      </>
+                    )}
+                  </td>
+                  <td className="px-3 py-3.5">
+                    {l.tipo === "CONCEPTO" ? (
+                      <div className="flex flex-col gap-1.5">
+                        <span
+                          className={cn(
+                            "w-fit rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                            esServicio ? "border-info/30 bg-info/15" : "border-warning/30 bg-warning/15",
+                          )}
+                        >
+                          {esServicio ? "Servicio" : "Otro ingreso"}
+                        </span>
+                        <SelectorConcepto
+                          tipos={["INGRESO"]}
+                          valor={c}
+                          onElegir={(concepto) => actualizar(l.clave, { concepto })}
+                          filtro={(x) => x.cuenta !== null && !x.automatico}
+                        />
+                        {c?.cuenta && (
+                          <p className="text-xs text-muted-foreground">
+                            {c.operacional === false ? "No operacional" : c.cuenta.nombre} ·{" "}
+                            <span className="font-mono">{c.cuenta.codigo}</span>
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1.5">
+                        <span className="w-fit rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium">
+                          Producto
+                        </span>
+                        <p className="text-xs text-muted-foreground">Venta de mercancía</p>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-3.5 text-right">
+                    <CampoCantidad
+                      unidad={l.producto?.unidad_medida}
+                      value={l.cantidad}
+                      onChange={(cantidad) => actualizar(l.clave, { cantidad })}
+                      placeholder="0"
+                      className="ml-auto h-11 w-20 rounded-xl px-3 text-right font-mono"
+                      aria-label={`Cantidad de la línea ${i + 1}`}
+                    />
+                  </td>
+                  <td className="px-3 py-3.5 text-right">
+                    {l.tipo === "CONCEPTO" ? (
+                      <CampoPesos
+                        value={l.precioUnitario}
+                        onChange={(precioUnitario) => actualizar(l.clave, { precioUnitario })}
+                        placeholder="0"
+                        className="ml-auto h-11 w-32 rounded-xl px-3 text-right font-mono"
+                        aria-label={`Precio de la línea ${i + 1}`}
+                      />
+                    ) : (
+                      <PrecioDeLinea
+                        producto={l.producto}
+                        valor={l.precioUnitario}
+                        onCambiar={(precioUnitario) => actualizar(l.clave, { precioUnitario })}
+                        etiqueta={`Precio de la línea ${i + 1}`}
+                        editable={precioEditable}
+                        siempreDigitado={precioSiempreDigitado}
+                      />
+                    )}
+                  </td>
+                  {responsable && (
+                    <td className="px-3 py-3.5 text-right">
+                      {l.tipo === "CONCEPTO" ? (
+                        <select
+                          value={l.ivaTarifa ?? "19"}
+                          onChange={(e) => actualizar(l.clave, { ivaTarifa: e.target.value })}
+                          className="h-11 rounded-xl border border-input bg-card px-2 font-mono text-sm"
+                          aria-label={`IVA de la línea ${i + 1}`}
+                        >
+                          <option value="19">19 %</option>
+                          <option value="5">5 %</option>
+                          <option value="0">0 %</option>
+                        </select>
+                      ) : (
+                        <span className="block pt-3 font-mono">
+                          {l.producto ? `${Number(l.producto.iva_tarifa)} %` : "—"}
+                        </span>
+                      )}
+                    </td>
+                  )}
+                  <td className="px-3 py-3.5 pt-6 text-right font-mono font-semibold whitespace-nowrap tabular-nums">
+                    {calculos[i] === null ? "—" : pesos(calculos[i]!.subtotal)}
+                  </td>
+                  <td className="py-3.5 pr-6">
+                    {lineas.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Quitar la línea ${i + 1}`}
+                        className="text-muted-foreground hover:text-danger"
+                        onClick={() => quitar(l.clave)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            <tr>
+              <td colSpan={7} className="px-6 py-3">
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" className="h-9 rounded-xl border-dashed px-3 text-sm" onClick={agregar}>
+                    <Plus className="size-3.5" />
+                    Agregar producto
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 rounded-xl border-dashed px-3 text-sm"
+                    onClick={() => onCambiar([...lineas, lineaConceptoVacia()])}
+                  >
+                    <Plus className="size-3.5" />
+                    Agregar servicio u otro ingreso
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-2xl border border-border">
@@ -418,7 +594,7 @@ function Existencia({ producto }: { producto: ProductoResumen }) {
     <p className="mt-1.5 text-xs text-muted-foreground">
       {saldo > 0 ? (
         <>
-          Existencia: <b className="font-mono font-semibold">{saldo}</b>
+          Quedan <b className="font-mono font-semibold">{saldo}</b> en bodega
         </>
       ) : (
         "Sin existencia — se puede cotizar"

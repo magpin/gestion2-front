@@ -82,7 +82,7 @@ test.describe("Tesorería", () => {
     await page.getByRole("button", { name: /Seleccione un proveedor/ }).click();
     await page.getByLabel("Buscar proveedor").fill("Distribuidora");
     await page.getByRole("button", { name: /Distribuidora del Valle/ }).first().click();
-    await page.getByLabel("N.° factura proveedor").fill(`FP-${Date.now().toString().slice(-6)}`);
+    await page.getByLabel("Número de factura").fill(`FP-${Date.now().toString().slice(-6)}`);
     await page.getByRole("button", { name: /Seleccione un producto/ }).click();
     await page.getByLabel("Buscar producto").fill(e.producto.codigo);
     await page.getByRole("button", { name: new RegExp(e.producto.nombre) }).first().click();

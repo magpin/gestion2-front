@@ -294,7 +294,7 @@ export async function nuevaCompra(page: Page, proveedor: Proveedor): Promise<{ d
   await page.getByRole("button", { name: new RegExp(escapar(proveedor.nombre)) }).first().click();
 
   const numero = `FP-${Date.now().toString().slice(-7)}`;
-  await dialogo.getByLabel("N.° factura proveedor").fill(numero);
+  await dialogo.getByLabel("Número de factura").fill(numero);
   return { dialogo, numero };
 }
 

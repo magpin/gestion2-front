@@ -3,22 +3,24 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { AsientoPrevio } from "@/components/shared/AsientoPrevio";
+import { CabeceraPagina } from "@/components/shared/CabeceraPagina";
 import { SILENCIOSO } from "@/components/shared/ErrorCarga";
+import { Button } from "@/components/ui/button";
 import { useQuieto } from "@/hooks/useQuieto";
 import { aviso } from "@/lib/avisos";
-import { formatCOP, formatFecha } from "@/lib/utils";
-import { CamposCompra } from "../components/CamposCompra";
-import { useBorradorCompra } from "../hooks/useBorradorCompra";
+import { formatCOP } from "@/lib/utils";
+import { DocumentoCompra, LineasCompra, PlazoCompra, QueSeCompro, Seccion } from "../components/CamposCompra";
+import { useBorradorCompra, type BorradorCompra } from "../hooks/useBorradorCompra";
 import { comprasApi } from "../services/compras.service";
 import type { CompraPrevia, CrearCompraInput } from "../types/compras.types";
 
 /**
- * La compra nueva como página (pantallas 09 y 10): el formulario a la
- * izquierda y, a la derecha, cómo queda antes de guardar —totales, cada
- * retención, lo que se le va a pagar y el asiento—.
+ * La compra nueva como página (pantallas 09 y 10), como en el diseño:
+ * Documento y Plazo y pago a la izquierda, el Resumen a la derecha, las líneas
+ * y el asiento a lo ancho, y abajo qué pasa al registrarla.
  *
  * El resumen lo arma el servidor corriendo la compra de verdad y deshaciéndola
  * (`POST /compras/previo`): no hay una segunda cuenta en el navegador que se
@@ -40,6 +42,7 @@ export function CompraNuevaView() {
     // El error se muestra en el resumen, no en un aviso que tapa la página.
     meta: SILENCIOSO,
   });
+  const previa = pedido === null ? undefined : previo.data;
 
   const crear = useMutation({
     mutationFn: comprasApi.crear,
@@ -51,64 +54,95 @@ export function CompraNuevaView() {
     onError: (e: unknown) => aviso.falla(e),
   });
 
-  const accion = b.soporte ? "Registrar documento soporte" : "Registrar compra";
+  // «Te ahorrás»: el pronto pago sobre lo que se le va a pagar (PC24).
+  const ahorro = previa && b.conPronto && Number(b.prontoPct) > 0 ? (previa.neto * Number(b.prontoPct)) / 100 : null;
 
   return (
     // Una región con el nombre del documento: se lee igual que el diálogo que
     // reemplaza, y desaparece al guardar.
-    <div
-      role="region"
-      aria-label={b.soporte ? "Documento soporte" : "Nueva compra"}
-      className="w-full"
-    >
-      <header className="mb-8">
-        <Link
-          href="/dashboard/compras"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Compras
-        </Link>
-        <h1 className="text-4xl font-semibold tracking-[-0.04em]">
-          {b.soporte ? "Documento soporte" : "Nueva compra"}
-          <span className="text-brand">.</span>
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {b.soporte
-            ? "Para lo que le comprás a quien no factura. Lo numerás vos con tu resolución; queda sin transmitir."
-            : "Asienta y aumenta el kardex al guardar. El costo de cada línea es el que dice la factura del proveedor."}
-        </p>
-      </header>
+    <div role="region" aria-label={b.soporte ? "Documento soporte" : "Nueva compra"} className="flex w-full flex-col gap-5">
+      <CabeceraPagina
+        ruta={[{ etiqueta: "Egresos" }, { etiqueta: "Compras", href: "/dashboard/compras" }, { etiqueta: "Nueva" }]}
+        titulo={b.soporte ? "Documento soporte" : "Nueva compra"}
+        subtitulo={
+          b.soporte
+            ? "Para comprarle a quien no factura. Lo emitís vos con tu numeración; queda sin transmitir."
+            : "Mercancía y gastos en la misma factura. Cada línea va a su cuenta según el concepto."
+        }
+      />
 
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7">
-          <CamposCompra b={b} completa />
-        </section>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <Seccion id="c-doc" titulo="Documento">
+            <DocumentoCompra b={b} completa />
+          </Seccion>
+          {b.soporte ? (
+            <Seccion id="ds-lin" titulo="Qué se compró">
+              <QueSeCompro b={b} />
+            </Seccion>
+          ) : (
+            <Seccion id="c-plazo" titulo="Plazo y pago">
+              <PlazoCompra b={b} ahorro={ahorro} />
+            </Seccion>
+          )}
+        </div>
 
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
-          <ResumenCompra
-            previa={pedido === null ? undefined : previo.data}
+        <aside className="flex flex-col gap-5 lg:sticky lg:top-6">
+          <Resumen
+            b={b}
+            previa={previa}
             cargando={pedido !== null && previo.isFetching}
             error={pedido !== null && previo.isError ? mensajeDe(previo.error) : null}
-            soporte={b.soporte}
           />
-          <p className="text-sm text-muted-foreground">{b.problema ?? "Listo para guardar."}</p>
-          <Button
-            type="button"
-            className="h-12 rounded-xl px-6"
-            disabled={datos === null || crear.isPending}
-            onClick={() => datos !== null && crear.mutate(datos)}
-          >
-            {crear.isPending && <Loader2 className="size-4 animate-spin" />}
-            {accion}
-          </Button>
-          <Button variant="outline" className="h-12 rounded-xl px-6" render={<Link href="/dashboard/compras" />}>
-            Cancelar
-          </Button>
         </aside>
+      </div>
+
+      {!b.soporte && (
+        <section
+          aria-labelledby="c-lineas"
+          className="overflow-hidden rounded-[26px] border border-border bg-card shadow-sm"
+        >
+          <div className="flex flex-wrap items-baseline justify-between gap-2 px-6 pt-5 pb-4">
+            <h2 id="c-lineas" className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              Líneas de la factura
+            </h2>
+            <p className="text-xs text-muted-foreground">Mercancía entra al inventario · gasto va por concepto</p>
+          </div>
+          <LineasCompra b={b} completa />
+        </section>
+      )}
+
+      {previa && <AsientoPrevio lineas={previa.asiento} />}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="flex-grow text-[13px] text-muted-foreground">{b.problema ?? pie(b)}</p>
+        <Button variant="outline" className="h-12 rounded-[16.8px] px-6" render={<Link href="/dashboard/compras" />}>
+          Cancelar
+        </Button>
+        <Button
+          type="button"
+          className="h-12 rounded-[16.8px] px-6 shadow-[0_8px_20px_rgb(0_0_0/0.15)]"
+          disabled={datos === null || crear.isPending}
+          onClick={() => datos !== null && crear.mutate(datos)}
+        >
+          {crear.isPending && <Loader2 className="size-4 animate-spin" />}
+          {b.soporte ? "Registrar documento soporte" : "Registrar compra"}
+        </Button>
       </div>
     </div>
   );
+}
+
+/** Lo que pasa al registrarla, en una frase (pie del diseño). */
+function pie(b: BorradorCompra): string {
+  if (b.soporte) return "Al registrarlo queda numerado con tu resolución y sin transmitir.";
+  const unidades = b.lineas
+    .filter((l) => l.tipo === "PRODUCTO" && l.producto !== null)
+    .reduce((s, l) => s + (Number(l.cantidad) || 0), 0);
+  const destino = b.formaPago.modo === "CREDITO" ? "la factura aparece en Por pagar" : "se paga de contado";
+  return unidades > 0
+    ? `Al registrarla, suben ${unidades.toLocaleString("es-CO")} ${unidades === 1 ? "unidad" : "unidades"} al inventario y ${destino}.`
+    : `Al registrarla, ${destino}.`;
 }
 
 function mensajeDe(e: unknown): string {
@@ -116,95 +150,94 @@ function mensajeDe(e: unknown): string {
   return Array.isArray(m) ? m[0] : (m ?? "No se pudo armar el resumen.");
 }
 
-/** Totales, retenciones, «Le vas a pagar», vence y el asiento que haría. */
-function ResumenCompra({
+/** La tarifa de IVA si todas las líneas llevan la misma: «IVA 19 %». */
+function tarifaUnica(previa: CompraPrevia): string {
+  if (previa.subtotal <= 0 || previa.iva <= 0) return "";
+  const t = Math.round((previa.iva / previa.subtotal) * 1000) / 10;
+  return [19, 5].includes(t) ? ` ${t} %` : "";
+}
+
+/** Resumen: subtotal, IVA, total, cada retención y lo que se le va a pagar. */
+function Resumen({
+  b,
   previa,
   cargando,
   error,
-  soporte,
 }: {
+  b: BorradorCompra;
   previa: CompraPrevia | undefined;
   cargando: boolean;
   error: string | null;
-  soporte: boolean;
 }) {
-  if (previa === undefined) {
-    return (
-      <div className="rounded-3xl border border-dashed border-border px-5 py-6 text-sm text-muted-foreground">
-        {cargando ? (
-          <span className="inline-flex items-center gap-2">
-            <Loader2 className="size-4 animate-spin" /> Armando el resumen…
-          </span>
-        ) : error !== null ? (
-          <span className="text-danger">{error}</span>
-        ) : (
-          "Cuando esté todo, acá ves cuánto queda, qué se retiene y el asiento, antes de guardar."
-        )}
-      </div>
-    );
-  }
-
-  const fila = (etiqueta: string, valor: number, fuerte = false) => (
-    <div className="flex justify-between gap-3">
-      <span className={fuerte ? "font-semibold" : "text-muted-foreground"}>{etiqueta}</span>
-      <span className={`font-mono tabular-nums ${fuerte ? "font-semibold" : ""}`}>{formatCOP(valor)}</span>
-    </div>
+  const fila = (etiqueta: string, valor: string, fuerte = false) => (
+    <p className={`flex justify-between gap-3 text-sm ${fuerte ? "font-semibold" : ""}`}>
+      <span className={fuerte ? "" : "text-muted-foreground"}>{etiqueta}</span>
+      <span className="font-mono whitespace-nowrap tabular-nums">{valor}</span>
+    </p>
   );
+  const medio =
+    b.formaPago.modo === "EFECTIVO"
+      ? b.formaPago.caja?.nombre
+      : b.formaPago.modo === "TRANSFERENCIA"
+        ? b.formaPago.cuenta?.banco
+        : undefined;
 
   return (
-    <div className={`flex flex-col gap-4 ${cargando ? "opacity-60" : ""}`}>
-      <div className="flex flex-col gap-2 rounded-3xl border border-border bg-card p-5 text-sm shadow-sm">
-        {soporte && (
-          <p className="mb-1 font-mono text-xs text-muted-foreground">Número {previa.numero}</p>
-        )}
-        {fila("Subtotal", previa.subtotal)}
-        {previa.iva > 0 && fila("IVA", previa.iva)}
-        {fila("Total", previa.total, true)}
-        {previa.detalleRetenciones.map((r, i) => (
-          <div key={i} className="flex justify-between gap-3">
-            <span className="text-muted-foreground">
-              {r.nombre}
-              {r.tarifa !== null && (
-                <span className="ml-1 text-xs">({(r.tarifa * 100).toLocaleString("es-CO", { maximumFractionDigits: 3 })} %)</span>
-              )}
+    <section
+      aria-labelledby="c-res"
+      className={`flex flex-col gap-2.5 rounded-[26px] border border-border bg-card p-5 shadow-sm ${cargando ? "opacity-60" : ""}`}
+    >
+      <h2 id="c-res" className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        Resumen
+      </h2>
+      {previa === undefined ? (
+        <p className="text-sm text-muted-foreground">
+          {cargando ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="size-4 animate-spin" /> Armando el resumen…
             </span>
-            <span className="font-mono tabular-nums">−{formatCOP(r.valor)}</span>
-          </div>
-        ))}
-        <div className="mt-2 border-t border-border pt-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="font-semibold">Le vas a pagar</span>
-            <span className="font-mono text-xl font-semibold tabular-nums">{formatCOP(previa.neto)}</span>
-          </div>
-          {previa.vence !== null && (
-            <p className="mt-1 text-right text-xs text-muted-foreground">Vence el {formatFecha(previa.vence)}</p>
+          ) : error !== null ? (
+            <span className="text-danger">{error}</span>
+          ) : (
+            "Cuando esté todo, acá ves cuánto queda, qué se retiene y el asiento, antes de guardar."
           )}
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-border bg-card p-5 text-xs shadow-sm">
-        <p className="mb-2 font-bold uppercase tracking-[0.14em] text-muted-foreground">Así queda en el libro</p>
-        <table className="w-full">
-          <thead className="text-muted-foreground">
-            <tr>
-              <th className="py-1 text-left font-medium">Cuenta</th>
-              <th className="py-1 text-right font-medium">Débito</th>
-              <th className="py-1 text-right font-medium">Crédito</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {previa.asiento.map((l, i) => (
-              <tr key={i}>
-                <td className="py-1.5 pr-2">
-                  <span className="font-mono text-muted-foreground">{l.codigo}</span> {l.nombre}
-                </td>
-                <td className="py-1.5 text-right font-mono tabular-nums">{l.debito > 0 ? formatCOP(l.debito) : ""}</td>
-                <td className="py-1.5 text-right font-mono tabular-nums">{l.credito > 0 ? formatCOP(l.credito) : ""}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+        </p>
+      ) : (
+        <>
+          {fila(b.soporte ? "Valor" : "Subtotal", formatCOP(previa.subtotal))}
+          {b.soporte ? fila("IVA", previa.iva > 0 ? formatCOP(previa.iva) : "No aplica") : fila(`IVA${tarifaUnica(previa)}`, formatCOP(previa.iva))}
+          {!b.soporte && fila("Total factura", formatCOP(previa.total), true)}
+          {previa.detalleRetenciones.map((r, i) => (
+            <p key={i} className="flex justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">
+                {r.nombre}
+                {r.tarifa !== null && ` ${(r.tarifa * 100).toLocaleString("es-CO", { maximumFractionDigits: 3 })} %`}
+              </span>
+              <span className="font-mono whitespace-nowrap tabular-nums">− {formatCOP(r.valor)}</span>
+            </p>
+          ))}
+          <div className="mt-2 border-t border-border pt-3">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              {b.soporte ? "Le entregás" : "Le vas a pagar"}
+            </p>
+            <p className="mt-1 font-mono text-[28px] leading-[34px] font-semibold tracking-[-0.03em]">
+              {formatCOP(previa.neto)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {b.formaPago.modo === "CREDITO"
+                ? `Queda en Pagos → Por pagar${previa.vence ? `, vence el ${fechaCorta(previa.vence)}` : ""}`
+                : `Sale de ${medio ?? "la caja o el banco"} con comprobante de egreso`}
+            </p>
+          </div>
+        </>
+      )}
+    </section>
   );
+}
+
+/** «28 oct». */
+function fechaCorta(iso: string): string {
+  const [, m, d] = iso.split("-").map(Number);
+  const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  return `${d} ${meses[m - 1]}`;
 }

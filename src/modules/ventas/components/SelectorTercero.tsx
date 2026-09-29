@@ -81,15 +81,20 @@ export function SelectorTercero({
         <PopoverTrigger
           render={<Button type="button" variant="outline" />}
           aria-invalid={invalido || undefined}
-          className="h-11 w-full justify-between rounded-xl px-4 font-normal aria-invalid:border-danger"
+          className="h-[52px] w-full justify-between rounded-xl px-4 font-normal aria-invalid:border-danger"
         >
-          <span
-            className={cn("truncate", valor ? "" : "text-muted-foreground")}
-          >
-            {valor
-              ? `${valor.nombre} · ${valor.tipoDocumento} ${valor.numeroDocumento}`
-              : textos.vacio}
-          </span>
+          {valor ? (
+            // Como en el diseño: el nombre, y debajo el documento.
+            <span className="flex min-w-0 flex-col items-start text-left">
+              <span className="w-full truncate text-sm font-semibold">{valor.nombre}</span>
+              <span className="w-full truncate font-mono text-[11px] text-muted-foreground">
+                {valor.tipoDocumento} {valor.numeroDocumento}
+                {valor.dv ? `-${valor.dv}` : ""}
+              </span>
+            </span>
+          ) : (
+            <span className={cn("truncate", "text-muted-foreground")}>{textos.vacio}</span>
+          )}
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
 

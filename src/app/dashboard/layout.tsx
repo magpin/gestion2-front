@@ -33,7 +33,7 @@ export default async function DashboardLayout({
         <BarraSuperior />
         <AnunciosPlataforma />
         {/* En el móvil, espacio para la barra inferior: que no tape lo último. */}
-        <div className="min-w-0 flex-1 px-4 pt-7 pb-28 md:px-10 md:pb-7 lg:px-14">
+        <div className="min-w-0 flex-1 px-4 pt-7 pb-28 md:px-10 md:pb-7 lg:px-16">
           <div className="mx-auto max-w-7xl">{children}</div>
         </div>
         <BarraInferior />

@@ -54,7 +54,7 @@ test.describe("Pantallas complementarias", () => {
     await page.getByRole("button", { name: /Seleccione un proveedor/ }).click();
     await page.getByLabel("Buscar proveedor").fill("Distribuidora");
     await page.getByRole("button", { name: /Distribuidora del Valle/ }).first().click();
-    await page.getByLabel("N.° factura proveedor").fill(`FP-${Date.now().toString().slice(-6)}`);
+    await page.getByLabel("Número de factura").fill(`FP-${Date.now().toString().slice(-6)}`);
     // Un CUFE corto no se acepta: se dice antes de pedir el resumen.
     await page.getByLabel("CUFE (opcional)").fill("a41f9c07e2");
     await expect(page.getByText(/El CUFE tiene entre 20 y 200 caracteres/)).toBeVisible();
@@ -83,7 +83,7 @@ test.describe("Pantallas complementarias", () => {
     await page.getByRole("radio", { name: /Documento soporte/ }).click();
     await expect(page.getByText(/No hay una resolución de documento soporte vigente/)).toBeVisible();
     // El soporte lo numera la empresa: no se pide el número del proveedor.
-    await expect(page.getByLabel("N.° factura proveedor")).toBeHidden();
+    await expect(page.getByLabel("Número de factura")).toBeHidden();
   });
 
   test("la factura lleva un producto y un servicio, y el servicio no sale del inventario", async ({ page }) => {

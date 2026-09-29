@@ -451,7 +451,7 @@ export async function registrarCompra(
   await page.getByLabel("Buscar proveedor").fill("Distribuidora");
   await page.getByRole("button", { name: /Distribuidora del Valle/ }).first().click();
   if (datos.fecha) await dialogo.getByLabel("Fecha", { exact: true }).fill(datos.fecha);
-  await page.getByLabel("N.° factura proveedor").fill(datos.numero);
+  await page.getByLabel("Número de factura").fill(datos.numero);
 
   await page.getByRole("button", { name: /Seleccione un producto/ }).click();
   await page.getByLabel("Buscar producto").fill(e.producto.codigo);

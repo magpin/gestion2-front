@@ -5,20 +5,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   Check,
   FileText,
   Info,
   Loader2,
   Paperclip,
-  Sparkles,
   X,
 } from "lucide-react";
 
+import { CabeceraPagina } from "@/components/shared/CabeceraPagina";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { aviso } from "@/lib/avisos";
 import { cn, hoyEnColombia } from "@/lib/utils";
+import { Maria } from "@/modules/asistente/components/Maria";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
 import {
@@ -230,26 +230,19 @@ export function ComprobanteManualView() {
 
   return (
     <div className="w-full">
-      <header className="mb-8">
-        <Link
-          href="/dashboard/contabilidad"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Libro
-        </Link>
-        <h1 className="text-4xl font-semibold tracking-[-0.04em]">
-          Comprobante manual<span className="text-brand">.</span>
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Para lo que no nace de una factura ni de un pago: depreciaciones,
-          provisiones y ajustes.
-        </p>
-      </header>
+      <CabeceraPagina
+        ruta={[
+          { etiqueta: "Contabilidad" },
+          { etiqueta: "Libro", href: "/dashboard/contabilidad" },
+          { etiqueta: "Nuevo" },
+        ]}
+        titulo="Comprobante manual"
+        subtitulo="Para lo que no nace de una factura ni de un pago: depreciaciones, provisiones y ajustes."
+      />
 
       <section className="mb-6 rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <p className="mb-3 flex items-center gap-2 font-semibold">
-          <Sparkles className="size-4 text-brand" />
+          <Maria estado="reposo" tamano={24} />
           Contale a María qué querés registrar
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -401,9 +394,8 @@ export function ComprobanteManualView() {
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              {/* La tarjeta es angosta al lado de la lista previa: el tipo va arriba, a lo ancho. */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Campo id="tipo" etiqueta="Tipo" className="sm:col-span-2">
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                <Campo id="tipo" etiqueta="Tipo">
                   <select
                     id="tipo"
                     value={comprobanteTipoId}
@@ -536,7 +528,7 @@ export function ComprobanteManualView() {
                   (l) => l.cuenta !== null && l.cuenta.es_auxiliar,
                 )}
               >
-                Son cuentas de movimiento (auxiliares)
+                Son cuentas de movimiento, de 6 dígitos
               </Chequeo>
               <Chequeo
                 bien={
