@@ -112,7 +112,11 @@ test.describe("Ventas", () => {
     expect(await existencia(page, e)).toBe(8);
   });
 
-  test("no deja facturar en un período cerrado", async ({ page, request }) => {
+  // El mes en curso ya no se cierra a mano: el calendario lo tiene siempre
+  // abierto y lo cierra el último día (96fc183, «Períodos automáticos»). Sin
+  // cómo cerrarlo, esta prueba no tiene escenario. La regla sigue probada en
+  // `factura.service.spec` (periodoAbiertoEn).
+  test.skip("no deja facturar en un período cerrado", async ({ page, request }) => {
     const cabeceras = { Authorization: `Bearer ${e.token}` };
     const api = process.env.E2E_API ?? "http://localhost:3001/api/v1";
     const actual = (await request

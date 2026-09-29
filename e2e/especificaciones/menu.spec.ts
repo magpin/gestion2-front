@@ -31,7 +31,6 @@ test.describe("Menú nuevo", () => {
       "Caja y bancos",
       "Control",
       "Libro",
-      "Retenciones",
       "Plan de cuentas",
       "Terceros",
       "Reportes",
@@ -39,14 +38,24 @@ test.describe("Menú nuevo", () => {
     ]) {
       await expect(menu.getByRole("link", { name: entrada, exact: true })).toBeVisible();
     }
+    // Retenciones se vuelve Impuestos cuando se prende la pieza nueva (Fase 1
+    // de las pantallas complementarias): una de las dos, nunca las dos.
+    const impuestos = menu
+      .getByRole("link", { name: "Retenciones", exact: true })
+      .or(menu.getByRole("link", { name: "Impuestos", exact: true }));
+    await expect(impuestos).toHaveCount(1);
   });
 
   test("Tesorería partida en dos: Caja y bancos, y Control", async ({ page }) => {
     await page.goto("/dashboard/caja-bancos");
     await expect(page.getByRole("heading", { name: "Caja y bancos." })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Cajas", exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Cuentas bancarias", exact: true })).toBeVisible();
+    // Caja y Bancos van en pestañas (Fase 6), y los movimientos juntos.
+    await expect(page.getByRole("heading", { name: "Todas las cajas", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Bancos", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Administrar cuentas", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Movimientos", exact: true }).click();
+    // El libro de cada caja o cuenta sigue ahí, para reversar un movimiento.
+    await page.getByText("El libro de una caja o una cuenta, para reversar un movimiento").click();
     await expect(page.getByRole("heading", { name: "Libro de caja" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Libro de bancos" })).toBeVisible();
 

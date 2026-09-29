@@ -346,7 +346,8 @@ export async function emitirFactura(
   cantidad: number,
 ): Promise<void> {
   await llenarYEmitirFactura(page, cliente, producto, cantidad);
-  await expect(page.getByRole("dialog")).toBeHidden({ timeout: 20_000 });
+  // Emitida: el diálogo se cierra, o la página vuelve a la lista (Fase 8).
+  await expect(page.getByRole("button", { name: "Emitir factura" })).toBeHidden({ timeout: 20_000 });
 }
 
 /** La fila de una factura en la pestaña «Facturas». */
@@ -443,7 +444,8 @@ export async function registrarCompra(
 ): Promise<void> {
   await page.goto("/dashboard/compras");
   await page.getByRole("button", { name: "Nueva compra" }).click();
-  const dialogo = page.getByRole("dialog");
+  // El diálogo, o la página si la compra como página está prendida (Fase 7).
+  const dialogo = page.getByRole("dialog").or(page.getByRole("region", { name: "Nueva compra" }));
 
   await page.getByRole("button", { name: /Seleccione un proveedor/ }).click();
   await page.getByLabel("Buscar proveedor").fill("Distribuidora");

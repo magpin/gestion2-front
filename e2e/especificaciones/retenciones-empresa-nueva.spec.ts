@@ -356,13 +356,22 @@ test.describe("Motor de retenciones: empresa nueva", () => {
 
     await test.step("El Inicio no pide Impuestos", async () => {
       await entrarAlProducto(page, e);
-      await expect(page.getByRole("heading", { name: "Configuración", level: 1 })).toBeVisible();
-      const fila = page.getByRole("link").filter({ hasText: /^Impuestos/ });
-      await expect(fila).toContainText("Listo");
-      await expect(page.getByText("6 de 6")).toBeVisible();
-      // Nada que continuar.
-      await expect(page.getByRole("link", { name: /^Continuar/ })).toHaveCount(0);
-      await mirar(page, [fila, page.getByText("6 de 6")], 4);
+      // Con la configuración completa, Inicio es el tablero de la plata cuando
+      // está prendido (menú nuevo, D3); si no, la lista de pasos, toda lista.
+      const configuracion = page.getByRole("heading", { name: "Configuración", level: 1 });
+      const tablero = page.getByRole("heading", { name: /^Inicio/, level: 1 });
+      await expect(configuracion.or(tablero)).toBeVisible();
+      if (await configuracion.isVisible()) {
+        const fila = page.getByRole("link").filter({ hasText: /^Impuestos/ });
+        await expect(fila).toContainText("Listo");
+        await expect(page.getByText("6 de 6")).toBeVisible();
+        // Nada que continuar.
+        await expect(page.getByRole("link", { name: /^Continuar/ })).toHaveCount(0);
+        await mirar(page, [fila, page.getByText("6 de 6")], 4);
+      } else {
+        // El tablero solo sale con los seis pasos listos: no pide nada.
+        await expect(page.getByRole("link", { name: /^Continuar/ })).toHaveCount(0);
+      }
 
       // Entrar al paso muestra lo ya confirmado, no preguntas en blanco.
       await page.goto("/configuracion/impuestos");

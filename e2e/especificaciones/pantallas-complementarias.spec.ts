@@ -112,7 +112,7 @@ test.describe("Pantallas complementarias", () => {
     await page.screenshot({ path: "e2e/.capturas/factura-pagina.png", fullPage: true });
 
     await page.getByRole("button", { name: "Emitir factura" }).click();
-    await expect(page).toHaveURL(/\/dashboard\/ventas$/);
+    await expect(page).toHaveURL(/\/dashboard\/ventas\?seccion=facturas$/);
   });
 
   test("María arma la depreciación y explica la cuenta", async ({ page, request }) => {

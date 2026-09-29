@@ -265,7 +265,10 @@ export const pesos = (n: number): RegExp =>
 export async function nuevaCompra(page: Page, proveedor: Proveedor): Promise<{ dialogo: Locator; numero: string }> {
   await page.goto("/dashboard/compras");
   await page.getByRole("button", { name: "Nueva compra" }).click();
-  const dialogo = page.getByRole("dialog", { name: "Nueva compra" });
+  // El diálogo, o la página si la compra como página está prendida (Fase 7).
+  const dialogo = page
+    .getByRole("dialog", { name: "Nueva compra" })
+    .or(page.getByRole("region", { name: "Nueva compra" }));
   await expect(dialogo).toBeVisible();
 
   await dialogo.getByRole("button", { name: /Seleccione un proveedor/ }).click();

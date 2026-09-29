@@ -36,6 +36,8 @@ test.describe("Asistente de configuración", () => {
       await page.getByRole("link", { name: /Nueva empresa|Crear empresa/ }).click();
     }
     await expect(page).toHaveURL(/\/configuracion\/empresa-nueva/);
+    // Primero se elige cómo: con IA o a mano. La prueba va a mano.
+    await page.getByRole("button", { name: /Configurar a mano/ }).click();
 
     // ── La empresa ──
     const { nit, dv } = nitDePrueba();

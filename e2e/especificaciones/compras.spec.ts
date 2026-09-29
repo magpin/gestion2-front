@@ -48,7 +48,9 @@ test.describe("Compras", () => {
     await expect(page.getByRole("button", { name: "Registrar compra" })).toBeDisabled();
     await page.getByRole("radio", { name: "Crédito" }).click();
     await page.getByRole("button", { name: "Registrar compra" }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    // Guardada: el diálogo se cierra, o la página vuelve a la lista (con la
+    // compra como página, Fase 7). En los dos casos el botón ya no está.
+    await expect(page.getByRole("button", { name: "Registrar compra" })).toBeHidden();
 
     // Entraron cinco: el kardex es el que manda.
     expect(await existencia(page, e)).toBe(15);
@@ -63,7 +65,9 @@ test.describe("Compras", () => {
     await expect(page.getByText(/tu empresa no es agente de retención/i)).toBeVisible();
     await page.getByRole("radio", { name: "Crédito" }).click();
     await page.getByRole("button", { name: "Registrar compra" }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    // Guardada: el diálogo se cierra, o la página vuelve a la lista (con la
+    // compra como página, Fase 7). En los dos casos el botón ya no está.
+    await expect(page.getByRole("button", { name: "Registrar compra" })).toBeHidden();
     expect(await existencia(page, e)).toBe(11);
   });
 
@@ -79,7 +83,9 @@ test.describe("Compras", () => {
 
     await page.getByRole("radio", { name: "Crédito" }).click();
     await page.getByRole("button", { name: "Registrar compra" }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    // Guardada: el diálogo se cierra, o la página vuelve a la lista (con la
+    // compra como página, Fase 7). En los dos casos el botón ya no está.
+    await expect(page.getByRole("button", { name: "Registrar compra" })).toBeHidden();
 
     // La mercancía entró igual, y lo retenido no se le paga al proveedor: se
     // le queda debiendo a la DIAN.
@@ -100,7 +106,9 @@ test.describe("Compras", () => {
 
     await page.getByLabel("Motivo para registrar sin retención").fill("El proveedor mostró su resolución de autorretenedor.");
     await page.getByRole("button", { name: "Registrar compra" }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    // Guardada: el diálogo se cierra, o la página vuelve a la lista (con la
+    // compra como página, Fase 7). En los dos casos el botón ya no está.
+    await expect(page.getByRole("button", { name: "Registrar compra" })).toBeHidden();
     await expect(
       page.getByRole("row", { name: new RegExp("Distribuidora del Valle") }),
     ).toContainText("$ 1.000.000");

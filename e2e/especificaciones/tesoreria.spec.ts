@@ -90,7 +90,8 @@ test.describe("Tesorería", () => {
     await page.getByLabel("Costo unitario de la línea 1").fill("90000");
     await page.getByRole("radio", { name: "Crédito" }).click();
     await page.getByRole("button", { name: "Registrar compra" }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    // Guardada: el diálogo se cierra, o la página vuelve a la lista (Fase 7).
+    await expect(page.getByRole("button", { name: "Registrar compra" })).toBeHidden();
 
     // ── Y el pago ──
     await page.getByRole("button", { name: "Más acciones" }).first().click();
