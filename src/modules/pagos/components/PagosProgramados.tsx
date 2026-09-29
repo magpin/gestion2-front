@@ -26,7 +26,9 @@ import { SelectorProveedor } from "@/modules/compras/components/SelectorProveedo
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
 import type { Concepto } from "@/modules/conceptos/types/conceptos.types";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { cuentasBancariasApi } from "@/modules/tesoreria/services/bancos.service";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
+import { agruparPorSemana, proyectarCuentas } from "../lib/semanas";
 import { pagosApi } from "../services/pagos.service";
 import type { PagoProgramado, Recurrencia } from "../types/pagos.types";
 
@@ -35,11 +37,14 @@ const hoy = (): string => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+const CADA: Record<Recurrencia, string> = { UNA_VEZ: "una vez", QUINCENAL: "cada quincena", MENSUAL: "cada mes" };
+
 /**
- * Lo que hay que pagar y todavía no tiene factura: el arriendo de cada mes,
- * la cuota del préstamo, la nómina. Es un recordatorio: marcarlo pagado no
- * mueve plata (eso lo hace el comprobante o el pago sin factura); un mensual
- * crea solo el del mes siguiente.
+ * Pagos → Programados (lienzo «Programados»): lo que va a salir, agrupado
+ * por semana (desde el lunes, E24), y cómo quedan las cuentas después, con
+ * el 4×1000 (E27). Recuerda, no paga: marcarlo pagado no mueve plata (eso lo
+ * hace el comprobante o el pago sin factura), y no hay aprobación (D6, E26).
  */
 export function PagosProgramados({
   puedeProgramar,
@@ -66,6 +71,11 @@ export function PagosProgramados({
     queryFn: () => pagosApi.programados(todos),
     meta: SILENCIOSO,
   });
+  const { data: cuentas = [] } = useQuery({
+    queryKey: ["cuentas-bancarias"],
+    queryFn: () => cuentasBancariasApi.listar(),
+    meta: SILENCIOSO,
+  });
 
   const cambiar = useMutation({
     mutationFn: ({ p, accion }: { p: PagoProgramado; accion: "pagado" | "cancelar" }) =>
@@ -74,13 +84,72 @@ export function PagosProgramados({
       await queryClient.invalidateQueries({ queryKey: ["pagos", "programados"] });
       aviso.exito(
         accion === "pagado" ? "Marcado como pagado" : "Pago cancelado",
-        accion === "pagado" && p.recurrencia === "MENSUAL" ? "Quedó programado el del mes siguiente." : undefined,
+        accion === "pagado" && p.recurrencia !== "UNA_VEZ"
+          ? `Quedó programado el de ${p.recurrencia === "QUINCENAL" ? "la quincena" : "el mes"} siguiente.`
+          : undefined,
       );
     },
     onError: (e: unknown) => aviso.falla(e),
   });
 
-  const vencido = (fecha: string) => fecha < hoy();
+  if (data === undefined) {
+    return isError ? <ErrorCarga error={error} titulo="No se pudieron leer los pagos programados" onReintentar={refetch} /> : <SkeletonTable />;
+  }
+
+  const hoyDia = hoy();
+  const pendientes = data.filter((p) => p.estado === "PENDIENTE");
+  const resueltos = data.filter((p) => p.estado !== "PENDIENTE");
+  const grupos = agruparPorSemana(pendientes, hoyDia);
+  const activas = cuentas.filter((c) => c.activa);
+  const proyeccion = proyectarCuentas(
+    activas.map((c) => ({ id: c.id, saldo: Number(c.saldo), exentaGmf: c.exenta_gmf })),
+    pendientes.map((p) => ({ fecha: p.fecha, valor: p.valor, cuentaId: p.cuentaBancariaId })),
+  ).filter((x) => x.hasta !== null);
+
+  const Fila = ({ p }: { p: PagoProgramado }) => {
+    const d = new Date(`${p.fecha}T00:00:00Z`);
+    const vencido = p.estado === "PENDIENTE" && p.fecha < hoyDia;
+    return (
+      <li className="flex flex-wrap items-center gap-4 border-t border-border px-5 py-3.5">
+        <div className="w-10 text-center leading-tight">
+          <p className="text-[10px] font-bold uppercase text-muted-foreground">{DIAS[d.getUTCDay()]}</p>
+          <p className="text-lg font-semibold">{d.getUTCDate()}</p>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold">
+            {p.descripcion}
+            {p.terceroNombre && <span className="font-normal text-muted-foreground"> · {p.terceroNombre}</span>}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {[p.cuentaBancaria ?? null, p.conceptoNombre, CADA[p.recurrencia]].filter(Boolean).join(" · ")}
+          </p>
+        </div>
+        {vencido ? (
+          <span className="rounded-full border border-warning/40 bg-warning/15 px-2.5 py-0.5 text-xs font-medium">Ya pasó la fecha</span>
+        ) : (
+          p.recurrencia !== "UNA_VEZ" && <span className="rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium">Recurrente</span>
+        )}
+        <span className="font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(p.valor)}</span>
+        {p.estado === "PENDIENTE" && (puedePagar || puedeProgramar) && (
+          <div className="flex gap-2">
+            {puedePagar && (
+              <Button type="button" variant="outline" className="h-9 rounded-lg px-3" disabled={cambiar.isPending} onClick={() => cambiar.mutate({ p, accion: "pagado" })}>
+                Ya se pagó
+              </Button>
+            )}
+            {puedeProgramar && (
+              <Button type="button" variant="ghost" className="h-9 rounded-lg px-3" disabled={cambiar.isPending} onClick={() => cambiar.mutate({ p, accion: "cancelar" })}>
+                Cancelar
+              </Button>
+            )}
+          </div>
+        )}
+        {p.estado !== "PENDIENTE" && (
+          <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium">{p.estado === "PAGADO" ? "Pagado" : "Cancelado"}</span>
+        )}
+      </li>
+    );
+  };
 
   return (
     <>
@@ -90,98 +159,81 @@ export function PagosProgramados({
           Ver también los pagados y cancelados
         </label>
       </div>
-      {data === undefined ? (
-        isError ? (
-          <ErrorCarga error={error} titulo="No se pudieron leer los pagos programados" onReintentar={refetch} />
-        ) : (
-          <SkeletonTable />
-        )
-      ) : data.length === 0 ? (
-        todos ? (
-          <EmptyState
-            titulo="Todavía no hay pagos programados"
-            descripcion="Programá el arriendo, la cuota del préstamo o la nómina con su fecha, para que ninguno se te pase."
-            accion={puedeProgramar ? { label: "Programar pago", onClick: () => setNuevoDesdeVacio(true) } : undefined}
-          />
-        ) : (
-          <EmptyState
-            titulo="No hay pagos pendientes"
-            descripcion="Programá el arriendo, la cuota del préstamo o la nómina con su fecha, para que no se te pase. Los que ya pagaste o cancelaste están aparte."
-            accion={puedeProgramar ? { label: "Programar pago", onClick: () => setNuevoDesdeVacio(true) } : undefined}
-            accionSecundaria={{ label: "Ver pagados y cancelados", onClick: () => setTodos(true) }}
-          />
-        )
+      {pendientes.length === 0 && resueltos.length === 0 ? (
+        <EmptyState
+          titulo={todos ? "Todavía no hay pagos programados" : "No hay pagos pendientes"}
+          descripcion="Programá el arriendo, la cuota del préstamo o la nómina con su fecha, para que ninguno se te pase."
+          accion={puedeProgramar ? { label: "Programar pago", onClick: () => setNuevoDesdeVacio(true) } : undefined}
+          accionSecundaria={todos ? undefined : { label: "Ver pagados y cancelados", onClick: () => setTodos(true) }}
+        />
       ) : (
-        <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                <th className="px-5 py-3">Fecha</th>
-                <th className="px-5 py-3">Qué</th>
-                <th className="px-5 py-3">A quién</th>
-                <th className="px-5 py-3">Cada</th>
-                <th className="px-5 py-3 text-right">Valor</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((p) => (
-                <tr key={p.id} className={cn("border-t border-border", p.estado !== "PENDIENTE" && "text-muted-foreground")}>
-                  <td className="px-5 py-3 whitespace-nowrap">
-                    {p.estado === "PENDIENTE" && vencido(p.fecha) ? (
-                      <span className="rounded-full border border-warning/40 bg-warning/15 px-2.5 py-0.5 text-xs font-medium">
-                        {p.fecha}
-                      </span>
-                    ) : (
-                      p.fecha
-                    )}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className="font-semibold">{p.descripcion}</span>
-                    {p.conceptoNombre && <p className="text-xs text-muted-foreground">{p.conceptoNombre}</p>}
-                    {p.estado !== "PENDIENTE" && (
-                      <span className="ml-2 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium">
-                        {p.estado === "PAGADO" ? "Pagado" : "Cancelado"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3">{p.terceroNombre ?? "—"}</td>
-                  <td className="px-5 py-3">{p.recurrencia === "MENSUAL" ? "Mes" : "Una vez"}</td>
-                  <td className="px-5 py-3 text-right font-mono font-semibold whitespace-nowrap tabular-nums">
-                    {formatCOP(p.valor)}
-                  </td>
-                  <td className="px-5 py-3 text-right whitespace-nowrap">
-                    {p.estado === "PENDIENTE" && (
-                      <div className="inline-flex gap-2">
-                        {puedePagar && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="h-9 rounded-lg px-3"
-                            disabled={cambiar.isPending}
-                            onClick={() => cambiar.mutate({ p, accion: "pagado" })}
-                          >
-                            Ya se pagó
-                          </Button>
-                        )}
-                        {puedeProgramar && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-9 rounded-lg px-3"
-                            disabled={cambiar.isPending}
-                            onClick={() => cambiar.mutate({ p, accion: "cancelar" })}
-                          >
-                            Cancelar
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          <div className="flex min-w-0 flex-1 flex-col gap-5">
+            {grupos.map((g) => (
+              <section key={g.clave} className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+                <div className="flex items-baseline justify-between gap-3 bg-muted/40 px-5 py-3">
+                  <h2 className="text-sm font-semibold">
+                    {g.titulo}
+                    {g.rango && <span className="font-normal text-muted-foreground"> · {g.rango}</span>}
+                  </h2>
+                  <span className="font-mono font-semibold whitespace-nowrap tabular-nums">{formatCOP(g.total)}</span>
+                </div>
+                <ul>
+                  {g.items.map((p) => (
+                    <Fila key={p.id} p={p} />
+                  ))}
+                </ul>
+              </section>
+            ))}
+            {pendientes.length === 0 && (
+              <p className="rounded-3xl border border-border bg-card px-5 py-4 text-sm text-muted-foreground shadow-sm">No hay pagos pendientes.</p>
+            )}
+            {todos && resueltos.length > 0 && (
+              <section className="overflow-hidden rounded-3xl border border-border bg-card text-muted-foreground shadow-sm">
+                <h2 className="bg-muted/40 px-5 py-3 text-sm font-semibold text-foreground">Pagados y cancelados</h2>
+                <ul>
+                  {resueltos.map((p) => (
+                    <Fila key={p.id} p={p} />
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
+
+          {proyeccion.length > 0 && (
+            <aside className="w-full lg:w-80 lg:shrink-0">
+              <section className="rounded-3xl border border-border bg-card px-5 py-4 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Cómo quedan las cuentas</p>
+                <ul className="mt-3 flex flex-col gap-4">
+                  {proyeccion.map((x) => {
+                    const c = activas.find((a) => a.id === x.cuentaId)!;
+                    const d = new Date(`${x.hasta}T00:00:00Z`);
+                    const parte = x.hoy > 0 ? Math.max(0, Math.min(1, x.queda / x.hoy)) : 0;
+                    return (
+                      <li key={x.cuentaId}>
+                        <div className="flex justify-between gap-2 text-sm">
+                          <span className="font-semibold">{c.banco}</span>
+                          <span className="text-xs text-muted-foreground">
+                            hoy → {DIAS[d.getUTCDay()]} {d.getUTCDate()}
+                          </span>
+                        </div>
+                        <div className="my-1.5 h-2 rounded-full bg-muted" role="img" aria-label={`Queda el ${Math.round(parte * 100)} % de lo que hay hoy`}>
+                          <div className={cn("h-2 rounded-full", x.queda < 0 ? "bg-danger" : "bg-foreground")} style={{ width: `${parte * 100}%` }} />
+                        </div>
+                        <div className="flex justify-between font-mono text-xs tabular-nums">
+                          <span className="text-muted-foreground">{formatCOP(x.hoy)}</span>
+                          <span className={cn("font-semibold", x.queda < 0 && "text-danger")}>{formatCOP(x.queda)}</span>
+                        </div>
+                        {x.gmf > 0 && <p className="text-[11px] text-muted-foreground">Incluye {formatCOP(x.gmf)} de 4×1000.</p>}
+                        {x.queda < 0 && <p className="text-xs text-danger">No alcanza: faltan {formatCOP(-x.queda)}.</p>}
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-3 text-xs text-muted-foreground">Sin contar lo que entre por cobros. Los pagos sin cuenta no mueven ningún banco.</p>
+              </section>
+            </aside>
+          )}
         </div>
       )}
       <Dialog open={abiertoNuevo} onOpenChange={(a) => !a && cerrarNuevo()}>
@@ -199,6 +251,8 @@ function FormularioProgramado({ onCerrar }: { onCerrar: () => void }) {
   const [valor, setValor] = useState("");
   const [fecha, setFecha] = useState(hoy());
   const [recurrencia, setRecurrencia] = useState<Recurrencia>("MENSUAL");
+  const [cuentaId, setCuentaId] = useState<string>("");
+  const { data: cuentas = [] } = useQuery({ queryKey: ["cuentas-bancarias"], queryFn: () => cuentasBancariasApi.listar() });
 
   const problema =
     descripcion.trim().length < 3
@@ -218,6 +272,7 @@ function FormularioProgramado({ onCerrar }: { onCerrar: () => void }) {
         valor: Number(valor),
         fecha,
         recurrencia,
+        cuentaBancariaId: cuentaId || undefined,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["pagos", "programados"] });
@@ -255,7 +310,24 @@ function FormularioProgramado({ onCerrar }: { onCerrar: () => void }) {
             <SelectorConcepto valor={concepto} onElegir={setConcepto} tipos={["GASTO", "COSTO", "NO_GASTO"]} />
           </Campo>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <Campo id="programado-cuenta" etiqueta="Sale de (opcional)" ayuda="Con la cuenta, se ve cómo queda después de pagar, con su 4×1000.">
+          <select
+            id="programado-cuenta"
+            value={cuentaId}
+            onChange={(e) => setCuentaId(e.target.value)}
+            className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
+          >
+            <option value="">Efectivo o sin decidir</option>
+            {cuentas
+              .filter((c) => c.activa)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.banco} · {c.numero_cuenta.slice(-4)}
+                </option>
+              ))}
+          </select>
+        </Campo>
+        <div className="grid gap-4 sm:grid-cols-2">
           <Campo id="programado-valor" etiqueta="Valor">
             <CampoPesos
               id="programado-valor"
@@ -273,9 +345,11 @@ function FormularioProgramado({ onCerrar }: { onCerrar: () => void }) {
               className="h-11 rounded-xl px-4"
             />
           </Campo>
+        </div>
+        <div>
           <Campo id="programado-recurrencia" etiqueta="Se repite">
             <div className="inline-flex w-fit gap-1 rounded-2xl border border-border bg-muted p-1">
-              {(["MENSUAL", "UNA_VEZ"] as const).map((r) => (
+              {(["MENSUAL", "QUINCENAL", "UNA_VEZ"] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
@@ -285,7 +359,7 @@ function FormularioProgramado({ onCerrar }: { onCerrar: () => void }) {
                     recurrencia === r ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent",
                   )}
                 >
-                  {r === "MENSUAL" ? "Cada mes" : "Una vez"}
+                  {r === "MENSUAL" ? "Cada mes" : r === "QUINCENAL" ? "Cada quincena" : "Una vez"}
                 </button>
               ))}
             </div>

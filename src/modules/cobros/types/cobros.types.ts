@@ -49,6 +49,8 @@ export interface ReciboCaja {
   terceroId: string;
   terceroNombre: string;
   medio: "CAJA" | "BANCO";
+  cajaId: string | null;
+  cuentaBancariaId: string | null;
   destino: string;
   /** Lo que pagó el cliente en plata: abonos más anticipo. */
   total: number;

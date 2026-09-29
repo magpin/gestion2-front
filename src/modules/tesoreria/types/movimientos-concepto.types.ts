@@ -24,6 +24,8 @@ export interface MovimientoConcepto {
   asientoId: string | null;
   estado: "VIGENTE" | "ANULADO";
   motivoAnulacion: string | null;
+  /** Las líneas, cuando son varias (PC14); vacío si es una sola. */
+  lineas: Array<{ conceptoId: string; concepto: string; valor: number }>;
 }
 
 export interface CrearMovimientoConceptoInput {
@@ -32,8 +34,13 @@ export interface CrearMovimientoConceptoInput {
   cajaId?: string;
   cuentaBancariaId?: string;
   fecha: string;
-  conceptoId: string;
+  /** Con una sola línea; con varias, `lineas`. */
+  conceptoId?: string;
   terceroId?: string;
   detalle: string;
-  valor: number;
+  valor?: number;
+  /** Varios conceptos en un solo comprobante (PC14). */
+  lineas?: Array<{ conceptoId: string; valor: number }>;
+  /** Lo que nos retuvieron, solo en una entrada (PC17). */
+  retencion?: { tipo: "RENTA" | "IVA" | "ICA"; valor: number };
 }

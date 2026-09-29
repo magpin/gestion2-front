@@ -99,7 +99,7 @@ export function ListaMovimientosConcepto({
               <tr key={m.id} className={`border-t border-border ${m.estado === "ANULADO" ? "text-muted-foreground" : ""}`}>
                 <td className="px-5 py-3 whitespace-nowrap">{m.fecha}</td>
                 <td className="px-5 py-3">
-                  <span className="font-semibold">{m.conceptoNombre}</span>
+                  <span className="font-semibold">{m.lineas.length > 1 ? m.lineas.map((l) => l.concepto).join(" + ") : m.conceptoNombre}</span>
                   {m.terceroNombre && <p className="text-xs text-muted-foreground">{m.terceroNombre}</p>}
                 </td>
                 <td className="px-5 py-3">
@@ -146,7 +146,7 @@ function DialogoAnularMovimiento({
     mutationFn: () => movimientosConceptoApi.anular(movimiento!.id, motivo.trim()),
     onSuccess: async () => {
       await Promise.all(
-        [["movimientos-concepto"], ["cajas"], ["cuentas-bancarias"]].map((queryKey) =>
+        [["movimientos-concepto"], ["cajas"], ["cuentas-bancarias"], ["pagos", "egresos"]].map((queryKey) =>
           queryClient.invalidateQueries({ queryKey }),
         ),
       );

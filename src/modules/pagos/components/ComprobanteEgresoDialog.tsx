@@ -190,7 +190,7 @@ function Contenido({
       );
       aviso.exito(
         `Comprobante ${c.numero} registrado`,
-        `Salieron ${formatCOP(c.total + c.anticipo - c.retencionAnticipo)}${c.gmf > 0 ? ` más ${formatCOP(c.gmf)} de 4×1000` : ""}.`,
+        `Salieron ${formatCOP(c.total)}${c.gmf > 0 ? ` más ${formatCOP(c.gmf)} de 4×1000` : ""}.`,
       );
       onCerrar();
     },

@@ -106,7 +106,7 @@ export interface CrearCrucePagoInput {
   fecha: string;
 }
 
-export type Recurrencia = "UNA_VEZ" | "MENSUAL";
+export type Recurrencia = "UNA_VEZ" | "QUINCENAL" | "MENSUAL";
 
 export interface PagoProgramado {
   id: string;
@@ -120,6 +120,9 @@ export interface PagoProgramado {
   fecha: string;
   recurrencia: Recurrencia;
   estado: "PENDIENTE" | "PAGADO" | "CANCELADO";
+  /** De qué banco va a salir; `null` si no se dijo. */
+  cuentaBancariaId: string | null;
+  cuentaBancaria: string | null;
 }
 
 export interface CrearPagoProgramadoInput {
@@ -129,4 +132,39 @@ export interface CrearPagoProgramadoInput {
   valor: number;
   fecha: string;
   recurrencia: Recurrencia;
+  cuentaBancariaId?: string;
+}
+
+// ─── Todo lo que salió en el mes (PC12) ─────────────────────────────────────
+
+export type TipoEgreso = "PROVEEDOR" | "SIN_FACTURA" | "NO_GASTO" | "IMPUESTO";
+
+export const NOMBRE_TIPO_EGRESO: Record<TipoEgreso, string> = {
+  PROVEEDOR: "Proveedor",
+  SIN_FACTURA: "Gasto sin factura",
+  NO_GASTO: "No es gasto",
+  IMPUESTO: "Impuesto",
+};
+
+export interface Egreso {
+  id: string;
+  origen: "COMPROBANTE" | "CONCEPTO" | "DECLARACION" | "CUOTA";
+  /** «EG-000074», o el número del asiento cuando no hay comprobante de egreso. */
+  numero: string;
+  fecha: string;
+  tercero: string | null;
+  detalle: string;
+  tipo: TipoEgreso;
+  medio: "CAJA" | "BANCO";
+  medioId: string;
+  destino: string;
+  /** Lo que salió, sin el 4×1000. */
+  valor: number;
+  gmf: number;
+  estado: "VIGENTE" | "ANULADO";
+}
+
+export interface EgresosDelMes {
+  resumen: import("@/modules/tesoreria/types/resumen.types").ResumenDelMes;
+  egresos: Egreso[];
 }

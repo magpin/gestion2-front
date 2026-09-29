@@ -278,7 +278,7 @@ function ContenidoCruce({
   );
 }
 
-function ListaCruces({ puedeAnular }: { puedeAnular: boolean }) {
+export function ListaCruces({ puedeAnular }: { puedeAnular: boolean }) {
   const [anulando, setAnulando] = useState<CrucePago | null>(null);
   const {
     data: cruces,

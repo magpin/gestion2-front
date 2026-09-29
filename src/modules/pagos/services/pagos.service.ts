@@ -1,8 +1,10 @@
 import { api } from "@/core/api/api";
+import type { AnticiposAProveedores, DatosDevolucion } from "@/modules/tesoreria/types/anticipos.types";
 import type { PropuestaRenta } from "@/modules/retenciones/types/retenciones.types";
 import type {
   AnticipoProveedor,
   ComprobanteEgreso,
+  EgresosDelMes,
   CompraPorPagar,
   CrearComprobanteEgresoInput,
   CrearCrucePagoInput,
@@ -23,6 +25,10 @@ export const pagosApi = {
 
   comprobantes: () => api.get<ComprobanteEgreso[]>("/comprobantes-egreso").then((r) => r.data),
 
+  /** Todo lo que salió en el mes: comprobantes, sin factura e impuestos, con el resumen por medio. */
+  egresos: (mes: string) =>
+    api.get<EgresosDelMes>("/pagos/egresos", { params: { mes } }).then((r) => r.data),
+
   /** Lo que el motor retendría al anticipo, sin guardar nada. */
   retencionAnticipo: (datos: { terceroId: string; fecha: string; base: number; conceptoCodigo?: string }) =>
     api
@@ -36,6 +42,15 @@ export const pagosApi = {
     api.post<ComprobanteEgreso>(`/comprobantes-egreso/${id}/anular`, { motivo }).then((r) => r.data),
 
   cruces: () => api.get<CrucePago[]>("/pagos/cruces").then((r) => r.data),
+
+  /** Los anticipos a todos los proveedores que no se han legalizado (PC19). */
+  anticipos: () => api.get<AnticiposAProveedores>("/pagos/anticipos").then((r) => r.data),
+
+  devolverAnticipo: (id: string, datos: DatosDevolucion) =>
+    api.post(`/pagos/anticipos/${id}/devolver`, datos).then((r) => r.data),
+
+  anularDevolucion: (id: string, motivo: string) =>
+    api.post(`/pagos/anticipos/devoluciones/${id}/anular`, { motivo }).then((r) => r.data),
 
   crearCruce: (datos: CrearCrucePagoInput) =>
     api.post<CrucePago>("/pagos/cruces", datos).then((r) => r.data),
