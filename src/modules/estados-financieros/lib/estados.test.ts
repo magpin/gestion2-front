@@ -78,3 +78,38 @@ describe("estados financieros en pantalla", () => {
     expect(b.get("total:pasivoPatrimonio")).toBe(50);
   });
 });
+
+describe("indicadores y nota del flujo (PC10)", () => {
+  it("capital de trabajo, razón corriente y endeudamiento", async () => {
+    const { indicadoresBalance } = await import("./estados");
+    const lado = (total: number, secciones: Array<[string, number]>) => ({
+      total,
+      secciones: secciones.map(([etiqueta, t]) => ({ etiqueta, total: t, renglones: [] })),
+    });
+    const i = indicadoresBalance({
+      activo: lado(159_350_200, [["Activo corriente", 132_000_200], ["Activo no corriente", 27_350_000]]),
+      pasivo: lado(41_643_100, [["Pasivo corriente", 23_143_100], ["Pasivo no corriente", 18_500_000]]),
+      patrimonio: lado(117_707_100, []),
+      diferencia: 0,
+    } as unknown as BalanceGeneral);
+    expect(i.capitalDeTrabajo).toBe(108_857_100);
+    expect(i.razonCorriente).toBeCloseTo(5.7036, 3);
+    expect(i.endeudamiento).toBeCloseTo(26.13, 1);
+  });
+
+  it("la nota dice si bajó o subió y qué pesó más", async () => {
+    const { notaDelFlujo } = await import("./estados");
+    const flujo = (neto: number, rubros: Array<[string, number]>) => ({
+      saldoInicial: 0,
+      saldoFinal: neto,
+      neto,
+      diferencia: 0,
+      actividades: [{ actividad: "OPERACION", etiqueta: "Operación", entradas: 0, salidas: 0, neto, rubros: rubros.map(([rubro, valor]) => ({ rubro, valor })) }],
+    });
+    expect(notaDelFlujo(flujo(-9_048_800, [["Cobros a clientes", 24_360_000], ["Pagos a proveedores", -12_840_000]]) as never)).toBe(
+      "Salió más de lo que entró: caja y bancos bajaron $ 9.048.800. Lo que más pesó fue pagos a proveedores ($ 12.840.000).",
+    );
+    expect(notaDelFlujo(flujo(1_000, [["Cobros a clientes", 1_000]]) as never)).toContain("subieron $ 1.000");
+    expect(notaDelFlujo(flujo(0, []) as never)).toBeNull();
+  });
+});

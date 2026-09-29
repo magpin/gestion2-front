@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { formatCOP } from "@/lib/utils";
-import { fechaCorta, valoresBalance } from "../lib/estados";
+import { fechaCorta, indicadoresBalance, valoresBalance } from "../lib/estados";
 import { estadosApi } from "../services/estados.service";
 import type { Balance, BalanceGeneral, LadoBalance } from "../types/estados.types";
 import { Dato, Fila, TablaEstado, Tarjeta } from "./Comun";
@@ -35,6 +35,20 @@ export function BalanceGeneralTab({ mes, comparar }: { mes: string; comparar?: s
           El activo no es igual al pasivo más el patrimonio. Suele ser un asiento a medio registrar o un saldo inicial
           sin su contrapartida: revísalo en el Libro con el balance de prueba.
         </Aviso>
+      )}
+      {!vacio && (
+        <ul className="grid gap-4 md:grid-cols-3">
+          {[
+            { rotulo: "Lo que tenés · activo", valor: b.activo.total },
+            { rotulo: "Lo que debés · pasivo", valor: b.pasivo.total },
+            { rotulo: "Lo que es de los socios · patrimonio", valor: b.patrimonio.total },
+          ].map((t) => (
+            <li key={t.rotulo} className="rounded-3xl border border-border bg-card px-5 py-4 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{t.rotulo}</p>
+              <p className="mt-1 font-mono text-2xl font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums">{formatCOP(t.valor)}</p>
+            </li>
+          ))}
+        </ul>
       )}
       {vacio ? (
         <EmptyState
@@ -162,13 +176,10 @@ function Ecuacion({ balance }: { balance: BalanceGeneral }) {
 }
 
 function Indicadores({ balance }: { balance: BalanceGeneral }) {
-  const corriente = (l: LadoBalance, etiqueta: string) => l.secciones.find((s) => s.etiqueta === etiqueta)?.total ?? 0;
-  const activoCorriente = corriente(balance.activo, "Activo corriente");
-  const pasivoCorriente = corriente(balance.pasivo, "Pasivo corriente");
-  const razon = pasivoCorriente === 0 ? null : activoCorriente / pasivoCorriente;
-  const endeudamiento = balance.activo.total === 0 ? null : (balance.pasivo.total / balance.activo.total) * 100;
+  const { capitalDeTrabajo, razonCorriente: razon, endeudamiento } = indicadoresBalance(balance);
   return (
     <Tarjeta titulo="Indicadores">
+      <Dato etiqueta="Capital de trabajo" valor={formatCOP(capitalDeTrabajo)} />
       <Dato
         etiqueta="Razón corriente"
         valor={razon === null ? "—" : razon.toLocaleString("es-CO", { maximumFractionDigits: 2 })}
@@ -181,6 +192,10 @@ function Indicadores({ balance }: { balance: BalanceGeneral }) {
         {razon === null
           ? "No hay deudas de corto plazo al corte."
           : `Por cada peso que debe a corto plazo, tiene $ ${razon.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} para pagarlo.`}
+        {" "}
+        {capitalDeTrabajo >= 0
+          ? "El capital de trabajo es lo que le queda si pagara hoy todo lo de corto plazo."
+          : "El capital de trabajo es negativo: lo de corto plazo no alcanza para las deudas de corto plazo."}
       </p>
     </Tarjeta>
   );

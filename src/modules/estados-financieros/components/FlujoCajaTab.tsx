@@ -7,7 +7,7 @@ import { Aviso } from "@/components/shared/Aviso";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { cn, formatCOP } from "@/lib/utils";
-import { fechaCorta, mesCorto } from "../lib/estados";
+import { fechaCorta, mesCorto, notaDelFlujo } from "../lib/estados";
 import { estadosApi } from "../services/estados.service";
 import type { FlujoDirecto } from "../types/estados.types";
 import { Dato, Fila, TablaEstado, Tarjeta, rangoDelPeriodo } from "./Comun";
@@ -30,9 +30,25 @@ function Real({ mes }: { mes: string }) {
     return isError ? <ErrorCarga error={error} titulo="No se pudo armar el estado" onReintentar={refetch} /> : <SkeletonTable />;
   }
   const f = data.directo;
+  const entradas = f.actividades.reduce((t, a) => t + a.entradas, 0);
+  const salidas = f.actividades.reduce((t, a) => t + a.salidas, 0);
+  const nota = notaDelFlujo(f);
 
   return (
     <div className="flex flex-col gap-6">
+      <ul className="grid overflow-hidden rounded-3xl border border-border bg-card shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { rotulo: `Había el ${fechaCorta(data.periodo.desde)}`, valor: formatCOP(f.saldoInicial), clase: "" },
+          { rotulo: "Entró", valor: `+ ${formatCOP(entradas)}`, clase: "text-success" },
+          { rotulo: "Salió", valor: `− ${formatCOP(salidas)}`, clase: "" },
+          { rotulo: `Hay al ${fechaCorta(data.periodo.corte)}`, valor: formatCOP(f.saldoFinal), clase: "", fuerte: true },
+        ].map((t) => (
+          <li key={t.rotulo} className={cn("border-b border-border px-5 py-4 lg:border-r lg:border-b-0", t.fuerte && "bg-muted")}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{t.rotulo}</p>
+            <p className={cn("mt-1 font-mono text-2xl font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums", t.clase)}>{t.valor}</p>
+          </li>
+        ))}
+      </ul>
       {f.diferencia !== 0 && (
         <Aviso tono="alarma" titulo="Hay plata que el flujo no explica" cifra={formatCOP(f.diferencia)}>
           El saldo final de caja y bancos no sale del inicial más lo que se movió. Suele ser un asiento de caja sin
@@ -59,6 +75,11 @@ function Real({ mes }: { mes: string }) {
         </TablaEstado>
         <aside className="flex w-full flex-col gap-4 lg:w-72 lg:shrink-0">
           <EntraSale flujo={f} />
+          {nota && (
+            <Tarjeta titulo="En pocas palabras">
+              <p className="text-sm text-muted-foreground">{nota}</p>
+            </Tarjeta>
+          )}
         </aside>
       </div>
     </div>
@@ -111,6 +132,7 @@ function ProximasSemanas() {
           algún pago.
         </Aviso>
       )}
+      <GraficoSemanas semanas={semanas.filter((s) => s.desde !== null)} />
       <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-5 py-4">
           <div>
@@ -160,5 +182,60 @@ function ProximasSemanas() {
         </div>
       </section>
     </div>
+  );
+}
+
+/** Lo que entra y sale cada semana, con su escala y el valor de cada barra (§1.5: sin escala no se lee). */
+function GraficoSemanas({ semanas }: { semanas: Array<{ desde: string | null; etiqueta: string; entradas: number; salidas: number }> }) {
+  if (semanas.length === 0) return null;
+  const mayor = Math.max(1, ...semanas.flatMap((s) => [s.entradas, s.salidas]));
+  // La escala en millones redondos, para que las rayas caigan en números que se leen.
+  const paso = Math.max(1_000_000, Math.ceil(mayor / 4 / 1_000_000) * 1_000_000);
+  const tope = paso * Math.ceil(mayor / paso);
+  const marcas = Array.from({ length: tope / paso + 1 }, (_, i) => i * paso).reverse();
+  const corto = (v: number) => (v >= 1_000_000 ? `${(v / 1_000_000).toLocaleString("es-CO", { maximumFractionDigits: 1 })} M` : formatCOP(v));
+  return (
+    <section className="rounded-3xl border border-border bg-card px-5 py-4 shadow-sm">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-semibold">Entra y sale, semana a semana</h2>
+        <p className="flex gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-foreground" /> Entra</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-brand" /> Sale</span>
+        </p>
+      </div>
+      <div
+        className="flex gap-2"
+        role="img"
+        aria-label={semanas.map((s) => `${s.etiqueta}: entra ${formatCOP(s.entradas)}, sale ${formatCOP(s.salidas)}`).join("; ")}
+      >
+        <div className="flex h-44 flex-col justify-between pb-0 text-right font-mono text-[10px] text-muted-foreground">
+          {marcas.map((m) => (
+            <span key={m} className="leading-none">{m === 0 ? "0" : corto(m)}</span>
+          ))}
+        </div>
+        <div className="flex-1">
+          <div className="relative grid h-44 items-end gap-3 border-b border-l border-border" style={{ gridTemplateColumns: `repeat(${semanas.length}, minmax(0, 1fr))` }}>
+            {semanas.map((s) => (
+              <div key={s.desde ?? s.etiqueta} className="flex h-full items-end justify-center gap-1">
+                {[
+                  { v: s.entradas, clase: "bg-foreground" },
+                  { v: s.salidas, clase: "bg-brand" },
+                ].map((b, i) => (
+                  <div key={i} className="flex h-full w-4 flex-col items-center justify-end">
+                    {b.v > 0 && <span className="mb-0.5 font-mono text-[9px] whitespace-nowrap text-muted-foreground">{corto(b.v)}</span>}
+                    <span className={cn("w-full rounded-t", b.clase)} style={{ height: `${(b.v / tope) * 85}%`, minHeight: b.v > 0 ? 2 : 0 }} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-3 pt-1.5 text-center text-[11px] text-muted-foreground" style={{ gridTemplateColumns: `repeat(${semanas.length}, minmax(0, 1fr))` }}>
+            {semanas.map((s) => (
+              <span key={s.desde ?? s.etiqueta}>{s.desde ? fechaCorta(s.desde) : s.etiqueta}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

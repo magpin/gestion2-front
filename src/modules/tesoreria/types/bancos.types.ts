@@ -4,12 +4,13 @@
 // `banco-movimiento.service.ts`/`extracto.service.ts` de los de Caja
 // dentro del mismo módulo `tesoreria`.
 
-export const TIPOS_CUENTA_BANCARIA = ["AHORROS", "CORRIENTE"] as const;
+export const TIPOS_CUENTA_BANCARIA = ["AHORROS", "CORRIENTE", "BILLETERA"] as const;
 export type TipoCuentaBancaria = (typeof TIPOS_CUENTA_BANCARIA)[number];
 
 export const NOMBRE_TIPO_CUENTA_BANCARIA: Record<TipoCuentaBancaria, string> = {
   AHORROS: "Ahorros",
   CORRIENTE: "Corriente",
+  BILLETERA: "Billetera (Nequi, Daviplata)",
 };
 
 export interface CuentaBancariaResumen {
@@ -19,6 +20,10 @@ export interface CuentaBancariaResumen {
   tipo_cuenta: TipoCuentaBancaria;
   cuenta_id: string;
   activa: boolean;
+  /** Exenta del 4×1000: sus salidas no lo pagan. */
+  exenta_gmf: boolean;
+  /** Hasta qué día está conciliada con el extracto; `null` si nunca se concilió. */
+  conciliada_hasta: string | null;
   /** Cuánta plata hay hoy. Puede ser negativo: el banco admite sobregiro. */
   saldo: string;
   /** El día del último movimiento, o `null` si nunca se movió. */

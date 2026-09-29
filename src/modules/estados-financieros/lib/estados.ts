@@ -1,5 +1,5 @@
 import { moverMes, nombreMes } from "@/modules/gastos/lib/mes";
-import type { BalanceGeneral, EstadoResultados } from "../types/estados.types";
+import type { BalanceGeneral, EstadoResultados, FlujoDirecto } from "../types/estados.types";
 
 /** Variación en porcentaje con un decimal; `null` si el anterior es cero. La misma cuenta del backend. */
 export function variacion(actual: number, anterior: number): number | null {
@@ -69,4 +69,52 @@ export function valoresBalance(balance: BalanceGeneral | undefined): Map<string,
   valores.set("total:patrimonio", balance.patrimonio.total);
   valores.set("total:pasivoPatrimonio", balance.pasivo.total + balance.patrimonio.total);
   return valores;
+}
+
+/**
+ * Lo del corto plazo del balance (PC10): el activo y el pasivo corrientes, el
+ * capital de trabajo (lo que queda si se pagara hoy todo lo de corto plazo),
+ * la razón corriente y el endeudamiento.
+ */
+export function indicadoresBalance(balance: BalanceGeneral): {
+  activoCorriente: number;
+  pasivoCorriente: number;
+  capitalDeTrabajo: number;
+  razonCorriente: number | null;
+  endeudamiento: number | null;
+} {
+  const seccion = (lado: BalanceGeneral["activo"], etiqueta: string) =>
+    lado.secciones.find((s) => s.etiqueta === etiqueta)?.total ?? 0;
+  const activoCorriente = seccion(balance.activo, "Activo corriente");
+  const pasivoCorriente = seccion(balance.pasivo, "Pasivo corriente");
+  return {
+    activoCorriente,
+    pasivoCorriente,
+    capitalDeTrabajo: activoCorriente - pasivoCorriente,
+    razonCorriente: pasivoCorriente === 0 ? null : activoCorriente / pasivoCorriente,
+    endeudamiento: balance.activo.total === 0 ? null : (balance.pasivo.total / balance.activo.total) * 100,
+  };
+}
+
+/**
+ * La nota del flujo del mes, armada con reglas y no con texto fijo (PC10):
+ * si la plata subió o bajó, y qué pesó más en cada sentido.
+ */
+export function notaDelFlujo(flujo: FlujoDirecto): string | null {
+  const rubros = flujo.actividades.flatMap((a) => a.rubros);
+  if (rubros.length === 0) return null;
+  const pesos = (v: number) => `$ ${Math.round(Math.abs(v)).toLocaleString("es-CO")}`;
+  const salida = rubros.filter((r) => r.valor < 0).sort((a, b) => a.valor - b.valor)[0];
+  const entrada = rubros.filter((r) => r.valor > 0).sort((a, b) => b.valor - a.valor)[0];
+  if (flujo.neto < 0) {
+    return `Salió más de lo que entró: caja y bancos bajaron ${pesos(flujo.neto)}.${
+      salida ? ` Lo que más pesó fue ${salida.rubro.toLowerCase()} (${pesos(salida.valor)}).` : ""
+    }`;
+  }
+  if (flujo.neto > 0) {
+    return `Entró más de lo que salió: caja y bancos subieron ${pesos(flujo.neto)}.${
+      entrada ? ` Lo que más aportó fue ${entrada.rubro.toLowerCase()} (${pesos(entrada.valor)}).` : ""
+    }`;
+  }
+  return "Entró lo mismo que salió: caja y bancos quedaron igual.";
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeftRight, History, Landmark, Plus } from "lucide-react";
+import { ArrowLeftRight, History, Landmark, Plus, Wallet } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ import {
   DialogoNuevaCaja,
   DialogoNuevaCuentaBancaria,
 } from "../components/DialogosAltaTesoreria";
-import { SaldosTesoreria } from "../components/SaldosTesoreria";
+import { BancosResumen } from "../components/BancosResumen";
+import { CajaHoy } from "../components/CajaHoy";
+import { MovimientosJuntos } from "../components/MovimientosJuntos";
 import { ListaTraslados, TrasladoDialog } from "../components/Traslados";
 import { usePrepararTesoreria } from "../hooks/usePrepararTesoreria";
 import { CajasSeccion } from "./CajasSeccion";
@@ -19,10 +21,11 @@ import { CuentasBancariasSeccion } from "./CuentasBancariasSeccion";
 import { LibroBancoSeccion } from "./LibroBancoSeccion";
 import { LibroCajaSeccion } from "./LibroCajaSeccion";
 
-type Seccion = "Saldos" | "Movimientos" | "Traslados";
+type Seccion = "Caja" | "Bancos" | "Movimientos" | "Traslados";
 
 const SECCIONES: Array<[Seccion, typeof Landmark]> = [
-  ["Saldos", Landmark],
+  ["Caja", Wallet],
+  ["Bancos", Landmark],
   ["Movimientos", History],
   // Pieza nueva del menú: se ve cuando su interruptor está encendido.
   ...(funcionActiva("traslados") ? [["Traslados", ArrowLeftRight] as [Seccion, typeof Landmark]] : []),
@@ -32,16 +35,19 @@ const SECCIONES: Array<[Seccion, typeof Landmark]> = [
  * Dinero → Caja y bancos: la mitad operativa de lo que era Tesorería. Dónde
  * está la plata y qué entró y salió de cada caja y cada cuenta.
  *
- * Son las mismas secciones de antes, juntas por lo que responden y no por el
- * instrumento: «Saldos» reúne cajas y cuentas bancarias; «Movimientos», los dos
- * libros; «Traslados», la plata que pasa de una caja o cuenta a otra. La otra
- * mitad —arqueo, corte, extractos, conciliación— es Control.
+ * Pestañas de la Fase 6 de las pantallas complementarias: «Caja», la
+ * principal por defecto con su día (PC7); «Bancos», cada cuenta con su
+ * conciliación y su 4×1000; «Movimientos», caja y bancos juntos con saldo
+ * corrido; «Traslados», la plata que pasa de una a otra. Las altas de cajas y
+ * cuentas se quedan acá (PC8). La otra mitad —arqueo, corte, extractos,
+ * conciliación— es Control.
  */
 export function CajaBancosView() {
   usePrepararTesoreria();
   const puedeCrear = useTieneRol("CAJA", "DIRECTOR");
 
-  const [seccion, setSeccion] = useState<Seccion>("Saldos");
+  const [seccion, setSeccion] = useState<Seccion>("Caja");
+  const [cuentaMovimientos, setCuentaMovimientos] = useState<string | null>(null);
   const [creandoCaja, setCreandoCaja] = useState(false);
   const [creandoCuenta, setCreandoCuenta] = useState(false);
   const [trasladando, setTrasladando] = useState(false);
@@ -61,9 +67,10 @@ export function CajaBancosView() {
             Dónde está la plata: cada caja y cada cuenta, y lo que entró y salió de ellas.
           </p>
         </div>
-        {seccion === "Traslados" && puedeCrear && (
+        {(seccion === "Traslados" || seccion === "Movimientos") && puedeCrear && (
           <BotonNuevo etiqueta="Nuevo traslado" onClick={() => setTrasladando(true)} />
         )}
+        {seccion === "Bancos" && puedeCrear && <BotonNuevo etiqueta="Agregar cuenta" onClick={() => setCreandoCuenta(true)} />}
       </header>
 
       <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
@@ -72,7 +79,10 @@ export function CajaBancosView() {
             key={nombre}
             type="button"
             aria-current={seccion === nombre ? "page" : undefined}
-            onClick={() => setSeccion(nombre)}
+            onClick={() => {
+              setSeccion(nombre);
+              setCuentaMovimientos(null);
+            }}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
               seccion === nombre
                 ? "bg-primary text-primary-foreground"
@@ -85,38 +95,50 @@ export function CajaBancosView() {
         ))}
       </nav>
 
-      {seccion === "Saldos" && (
-        <>
-          <SaldosTesoreria />
-          <div className="flex flex-col gap-10">
-            <section>
-              <TituloBloque
-                titulo="Cajas"
-                accion={puedeCrear ? "Nueva caja" : undefined}
-                onAccion={() => setCreandoCaja(true)}
-              />
-              <CajasSeccion />
-            </section>
-            <section>
-              <TituloBloque
-                titulo="Cuentas bancarias"
-                accion={puedeCrear ? "Nueva cuenta bancaria" : undefined}
-                onAccion={() => setCreandoCuenta(true)}
-              />
-              <CuentasBancariasSeccion />
-            </section>
-          </div>
-          <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground print:hidden">
-            <Landmark className="size-3.5 text-success" />
-            Las cajas y las cuentas no se eliminan: se desactivan para conservar su libro.
-          </p>
-        </>
+      {seccion === "Caja" && (
+        <div className="flex flex-col gap-10">
+          <CajaHoy onVerMovimientos={() => setSeccion("Movimientos")} />
+          <section>
+            <TituloBloque
+              titulo="Todas las cajas"
+              accion={puedeCrear ? "Nueva caja" : undefined}
+              onAccion={() => setCreandoCaja(true)}
+            />
+            <CajasSeccion />
+          </section>
+        </div>
+      )}
+
+      {seccion === "Bancos" && (
+        <div className="flex flex-col gap-10">
+          <BancosResumen
+            onAgregar={() => setCreandoCuenta(true)}
+            onVerMovimientos={(id) => {
+              setCuentaMovimientos(id);
+              setSeccion("Movimientos");
+            }}
+          />
+          <section>
+            <TituloBloque titulo="Administrar cuentas" onAccion={() => setCreandoCuenta(true)} />
+            <CuentasBancariasSeccion />
+            <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground print:hidden">
+              <Landmark className="size-3.5 text-success" />
+              Las cajas y las cuentas no se eliminan: se desactivan para conservar su libro.
+            </p>
+          </section>
+        </div>
       )}
 
       {seccion === "Movimientos" && (
         <div className="flex flex-col gap-10">
-          <LibroCajaSeccion />
-          <LibroBancoSeccion />
+          <MovimientosJuntos key={cuentaMovimientos ?? "todas"} cuentaInicial={cuentaMovimientos} />
+          <details className="rounded-3xl border border-border bg-card px-5 py-4 shadow-sm">
+            <summary className="cursor-pointer text-sm font-semibold">El libro de una caja o una cuenta, para reversar un movimiento</summary>
+            <div className="mt-5 flex flex-col gap-10">
+              <LibroCajaSeccion />
+              <LibroBancoSeccion />
+            </div>
+          </details>
         </div>
       )}
 

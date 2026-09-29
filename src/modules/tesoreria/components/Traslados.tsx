@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeftRight, ArrowRight, Loader2 } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -229,7 +229,7 @@ function Formulario({ onCerrar }: { onCerrar: () => void }) {
         <DialogCloseIcon />
       </DialogHeader>
       <DialogBody className="flex flex-col gap-5">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-end gap-4 md:grid-cols-[1fr_auto_1fr]">
           <Campo id="traslado-origen" etiqueta="Sale de">
             <SelectorMedio
               medio={origen.medio}
@@ -240,6 +240,18 @@ function Formulario({ onCerrar }: { onCerrar: () => void }) {
               onCuenta={(cuenta) => setOrigen({ ...origen, cuenta })}
             />
           </Campo>
+          <Button
+            type="button"
+            variant="outline"
+            className="mb-0.5 size-11 self-end rounded-full p-0"
+            aria-label="Invertir: que salga del destino y llegue al origen"
+            onClick={() => {
+              setOrigen(destino);
+              setDestino(origen);
+            }}
+          >
+            <ArrowLeftRight className="size-4" />
+          </Button>
           <Campo id="traslado-destino" etiqueta="Llega a">
             <SelectorMedio
               medio={destino.medio}
@@ -297,11 +309,12 @@ function Formulario({ onCerrar }: { onCerrar: () => void }) {
             </label>
           </div>
         )}
+        {problema === null && <QuedaEn origen={origen} destino={destino} valor={Number(valor)} gmf={gmf} />}
       </DialogBody>
       <DialogFooter className="sm:justify-between">
         <p className="self-center text-sm text-muted-foreground">
           {problema ??
-            `Sale ${formatCOP(Number(valor) + gmf)}${gmf > 0 ? " con el 4×1000" : ""}; llega ${formatCOP(Number(valor))}.`}
+            `Sale ${formatCOP(Number(valor) + gmf)}${gmf > 0 ? " con el 4×1000" : ""}; llega ${formatCOP(Number(valor))}. Aparece en los movimientos de las dos cuentas.`}
         </p>
         <div className="flex gap-3">
           <Button type="button" variant="outline" className="h-12 rounded-xl px-6" onClick={onCerrar}>
@@ -381,5 +394,52 @@ function DialogoAnularTraslado({ traslado, onCerrar }: { traslado: Traslado | nu
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+const nombreDe = (l: Lado) => (l.medio === "CAJA" ? (l.caja?.nombre ?? "Caja") : (l.cuenta?.banco ?? "Banco"));
+const saldoDe = (l: Lado) => Number((l.medio === "CAJA" ? l.caja?.saldo : l.cuenta?.saldo) ?? 0);
+
+/**
+ * Cómo quedan las dos cuentas y el asiento que se va a hacer (PC9): sale el
+ * valor más el 4×1000 del origen, llega el valor al destino, y el 4×1000 va
+ * a gasto en su propio movimiento.
+ */
+function QuedaEn({ origen, destino, valor, gmf }: { origen: Lado; destino: Lado; valor: number; gmf: number }) {
+  const lineas = [
+    { nombre: nombreDe(destino), lado: "D", valor },
+    ...(gmf > 0 ? [{ nombre: "Gravamen a los movimientos financieros (gasto)", lado: "D", valor: gmf }] : []),
+    { nombre: nombreDe(origen), lado: "C", valor: valor + gmf },
+  ];
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[
+          { l: origen, queda: saldoDe(origen) - valor - gmf },
+          { l: destino, queda: saldoDe(destino) + valor },
+        ].map(({ l, queda }) => (
+          <div key={`${l.medio}-${nombreDe(l)}`} className="rounded-2xl border border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground">{nombreDe(l)} queda en</p>
+            <p className="font-mono whitespace-nowrap tabular-nums">
+              <span className="mr-2 text-xs text-muted-foreground line-through">{formatCOP(saldoDe(l))}</span>
+              <span className={queda < 0 ? "font-semibold text-danger" : "font-semibold"}>{formatCOP(queda)}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl bg-muted px-4 py-3">
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">En el libro</p>
+        <ul className="flex flex-col gap-0.5 text-xs">
+          {lineas.map((x) => (
+            <li key={`${x.nombre}-${x.lado}`} className="flex justify-between gap-3">
+              <span>{x.nombre}</span>
+              <span className="font-mono whitespace-nowrap tabular-nums">
+                {x.lado} {formatCOP(x.valor)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
