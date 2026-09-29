@@ -25,6 +25,7 @@ import type { LucideIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { buttonVariants } from "@/components/ui/button";
+import { funcionActiva } from "@/core/config/funciones";
 import { useAuthStore } from "@/core/store/authStore";
 import { MariaEstaSemana } from "@/modules/asistente/components/MariaEstaSemana";
 import { ROLES_MARIA } from "@/modules/asistente/hooks/usePendientes";
@@ -40,6 +41,8 @@ import type {
   EstadoPaso,
   Paso,
 } from "@/modules/configuracion/types/configuracion.types";
+import { AlertasMaria, TableroPlata } from "../components/TableroPlata";
+import { tableroApi } from "../services/tablero.service";
 
 const ICONO: Record<ClavePaso, LucideIcon> = {
   EMPRESA: Building2,
@@ -78,10 +81,25 @@ const TONO: Record<
   },
 };
 
+/** Quien ve la plata de la empresa: los mismos roles de `GET /tablero/plata`. */
+const ROLES_PLATA = ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"] as const;
+
 export function InicioView() {
   const { data, isLoading, isError } = useEstadoConfiguracion();
   const roles = useAuthStore((s) => s.roles);
   const veMaria = ROLES_MARIA.some((r) => roles.includes(r));
+  // D3: con la configuración completa, Inicio es el tablero de la plata.
+  // Mientras falte algo, siguen los pasos.
+  const conTablero =
+    data !== undefined &&
+    data.completados >= data.totalObligatorios &&
+    funcionActiva("tableroPlata") &&
+    ROLES_PLATA.some((r) => roles.includes(r));
+  const tablero = useQuery({
+    queryKey: ["tablero", "plata"],
+    queryFn: tableroApi.plata,
+    enabled: conTablero,
+  });
 
   if (isLoading) {
     return (
@@ -96,6 +114,41 @@ export function InicioView() {
       <p className="py-24 text-center text-sm text-muted-foreground">
         No se pudo leer el estado de la empresa.
       </p>
+    );
+  }
+
+  if (conTablero) {
+    return (
+      <div className="flex flex-col gap-6">
+        <header>
+          <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
+            <span className="size-2 rounded-full bg-brand" />
+            Tablero · {fechaDeHoy()}
+          </div>
+          <h1 className="text-4xl font-semibold tracking-[-0.04em]">
+            Inicio<span className="text-brand">.</span>
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Cuánta plata hay, quién te debe, a quién le debés y cómo va el mes.
+          </p>
+        </header>
+
+        {tablero.isError ? (
+          <p className="rounded-3xl border border-border bg-card px-6 py-5 text-sm text-muted-foreground">
+            No se pudo leer la plata de la empresa. Intenta de nuevo en un momento.
+          </p>
+        ) : (
+          <TableroPlata datos={tablero.data} />
+        )}
+
+        {veMaria && (
+          <MariaEstaSemana>
+            <AlertasMaria alertas={tablero.data?.alertas ?? []} />
+          </MariaEstaSemana>
+        )}
+
+        <Atajos />
+      </div>
     );
   }
 
@@ -147,6 +200,13 @@ export function InicioView() {
       <Atajos />
     </div>
   );
+}
+
+/** «Lunes 28 sep». */
+function fechaDeHoy(hoy = new Date()): string {
+  const dia = hoy.toLocaleDateString("es-CO", { weekday: "long" });
+  const mes = hoy.toLocaleDateString("es-CO", { month: "long" }).slice(0, 3);
+  return `${dia} ${hoy.getDate()} ${mes}`;
 }
 
 /**

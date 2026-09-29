@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 
 import { Maria } from "./Maria";
@@ -13,8 +14,11 @@ import { useSemanaDeMaria } from "../hooks/usePendientes";
  * «Asientos aprobados» y no «asentados»: todo lo que está ahí lo aprobó una
  * persona. Lo que espera lleva el punto naranja —el acento señala— y lleva al
  * chat, que es donde se decide.
+ *
+ * `children` va debajo de las cifras: en el tablero de la plata, lo que María
+ * ve en la plata (las alertas).
  */
-export function MariaEstaSemana() {
+export function MariaEstaSemana({ children }: { children?: ReactNode } = {}) {
   const semana = useSemanaDeMaria();
   const cifra = (n: number | undefined) => (n === undefined ? "…" : String(n));
 
@@ -42,6 +46,7 @@ export function MariaEstaSemana() {
           <ChevronRight className="ml-auto size-4 shrink-0 text-muted-foreground" />
         </Link>
       </div>
+      {children}
     </section>
   );
 }
