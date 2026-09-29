@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   BookOpen,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
 import { FormularioAsiento } from "../components/FormularioAsiento";
 import { periodosApi } from "../services/contabilidad.service";
@@ -43,6 +45,12 @@ export function ContabilidadView() {
   const puedeAsentar = useTieneRol("CONTADOR");
   const [seccion, setSeccion] = useState<Seccion>("Asientos");
   const [creando, setCreando] = useState(false);
+  // Con la página prendida, el asiento nuevo es el comprobante manual asistido.
+  const router = useRouter();
+  const nuevoAsiento = () =>
+    funcionActiva("comprobanteAsistido")
+      ? router.push("/dashboard/contabilidad/comprobante")
+      : setCreando(true);
 
   // El año del período abierto, no el del reloj: una empresa que todavía está
   // cerrando diciembre no trabaja en el año que dice el calendario.
@@ -69,7 +77,7 @@ export function ContabilidadView() {
 
         {puedeAsentar && (
           <Button
-            onClick={() => setCreando(true)}
+            onClick={nuevoAsiento}
             className="h-auto gap-3 rounded-2xl px-5 py-3.5 font-semibold shadow-[0_8px_20px_rgb(0_0_0/0.15)] hover:-translate-y-0.5 hover:bg-primary/90"
           >
             <span className="flex size-7 items-center justify-center rounded-full bg-primary-foreground/15">

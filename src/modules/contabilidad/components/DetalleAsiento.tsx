@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Paperclip } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,8 +48,16 @@ export function DetalleAsiento({
     // La URL del documento caduca en una hora: más que eso no se guarda.
     staleTime: 30 * 60_000,
   });
+  // El soporte que se adjuntó al comprobante manual (Fase 9).
+  const { data: soportes = [] } = useQuery({
+    queryKey: ["asientos", "soportes", asientoId],
+    queryFn: () => asientosApi.soportes(asientoId!),
+    enabled: asientoId !== null,
+    staleTime: 30 * 60_000,
+  });
   const conMaria =
-    data?.propuesta_id != null || (historial?.pasos.some((p) => p.deMaria) ?? false);
+    data?.propuesta_id != null ||
+    (historial?.pasos.some((p) => p.deMaria) ?? false);
 
   return (
     <Dialog open={asientoId !== null} onOpenChange={(a) => !a && onCerrar()}>
@@ -103,7 +111,9 @@ export function DetalleAsiento({
                           <span className="font-mono text-xs text-muted-foreground">
                             {l.cuenta_codigo}
                           </span>
-                          <span className="ml-2 font-medium">{l.cuenta_nombre}</span>
+                          <span className="ml-2 font-medium">
+                            {l.cuenta_nombre}
+                          </span>
                           {l.detalle && (
                             <span className="block text-xs text-muted-foreground">
                               {l.detalle}
@@ -114,10 +124,14 @@ export function DetalleAsiento({
                           {l.tercero_nombre ?? "—"}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
-                          {Number(l.debito) > 0 ? formatCOP(Number(l.debito)) : ""}
+                          {Number(l.debito) > 0
+                            ? formatCOP(Number(l.debito))
+                            : ""}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
-                          {Number(l.credito) > 0 ? formatCOP(Number(l.credito)) : ""}
+                          {Number(l.credito) > 0
+                            ? formatCOP(Number(l.credito))
+                            : ""}
                         </td>
                       </tr>
                     ))}
@@ -143,7 +157,24 @@ export function DetalleAsiento({
                   {data.motivo_anulacion}
                 </p>
               )}
-              {historial?.documento && <DocumentoSoporte documento={historial.documento} />}
+              {historial?.documento && (
+                <DocumentoSoporte documento={historial.documento} />
+              )}
+              {soportes.map((s, i) => (
+                <a
+                  key={i}
+                  href={s.url ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3 rounded-2xl border border-border px-5 py-3 text-sm hover:bg-accent"
+                >
+                  <Paperclip className="size-4 text-muted-foreground" />
+                  <span className="grow truncate">{s.nombre}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {s.url ? "Ver soporte" : "Sin almacenamiento"}
+                  </span>
+                </a>
+              ))}
               {historial && <HistorialAsiento pasos={historial.pasos} />}
             </DialogBody>
           </>

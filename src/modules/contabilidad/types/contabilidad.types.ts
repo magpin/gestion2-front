@@ -9,11 +9,7 @@ export type EstadoAsiento = "REGISTRADO" | "ANULADO";
 export type Naturaleza = "DEBITO" | "CREDITO";
 
 export type NaturalezaComprobante =
-  | "DIARIO"
-  | "INGRESO"
-  | "EGRESO"
-  | "APERTURA"
-  | "CIERRE";
+  "DIARIO" | "INGRESO" | "EGRESO" | "APERTURA" | "CIERRE";
 
 export interface Periodo {
   id: string;
@@ -143,7 +139,76 @@ export interface AsientoNuevo {
   fecha: string;
   glosa: string;
   lineas: LineaNueva[];
+  /** Solo el comprobante manual: el documento que lo respalda, ya subido. */
+  soporte?: { clave: string; nombre: string };
 }
+
+// ---------------------------------------------------------------------------
+// Comprobante manual asistido (Fase 9, pantalla 52)
+// ---------------------------------------------------------------------------
+
+export type Plantilla = "DEPRECIACION" | "PRIMA" | "SEGUROS" | "INVENTARIO";
+
+export const NOMBRE_PLANTILLA: Record<Plantilla, string> = {
+  DEPRECIACION: "Depreciación del mes",
+  PRIMA: "Provisión de prima",
+  SEGUROS: "Amortización de seguros",
+  INVENTARIO: "Ajuste por conteo de inventario",
+};
+
+export const CLASES_ACTIVO = {
+  COMPUTO: "Equipo de cómputo y comunicación",
+  OFICINA: "Equipo de oficina",
+  MAQUINARIA: "Maquinaria y equipo",
+  FLOTA: "Flota y equipo de transporte",
+  CONSTRUCCIONES: "Construcciones y edificaciones",
+} as const;
+export type ClaseActivo = keyof typeof CLASES_ACTIVO;
+
+export const RAMOS_SEGURO = {
+  INCENDIO: "Incendio",
+  MANEJO: "Manejo",
+  CUMPLIMIENTO: "Cumplimiento",
+  CORRIENTE_DEBIL: "Corriente débil",
+  VIDA: "Vida colectiva",
+  FLOTA: "Flota y equipo de transporte",
+  OTROS: "Otros",
+} as const;
+export type RamoSeguro = keyof typeof RAMOS_SEGURO;
+
+export interface DatosPlantilla {
+  clase?: ClaseActivo;
+  ramo?: RamoSeguro;
+  costo?: number;
+  meses?: number;
+  salarios?: number;
+  valor?: number;
+}
+
+export interface RenglonPropuesto {
+  codigo: string;
+  detalle: string;
+  debito: number;
+  credito: number;
+  cuenta: { id: string; codigo: string; nombre: string } | null;
+  /** Si la cuenta falta o está inactiva, qué hacer. */
+  problema: string | null;
+}
+
+export type PropuestaManual =
+  | { plantilla: null; mensaje: string }
+  | {
+      plantilla: Plantilla;
+      /** Los datos que la plantilla todavía necesita. */
+      faltan: string[];
+      sugerido: { clase?: ClaseActivo };
+      propuesta: {
+        glosa: string;
+        renglones: RenglonPropuesto[];
+        explicacion: string[];
+        redirigir?: { a: "AJUSTE_INVENTARIO"; motivo: string };
+      } | null;
+    };
 
 // ---------------------------------------------------------------------------
 // Libros
@@ -184,7 +249,12 @@ export interface MovimientoMayor {
 }
 
 export interface Mayor {
-  cuenta: { id: string; codigo: string; nombre: string; naturaleza: Naturaleza };
+  cuenta: {
+    id: string;
+    codigo: string;
+    nombre: string;
+    naturaleza: Naturaleza;
+  };
   movimientos: MovimientoMayor[];
 }
 
@@ -220,11 +290,7 @@ export interface BalancePrueba {
 // comprobado —fase 7— o algo que pide criterio —fase 9—, y `certeza` dice cuál.
 
 export type GrupoHallazgo =
-  | "DESCUADRE"
-  | "DUPLICADO"
-  | "FECHAS"
-  | "FALTANTE"
-  | "CLASIFICACION";
+  "DESCUADRE" | "DUPLICADO" | "FECHAS" | "FALTANTE" | "CLASIFICACION";
 
 /**
  * Qué tan seguro es. `AFIRMADO` es una comparación exacta; `VISTA` es un hecho

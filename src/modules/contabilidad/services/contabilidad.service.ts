@@ -14,6 +14,9 @@ import type {
   Periodo,
   ResumenPeriodo,
   Trazabilidad,
+  DatosPlantilla,
+  Plantilla,
+  PropuestaManual,
 } from "../types/contabilidad.types";
 
 /**
@@ -34,7 +37,9 @@ export const periodosApi = {
   /** El calendario por mes, trimestre, semestre o año, con sus cifras. */
   resumen: (agrupacion: Agrupacion, anio?: number) =>
     api
-      .get<ResumenPeriodo[]>("/periodos/resumen", { params: { agrupacion, anio } })
+      .get<ResumenPeriodo[]>("/periodos/resumen", {
+        params: { agrupacion, anio },
+      })
       .then((r) => r.data),
 };
 
@@ -56,7 +61,9 @@ export const comprobantesApi = {
 
   /** Solo el nombre: el prefijo y la naturaleza ya numeraron asientos. */
   editar: (id: string, datos: { nombre: string }) =>
-    api.patch<ComprobanteTipo>(`/comprobantes/${id}`, datos).then((r) => r.data),
+    api
+      .patch<ComprobanteTipo>(`/comprobantes/${id}`, datos)
+      .then((r) => r.data),
 
   desactivar: (id: string) =>
     api.post(`/comprobantes/${id}/desactivar`).then(() => undefined),
@@ -101,6 +108,44 @@ export const asientosApi = {
   crear: (datos: AsientoNuevo) =>
     api
       .post<{ id: string; numero: string }>("/asientos", datos)
+      .then((r) => r.data),
+
+  /** Lo que María propone para el comprobante manual. No guarda nada. */
+  propuesta: (datos: {
+    plantilla?: Plantilla;
+    texto?: string;
+    fecha: string;
+    datos?: DatosPlantilla;
+  }) =>
+    api.post<PropuestaManual>("/asientos/propuesta", datos).then((r) => r.data),
+
+  /** Sube el soporte al almacenamiento y devuelve la llave para contabilizar con él. */
+  subirSoporte: async (archivo: File) => {
+    const tipoMime = archivo.type;
+    const { url, clave } = await api
+      .post<{ url: string; clave: string }>("/asientos/soporte/firmar", {
+        tipoMime,
+      })
+      .then((r) => r.data);
+    const respuesta = await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": tipoMime },
+      body: archivo,
+    });
+    if (!respuesta.ok) {
+      throw new Error(
+        `El soporte no se pudo subir (${respuesta.status}). Revisá que el almacenamiento esté disponible.`,
+      );
+    }
+    return { clave, nombre: archivo.name };
+  },
+
+  /** Los soportes del asiento, con su enlace de lectura. */
+  soportes: (id: string) =>
+    api
+      .get<Array<{ nombre: string; url: string | null }>>(
+        `/asientos/${id}/soportes`,
+      )
       .then((r) => r.data),
 
   /** No borra: marca ANULADO y guarda quién, cuándo y por qué. */
