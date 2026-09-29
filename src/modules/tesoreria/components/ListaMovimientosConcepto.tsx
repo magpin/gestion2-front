@@ -24,6 +24,7 @@ import { formatCOP } from "@/lib/utils";
 import { movimientosConceptoApi } from "../services/movimientos-concepto.service";
 import type { Direccion, MovimientoConcepto } from "../types/movimientos-concepto.types";
 import { MovimientoConceptoDialog } from "./MovimientoConceptoDialog";
+import { fechaCorta } from "@/modules/impuestos/lib/impuestos";
 
 /**
  * Los ingresos o egresos sin factura registrados a mano, con su anulación.
@@ -97,7 +98,7 @@ export function ListaMovimientosConcepto({
           <tbody>
             {data.map((m) => (
               <tr key={m.id} className={`border-t border-border ${m.estado === "ANULADO" ? "text-muted-foreground" : ""}`}>
-                <td className="px-5 py-3 whitespace-nowrap">{m.fecha}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{fechaCorta(m.fecha)}</td>
                 <td className="px-5 py-3">
                   <span className="font-semibold">{m.lineas.length > 1 ? m.lineas.map((l) => l.concepto).join(" + ") : m.conceptoNombre}</span>
                   {m.terceroNombre && <p className="text-xs text-muted-foreground">{m.terceroNombre}</p>}

@@ -33,7 +33,7 @@ export function BalanceGeneralTab({ mes, comparar }: { mes: string; comparar?: s
       {b.diferencia !== 0 && (
         <Aviso tono="alarma" titulo="El libro no cuadra al corte" cifra={formatCOP(b.diferencia)}>
           El activo no es igual al pasivo más el patrimonio. Suele ser un asiento a medio registrar o un saldo inicial
-          sin su contrapartida: revísalo en el Libro con el balance de prueba.
+          sin su contrapartida: revisalo en el Libro con el balance de prueba.
         </Aviso>
       )}
       {!vacio && (

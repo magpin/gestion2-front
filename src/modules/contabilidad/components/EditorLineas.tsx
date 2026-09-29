@@ -335,17 +335,24 @@ export function EditorLineas({
           </span>
         </div>
 
+        {/* Sin valores todavía no cuadra ni descuadra: se queda neutro. */}
         <p
           role="status"
           className={`text-sm font-bold ${
-            cuadre.cuadra ? "text-success" : "text-brand-text"
+            cuadre.totalDebito === 0 && cuadre.totalCredito === 0
+              ? "text-muted-foreground"
+              : cuadre.cuadra
+                ? "text-success"
+                : "text-brand-text"
           }`}
         >
-          {cuadre.cuadra
-            ? "Asiento cuadrado"
-            : `Faltan ${formatCOP(cuadre.diferencia)} en el ${
-                cuadre.falta === "DEBITO" ? "débito" : "crédito"
-              }`}
+          {cuadre.totalDebito === 0 && cuadre.totalCredito === 0
+            ? "Todavía sin valores"
+            : cuadre.cuadra
+              ? `Cuadra · diferencia ${formatCOP(0)}`
+              : `No cuadra · faltan ${formatCOP(cuadre.diferencia)} en el ${
+                  cuadre.falta === "DEBITO" ? "débito" : "crédito"
+                }`}
         </p>
       </div>
     </div>

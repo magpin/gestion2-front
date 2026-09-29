@@ -57,6 +57,10 @@ interface Lado {
   explicacion: string;
   /** Lo que se dice cuando no hay nada: cada lado explica lo suyo. */
   vacio: { titulo: string; descripcion: string };
+  /** «los anticipos», «los saldos a favor»: para el error de carga. */
+  loQueSeLee: string;
+  /** Los documentos del tercero con los que se puede cruzar: «factura por cobrar». */
+  pendiente: [string, string];
   unidad: [string, string];
   columnaTotal: string;
   columnaPendiente: string;
@@ -91,6 +95,8 @@ export const CLIENTES: Lado = {
     titulo: "No hay anticipos pendientes",
     descripcion: "Cuando un cliente deje plata sin factura, registrala con un recibo de caja como anticipo y aparece acá.",
   },
+  loQueSeLee: "los anticipos de clientes",
+  pendiente: ["factura por cobrar", "facturas por cobrar"],
   unidad: ["cliente", "clientes"],
   columnaTotal: "Recibido",
   columnaPendiente: "Por aplicar",
@@ -139,6 +145,8 @@ export const PROVEEDORES: Lado = {
     titulo: "No hay anticipos pendientes",
     descripcion: "Cuando le des plata a un proveedor antes de la factura, registrala como anticipo en el comprobante de egreso.",
   },
+  loQueSeLee: "los anticipos a proveedores",
+  pendiente: ["compra por pagar", "compras por pagar"],
   unidad: ["proveedor", "proveedores"],
   columnaTotal: "Anticipo",
   columnaPendiente: "Por legalizar",
@@ -194,8 +202,10 @@ export const SALDOS_A_FAVOR: Lado = {
   vacio: {
     titulo: "Ningún cliente tiene saldo a favor",
     descripcion:
-      "Aparece acá cuando una nota crédito cae sobre una factura que ya estaba pagada: esa plata se cruza con otra factura del cliente o se le devuelve desde Pagos.",
+      "Aparece acá cuando una nota crédito cae sobre una factura que ya estaba pagada: esa plata se cruza con otra factura del cliente o se le devuelve desde acá mismo.",
   },
+  loQueSeLee: "los saldos a favor",
+  pendiente: ["factura por cobrar", "facturas por cobrar"],
   unidad: ["cliente", "clientes"],
   columnaTotal: "A favor",
   columnaPendiente: "Por aplicar",
@@ -257,7 +267,7 @@ export function AnticiposGlobales({ lado, puedeMover }: { lado: Lado; puedeMover
 
   if (data === undefined) {
     return consulta.isError ? (
-      <ErrorCarga error={consulta.error} titulo="No se pudieron leer los anticipos" onReintentar={consulta.refetch} />
+      <ErrorCarga error={consulta.error} titulo={`No se pudieron leer ${lado.loQueSeLee}`} onReintentar={consulta.refetch} />
     ) : (
       <SkeletonTable />
     );
@@ -298,7 +308,7 @@ export function AnticiposGlobales({ lado, puedeMover }: { lado: Lado; puedeMover
                       <td className="px-5 py-3">
                         <p className="font-semibold">{a.tercero}</p>
                         <p className="text-xs text-muted-foreground">
-                          {[a.documento, fechaCorta(a.fecha).toLowerCase(), a.documentosPendientes > 0 ? `${a.documentosPendientes} por cobrar o pagar` : lado.esperando]
+                          {[a.documento, fechaCorta(a.fecha).toLowerCase(), a.documentosPendientes > 0 ? `${a.documentosPendientes} ${lado.pendiente[a.documentosPendientes === 1 ? 0 : 1]}` : lado.esperando]
                             .filter(Boolean)
                             .join(" · ")}
                         </p>
@@ -410,7 +420,7 @@ function PanelCruce({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: Antici
     mutationFn: () => lado.cruzar(anticipo, elegido!, monto, fecha),
     onSuccess: async () => {
       await Promise.all([lado.llave, ...lado.invalidar].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
-      aviso.exito("Anticipo aplicado", `${formatCOP(monto)} a ${elegido!.numero}.`);
+      aviso.exito(`${lado.nombreOrigen} aplicado`, `${formatCOP(monto)} a ${elegido!.numero}.`);
       onCerrar();
     },
     onError: (e: unknown) => aviso.falla(e),
@@ -537,7 +547,7 @@ function PanelDevolucion({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: A
       }),
     onSuccess: async () => {
       await Promise.all([lado.llave, ...lado.invalidar].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
-      aviso.exito("Anticipo devuelto", `${formatCOP(monto)} · ${anticipo.tercero}.`);
+      aviso.exito(`${lado.nombreOrigen} devuelto`, `${formatCOP(monto)} · ${anticipo.tercero}.`);
       onCerrar();
     },
     onError: (e: unknown) => aviso.falla(e),

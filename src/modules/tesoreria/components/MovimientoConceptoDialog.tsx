@@ -19,7 +19,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { aviso } from "@/lib/avisos";
-import { formatCOP } from "@/lib/utils";
+import { formatCOP, hoyEnColombia } from "@/lib/utils";
 import { SelectorProveedor } from "@/modules/compras/components/SelectorProveedor";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
 import { conceptosApi } from "@/modules/conceptos/services/conceptos.service";
@@ -33,10 +33,8 @@ import type { Direccion } from "../types/movimientos-concepto.types";
 import type { CajaResumen } from "../types/tesoreria.types";
 import { problemaDelMedio, SelectorMedio, type Medio } from "./SelectorMedio";
 
-const hoy = (): string => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+/** Hoy en Colombia, no en el reloj del navegador: es la fecha que acepta el backend. */
+const hoy = (): string => hoyEnColombia();
 
 /**
  * Lo que se paga sin factura: lo financiero (53), los impuestos que son

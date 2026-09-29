@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { aviso } from "@/lib/avisos";
-import { cn, formatCOP } from "@/lib/utils";
+import { cn, formatCOP, hoyEnColombia } from "@/lib/utils";
 import { SelectorProveedor } from "@/modules/compras/components/SelectorProveedor";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
 import type { Concepto } from "@/modules/conceptos/types/conceptos.types";
@@ -32,10 +32,8 @@ import { agruparPorSemana, proyectarCuentas } from "../lib/semanas";
 import { pagosApi } from "../services/pagos.service";
 import type { PagoProgramado, Recurrencia } from "../types/pagos.types";
 
-const hoy = (): string => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+/** Hoy en Colombia, no en el reloj del navegador: es la fecha que acepta el backend. */
+const hoy = (): string => hoyEnColombia();
 
 const DIAS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const CADA: Record<Recurrencia, string> = { UNA_VEZ: "una vez", QUINCENAL: "cada quincena", MENSUAL: "cada mes" };

@@ -203,7 +203,8 @@ export function EditorLineasVenta({
           <thead className="border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
             <tr>
               <th scope="col" className="px-4 py-3">
-                Producto
+                {/* Con servicios, la fila no siempre es un producto. */}
+                {conConceptos ? "Qué" : "Producto"}
               </th>
               <th scope="col" className="px-4 py-3">
                 Cantidad
@@ -364,7 +365,8 @@ export function EditorLineasVenta({
           </Button>
         )}
 
-        {completas.length > 0 && (
+        {/* En la página de la factura el resumen va a la derecha: acá sobra. */}
+        {completas.length > 0 && !conConceptos && (
           <dl className="grid min-w-[260px] grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
             <dt className="text-muted-foreground">Subtotal</dt>
             <dd className="text-right font-mono tabular-nums">

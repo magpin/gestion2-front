@@ -246,11 +246,11 @@ function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void
                           : undefined
                       }
                     >
-                      {c.tramo === "VENCIDO" ? "Venció" : "Vence"} {c.venceEfectivo}
+                      {c.tramo === "VENCIDO" ? "Venció" : "Vence"} el {fechaCorta(c.venceEfectivo)}
                     </span>
                     {c.descuentoSugerido > 0 && (
                       <span className="rounded-full border border-success/40 bg-success/10 px-2 py-0.5 font-medium text-foreground">
-                        Pronto pago hasta el {c.descuentoHasta}
+                        Pronto pago hasta el {c.descuentoHasta ? fechaCorta(c.descuentoHasta) : ""}
                       </span>
                     )}
                   </p>

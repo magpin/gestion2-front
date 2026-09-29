@@ -27,6 +27,7 @@ import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { SelectorTercero } from "@/modules/ventas/components/SelectorTercero";
 import { cobrosApi } from "../services/cobros.service";
 import type { CruceCartera } from "../types/cobros.types";
+import { fechaCorta } from "@/modules/impuestos/lib/impuestos";
 
 const hoy = (): string => {
   const d = new Date();
@@ -70,7 +71,7 @@ export function AnticiposYCruces({ puedeCruzar }: { puedeCruzar: boolean }) {
         ...disponibles.anticipos.map((a) => ({
           tipo: "ANTICIPO" as const,
           id: a.movimientoId,
-          nombre: `Anticipo del ${a.fecha}${a.detalle ? ` · ${a.detalle}` : ""}`,
+          nombre: `Anticipo del ${fechaCorta(a.fecha)}${a.detalle ? ` · ${a.detalle}` : ""}`,
           saldo: a.saldo,
         })),
         ...disponibles.saldosAFavor.map((s) => ({
@@ -350,7 +351,7 @@ export function ListaCruces({ puedeAnular }: { puedeAnular: boolean }) {
           <tbody>
             {cruces.map((c) => (
               <tr key={c.id} className={`border-t border-border ${c.estado === "ANULADO" ? "text-muted-foreground" : ""}`}>
-                <td className="px-5 py-3 whitespace-nowrap">{c.fecha}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{fechaCorta(c.fecha)}</td>
                 <td className="px-5 py-3">{c.terceroNombre}</td>
                 <td className="px-5 py-3">
                   {c.origen}

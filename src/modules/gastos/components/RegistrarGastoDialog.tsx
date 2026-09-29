@@ -255,10 +255,10 @@ function Formulario({
           />
           <ErrorDeCampo id="gasto-concepto-error" mensaje={verError("concepto")} />
         </Campo>
-        {concepto?.cuenta && (
+        {/* E25: a quien registra no se le muestra la cuenta; la pone el concepto. */}
+        {concepto !== null && concepto.operacional !== null && (
           <p className="-mt-3 text-xs text-muted-foreground">
-            Va a {concepto.cuenta.codigo} · {concepto.cuenta.nombre}
-            {concepto.operacional === true ? " · gasto operacional" : concepto.operacional === false ? " · no operacional" : ""}
+            {concepto.operacional ? "Gasto de la operación" : "No es de la operación"}
           </p>
         )}
 

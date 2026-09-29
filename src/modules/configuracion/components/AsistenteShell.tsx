@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Loader2, TriangleAlert } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
+import { ErrorCarga } from "@/components/shared/ErrorCarga";
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
@@ -82,7 +83,7 @@ export function AsistenteShell({
   etiquetaContinuar,
 }: Props) {
   const router = useRouter();
-  const { data, isLoading } = useEstadoConfiguracion();
+  const { data, isLoading, isError, error, refetch } = useEstadoConfiguracion();
   const empresas = useAuthStore((s) => s.empresas);
   const empresaId = useAuthStore((s) => s.empresaId);
   const empresa = empresas.find((e) => e.id === empresaId);
@@ -110,6 +111,15 @@ export function AsistenteShell({
             {etiquetaContinuar ?? "Guardar"}
           </button>
         )}
+      </div>
+    );
+  }
+
+  // Si la consulta falla no se queda cargando para siempre: lo dice y deja reintentar.
+  if (isError && !data) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center px-6">
+        <ErrorCarga error={error} titulo="No se pudo leer cómo va la configuración" onReintentar={refetch} />
       </div>
     );
   }

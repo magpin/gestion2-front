@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, FileText, Loader2, Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { ErrorCarga } from "@/components/shared/ErrorCarga";
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
 import { RUTA_MODO_IA } from "../components/AsistenteShell";
@@ -47,12 +48,21 @@ const DOCUMENTOS = [
 ];
 
 export function BienvenidaView() {
-  const { data, isLoading } = useEstadoConfiguracion();
+  const { data, isLoading, isError, error, refetch } = useEstadoConfiguracion();
   const { data: modoIa } = useDisponible();
   const router = useRouter();
   const empresas = useAuthStore((s) => s.empresas);
   const empresaId = useAuthStore((s) => s.empresaId);
   const empresa = empresas.find((e) => e.id === empresaId);
+
+  // Si la consulta falla no se queda cargando para siempre: lo dice y deja reintentar.
+  if (isError && !data) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center px-6">
+        <ErrorCarga error={error} titulo="No se pudo leer cómo va la configuración" onReintentar={refetch} />
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return (

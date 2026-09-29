@@ -52,7 +52,7 @@ function Real({ mes }: { mes: string }) {
       {f.diferencia !== 0 && (
         <Aviso tono="alarma" titulo="Hay plata que el flujo no explica" cifra={formatCOP(f.diferencia)}>
           El saldo final de caja y bancos no sale del inicial más lo que se movió. Suele ser un asiento de caja sin
-          contrapartida; revísalo en el Libro.
+          contrapartida; revisalo en el Libro.
         </Aviso>
       )}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">

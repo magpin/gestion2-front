@@ -72,7 +72,7 @@ export function EstadosFinancierosView() {
             Estados financieros<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Balance general, estado de resultados y flujo de caja, al corte que elijas. Salen del libro.
+            Balance general, estado de resultados y flujo de caja, al corte que elijás. Salen del libro.
           </p>
         </div>
         <AccionesDropdown

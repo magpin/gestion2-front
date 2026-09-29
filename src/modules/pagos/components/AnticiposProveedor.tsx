@@ -27,6 +27,7 @@ import { Campo } from "@/modules/configuracion/components/Campo";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { pagosApi } from "../services/pagos.service";
 import type { AnticipoProveedor, CrucePago } from "../types/pagos.types";
+import { fechaCorta } from "@/modules/impuestos/lib/impuestos";
 
 const hoy = (): string => {
   const d = new Date();
@@ -93,7 +94,7 @@ export function AnticiposProveedor({ puedeCruzar }: { puedeCruzar: boolean }) {
                 <li key={a.movimientoId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold">
-                      Anticipo del {a.fecha}
+                      Anticipo del {fechaCorta(a.fecha)}
                       {a.detalle ? ` · ${a.detalle}` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -198,7 +199,7 @@ function ContenidoCruce({
         <div>
           <DialogTitle>Cruzar el anticipo</DialogTitle>
           <DialogDescription>
-            Quedan {formatCOP(anticipo.saldo)} del anticipo del {anticipo.fecha}. Se asienta débito a
+            Quedan {formatCOP(anticipo.saldo)} del anticipo del {fechaCorta(anticipo.fecha)}. Se asienta débito a
             Proveedores (220505) y crédito a Anticipos (133005); la retención del anticipo en la parte cruzada
             se reversa, porque la compra ya lleva la suya.
           </DialogDescription>
@@ -319,7 +320,7 @@ export function ListaCruces({ puedeAnular }: { puedeAnular: boolean }) {
           <tbody>
             {cruces.map((c) => (
               <tr key={c.id} className={`border-t border-border ${c.estado === "ANULADO" ? "text-muted-foreground" : ""}`}>
-                <td className="px-5 py-3 whitespace-nowrap">{c.fecha}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{fechaCorta(c.fecha)}</td>
                 <td className="px-5 py-3">{c.terceroNombre}</td>
                 <td className="px-5 py-3">
                   {c.origen}

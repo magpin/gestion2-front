@@ -30,6 +30,9 @@ const ESTILO: Record<AvisoImpuestos["tipo"], { caja: string; icono: typeof Landm
  */
 export function AvisoImpuestosInicio() {
   const paga = useTieneRol("DIRECTOR", "CONTADOR", "CAJA");
+  // Los mismos roles que leen Impuestos en el backend: a CAJA la pantalla le da
+  // 403, así que no se le ofrece el enlace.
+  const ve = useTieneRol("DIRECTOR", "CONTADOR", "CONSULTA");
   const [pagando, setPagando] = useState(false);
   const { data } = useQuery({ queryKey: ["impuestos", "aviso"], queryFn: impuestosApi.aviso, meta: SILENCIOSO });
   if (!data) return null;
@@ -77,7 +80,7 @@ export function AvisoImpuestosInicio() {
         <Button className="h-10 rounded-xl px-5" onClick={() => setPagando(true)}>
           Registrar pago
         </Button>
-      ) : (
+      ) : !ve ? null : (
         <Link
           href={fila.obligacion === "RETENCION" ? "/dashboard/impuestos?pestana=retencion" : "/dashboard/impuestos"}
           className={cn(buttonVariants({ variant: "outline" }), "h-10 rounded-xl px-5")}
