@@ -107,7 +107,26 @@ export function DetalleVenta({
                     {documento.lineas.map((l) => (
                       <tr key={l.id}>
                         <td className="px-4 py-3 text-sm font-medium">
-                          {l.producto_nombre}
+                          {l.producto_nombre ?? (
+                            <>
+                              {l.detalle}
+                              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                                {l.concepto_operacional === false
+                                  ? "Otro ingreso"
+                                  : "Servicio"}{" "}
+                                · {l.concepto_nombre}
+                                {l.cuenta_codigo && (
+                                  <>
+                                    {" "}
+                                    ·{" "}
+                                    <span className="font-mono">
+                                      {l.cuenta_codigo}
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            </>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {mostrarCantidad(l.cantidad)}

@@ -56,9 +56,8 @@ export function FormularioNotaCredito({
   // formulario se reabre desde filas distintas de la lista de facturas—, así
   // que la elegida es la fija cuando viene, nunca lo que quedó en el estado
   // de una apertura anterior.
-  const [elegidaAMano, setElegidaAMano] = useState<VentaDocumentoResumen | null>(
-    null,
-  );
+  const [elegidaAMano, setElegidaAMano] =
+    useState<VentaDocumentoResumen | null>(null);
   const factura = facturaFija ?? elegidaAMano;
   const [fecha, setFecha] = useState(hoyEnColombia());
   const [motivo, setMotivo] = useState("");
@@ -142,7 +141,10 @@ export function FormularioNotaCredito({
                 {facturaFija.consecutivo}
               </p>
             ) : (
-              <SelectorFacturaVigente valor={factura} onElegir={setElegidaAMano} />
+              <SelectorFacturaVigente
+                valor={factura}
+                onElegir={setElegidaAMano}
+              />
             )}
           </Campo>
 
@@ -211,7 +213,26 @@ export function FormularioNotaCredito({
                     {(detalle?.lineas ?? []).map((l) => (
                       <tr key={l.id}>
                         <td className="px-4 py-3 text-sm font-medium">
-                          {l.producto_nombre}
+                          {l.producto_nombre ?? (
+                            <>
+                              {l.detalle}
+                              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                                {l.concepto_operacional === false
+                                  ? "Otro ingreso"
+                                  : "Servicio"}{" "}
+                                · {l.concepto_nombre}
+                                {l.cuenta_codigo && (
+                                  <>
+                                    {" "}
+                                    ·{" "}
+                                    <span className="font-mono">
+                                      {l.cuenta_codigo}
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            </>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {l.cantidad}
@@ -231,7 +252,7 @@ export function FormularioNotaCredito({
                             }
                             placeholder="0"
                             className="h-11 w-28 rounded-xl px-4 text-right font-mono"
-                            aria-label={`Cuánto vuelve de ${l.producto_nombre}`}
+                            aria-label={`Cuánto vuelve de ${l.producto_nombre ?? l.detalle}`}
                           />
                         </td>
                       </tr>

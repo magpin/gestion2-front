@@ -118,9 +118,10 @@ export function CotizacionesSeccion({
 
   const { data: productosACorregir } = useQuery({
     queryKey: ["productos", "de-cotizacion", aCorregir?.id],
+    // Una cotización es solo de productos: la línea de concepto es de la factura.
     queryFn: () =>
       Promise.all(
-        (aCorregir?.lineas ?? []).map((l) => productosApi.porId(l.producto_id)),
+        (aCorregir?.lineas ?? []).map((l) => productosApi.porId(l.producto_id!)),
       ),
     enabled: aCorregir !== undefined,
   });

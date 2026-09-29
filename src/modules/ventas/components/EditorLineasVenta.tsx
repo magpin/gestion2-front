@@ -5,15 +5,22 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { CampoCantidad, CampoPesos } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
-import { formatCOP } from "@/lib/utils";
+import { cn, formatCOP } from "@/lib/utils";
+import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
+import type { Concepto } from "@/modules/conceptos/types/conceptos.types";
 import { SelectorProducto } from "@/modules/inventario/components/SelectorProducto";
 import {
   kardexApi,
   precioApi,
 } from "@/modules/inventario/services/inventario.service";
 import type { ProductoResumen } from "@/modules/inventario/types/inventario.types";
-import { sumarTotales, totalesDeLinea, type TotalesLinea } from "../lib/totales";
+import {
+  sumarTotales,
+  totalesDeLinea,
+  type TotalesLinea,
+} from "../lib/totales";
 
 /**
  * Pesos con centavos solo si los hay: el precio sin IVA de la tinta es
@@ -34,8 +41,41 @@ export interface LineaVentaBorrador {
   clave: number;
   producto: ProductoResumen | null;
   cantidad: string;
-  /** Solo se llena —y solo se manda— si el producto no tiene precio de lista. */
+  /**
+   * Solo se llena —y solo se manda— si el producto no tiene precio de lista.
+   * En la línea de concepto es el precio que se cobra.
+   */
   precioUnitario: string;
+  /**
+   * Solo en la factura: un producto, o un servicio u otro ingreso por
+   * concepto (Fase 8). Sin esto, producto.
+   */
+  tipo?: "PRODUCTO" | "CONCEPTO";
+  /** Solo en la de concepto: el concepto de INGRESO; la cuenta la pone él. */
+  concepto?: Concepto | null;
+  /** Solo en la de concepto: qué se cobró. */
+  detalle?: string;
+  /** Solo en la de concepto: la tarifa la decide quien factura. */
+  ivaTarifa?: string;
+}
+
+/** Una línea de servicio u otro ingreso, vacía. */
+export function lineaConceptoVacia(): LineaVentaBorrador {
+  return {
+    ...lineaVentaVacia(),
+    tipo: "CONCEPTO",
+    concepto: null,
+    detalle: "",
+    ivaTarifa: "19",
+    cantidad: "1",
+  };
+}
+
+/** Si la línea ya tiene lo mínimo: el producto, o el concepto y qué se cobró. */
+export function lineaVentaCompleta(l: LineaVentaBorrador): boolean {
+  return l.tipo === "CONCEPTO"
+    ? (l.concepto ?? null) !== null && (l.detalle ?? "").trim().length >= 2
+    : l.producto !== null;
 }
 
 export function lineaVentaVacia(): LineaVentaBorrador {
@@ -84,6 +124,7 @@ export function EditorLineasVenta({
   precioEditable = false,
   precioSiempreDigitado = false,
   mostrarExistencia = true,
+  conConceptos = false,
 }: {
   lineas: LineaVentaBorrador[];
   onCambiar: (lineas: LineaVentaBorrador[]) => void;
@@ -101,6 +142,8 @@ export function EditorLineasVenta({
    * kardex, y ahí el saldo en bodega es ruido.
    */
   mostrarExistencia?: boolean;
+  /** Solo la factura: deja agregar servicios y otros ingresos por concepto. */
+  conConceptos?: boolean;
 }) {
   const actualizar = (clave: number, cambio: Partial<LineaVentaBorrador>) =>
     onCambiar(lineas.map((l) => (l.clave === clave ? { ...l, ...cambio } : l)));
@@ -120,6 +163,13 @@ export function EditorLineasVenta({
   });
   const calculos: Array<(TotalesLinea & { tarifa: number }) | null> =
     lineas.map((l, i) => {
+      if (l.tipo === "CONCEPTO") {
+        const precio = Number(l.precioUnitario);
+        const cantidad = Number(l.cantidad);
+        if (!(precio > 0) || !(cantidad > 0)) return null;
+        const tarifa = responsable ? Number(l.ivaTarifa ?? 0) : 0;
+        return { ...totalesDeLinea(cantidad, precio, tarifa), tarifa };
+      }
       if (l.producto === null) return null;
       const vigente = consultas[i]?.data?.find((p) => p.fecha_fin === null);
       const deLista =
@@ -179,14 +229,30 @@ export function EditorLineasVenta({
             {lineas.map((l, i) => (
               <tr key={l.clave} className="align-top">
                 <td className="px-4 py-3">
-                  <SelectorProducto
-                    valor={l.producto}
-                    onElegir={(producto) =>
-                      actualizar(l.clave, { producto, precioUnitario: "" })
-                    }
-                  />
-                  {mostrarExistencia && l.producto && (
-                    <Existencia producto={l.producto} />
+                  {l.tipo === "CONCEPTO" ? (
+                    <LineaDeConcepto
+                      linea={l}
+                      numero={i + 1}
+                      conIva={responsable}
+                      onCambiar={(cambio) => actualizar(l.clave, cambio)}
+                    />
+                  ) : (
+                    <>
+                      {conConceptos && (
+                        <span className="mb-1.5 inline-block rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">
+                          Producto
+                        </span>
+                      )}
+                      <SelectorProducto
+                        valor={l.producto}
+                        onElegir={(producto) =>
+                          actualizar(l.clave, { producto, precioUnitario: "" })
+                        }
+                      />
+                      {mostrarExistencia && l.producto && (
+                        <Existencia producto={l.producto} />
+                      )}
+                    </>
                   )}
                 </td>
                 <td className="px-4 py-3">
@@ -200,16 +266,28 @@ export function EditorLineasVenta({
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <PrecioDeLinea
-                    producto={l.producto}
-                    valor={l.precioUnitario}
-                    onCambiar={(precioUnitario) =>
-                      actualizar(l.clave, { precioUnitario })
-                    }
-                    etiqueta={`Precio de la línea ${i + 1}`}
-                    editable={precioEditable}
-                    siempreDigitado={precioSiempreDigitado}
-                  />
+                  {l.tipo === "CONCEPTO" ? (
+                    <CampoPesos
+                      value={l.precioUnitario}
+                      onChange={(precioUnitario) =>
+                        actualizar(l.clave, { precioUnitario })
+                      }
+                      placeholder="0"
+                      className="ml-auto h-11 w-32 rounded-xl px-4 text-right font-mono"
+                      aria-label={`Precio de la línea ${i + 1}`}
+                    />
+                  ) : (
+                    <PrecioDeLinea
+                      producto={l.producto}
+                      valor={l.precioUnitario}
+                      onCambiar={(precioUnitario) =>
+                        actualizar(l.clave, { precioUnitario })
+                      }
+                      etiqueta={`Precio de la línea ${i + 1}`}
+                      editable={precioEditable}
+                      siempreDigitado={precioSiempreDigitado}
+                    />
+                  )}
                 </td>
                 <td className="px-4 py-3 pt-6 text-right font-mono text-sm tabular-nums">
                   {calculos[i] === null ? "—" : pesos(calculos[i]!.subtotal)}
@@ -253,15 +331,38 @@ export function EditorLineasVenta({
       </div>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <Button
-          type="button"
-          variant="ghost"
-          className="h-11 rounded-xl px-4 text-brand-text"
-          onClick={agregar}
-        >
-          <Plus className="size-4" />
-          Agregar línea
-        </Button>
+        {conConceptos ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 rounded-xl border-dashed px-4"
+              onClick={agregar}
+            >
+              <Plus className="size-4" />
+              Agregar producto
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 rounded-xl border-dashed px-4"
+              onClick={() => onCambiar([...lineas, lineaConceptoVacia()])}
+            >
+              <Plus className="size-4" />
+              Agregar servicio u otro ingreso
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-11 rounded-xl px-4 text-brand-text"
+            onClick={agregar}
+          >
+            <Plus className="size-4" />
+            Agregar línea
+          </Button>
+        )}
 
         {completas.length > 0 && (
           <dl className="grid min-w-[260px] grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
@@ -397,5 +498,74 @@ function PrecioDeLinea({
           </span>
         )}
     </>
+  );
+}
+
+/**
+ * Una línea de servicio u otro ingreso: el concepto de INGRESO —que dice la
+ * cuenta—, qué se cobró y la tarifa de IVA. No sale de ninguna bodega.
+ */
+function LineaDeConcepto({
+  linea,
+  numero,
+  conIva,
+  onCambiar,
+}: {
+  linea: LineaVentaBorrador;
+  numero: number;
+  conIva: boolean;
+  onCambiar: (cambio: Partial<LineaVentaBorrador>) => void;
+}) {
+  const c = linea.concepto ?? null;
+  // 41 es de la operación (un servicio); 42, no operacional (otro ingreso).
+  const esServicio = c?.cuenta?.codigo.startsWith("41") ?? true;
+  return (
+    <div className="flex flex-col gap-2">
+      <span
+        className={cn(
+          "inline-block w-fit rounded-full px-2 py-0.5 text-[11px] font-medium",
+          esServicio
+            ? "bg-info/15 text-info"
+            : "bg-warning/15 text-warning-foreground",
+        )}
+      >
+        {esServicio ? "Servicio" : "Otro ingreso"}
+      </span>
+      <SelectorConcepto
+        tipos={["INGRESO"]}
+        valor={c}
+        onElegir={(concepto) => onCambiar({ concepto })}
+        filtro={(x) => x.cuenta !== null && !x.automatico}
+      />
+      {c?.cuenta && (
+        <p className="-mt-1 text-xs text-muted-foreground">
+          {c.operacional === false ? "No operacional" : "Operacional"} ·{" "}
+          {c.cuenta.codigo} {c.cuenta.nombre}
+        </p>
+      )}
+      <Input
+        value={linea.detalle ?? ""}
+        onChange={(e) => onCambiar({ detalle: e.target.value })}
+        placeholder="Qué se cobró: transporte a Turbo, arriendo de octubre…"
+        maxLength={200}
+        className="h-11 rounded-xl px-4"
+        aria-label={`Detalle de la línea ${numero}`}
+      />
+      {conIva && (
+        <label className="flex w-fit items-center gap-2 text-xs text-muted-foreground">
+          IVA
+          <select
+            value={linea.ivaTarifa ?? "19"}
+            onChange={(e) => onCambiar({ ivaTarifa: e.target.value })}
+            className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm text-foreground"
+            aria-label={`IVA de la línea ${numero}`}
+          >
+            <option value="19">19 %</option>
+            <option value="5">5 %</option>
+            <option value="0">Excluido o exento</option>
+          </select>
+        </label>
+      )}
+    </div>
   );
 }

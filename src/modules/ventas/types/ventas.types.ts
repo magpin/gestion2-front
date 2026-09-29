@@ -73,9 +73,18 @@ export interface VentaDocumentoLineaResumen {
   id: string;
   venta_documento_id: string;
   orden: number;
-  producto_id: string;
-  producto_codigo: string;
-  producto_nombre: string;
+  /** `null` en una línea de servicio u otro ingreso (Fase 8). */
+  producto_id: string | null;
+  producto_codigo: string | null;
+  producto_nombre: string | null;
+  /** La línea de concepto: qué concepto, a qué cuenta entró y qué fue. */
+  concepto_id?: string | null;
+  concepto_nombre?: string | null;
+  /** `true`: servicio (41). `false`: otro ingreso (42). */
+  concepto_operacional?: boolean | null;
+  cuenta_codigo?: string | null;
+  cuenta_nombre?: string | null;
+  detalle?: string | null;
   cantidad: string;
   precio_unitario: string;
   iva_tarifa: string;
@@ -114,7 +123,13 @@ export interface FiltroVentas {
 
 /** Sin `precioUnitario`: el precio es siempre el de lista vigente del producto. */
 export interface LineaDocumentoInput {
-  productoId: string;
+  /** Un producto del catálogo, o —solo en la factura— un concepto de ingreso. */
+  productoId?: string;
+  conceptoId?: string;
+  /** Solo en la de concepto: qué se cobró. */
+  detalle?: string;
+  /** Solo en la de concepto: 0, 5 o 19. */
+  ivaTarifa?: number;
   cantidad: number;
   /**
    * Solo en cotizaciones, y solo cuando el producto no tiene precio de lista:
@@ -155,6 +170,35 @@ export interface CrearFacturaInput {
    */
   formaPago: "CREDITO" | "CONTADO";
   pagos?: MedioAlEmitirInput[];
+  /** A crédito: cuándo vence. Sin él, el plazo del cliente o 30 días. */
+  vence?: string;
+  /** Lo que el cliente nos retiene: el concepto y la base. */
+  retenciones?: Array<{ conceptoId: string; base: number }>;
+}
+
+/** Cómo quedaría la factura, sin emitirla (`POST /facturas/previo`). */
+export interface FacturaPrevia {
+  numero: string;
+  subtotal: number;
+  iva: number;
+  total: number;
+  retenciones: Array<{ tipo: string; nombre: string; tarifa: number; base: number; valor: number }>;
+  retenido: number;
+  /** Lo que va a entrar: el total menos lo retenido. */
+  neto: number;
+  vence: string | null;
+  asiento: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
+  /** El costo de lo que sale del inventario, aparte del asiento que se muestra. */
+  costo: number;
+}
+
+/** El número que sale si se emite ahora (`GET /facturas/numeracion`). */
+export interface NumeracionFactura {
+  siguiente: string;
+  resolucion: string;
+  desde: number;
+  hasta: number;
+  quedan: number;
 }
 
 /**
@@ -210,6 +254,35 @@ export interface ConvertirCotizacionInput {
   /** Ver `CrearFacturaInput.formaPago`. */
   formaPago: "CREDITO" | "CONTADO";
   pagos?: MedioAlEmitirInput[];
+  /** A crédito: cuándo vence. Sin él, el plazo del cliente o 30 días. */
+  vence?: string;
+  /** Lo que el cliente nos retiene: el concepto y la base. */
+  retenciones?: Array<{ conceptoId: string; base: number }>;
+}
+
+/** Cómo quedaría la factura, sin emitirla (`POST /facturas/previo`). */
+export interface FacturaPrevia {
+  numero: string;
+  subtotal: number;
+  iva: number;
+  total: number;
+  retenciones: Array<{ tipo: string; nombre: string; tarifa: number; base: number; valor: number }>;
+  retenido: number;
+  /** Lo que va a entrar: el total menos lo retenido. */
+  neto: number;
+  vence: string | null;
+  asiento: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
+  /** El costo de lo que sale del inventario, aparte del asiento que se muestra. */
+  costo: number;
+}
+
+/** El número que sale si se emite ahora (`GET /facturas/numeracion`). */
+export interface NumeracionFactura {
+  siguiente: string;
+  resolucion: string;
+  desde: number;
+  hasta: number;
+  quedan: number;
 }
 
 /**

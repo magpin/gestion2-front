@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import {
-  FileMinus,
-  FilePlus,
-  FileText,
-  ReceiptText,
-} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FileMinus, FilePlus, FileText, ReceiptText } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
+import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
 import { AtajoLeidos } from "@/modules/asistente/components/AtajoLeidos";
 import { CotizacionesSeccion } from "./CotizacionesSeccion";
@@ -16,12 +13,8 @@ import { FacturasSeccion } from "./FacturasSeccion";
 import { NotasCreditoSeccion } from "./NotasCreditoSeccion";
 import { NotasDebitoSeccion } from "./NotasDebitoSeccion";
 
-
 export type Seccion =
-  | "Cotizaciones"
-  | "Facturas"
-  | "Notas crédito"
-  | "Notas débito";
+  "Cotizaciones" | "Facturas" | "Notas crédito" | "Notas débito";
 
 const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Cotizaciones", FileText],
@@ -47,13 +40,22 @@ const ETIQUETA_NUEVO: Partial<Record<Seccion, string>> = {
  * lista vigente del producto; la excepción es la nota débito, donde lo que
  * se cobra es un importe nuevo y se digita.
  */
-export function VentasView({ inicial = "Cotizaciones" }: { inicial?: Seccion } = {}) {
+export function VentasView({
+  inicial = "Cotizaciones",
+}: { inicial?: Seccion } = {}) {
   const [seccion, setSeccion] = useState<Seccion>(inicial);
   // El estado de "estoy creando" vive acá y no en cada sección: el botón está
   // en la cabecera, arriba de las pestañas, y desde ahí no alcanzaría.
   const [creando, setCreando] = useState(false);
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
   const cerrarCreacion = () => setCreando(false);
+  const router = useRouter();
+  // Con la página prendida, la factura nueva se emite allá, con servicios,
+  // resumen y asiento previo. Las cotizaciones y las notas siguen en su diálogo.
+  const nuevo = () =>
+    seccion === "Facturas" && funcionActiva("facturaPagina")
+      ? router.push("/dashboard/ventas/nueva")
+      : setCreando(true);
 
   return (
     <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
@@ -75,10 +77,7 @@ export function VentasView({ inicial = "Cotizaciones" }: { inicial?: Seccion } =
         <div className="flex flex-wrap items-center gap-3">
           <AtajoLeidos tipo="pedidos" />
           {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
-            <BotonNuevo
-              etiqueta={ETIQUETA_NUEVO[seccion]!}
-              onClick={() => setCreando(true)}
-            />
+            <BotonNuevo etiqueta={ETIQUETA_NUEVO[seccion]!} onClick={nuevo} />
           )}
         </div>
       </header>

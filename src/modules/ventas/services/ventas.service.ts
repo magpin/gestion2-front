@@ -10,6 +10,8 @@ import type {
   PaginaVentas,
   VentaDocumentoDetalle,
   VentaDocumentoResumen,
+  FacturaPrevia,
+  NumeracionFactura,
 } from "../types/ventas.types";
 
 const parametros = (f: FiltroVentas) => ({
@@ -66,6 +68,14 @@ export const facturasApi = {
 
   crear: (datos: CrearFacturaInput) =>
     api.post<VentaDocumentoDetalle>("/facturas", datos).then((r) => r.data),
+
+  /** Cómo quedaría, sin emitirla: totales, retenciones, vence y asiento. */
+  previo: (datos: CrearFacturaInput) =>
+    api.post<FacturaPrevia>("/facturas/previo", datos).then((r) => r.data),
+
+  /** El número que sale si se emite ahora; `null` si no hay resolución. */
+  numeracion: () =>
+    api.get<NumeracionFactura | null>("/facturas/numeracion").then((r) => r.data),
 
   /** El cliente y las líneas salen de la cotización; acá solo va la fecha. */
   convertirCotizacion: (cotizacionId: string, datos: ConvertirCotizacionInput) =>
