@@ -94,9 +94,18 @@ export function SelectorProducto({
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
 
+        {/* La lista tiene alto propio y el buscador se voltea hacia arriba si
+            abajo no cabe: en la última línea de la factura, con el alto de lo
+            que quedaba bajo el campo, la lista se encogía a cero y no se veía
+            ningún producto. */}
         <PopoverContent
-          className="flex max-h-(--available-height) w-(--anchor-width) min-w-96 flex-col p-0"
+          className="flex w-(--anchor-width) min-w-96 flex-col p-0"
           align="start"
+          collisionAvoidance={{
+            side: "flip",
+            align: "shift",
+            fallbackAxisSide: "none",
+          }}
         >
           <div className="border-b border-border p-3">
             <Input
@@ -115,7 +124,7 @@ export function SelectorProducto({
             />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+          <div className="max-h-[min(18rem,45vh)] overflow-y-auto p-2">
             {isFetching && (
               <div className="flex justify-center py-8 text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" />
