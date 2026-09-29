@@ -297,9 +297,9 @@ test.describe("Motor de retenciones · ventas y notas", () => {
     await dialogo.getByLabel("N.° nota del proveedor").fill(nd);
     await dialogo.getByLabel("Motivo *").fill("Mantenimiento no incluido en la factura (prueba e2e)");
     await dialogo.getByRole("button", { name: "Gasto", exact: true }).click();
-    await dialogo.getByRole("button", { name: /Seleccione una cuenta auxiliar/ }).click();
-    await page.getByLabel("Buscar cuenta").fill("514510");
-    await page.getByRole("button", { name: /514510/ }).first().click();
+    // La línea de gasto se elige por concepto (0108): el que va a la 514510.
+    await dialogo.getByRole("combobox").filter({ hasText: "Elegí el concepto" }).first().click();
+    await page.getByRole("option", { name: /514510$/ }).first().click();
     await dialogo.getByLabel("Detalle de la línea 1").fill("Mantenimiento de la bodega");
     await dialogo.getByLabel("Cantidad de la línea 1").fill("1");
     await dialogo.getByLabel("Costo unitario de la línea 1").fill("1000000");

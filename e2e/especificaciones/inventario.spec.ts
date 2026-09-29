@@ -40,6 +40,10 @@ test.describe("Inventario", () => {
     await page.getByLabel("Cantidad *").fill(String(cantidad));
     if (costo !== undefined) await page.getByLabel("Costo unitario *").fill(String(costo));
     await page.getByLabel("Motivo *").fill(motivo);
+    // Una salida pregunta quién responde por lo que falta (arqueo por
+    // concepto): en la prueba lo asume la empresa, como merma.
+    const asume = page.getByRole("dialog").getByText("Lo asume la empresa");
+    if (await asume.count()) await asume.click();
     await page.getByRole("dialog").getByRole("button", { name: "Registrar movimiento" }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
   }

@@ -47,27 +47,18 @@ test.describe("Asistente de configuración", () => {
     // El DV no se teclea: es una función del NIT, y la base lo recalcula.
     await expect(page.getByLabel("DV")).toHaveValue(dv);
 
-    await page.getByRole("button", { name: "Crear y configurar" }).click();
+    await page.getByRole("button", { name: "Crear y seguir" }).click();
 
-    // Cae en el tablero y no en la bienvenida: crear la empresa ya deja el
-    // primer paso LISTO, y la bienvenida solo se muestra con cero pasos
-    // hechos. O sea que la pantalla que explica «con IA o a mano» no la ve
-    // nadie que cree su empresa por acá. Está anotado en docs/pendientes.
-    await expect(page).toHaveURL(/\/dashboard/);
+    // Crear la empresa deja listo el paso 1 y sigue con el 2, sin pasar por
+    // el tablero: faltan cinco pasos y el asistente los lleva en orden.
+    await expect(page).toHaveURL(/\/configuracion\/(?!empresa-nueva)/);
+    await expect(page.getByText("1 de 6 listos")).toBeVisible();
 
-    // ── Se sigue configurando desde la barra lateral ──
-    await page.getByRole("link", { name: "Configurar empresa" }).click();
-    await expect(page).toHaveURL(/\/configuracion\/empresa/);
+    // Lo ya creado se puede revisar, pero el NIT y el tipo de persona no son
+    // campos: se muestran con un candado, porque otro NIT es otra empresa.
+    await page.goto("/configuracion/empresa");
     await expect(page.getByLabel("Razón social")).toHaveValue(razonSocial);
-
-    // El NIT y el tipo de persona ni siquiera son campos: se muestran con un
-    // candado, porque otro NIT es otra empresa.
     await expect(page.getByText(/El NIT y el tipo de persona no cambian/)).toBeVisible();
-
-    // Uno de cinco, y el plan de cuentas todavía no se puede tocar: necesita
-    // la situación legal para saber qué cuentas hacen falta.
-    await expect(page.getByText("1 de 5 listos")).toBeVisible();
-    await expect(page.getByText("Bloqueado")).toBeVisible();
 
     // ── El paso que falta primero: la sede ──
     await page.goto("/configuracion/sedes");
@@ -91,7 +82,7 @@ test.describe("Asistente de configuración", () => {
     await page.getByRole("button", { name: "Agregar sede" }).click();
     await expect(page.getByText("Sede registrada").first()).toBeVisible();
 
-    // Con la sede hecha, el asistente va por dos de cinco.
-    await expect(page.getByText("2 de 5 listos")).toBeVisible();
+    // Con la sede hecha, el asistente va por dos de seis.
+    await expect(page.getByText("2 de 6 listos")).toBeVisible();
   });
 });

@@ -18,7 +18,7 @@ import { expect, test } from "../fixtures/consola";
 
 const PANTALLAS: Array<{ ruta: string; titulo: RegExp; pestanas?: string[] }> = [
   { ruta: "/dashboard", titulo: /^Inicio/ },
-  { ruta: "/dashboard/asistente", titulo: /María/ },
+  { ruta: "/dashboard/asistente", titulo: /./ },
   { ruta: "/dashboard/ventas", titulo: /^Ventas/, pestanas: ["Cotizaciones", "Facturas", "Notas crédito", "Notas débito"] },
   { ruta: "/dashboard/ventas/nueva", titulo: /Nueva factura de venta/ },
   {

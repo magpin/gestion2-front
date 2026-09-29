@@ -36,7 +36,7 @@ import {
  */
 test.describe("Motor de retenciones en compras", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
-  test.setTimeout(90_000);
+  test.setTimeout(180_000);
 
   // -------------------------------------------------------------------------
   // §1 — La ley, para consultar

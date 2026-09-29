@@ -154,6 +154,24 @@ async function configurar(api: APIRequestContext, e: EmpresaLista, v: Variante) 
   ]) {
     if (!conGastos.has(codigo)) await pedir("post", "/plan-cuentas", { codigo, nombre });
   }
+
+  // La línea de gasto de la compra se elige por concepto (0108): cada cuenta
+  // de gasto de las pruebas necesita uno que vaya a ella.
+  const r = await api.get(`${API}/plan-cuentas`, { headers: { Authorization: `Bearer ${e.token}` } });
+  const cuentas = (await r.json()) as { id: string; codigo: string }[] | { datos: { id: string; codigo: string }[] };
+  const porCodigo = new Map((Array.isArray(cuentas) ? cuentas : cuentas.datos).map((c) => [c.codigo, c.id]));
+  const conceptos = (await pedir("get", "/conceptos")) as { cuenta: { codigo: string } | null }[];
+  const conConcepto = new Set(conceptos.map((c) => c.cuenta?.codigo));
+  for (const [codigo, nombre] of [
+    ["513505", "Aseo y vigilancia"],
+    ["513595", "Otros servicios"],
+    ["511025", "Asesoría contable"],
+  ]) {
+    const cuentaId = porCodigo.get(codigo);
+    if (cuentaId !== undefined && !conConcepto.has(codigo)) {
+      await pedir("post", "/conceptos", { nombre: `${nombre} (e2e)`, grupo: "Servicios", tipo: "GASTO", cuentaId });
+    }
+  }
 }
 
 function llamador(api: APIRequestContext, e: EmpresaLista) {
@@ -297,7 +315,11 @@ export async function lineaProducto(
   await dialogo.getByLabel(`Costo unitario de la línea ${n}`).fill(String(costo));
 }
 
-/** El renglón 1 como gasto: cuenta, detalle y valor. */
+/**
+ * El renglón 1 como gasto: el concepto que va a esa cuenta, detalle y valor.
+ * La línea de gasto se elige por concepto, no por cuenta (0108): cada opción
+ * muestra el nombre del concepto y el código de su cuenta.
+ */
 export async function lineaGasto(
   page: Page,
   dialogo: Locator,
@@ -306,9 +328,8 @@ export async function lineaGasto(
   costo: number,
 ) {
   await dialogo.getByRole("button", { name: "Gasto", exact: true }).first().click();
-  await dialogo.getByRole("button", { name: /Seleccione una cuenta auxiliar/ }).click();
-  await page.getByLabel("Buscar cuenta").fill(cuenta);
-  await page.getByRole("button", { name: new RegExp(`^${cuenta}`) }).first().click();
+  await dialogo.getByRole("combobox").filter({ hasText: "Elegí el concepto" }).first().click();
+  await page.getByRole("option", { name: new RegExp(`${cuenta}$`) }).first().click();
   await dialogo.getByLabel("Detalle de la línea 1").fill(detalle);
   // Cambiar el renglón a «Gasto» no le pone cantidad: se escribe.
   await dialogo.getByLabel("Cantidad de la línea 1").fill("1");
