@@ -32,7 +32,7 @@ export const periodosApi = {
       .then((r) => r.data),
 
   /** El período en curso. Siempre existe: el calendario se pone al día solo. */
-  actual: () => api.get<Periodo | null>("/periodos/actual").then((r) => r.data),
+  actual: () => api.get<Periodo | "" | null>("/periodos/actual").then((r) => r.data || null),
 
   /** El calendario por mes, trimestre, semestre o año, con sus cifras. */
   resumen: (agrupacion: Agrupacion, anio?: number) =>

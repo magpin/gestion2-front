@@ -75,7 +75,7 @@ export const facturasApi = {
 
   /** El número que sale si se emite ahora; `null` si no hay resolución. */
   numeracion: () =>
-    api.get<NumeracionFactura | null>("/facturas/numeracion").then((r) => r.data),
+    api.get<NumeracionFactura | "" | null>("/facturas/numeracion").then((r) => r.data || null),
 
   /** El cliente y las líneas salen de la cotización; acá solo va la fecha. */
   convertirCotizacion: (cotizacionId: string, datos: ConvertirCotizacionInput) =>

@@ -61,7 +61,7 @@ export function DocumentoCompra({ b, completa = false }: { b: BorradorCompra; co
     queryFn: comprasApi.numeracionSoporte,
     enabled: b.soporte,
   });
-  const prefijo = numeracion?.siguiente.replace(/\d+$/, "") ?? "";
+  const prefijo = numeracion?.siguiente?.replace(/\d+$/, "") ?? "";
 
   return (
     <div className="flex flex-col gap-[18px]">

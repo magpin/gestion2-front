@@ -44,7 +44,7 @@ export const impuestosApi = {
 
   porPagar: () => api.get<FilaCalendario[]>("/impuestos/por-pagar").then((r) => r.data),
 
-  aviso: () => api.get<AvisoImpuestos | null>("/impuestos/aviso").then((r) => r.data),
+  aviso: () => api.get<AvisoImpuestos | "" | null>("/impuestos/aviso").then((r) => r.data || null),
 
   presentar: (datos: DatosPresentacion) =>
     api.post<Declaracion>("/impuestos/declaraciones", datos).then((r) => r.data),

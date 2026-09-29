@@ -37,7 +37,9 @@ export const comprasApi = {
   previo: (datos: CrearCompraInput) => api.post<CompraPrevia>("/compras/previo", datos).then((r) => r.data),
 
   /** El siguiente número del documento soporte; `null` si no hay resolución. */
-  numeracionSoporte: () => api.get<NumeracionSoporte | null>("/compras/soporte/numeracion").then((r) => r.data),
+  // Sin resolución vigente el servidor responde vacío: llega "" y no null.
+  numeracionSoporte: () =>
+    api.get<NumeracionSoporte | "" | null>("/compras/soporte/numeracion").then((r) => r.data || null),
 
   crear: (datos: CrearCompraInput) =>
     api.post<CompraDocumentoDetalle>("/compras", datos).then((r) => r.data),
