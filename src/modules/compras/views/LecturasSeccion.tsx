@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Upload } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,9 +54,15 @@ export function LecturasSeccion() {
   const [abierta, setAbierta] = useState<LecturaFactura | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
 
-  const { data: lecturas = [], isLoading } = useQuery({
+  const {
+    data: lecturas,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: CLAVE,
     queryFn: lecturasApi.listar,
+    meta: SILENCIOSO,
     refetchInterval: (q) =>
       (q.state.data ?? []).some(
         (l) => l.estado === "EN_COLA" || l.estado === "LEYENDO",
@@ -95,7 +103,7 @@ export function LecturasSeccion() {
   const enPantalla =
     abierta === null
       ? null
-      : (lecturas.find((l) => l.id === abierta.id) ?? abierta);
+      : (lecturas?.find((l) => l.id === abierta.id) ?? abierta);
 
   return (
     <div className="flex flex-col gap-5">
@@ -142,16 +150,36 @@ export function LecturasSeccion() {
         )}
       </div>
 
-      {isLoading ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          Cargando…
-        </p>
-      ) : lecturas.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-14 text-center">
-          <p className="text-sm text-muted-foreground">
-            Todavía no le pasaste ninguna factura a María.
+      {lecturas === undefined ? (
+        isError ? (
+          <ErrorCarga
+            error={error}
+            titulo="No se pudieron leer las facturas que leyó María"
+            onReintentar={refetch}
+          />
+        ) : (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Cargando…
           </p>
-        </div>
+        )
+      ) : lecturas.length === 0 ? (
+        <EmptyState
+          icon={Upload}
+          titulo="Todavía no le pasaste ninguna factura a María"
+          descripcion={
+            puedeSubir
+              ? "Subí la factura de un proveedor, en PDF o en foto. María la lee, te dice qué le falta y la registrás vos después de revisarla."
+              : "Cuando alguien de compras suba la factura de un proveedor, la vas a ver acá con lo que leyó María."
+          }
+          accion={
+            puedeSubir && !subir.isPending
+              ? {
+                  label: "Subir una factura",
+                  onClick: () => entrada.current?.click(),
+                }
+              : undefined
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {lecturas.map((lectura) => (

@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, TriangleAlert, Upload } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -59,9 +61,15 @@ export function VentasAnterioresSeccion() {
   const [abierta, setAbierta] = useState<string | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
 
-  const { data: lecturas = [], isLoading } = useQuery({
+  const {
+    data: lecturas,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: CLAVE,
     queryFn: ventasAnterioresApi.listar,
+    meta: SILENCIOSO,
     refetchInterval: (q) =>
       (q.state.data ?? []).some(
         (l) => l.estado === "EN_COLA" || l.estado === "LEYENDO",
@@ -95,7 +103,7 @@ export function VentasAnterioresSeccion() {
   };
 
   const enPantalla =
-    abierta === null ? null : (lecturas.find((l) => l.id === abierta) ?? null);
+    abierta === null ? null : (lecturas?.find((l) => l.id === abierta) ?? null);
 
   return (
     <div className="flex flex-col gap-5">
@@ -139,16 +147,32 @@ export function VentasAnterioresSeccion() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          Cargando…
-        </p>
-      ) : lecturas.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-14 text-center">
-          <p className="text-sm text-muted-foreground">
-            Todavía no le pasaste ventas del sistema anterior a María.
+      {lecturas === undefined ? (
+        isError ? (
+          <ErrorCarga
+            error={error}
+            titulo="No se pudieron leer las ventas del sistema anterior"
+            onReintentar={refetch}
+          />
+        ) : (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Cargando…
           </p>
-        </div>
+        )
+      ) : lecturas.length === 0 ? (
+        <EmptyState
+          icon={Upload}
+          titulo="Todavía no le pasaste ventas del sistema anterior a María"
+          descripcion="Subí las facturas que emitiste antes de usar el sistema, en PDF o en foto. María te dice cuáles faltan y las cargás como históricas, para cobrar lo que siga pendiente."
+          accion={
+            subir.isPending
+              ? undefined
+              : {
+                  label: "Subir facturas",
+                  onClick: () => entrada.current?.click(),
+                }
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {lecturas.map((l) => (

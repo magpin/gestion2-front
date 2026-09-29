@@ -27,6 +27,7 @@ import {
   AccionesDropdown,
   type DropdownAccion,
 } from "@/components/shared/AccionesDropdown";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { funcionActiva } from "@/core/config/funciones";
@@ -89,9 +90,16 @@ export function FacturasCompraSeccion({
   const [notaDebitoDe, setNotaDebitoDe] =
     useState<CompraDocumentoResumen | null>(null);
 
-  const { data: resultado, isLoading } = useQuery({
+  const {
+    data: resultado,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: [...CLAVE, pagina],
     queryFn: () => comprasApi.listar({ pagina }),
+    meta: SILENCIOSO,
   });
 
   const { data: detalle } = useQuery({
@@ -246,6 +254,12 @@ export function FacturasCompraSeccion({
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      ) : isError && resultado === undefined ? (
+        <ErrorCarga
+          error={error}
+          titulo="No se pudieron leer las compras"
+          onReintentar={refetch}
+        />
       ) : compras.length === 0 ? (
         <VacioConMaria
           titulo="Todavía no hay compras"

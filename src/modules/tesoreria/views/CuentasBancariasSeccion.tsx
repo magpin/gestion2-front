@@ -15,10 +15,13 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { aviso } from "@/lib/avisos";
 import { useTieneRol } from "@/core/store/authStore";
 import { formatCOP, formatFecha } from "@/lib/utils";
+import { DialogoNuevaCuentaBancaria } from "../components/DialogosAltaTesoreria";
 import { cuentasBancariasApi } from "../services/bancos.service";
 import { NOMBRE_TIPO_CUENTA_BANCARIA } from "../types/bancos.types";
 import type { CuentaBancariaResumen } from "../types/bancos.types";
@@ -28,7 +31,7 @@ const CLAVE = ["cuentas-bancarias"];
 /**
  * El maestro. Nada de "editar" acá —la única acción real es activar/
  * desactivar—, mismo criterio que `CajasSeccion`. El alta ("Nueva cuenta
- * bancaria") vive en `CajaBancosView`, no acá.
+ * bancaria") vive en `CajaBancosView`; acá solo se abre desde el vacío.
  */
 export function CuentasBancariasSeccion() {
   const queryClient = useQueryClient();
@@ -40,9 +43,12 @@ export function CuentasBancariasSeccion() {
   );
   const [confirmando, setConfirmando] = useState(false);
 
-  const { data: cuentas = [], isLoading } = useQuery({
+  const [creando, setCreando] = useState(false);
+
+  const { data: cuentas, isError, error, refetch } = useQuery({
     queryKey: [...CLAVE, incluirInactivas],
     queryFn: () => cuentasBancariasApi.listar({ incluirInactivas }),
+    meta: SILENCIOSO,
   });
 
   const refrescar = () => queryClient.invalidateQueries({ queryKey: CLAVE });
@@ -70,7 +76,11 @@ export function CuentasBancariasSeccion() {
     <>
       <section className="mb-6 flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          <strong className="font-semibold text-foreground">{cuentas.length}</strong> cuenta{cuentas.length === 1 ? "" : "s"} bancaria{cuentas.length === 1 ? "" : "s"}
+          {cuentas !== undefined && (
+            <>
+              <strong className="font-semibold text-foreground">{cuentas.length}</strong> cuenta{cuentas.length === 1 ? "" : "s"} bancaria{cuentas.length === 1 ? "" : "s"}
+            </>
+          )}
         </p>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input
@@ -83,20 +93,31 @@ export function CuentasBancariasSeccion() {
         </label>
       </section>
 
-      {isLoading ? (
-        <div className="flex justify-center py-24 text-muted-foreground">
-          <Loader2 className="size-6 animate-spin" />
-        </div>
+      {cuentas === undefined ? (
+        isError ? (
+          <ErrorCarga error={error} titulo="No se pudieron leer las cuentas bancarias" onReintentar={refetch} />
+        ) : (
+          <div className="flex justify-center py-24 text-muted-foreground">
+            <Loader2 className="size-6 animate-spin" />
+          </div>
+        )
       ) : cuentas.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-20 text-center">
-          <span className="grid size-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
-            <Landmark className="size-6" />
-          </span>
-          <p className="text-lg font-semibold">Todavía no hay cuentas bancarias</p>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Creá la primera con el botón «Nueva cuenta bancaria» de arriba.
-          </p>
-        </div>
+        incluirInactivas ? (
+          <EmptyState
+            icon={Landmark}
+            titulo="Todavía no hay cuentas bancarias"
+            descripcion="Agregá tus cuentas de banco con el saldo que tienen hoy: así cuadrás cada extracto contra el libro."
+            accion={puedeOperar ? { label: "Agregar cuenta bancaria", onClick: () => setCreando(true) } : undefined}
+          />
+        ) : (
+          <EmptyState
+            icon={Landmark}
+            titulo="No hay cuentas bancarias activas"
+            descripcion="Agregá tus cuentas de banco con el saldo que tienen hoy, o mirá las inactivas por si hay una para reactivar."
+            accion={puedeOperar ? { label: "Agregar cuenta bancaria", onClick: () => setCreando(true) } : undefined}
+            accionSecundaria={{ label: "Ver inactivas", onClick: () => setIncluirInactivas(true) }}
+          />
+        )
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
@@ -160,6 +181,8 @@ export function CuentasBancariasSeccion() {
           </div>
         </section>
       )}
+
+      <DialogoNuevaCuentaBancaria abierto={creando} onCerrar={() => setCreando(false)} />
 
       <AlertDialog open={confirmando} onOpenChange={(a) => !a && setConfirmando(false)}>
         <AlertDialogContent className="gap-6 p-6 sm:max-w-md!">

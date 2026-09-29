@@ -15,6 +15,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp } fro
 import { Button } from "@/components/ui/button";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga } from "@/components/shared/ErrorCarga";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -23,6 +24,8 @@ interface DataTableProps<TDato> {
   data: TDato[];
   isLoading?: boolean;
   isError?: boolean;
+  /** El error de la consulta, para decir qué pasó. Sin él se dice lo que se sabe. */
+  error?: unknown;
   onReintentar?: () => void;
   onRowClick?: (fila: TDato) => void;
   enableSeleccion?: boolean;
@@ -75,6 +78,7 @@ export function DataTable<TDato>({
   data,
   isLoading = false,
   isError = false,
+  error,
   onReintentar,
   onRowClick,
   enableSeleccion = false,
@@ -147,12 +151,7 @@ export function DataTable<TDato>({
 
   if (isError) {
     return conBarra(
-      <EmptyState
-        titulo="No se pudieron cargar los datos"
-        descripcion="Ocurrió un error al consultar la información."
-        accion={onReintentar ? { label: "Reintentar", onClick: onReintentar } : undefined}
-        sinMarco={enBloque}
-      />,
+      <ErrorCarga error={error} onReintentar={onReintentar} sinMarco={enBloque} />,
     );
   }
 

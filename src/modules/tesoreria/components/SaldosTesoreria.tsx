@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { formatCOP } from "@/lib/utils";
 import { cuentasBancariasApi } from "../services/bancos.service";
 import { cajasApi } from "../services/tesoreria.service";
@@ -15,23 +16,49 @@ import { NOMBRE_TIPO_CAJA } from "../types/tesoreria.types";
  * su último movimiento, que es la única fuente de esa verdad.
  */
 export function SaldosTesoreria() {
-  const { data: cajas } = useQuery({
+  const consultaCajas = useQuery({
     queryKey: ["cajas"],
     queryFn: () => cajasApi.listar(),
+    meta: SILENCIOSO,
   });
-  const { data: cuentas } = useQuery({
+  const consultaCuentas = useQuery({
     queryKey: ["cuentas-bancarias"],
     queryFn: () => cuentasBancariasApi.listar(),
+    meta: SILENCIOSO,
   });
+  const cajas = consultaCajas.data;
+  const cuentas = consultaCuentas.data;
+
+  // Un total sin una de las dos listas sería un total falso: si alguna no se
+  // pudo leer, se dice eso y no se suma lo que sí llegó.
+  const fallida =
+    cajas === undefined && consultaCajas.isError
+      ? consultaCajas
+      : cuentas === undefined && consultaCuentas.isError
+        ? consultaCuentas
+        : null;
+  if (fallida) {
+    return (
+      <div className="mb-7">
+        <ErrorCarga
+          error={fallida.error}
+          titulo="No se pudieron leer los saldos"
+          onReintentar={() => Promise.all([consultaCajas.refetch(), consultaCuentas.refetch()])}
+        />
+      </div>
+    );
+  }
+  // Mientras llegan las dos, nada: el total a medias cambiaría de golpe.
+  if (cajas === undefined || cuentas === undefined) return null;
 
   const renglones = [
-    ...(cajas ?? []).map((c) => ({
+    ...cajas.map((c) => ({
       id: c.id,
       nombre: c.nombre,
       detalle: NOMBRE_TIPO_CAJA[c.tipo],
       saldo: Number(c.saldo),
     })),
-    ...(cuentas ?? []).map((c) => ({
+    ...cuentas.map((c) => ({
       id: c.id,
       nombre: c.banco,
       detalle: c.numero_cuenta,
@@ -42,8 +69,8 @@ export function SaldosTesoreria() {
   if (renglones.length === 0) return null;
 
   const total = renglones.reduce((t, r) => t + r.saldo, 0);
-  const nCajas = cajas?.length ?? 0;
-  const nCuentas = cuentas?.length ?? 0;
+  const nCajas = cajas.length;
+  const nCuentas = cuentas.length;
 
   return (
     <section className="mb-7 rounded-3xl border border-border bg-card shadow-sm">

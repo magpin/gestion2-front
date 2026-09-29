@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import { aviso } from "@/lib/avisos";
 import { formatCOP } from "@/lib/utils";
 import { movimientosConceptoApi } from "../services/movimientos-concepto.service";
 import type { Direccion, MovimientoConcepto } from "../types/movimientos-concepto.types";
+import { MovimientoConceptoDialog } from "./MovimientoConceptoDialog";
 
 /**
  * Los ingresos o egresos sin factura registrados a mano, con su anulación.
@@ -36,18 +38,45 @@ export function ListaMovimientosConcepto({
   puedeAnular: boolean;
 }) {
   const [anulando, setAnulando] = useState<MovimientoConcepto | null>(null);
-  const { data = [], isLoading } = useQuery({
+  const [registrando, setRegistrando] = useState(false);
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["movimientos-concepto", direccion, "MANUAL"],
     queryFn: () => movimientosConceptoApi.listar({ direccion, origen: "MANUAL" }),
+    meta: SILENCIOSO,
   });
 
-  if (isLoading) return <SkeletonTable />;
-  if (data.length === 0) {
-    return (
-      <EmptyState
-        titulo={direccion === "ENTRADA" ? "Sin ingresos sin factura" : "Sin pagos sin factura"}
-        descripcion="Los que registres quedan acá, con su concepto."
+  const entrada = direccion === "ENTRADA";
+
+  if (data === undefined) {
+    return isError ? (
+      <ErrorCarga
+        error={error}
+        titulo={entrada ? "No se pudieron leer los ingresos sin factura" : "No se pudieron leer los pagos sin factura"}
+        onReintentar={refetch}
       />
+    ) : (
+      <SkeletonTable />
+    );
+  }
+  if (data.length === 0) {
+    // Quien puede anular es quien puede registrar: la vista le pasa el mismo rol.
+    return (
+      <>
+        <EmptyState
+          titulo={entrada ? "Todavía no hay ingresos sin factura" : "Todavía no hay pagos sin factura"}
+          descripcion={
+            entrada
+              ? "Un rendimiento, un préstamo o un aporte entran sin factura de venta. Registralos con su concepto y quedan acá."
+              : "Lo financiero, los impuestos y lo que no es gasto se pagan sin factura. Registralos con su concepto y quedan acá; lo que lleva factura va por Compras."
+          }
+          accion={
+            puedeAnular
+              ? { label: entrada ? "Registrar ingreso" : "Registrar pago", onClick: () => setRegistrando(true) }
+              : undefined
+          }
+        />
+        <MovimientoConceptoDialog abierto={registrando} direccion={direccion} onCerrar={() => setRegistrando(false)} />
+      </>
     );
   }
 

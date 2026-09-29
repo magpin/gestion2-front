@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, PieChart, Repeat, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, PieChart, Receipt, Repeat, TrendingDown, TrendingUp } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import { funcionActiva } from "@/core/config/funciones";
@@ -118,7 +119,13 @@ export function GastosView() {
         )}
       </div>
 
-      {seccion === "Del mes" && <DelMes mes={mes} onVerRecurrentes={() => setSeccion("Recurrentes")} />}
+      {seccion === "Del mes" && (
+        <DelMes
+          mes={mes}
+          onVerRecurrentes={() => setSeccion("Recurrentes")}
+          onRegistrar={puedeRegistrar ? () => setRegistrando(true) : undefined}
+        />
+      )}
       {seccion === "Recurrentes" && (
         <PagosProgramados
           puedeProgramar={puedeRegistrar}
@@ -149,10 +156,28 @@ export function GastosView() {
   );
 }
 
-function DelMes({ mes, onVerRecurrentes }: { mes: string; onVerRecurrentes: () => void }) {
-  const { data, isLoading } = useQuery({ queryKey: ["gastos", mes], queryFn: () => gastosApi.resumen(mes) });
+function DelMes({
+  mes,
+  onVerRecurrentes,
+  onRegistrar,
+}: {
+  mes: string;
+  onVerRecurrentes: () => void;
+  onRegistrar?: () => void;
+}) {
+  const { data, isError, error, refetch } = useQuery({
+    queryKey: ["gastos", mes],
+    queryFn: () => gastosApi.resumen(mes),
+    meta: SILENCIOSO,
+  });
 
-  if (isLoading || data === undefined) return <SkeletonTable />;
+  if (data === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudieron leer los gastos del mes" onReintentar={refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-7">
@@ -161,7 +186,7 @@ function DelMes({ mes, onVerRecurrentes }: { mes: string; onVerRecurrentes: () =
         <PorConcepto resumen={data} />
         <Recurrentes onVerTodos={onVerRecurrentes} />
       </div>
-      <Ultimos resumen={data} />
+      <Ultimos resumen={data} mes={mes} onRegistrar={onRegistrar} />
     </div>
   );
 }
@@ -292,12 +317,14 @@ function Recurrentes({ onVerTodos }: { onVerTodos: () => void }) {
   );
 }
 
-function Ultimos({ resumen }: { resumen: ResumenGastos }) {
+function Ultimos({ resumen, mes, onRegistrar }: { resumen: ResumenGastos; mes: string; onRegistrar?: () => void }) {
   if (resumen.ultimos.length === 0) {
     return (
       <EmptyState
-        titulo="Sin gastos este mes"
-        descripcion="Lo que registres en Compras con concepto o en Pagos sin factura aparece acá."
+        titulo={`${nombreMes(mes).split(" ")[0]} sin gastos todavía`}
+        descripcion="Lo que registres con factura en Compras o sin factura en Pagos aparece acá, por concepto. Los recurrentes aparecen cuando se pagan."
+        icon={Receipt}
+        accion={onRegistrar ? { label: "Registrar gasto", onClick: onRegistrar } : undefined}
       />
     );
   }

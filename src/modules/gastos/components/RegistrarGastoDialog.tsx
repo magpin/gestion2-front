@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
+import { ErrorDeCampo } from "@/components/shared/ErrorDeCampo";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -110,15 +111,32 @@ function Formulario({
   const sinFacturaVale = concepto !== null && admiteSinFactura(concepto);
   const porCompras = conFactura || !sinFacturaVale;
 
-  const problema =
-    descripcion.trim().length < 2
-      ? "Escribí qué se pagó."
-      : concepto === null
-        ? "Elegí el concepto."
-        : porCompras
-          ? null
-          : (problemaDelMedio(medio, caja, cuenta) ??
-            (!(Number(valor) > 0) ? "Escribí el valor." : fecha === "" ? "Elegí la fecha." : null));
+  // Lo que está mal, campo por campo. Se muestra debajo de cada uno cuando se
+  // intentó guardar; antes, solo el primero, como pista al pie.
+  const [intentado, setIntentado] = useState(false);
+  const errores = {
+    descripcion: descripcion.trim().length < 2 ? "Escribí qué se pagó." : null,
+    concepto: concepto === null ? "Elegí el concepto." : null,
+    valor: !porCompras && !(Number(valor) > 0) ? "El valor tiene que ser mayor que cero." : null,
+    fecha: !porCompras && fecha === "" ? "Elegí la fecha." : null,
+    // El banco admite sobregiro; la caja no puede quedar en negativo.
+    medio: porCompras
+      ? null
+      : (problemaDelMedio(medio, caja, cuenta) ??
+        (medio === "CAJA" && caja !== null && Number(valor) > Number(caja.saldo)
+          ? `Para un gasto de ${formatCOP(Number(valor))} no alcanza: en ${caja.nombre} hay ${formatCOP(Number(caja.saldo))}.`
+          : null)),
+  };
+  const problema = Object.values(errores).find((e) => e !== null) ?? null;
+  const verError = (campo: keyof typeof errores) => (intentado ? errores[campo] : null);
+  /** Guarda si todo está bien; si no, marca lo que falta. */
+  const siEstaBien = (hacer: () => void) => () => {
+    if (problema !== null) {
+      setIntentado(true);
+      return;
+    }
+    hacer();
+  };
 
   const guardar = useMutation({
     mutationFn: () =>
@@ -175,7 +193,10 @@ function Formulario({
               placeholder="Flete Apartadó – Chigorodó, mercancía a la sede"
               maxLength={200}
               className="h-11 rounded-xl px-4"
+              aria-invalid={verError("descripcion") !== null}
+              aria-describedby="gasto-descripcion-error"
             />
+            <ErrorDeCampo id="gasto-descripcion-error" mensaje={verError("descripcion")} />
           </Campo>
           <Campo id="gasto-tercero" etiqueta="A quién (opcional)">
             <SelectorProveedor valor={tercero} onElegir={setTercero} />
@@ -216,6 +237,7 @@ function Formulario({
             onElegir={setConcepto}
             filtro={(c) => c.cuenta !== null}
           />
+          <ErrorDeCampo id="gasto-concepto-error" mensaje={verError("concepto")} />
         </Campo>
         {concepto?.cuenta && (
           <p className="-mt-3 text-xs text-muted-foreground">
@@ -254,7 +276,10 @@ function Formulario({
               value={valor}
               onChange={setValor}
               className="h-11 rounded-xl px-4 text-right font-mono"
+              aria-invalid={verError("valor") !== null}
+              aria-describedby="gasto-valor-error"
             />
+            <ErrorDeCampo id="gasto-valor-error" mensaje={verError("valor")} />
           </Campo>
           {!porCompras && (
             <Campo id="gasto-fecha" etiqueta="Fecha">
@@ -264,20 +289,24 @@ function Formulario({
                 value={fecha}
                 onChange={(e) => setFecha(e.target.value)}
                 className="h-11 rounded-xl px-4"
+                aria-invalid={verError("fecha") !== null}
+                aria-describedby="gasto-fecha-error"
               />
+              <ErrorDeCampo id="gasto-fecha-error" mensaje={verError("fecha")} />
             </Campo>
           )}
         </div>
         {!porCompras && (
           <Campo id="gasto-medio" etiqueta="Sale de">
             <SelectorMedio medio={medio} onMedio={setMedio} caja={caja} onCaja={setCaja} cuenta={cuenta} onCuenta={setCuenta} />
+            <ErrorDeCampo id="gasto-medio-error" mensaje={verError("medio")} />
           </Campo>
         )}
       </DialogBody>
 
       <DialogFooter className="sm:justify-between">
         <p className="self-center text-sm text-muted-foreground">
-          {problema ??
+          {(intentado && problema !== null ? "Revisá lo marcado en rojo." : problema) ??
             (porCompras
               ? "Se abre la compra con esto puesto: falta el número de la factura."
               : "Queda como pago sin factura en Pagos.")}
@@ -287,15 +316,15 @@ function Formulario({
             Cancelar
           </Button>
           {porCompras ? (
-            <Button type="button" className="h-12 rounded-xl px-6" disabled={problema !== null} onClick={seguirEnCompras}>
+            <Button type="button" className="h-12 rounded-xl px-6" onClick={siEstaBien(seguirEnCompras)}>
               Seguir en Compras
             </Button>
           ) : (
             <Button
               type="button"
               className="h-12 rounded-xl px-6"
-              disabled={problema !== null || guardar.isPending}
-              onClick={() => guardar.mutate()}
+              disabled={guardar.isPending}
+              onClick={siEstaBien(() => guardar.mutate())}
             >
               {guardar.isPending && <Loader2 className="size-4 animate-spin" />}
               Guardar gasto

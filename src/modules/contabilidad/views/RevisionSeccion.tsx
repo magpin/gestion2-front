@@ -11,6 +11,7 @@ import {
   Tags,
 } from "lucide-react";
 
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Maria } from "@/modules/asistente/components/Maria";
 import { cn, formatCOP } from "@/lib/utils";
@@ -92,9 +93,10 @@ const CERTEZA: Record<Certeza, { etiqueta: string; clase: string }> = {
  * María, corregir es de una persona, por la pantalla de siempre.
  */
 export function RevisionSeccion() {
-  const { data, isLoading, isFetching, isError, refetch } = useQuery({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["revision"],
     queryFn: revisionApi.revisar,
+    meta: SILENCIOSO,
     // Una revisión es una foto: se pide al entrar y cuando alguien la pide.
     staleTime: Infinity,
   });
@@ -152,6 +154,9 @@ export function RevisionSeccion() {
         </Button>
       </div>
 
+      {data === undefined && isError && (
+        <ErrorCarga error={error} titulo="No se pudo hacer la revisión de los libros" onReintentar={refetch} />
+      )}
       {afirmados.length > 0 && (
         <Mitad
           titulo="Lo que comprobé"

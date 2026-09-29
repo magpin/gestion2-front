@@ -28,6 +28,7 @@ import {
   AccionesDropdown,
   type DropdownAccion,
 } from "@/components/shared/AccionesDropdown";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
@@ -92,9 +93,16 @@ export function FacturasSeccion({
   const [devolviendoDe, setDevolviendoDe] =
     useState<VentaDocumentoResumen | null>(null);
 
-  const { data: resultado, isLoading } = useQuery({
+  const {
+    data: resultado,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: [...CLAVE, pagina],
     queryFn: () => facturasApi.listar({ pagina }),
+    meta: SILENCIOSO,
   });
 
   const { data: detalle } = useQuery({
@@ -248,6 +256,12 @@ export function FacturasSeccion({
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      ) : isError && resultado === undefined ? (
+        <ErrorCarga
+          error={error}
+          titulo="No se pudieron leer las facturas"
+          onReintentar={refetch}
+        />
       ) : facturas.length === 0 ? (
         <VacioConMaria
           titulo="Todavía no hay facturas"

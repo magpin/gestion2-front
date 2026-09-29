@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRightLeft, Loader2, Pencil, Trash2 } from "lucide-react";
+import { ArrowRightLeft, FileText, Loader2, Pencil, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -16,6 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AccionesDropdown } from "@/components/shared/AccionesDropdown";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { mensajeDeError } from "@/core/api/api";
@@ -71,9 +73,16 @@ export function CotizacionesSeccion({
     useState<VentaDocumentoResumen | null>(null);
   const [motivo, setMotivo] = useState("");
 
-  const { data: resultado, isLoading } = useQuery({
+  const {
+    data: resultado,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: [...CLAVE, pagina],
     queryFn: () => cotizacionesApi.listar({ pagina }),
+    meta: SILENCIOSO,
   });
 
   const { data: detalle } = useQuery({
@@ -207,13 +216,18 @@ export function CotizacionesSeccion({
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      ) : isError && resultado === undefined ? (
+        <ErrorCarga
+          error={error}
+          titulo="No se pudieron leer las cotizaciones"
+          onReintentar={refetch}
+        />
       ) : cotizaciones.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <p className="text-lg font-semibold">Todavía no hay cotizaciones</p>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Acá van las propuestas de venta que aún no se facturan.
-          </p>
-        </div>
+        <EmptyState
+          icon={FileText}
+          titulo="Todavía no hay cotizaciones"
+          descripcion={`Cuando le cotizás a un cliente, la propuesta queda acá hasta que la convertís en factura.${puedeCrear ? " Creá la primera con «Nueva cotización», arriba." : ""}`}
+        />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2 } from "lucide-react";
+import { FileMinus, FilePlus, Loader2, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -15,6 +15,8 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
@@ -61,12 +63,21 @@ export function NotasCompraSeccion({
   );
   const [motivo, setMotivo] = useState("");
 
-  const { data: resultado, isLoading } = useQuery({
+  const puedeCrear = useTieneRol("COMPRAS", "DIRECTOR");
+
+  const {
+    data: resultado,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: [...CLAVE, pagina],
     queryFn: () =>
       esCredito
         ? notasCompraApi.listarCredito({ pagina })
         : notasCompraApi.listarDebito({ pagina }),
+    meta: SILENCIOSO,
   });
 
   // El detalle sale por `/compras/:id`: las notas viven en la misma tabla y
@@ -126,17 +137,26 @@ export function NotasCompraSeccion({
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      ) : isError && resultado === undefined ? (
+        <ErrorCarga
+          error={error}
+          titulo={`No se pudieron leer las notas ${esCredito ? "crédito" : "débito"}`}
+          onReintentar={refetch}
+        />
       ) : notas.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <p className="text-lg font-semibold">
-            Todavía no hay notas {esCredito ? "crédito" : "débito"}
-          </p>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            {esCredito
-              ? "Acá van las que el proveedor nos acredita: devoluciones, descuentos posteriores, menores valores."
-              : "Acá va lo que el proveedor cobra de más sobre una compra ya registrada: un flete, un interés, un mayor valor."}
-          </p>
-        </div>
+        <EmptyState
+          icon={esCredito ? FileMinus : FilePlus}
+          titulo={`Todavía no hay notas ${esCredito ? "crédito" : "débito"}`}
+          descripcion={`${
+            esCredito
+              ? "Cuando el proveedor te acredita una devolución, un descuento posterior o un menor valor, la nota va acá y baja lo que le debés."
+              : "Cuando el proveedor te cobra de más sobre una compra ya registrada —un flete, un interés, un mayor valor—, la nota va acá y sube lo que le debés."
+          }${
+            puedeCrear
+              ? ` Registrala con «Nueva nota ${esCredito ? "crédito" : "débito"}», arriba, o desde la compra en la pestaña Facturas.`
+              : ""
+          }`}
+        />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">

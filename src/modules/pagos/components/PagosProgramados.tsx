@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,9 +54,17 @@ export function PagosProgramados({
 }) {
   const queryClient = useQueryClient();
   const [todos, setTodos] = useState(false);
-  const { data = [], isLoading } = useQuery({
+  // El nuevo lo abre la vista (su botón de arriba) o el vacío de acá.
+  const [nuevoDesdeVacio, setNuevoDesdeVacio] = useState(false);
+  const abiertoNuevo = nuevo || nuevoDesdeVacio;
+  const cerrarNuevo = () => {
+    setNuevoDesdeVacio(false);
+    onCerrarNuevo();
+  };
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["pagos", "programados", todos],
     queryFn: () => pagosApi.programados(todos),
+    meta: SILENCIOSO,
   });
 
   const cambiar = useMutation({
@@ -81,13 +90,27 @@ export function PagosProgramados({
           Ver también los pagados y cancelados
         </label>
       </div>
-      {isLoading ? (
-        <SkeletonTable />
+      {data === undefined ? (
+        isError ? (
+          <ErrorCarga error={error} titulo="No se pudieron leer los pagos programados" onReintentar={refetch} />
+        ) : (
+          <SkeletonTable />
+        )
       ) : data.length === 0 ? (
-        <EmptyState
-          titulo="Nada programado"
-          descripcion="Programá lo que se paga cada mes o en una fecha, para que no se pase."
-        />
+        todos ? (
+          <EmptyState
+            titulo="Todavía no hay pagos programados"
+            descripcion="Programá el arriendo, la cuota del préstamo o la nómina con su fecha, para que ninguno se te pase."
+            accion={puedeProgramar ? { label: "Programar pago", onClick: () => setNuevoDesdeVacio(true) } : undefined}
+          />
+        ) : (
+          <EmptyState
+            titulo="No hay pagos pendientes"
+            descripcion="Programá el arriendo, la cuota del préstamo o la nómina con su fecha, para que no se te pase. Los que ya pagaste o cancelaste están aparte."
+            accion={puedeProgramar ? { label: "Programar pago", onClick: () => setNuevoDesdeVacio(true) } : undefined}
+            accionSecundaria={{ label: "Ver pagados y cancelados", onClick: () => setTodos(true) }}
+          />
+        )
       ) : (
         <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
           <table className="w-full min-w-[760px] text-sm">
@@ -161,8 +184,8 @@ export function PagosProgramados({
           </table>
         </div>
       )}
-      <Dialog open={nuevo} onOpenChange={(a) => !a && onCerrarNuevo()}>
-        <DialogContent>{nuevo && <FormularioProgramado onCerrar={onCerrarNuevo} />}</DialogContent>
+      <Dialog open={abiertoNuevo} onOpenChange={(a) => !a && cerrarNuevo()}>
+        <DialogContent>{abiertoNuevo && <FormularioProgramado onCerrar={cerrarNuevo} />}</DialogContent>
       </Dialog>
     </>
   );

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, FileText, HandCoins, Loader2, PiggyBank, Search } from "lucide-react";
+import { ArrowLeftRight, FileText, HandCoins, Loader2, PiggyBank, ReceiptText, Search, SearchX } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -116,12 +117,19 @@ export function CobrosView() {
 
 function PorCobrar({ onCobrar }: { onCobrar?: (cliente: ClienteInicial) => void }) {
   const [busqueda, setBusqueda] = useState("");
-  const { data: cartera, isLoading } = useQuery({
+  const { data: cartera, isError, error, refetch } = useQuery({
     queryKey: ["cartera", "por-cobrar"],
     queryFn: cobrosApi.porCobrar,
+    meta: SILENCIOSO,
   });
 
-  if (isLoading || cartera === undefined) return <SkeletonTable />;
+  if (cartera === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudo leer lo que te deben" onReintentar={refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
 
   const q = busqueda.trim().toLowerCase();
   const clientes =
@@ -175,8 +183,15 @@ function PorCobrar({ onCobrar }: { onCobrar?: (cliente: ClienteInicial) => void 
 
       {clientes.length === 0 ? (
         <EmptyState
-          titulo={q ? "Nada coincide" : "Nadie te debe"}
-          descripcion={q ? "Probá con otro nombre o NIT." : "Todas las facturas están cobradas."}
+          titulo={q ? "Nada coincide con esa búsqueda" : "Nadie te debe"}
+          descripcion={
+            q
+              ? `Ningún cliente con saldo tiene «${busqueda.trim()}» en el nombre o el NIT.`
+              : "Cuando emitás una factura a crédito, aparece acá con su vencimiento."
+          }
+          icon={q ? SearchX : HandCoins}
+          accion={q ? undefined : { label: "Nueva factura de venta", href: "/dashboard/ventas" }}
+          accionSecundaria={q ? { label: "Limpiar búsqueda", onClick: () => setBusqueda("") } : undefined}
         />
       ) : (
         <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
@@ -241,14 +256,28 @@ function PorCobrar({ onCobrar }: { onCobrar?: (cliente: ClienteInicial) => void 
 
 function Recibos({ puedeAnular }: { puedeAnular: boolean }) {
   const [anulando, setAnulando] = useState<ReciboCaja | null>(null);
-  const { data: recibos = [], isLoading } = useQuery({
+  const consulta = useQuery({
     queryKey: ["recibos-caja"],
     queryFn: cobrosApi.recibos,
+    meta: SILENCIOSO,
   });
+  const recibos = consulta.data;
 
-  if (isLoading) return <SkeletonTable />;
+  if (recibos === undefined) {
+    return consulta.isError ? (
+      <ErrorCarga error={consulta.error} titulo="No se pudieron leer los recibos" onReintentar={consulta.refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
   if (recibos.length === 0) {
-    return <EmptyState titulo="Sin recibos todavía" descripcion="Cada cobro que registres queda acá con su número." />;
+    return (
+      <EmptyState
+        titulo="Sin recibos todavía"
+        descripcion="Cada cobro que registres queda acá con su número. Se cobra desde Por cobrar o desde la factura."
+        icon={ReceiptText}
+      />
+    );
   }
 
   return (

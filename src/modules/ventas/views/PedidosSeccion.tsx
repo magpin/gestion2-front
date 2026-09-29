@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, FileText, Loader2, TriangleAlert, Upload } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -53,9 +55,15 @@ export function PedidosSeccion() {
   const [facturando, setFacturando] = useState<LecturaPedido | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
 
-  const { data: pedidos = [], isLoading } = useQuery({
+  const {
+    data: pedidos,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: CLAVE,
     queryFn: pedidosApi.listar,
+    meta: SILENCIOSO,
     refetchInterval: (q) =>
       (q.state.data ?? []).some(
         (l) => l.estado === "EN_COLA" || l.estado === "LEYENDO",
@@ -94,7 +102,7 @@ export function PedidosSeccion() {
   const enPantalla =
     abierto === null
       ? null
-      : (pedidos.find((p) => p.id === abierto.id) ?? abierto);
+      : (pedidos?.find((p) => p.id === abierto.id) ?? abierto);
 
   return (
     <div className="flex flex-col gap-5">
@@ -142,16 +150,36 @@ export function PedidosSeccion() {
         )}
       </div>
 
-      {isLoading ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          Cargando…
-        </p>
-      ) : pedidos.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-14 text-center">
-          <p className="text-sm text-muted-foreground">
-            Todavía no le pasaste ningún pedido a María.
+      {pedidos === undefined ? (
+        isError ? (
+          <ErrorCarga
+            error={error}
+            titulo="No se pudieron leer los pedidos"
+            onReintentar={refetch}
+          />
+        ) : (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Cargando…
           </p>
-        </div>
+        )
+      ) : pedidos.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          titulo="Todavía no le pasaste ningún pedido a María"
+          descripcion={
+            puedeFacturar
+              ? "Subí la orden de compra o el pedido de un cliente, en PDF o en foto, y María te arma la factura para que la revisés y la emitas."
+              : "Cuando alguien de ventas suba un pedido de un cliente, lo vas a ver acá con la factura que armó María."
+          }
+          accion={
+            puedeFacturar && !subir.isPending
+              ? {
+                  label: "Subir un pedido",
+                  onClick: () => entrada.current?.click(),
+                }
+              : undefined
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {pedidos.map((p) => (

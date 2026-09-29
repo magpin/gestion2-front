@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardCheck, Loader2 } from "lucide-react";
 
 import { Aviso } from "@/components/shared/Aviso";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,10 +47,11 @@ export function ArqueoSeccion() {
   const [modal, setModal] = useState<"abrir" | "cerrar" | null>(null);
 
   const clave = ["cajas", "arqueos", caja?.id];
-  const { data: arqueos, isLoading } = useQuery({
+  const { data: arqueos, isError, error, refetch } = useQuery({
     queryKey: clave,
     queryFn: () => arqueosApi.listar(caja!.id),
     enabled: caja !== null,
+    meta: SILENCIOSO,
   });
 
   const { data: configuracion } = useQuery({
@@ -99,7 +102,8 @@ export function ArqueoSeccion() {
 
         <Button
           type="button"
-          disabled={!caja || !puedeOperar}
+          // Sin el historial leído no se sabe si hay uno abierto.
+          disabled={!caja || !puedeOperar || arqueos === undefined}
           onClick={() => setModal(abierto ? "cerrar" : "abrir")}
           className="h-auto min-h-12 rounded-2xl px-5 text-sm font-semibold"
         >
@@ -206,15 +210,21 @@ export function ArqueoSeccion() {
         </div>
 
         {!caja ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <ClipboardCheck className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Elegí una caja para ver sus arqueos</p>
-          </div>
-        ) : isLoading ? (
-          <div className="flex justify-center py-24 text-muted-foreground">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
-        ) : arqueos && arqueos.datos.length > 0 ? (
+          <EmptyState
+            sinMarco
+            icon={ClipboardCheck}
+            titulo="Elegí una caja para ver sus arqueos"
+            descripcion="Arriba, en «Caja»: acá queda cada conteo del efectivo, con lo que sobró o faltó."
+          />
+        ) : arqueos === undefined ? (
+          isError ? (
+            <ErrorCarga sinMarco error={error} titulo="No se pudieron leer los arqueos de esta caja" onReintentar={refetch} />
+          ) : (
+            <div className="flex justify-center py-24 text-muted-foreground">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          )
+        ) : arqueos.datos.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -278,11 +288,13 @@ export function ArqueoSeccion() {
             </table>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <ClipboardCheck className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Esta caja todavía no tiene arqueos</p>
-            <p className="max-w-md text-sm text-muted-foreground">Abrí el primero con el botón de arriba.</p>
-          </div>
+          <EmptyState
+            sinMarco
+            icon={ClipboardCheck}
+            titulo="Esta caja todavía no tiene arqueos"
+            descripcion="Abrí un arqueo, contá el efectivo y cerralo con lo que encontraste: así sabés si la caja cuadra."
+            accion={puedeOperar ? { label: "Abrir arqueo", onClick: () => setModal("abrir") } : undefined}
+          />
         )}
       </section>
 

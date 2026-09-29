@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+import { SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { useAuthStore } from "@/core/store/authStore";
 import { configuracionService } from "../services/configuracion.service";
 
@@ -21,7 +22,7 @@ export const useEstadoConfiguracion = () => {
     queryFn: configuracionService.estado,
     enabled: operando,
     staleTime: 0,
-    // `InicioView` ya muestra su propio error en la pantalla de inicio.
-    meta: { silencioso: true },
+    // `InicioView` ya muestra su propio error (`ErrorCarga`) en la pantalla de inicio.
+    meta: SILENCIOSO,
   });
 };

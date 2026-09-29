@@ -13,6 +13,7 @@ import {
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,10 +77,19 @@ export function ConceptosView() {
     preparar.mutate();
   }, [puedeEditar, preparar]);
 
-  const { data: conceptos = [], isLoading } = useQuery({
+  const {
+    data: leidos,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["conceptos", verInactivos],
     queryFn: () => conceptosApi.listar({ incluirInactivos: verInactivos }),
+    meta: SILENCIOSO,
   });
+  // Solo para contar en las pestañas y en el aviso: la lista mira `leidos`,
+  // para no confundir «no se pudo leer» con «no hay».
+  const conceptos = leidos ?? [];
 
   const cambiarActivo = useMutation({
     mutationFn: (c: Concepto) => conceptosApi.editar(c.id, { activo: !c.activo }),
@@ -168,17 +178,25 @@ export function ConceptosView() {
         </label>
       </div>
 
-      {isLoading ? (
-        <SkeletonTable />
+      {leidos === undefined ? (
+        isError ? (
+          <ErrorCarga error={error} titulo="No se pudieron leer los conceptos" onReintentar={refetch} />
+        ) : (
+          <SkeletonTable />
+        )
       ) : grupos.length === 0 ? (
         <EmptyState
-          titulo={busqueda ? "Nada coincide" : `Sin conceptos de ${NOMBRE_TIPO[tipo].toLowerCase()}`}
+          icon={busqueda ? Search : undefined}
+          titulo={busqueda ? "Ningún concepto coincide" : `Sin conceptos de ${NOMBRE_TIPO[tipo].toLowerCase()}`}
           descripcion={
             busqueda
-              ? "Probá con otra palabra o con el código de la cuenta."
+              ? "No hay conceptos con esa palabra ni con ese código de cuenta. Probá con otra búsqueda."
               : puedeEditar
-                ? "Creá uno con «Nuevo concepto»."
-                : undefined
+                ? "Mientras no haya uno, en esta pestaña no hay nada para elegir al registrar. Creá el primero."
+                : "Mientras no haya uno, en esta pestaña no hay nada para elegir al registrar. Pedile a quien dirige o lleva la contabilidad que lo cree."
+          }
+          accion={
+            !busqueda && puedeEditar ? { label: "Nuevo concepto", onClick: () => setCreando(true) } : undefined
           }
         />
       ) : (

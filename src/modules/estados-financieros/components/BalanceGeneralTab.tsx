@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { Aviso } from "@/components/shared/Aviso";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { formatCOP } from "@/lib/utils";
 import { fechaCorta, valoresBalance } from "../lib/estados";
@@ -14,12 +15,15 @@ import { Dato, Fila, TablaEstado, Tarjeta } from "./Comun";
 
 /** El balance general al corte del mes: lo que la empresa tiene, lo que debe y lo que es suyo. */
 export function BalanceGeneralTab({ mes, comparar }: { mes: string; comparar?: string }) {
-  const { data, isLoading } = useQuery({
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["estados-financieros", "balance", mes, comparar ?? ""],
     queryFn: () => estadosApi.balance(mes, comparar),
+    meta: SILENCIOSO,
   });
 
-  if (isLoading || data === undefined) return <SkeletonTable />;
+  if (data === undefined) {
+    return isError ? <ErrorCarga error={error} titulo="No se pudo armar el estado" onReintentar={refetch} /> : <SkeletonTable />;
+  }
 
   const b = data.actual;
   const vacio = b.activo.secciones.length + b.pasivo.secciones.length + b.patrimonio.secciones.length === 0;

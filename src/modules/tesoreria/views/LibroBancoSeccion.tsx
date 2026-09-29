@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { History, Loader2 } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,10 +66,11 @@ export function LibroBancoSeccion() {
   const [abierto, setAbierto] = useState(false);
 
   const clave = ["cuentas-bancarias", "movimientos", cuenta?.id];
-  const { data: movimientos, isLoading } = useQuery({
+  const { data: movimientos, isError, error, refetch } = useQuery({
     queryKey: clave,
     queryFn: () => movimientosBancoApi.listar(cuenta!.id),
     enabled: cuenta !== null,
+    meta: SILENCIOSO,
   });
 
   // El libro entero, no la página. Mismo criterio que en el de caja.
@@ -137,7 +140,8 @@ export function LibroBancoSeccion() {
 
         <Button
           type="button"
-          disabled={!cuenta || !puedeOperar}
+          // Sin el libro leído no se sabe si toca saldo inicial o movimiento.
+          disabled={!cuenta || !puedeOperar || movimientos === undefined}
           onClick={() => setAbierto(true)}
           className="h-auto min-h-12 rounded-2xl px-5 text-sm font-semibold"
         >
@@ -154,15 +158,21 @@ export function LibroBancoSeccion() {
         </div>
 
         {!cuenta ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <History className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Elegí una cuenta bancaria para ver su libro</p>
-          </div>
-        ) : isLoading ? (
-          <div className="flex justify-center py-24 text-muted-foreground">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
-        ) : movimientos && movimientos.datos.length > 0 ? (
+          <EmptyState
+            sinMarco
+            icon={History}
+            titulo="Elegí una cuenta bancaria para ver su libro"
+            descripcion="Arriba, en «Cuenta bancaria»: acá aparece cada consignación, retiro y transferencia, con su saldo."
+          />
+        ) : movimientos === undefined ? (
+          isError ? (
+            <ErrorCarga sinMarco error={error} titulo="No se pudo leer el libro de esta cuenta" onReintentar={refetch} />
+          ) : (
+            <div className="flex justify-center py-24 text-muted-foreground">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          )
+        ) : movimientos.datos.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[960px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -254,11 +264,13 @@ export function LibroBancoSeccion() {
             </table>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <History className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Esta cuenta todavía no tiene movimientos</p>
-            <p className="max-w-md text-sm text-muted-foreground">Empezá con su saldo inicial.</p>
-          </div>
+          <EmptyState
+            sinMarco
+            icon={History}
+            titulo="Esta cuenta todavía no tiene movimientos"
+            descripcion="Cargá el saldo que dice el banco hoy como saldo inicial: desde ahí se suma y se resta cada movimiento."
+            accion={puedeOperar ? { label: "Cargar saldo inicial", onClick: () => setAbierto(true) } : undefined}
+          />
         )}
       </section>
 

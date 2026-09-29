@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { cn, formatCOP } from "@/lib/utils";
 import { nombreMes } from "@/modules/gastos/lib/mes";
@@ -14,12 +15,15 @@ import { Dato, Fila, TablaEstado, Tarjeta, rangoDelPeriodo } from "./Comun";
 
 /** El estado de resultados del mes, contra otro si se eligió, con la utilidad de seis meses y los márgenes. */
 export function EstadoResultadosTab({ mes, comparar }: { mes: string; comparar?: string }) {
-  const { data, isLoading } = useQuery({
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["estados-financieros", "resultados", mes, comparar ?? ""],
     queryFn: () => estadosApi.resultados(mes, comparar),
+    meta: SILENCIOSO,
   });
 
-  if (isLoading || data === undefined) return <SkeletonTable />;
+  if (data === undefined) {
+    return isError ? <ErrorCarga error={error} titulo="No se pudo armar el estado" onReintentar={refetch} /> : <SkeletonTable />;
+  }
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start">

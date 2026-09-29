@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Flag, Link2Off, Loader2 } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -80,28 +82,47 @@ export function ConciliacionSeccion() {
   const abiertos = extractos?.datos.filter((e) => e.estado === "ABIERTO") ?? [];
 
   const claveDetalle = ["extractos", "detalle", extractoId];
-  const { data: detalle, isLoading: cargandoDetalle } = useQuery({
+  // Las tres consultas de abajo son la pantalla: sin cualquiera de ellas, lo
+  // que se muestre («Todo cruzado», «Sin líneas») sería falso. Si una falla,
+  // se dice eso en lugar del tablero.
+  const consultaDetalle = useQuery({
     queryKey: claveDetalle,
     queryFn: () => extractosApi.porId(extractoId!),
     enabled: extractoId !== null,
+    meta: SILENCIOSO,
   });
+  const detalle = consultaDetalle.data;
+  const cargandoDetalle = detalle === undefined;
 
   const clavePropuestas = ["extractos", "propuestas", extractoId];
-  const { data: propuestas, isLoading: cargandoPropuestas } = useQuery({
+  const consultaPropuestas = useQuery({
     queryKey: clavePropuestas,
     queryFn: () => extractosApi.propuestas(extractoId!),
     enabled: extractoId !== null,
+    meta: SILENCIOSO,
   });
+  const propuestas = consultaPropuestas.data;
+  const cargandoPropuestas = propuestas === undefined;
 
   // El sufijo la separa del libro entero (`LibroBancoSeccion`), que es otra
   // consulta; invalidar por el prefijo refresca las dos, y un cruce cambia
   // `conciliado` en ambas.
   const claveMovimientos = ["cuentas-bancarias", "movimientos", cuenta?.id];
-  const { data: movimientos, isLoading: cargandoMovimientos } = useQuery({
+  const consultaMovimientos = useQuery({
     queryKey: [...claveMovimientos, "por-conciliar"],
     queryFn: () => movimientosBancoApi.porConciliar(cuenta!.id),
     enabled: cuenta !== null,
+    meta: SILENCIOSO,
   });
+  const movimientos = consultaMovimientos.data;
+  const cargandoMovimientos = movimientos === undefined;
+
+  // La primera que no se pudo leer (y no tiene datos viejos que mostrar).
+  const fallida = [consultaDetalle, consultaPropuestas, consultaMovimientos].find(
+    (c) => c.data === undefined && c.isError,
+  );
+  const reintentar = () =>
+    Promise.all([consultaDetalle.refetch(), consultaPropuestas.refetch(), consultaMovimientos.refetch()]);
 
   /** Otra cuenta u otro extracto: nada de lo elegido ni de lo abierto sigue valiendo. */
   const empezarDeNuevo = () => {
@@ -368,13 +389,28 @@ export function ConciliacionSeccion() {
         )}
       </section>
 
-      {!extractoId ? (
-        <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <CheckCircle2 className="size-8 text-muted-foreground" />
-          <p className="font-semibold">
-            {cuenta ? "Elegí un extracto abierto para conciliar" : "Elegí una cuenta bancaria para empezar"}
-          </p>
-        </div>
+      {!cuenta ? (
+        <EmptyState
+          icon={CheckCircle2}
+          titulo="Elegí una cuenta bancaria para empezar"
+          descripcion="Arriba, en «Cuenta bancaria»: después elegís el extracto y el sistema te propone qué cruza con el libro."
+        />
+      ) : !extractoId ? (
+        extractos !== undefined && abiertos.length === 0 ? (
+          <EmptyState
+            icon={CheckCircle2}
+            titulo="Esta cuenta no tiene extractos por conciliar"
+            descripcion="Subí o digitá el extracto del banco en «Extractos» y volvé acá para cruzarlo con el libro."
+          />
+        ) : (
+          <EmptyState
+            icon={CheckCircle2}
+            titulo="Elegí un extracto abierto para conciliar"
+            descripcion="Arriba, en «Extracto abierto»: el sistema te propone qué cruza y vos confirmás."
+          />
+        )
+      ) : fallida ? (
+        <ErrorCarga error={fallida.error} titulo="No se pudo leer la conciliación de este extracto" onReintentar={reintentar} />
       ) : (
         <>
           {/*

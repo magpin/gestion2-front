@@ -24,6 +24,7 @@ import type { LucideIcon } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
 
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { buttonVariants } from "@/components/ui/button";
 import { funcionActiva } from "@/core/config/funciones";
 import { useAuthStore } from "@/core/store/authStore";
@@ -85,7 +86,7 @@ const TONO: Record<
 const ROLES_PLATA = ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"] as const;
 
 export function InicioView() {
-  const { data, isLoading, isError } = useEstadoConfiguracion();
+  const { data, isError, error, refetch } = useEstadoConfiguracion();
   const roles = useAuthStore((s) => s.roles);
   const veMaria = ROLES_MARIA.some((r) => roles.includes(r));
   // D3: con la configuración completa, Inicio es el tablero de la plata.
@@ -99,21 +100,16 @@ export function InicioView() {
     queryKey: ["tablero", "plata"],
     queryFn: tableroApi.plata,
     enabled: conTablero,
+    meta: SILENCIOSO,
   });
 
-  if (isLoading) {
-    return (
+  if (data === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudo leer el estado de la empresa" onReintentar={refetch} />
+    ) : (
       <div className="flex items-center justify-center py-24 text-muted-foreground">
         <Loader2 className="size-5 animate-spin" />
       </div>
-    );
-  }
-
-  if (isError || !data) {
-    return (
-      <p className="py-24 text-center text-sm text-muted-foreground">
-        No se pudo leer el estado de la empresa.
-      </p>
     );
   }
 
@@ -133,10 +129,12 @@ export function InicioView() {
           </p>
         </header>
 
-        {tablero.isError ? (
-          <p className="rounded-3xl border border-border bg-card px-6 py-5 text-sm text-muted-foreground">
-            No se pudo leer la plata de la empresa. Intenta de nuevo en un momento.
-          </p>
+        {tablero.data === undefined && tablero.isError ? (
+          <ErrorCarga
+            error={tablero.error}
+            titulo="No se pudo leer la plata de la empresa"
+            onReintentar={tablero.refetch}
+          />
         ) : (
           <TableroPlata datos={tablero.data} />
         )}

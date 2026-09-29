@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, CalendarClock, FileText, Loader2, Receipt, Wallet } from "lucide-react";
+import { ArrowLeftRight, CalendarClock, FileText, HandCoins, ListFilter, Loader2, Receipt, ReceiptText, Wallet } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,9 +131,19 @@ export function PagosView() {
 
 function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void }) {
   const [tramo, setTramo] = useState<TramoPago | null>(null);
-  const { data, isLoading } = useQuery({ queryKey: ["pagos", "por-pagar"], queryFn: pagosApi.porPagar });
+  const { data, isError, error, refetch } = useQuery({
+    queryKey: ["pagos", "por-pagar"],
+    queryFn: pagosApi.porPagar,
+    meta: SILENCIOSO,
+  });
 
-  if (isLoading || data === undefined) return <SkeletonTable />;
+  if (data === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudo leer lo que falta pagar" onReintentar={refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
 
   const proveedores = data.proveedores
     .map((p) => {
@@ -180,7 +191,14 @@ function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void
       {proveedores.length === 0 ? (
         <EmptyState
           titulo={tramo ? "Nada en este tramo" : "No le debés a nadie"}
-          descripcion={tramo ? "Tocá el tramo otra vez para ver todo." : "Todas las compras están pagadas."}
+          descripcion={
+            tramo
+              ? "Ninguna compra pendiente vence en ese tramo."
+              : "Cuando registrés una compra a crédito, aparece acá con su vencimiento."
+          }
+          icon={tramo ? ListFilter : HandCoins}
+          accion={tramo ? undefined : { label: "Registrar compra", href: "/dashboard/compras" }}
+          accionSecundaria={tramo ? { label: "Ver todo", onClick: () => setTramo(null) } : undefined}
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -244,14 +262,28 @@ function PorPagar({ onPagar }: { onPagar?: (proveedor: ProveedorInicial) => void
 
 function Comprobantes({ puedeAnular }: { puedeAnular: boolean }) {
   const [anulando, setAnulando] = useState<ComprobanteEgreso | null>(null);
-  const { data = [], isLoading } = useQuery({
+  const consulta = useQuery({
     queryKey: ["comprobantes-egreso"],
     queryFn: pagosApi.comprobantes,
+    meta: SILENCIOSO,
   });
+  const data = consulta.data;
 
-  if (isLoading) return <SkeletonTable />;
+  if (data === undefined) {
+    return consulta.isError ? (
+      <ErrorCarga error={consulta.error} titulo="No se pudieron leer los comprobantes" onReintentar={consulta.refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
   if (data.length === 0) {
-    return <EmptyState titulo="Sin comprobantes todavía" descripcion="Cada pago que registres queda acá con su número." />;
+    return (
+      <EmptyState
+        titulo="Sin comprobantes todavía"
+        descripcion="Cada pago que registres queda acá con su número. Se paga desde Por pagar o desde la compra."
+        icon={ReceiptText}
+      />
+    );
   }
 
   return (

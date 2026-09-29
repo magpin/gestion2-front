@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,10 +54,16 @@ export function AnticiposYCruces({ puedeCruzar }: { puedeCruzar: boolean }) {
   const [cliente, setCliente] = useState<TerceroResumen | null>(null);
   const [origen, setOrigen] = useState<Origen | null>(null);
 
-  const { data: disponibles, isFetching } = useQuery({
+  const {
+    data: disponibles,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["cruces-cartera", "disponibles", cliente?.id],
     queryFn: () => cobrosApi.disponibles(cliente!.id),
     enabled: cliente !== null,
+    meta: SILENCIOSO,
   });
 
   const origenes: Origen[] = disponibles
@@ -89,12 +96,24 @@ export function AnticiposYCruces({ puedeCruzar }: { puedeCruzar: boolean }) {
             <p className="text-sm text-muted-foreground">
               Elegí un cliente para ver sus anticipos y saldos a favor.
             </p>
-          ) : isFetching && disponibles === undefined ? (
-            <div className="flex justify-center py-6 text-muted-foreground">
-              <Loader2 className="size-5 animate-spin" />
-            </div>
+          ) : disponibles === undefined ? (
+            isError ? (
+              <ErrorCarga
+                sinMarco
+                error={error}
+                titulo="No se pudo leer lo que tiene este cliente por aplicar"
+                onReintentar={refetch}
+              />
+            ) : (
+              <div className="flex justify-center py-6 text-muted-foreground">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
+            )
           ) : origenes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Este cliente no tiene nada por aplicar.</p>
+            <p className="text-sm text-muted-foreground">
+              Este cliente no tiene anticipos ni saldos a favor por aplicar. Cuando deje plata adelantada, registrala
+              con un recibo de caja como anticipo y aparece acá.
+            </p>
           ) : (
             <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
               {origenes.map((o) => (
@@ -161,9 +180,16 @@ function ContenidoCruce({
   const [valor, setValor] = useState("");
   const [fecha, setFecha] = useState(hoy());
 
-  const { data: facturas = [], isLoading } = useQuery({
+  const {
+    data: facturas = [],
+    isLoading,
+    isError: falloFacturas,
+    error: errorFacturas,
+    refetch: releerFacturas,
+  } = useQuery({
     queryKey: ["cartera", "facturas", clienteId],
     queryFn: () => cobrosApi.facturasDe(clienteId),
+    meta: SILENCIOSO,
   });
   // El saldo a favor no se aplica a la misma factura que lo tiene.
   const destinos = facturas.filter((f) => f.id !== origen.id);
@@ -217,6 +243,8 @@ function ContenidoCruce({
           <div className="flex justify-center py-6 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
           </div>
+        ) : falloFacturas ? (
+          <ErrorCarga error={errorFacturas} titulo="No se pudieron leer las facturas del cliente" onReintentar={releerFacturas} sinMarco />
         ) : destinos.length === 0 ? (
           <p className="text-sm text-muted-foreground">Este cliente no debe nada: no hay a qué aplicarlo.</p>
         ) : (
@@ -284,14 +312,31 @@ function ContenidoCruce({
 
 function ListaCruces({ puedeAnular }: { puedeAnular: boolean }) {
   const [anulando, setAnulando] = useState<CruceCartera | null>(null);
-  const { data: cruces = [], isLoading } = useQuery({
+  const {
+    data: cruces,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["cruces-cartera", "lista"],
     queryFn: cobrosApi.cruces,
+    meta: SILENCIOSO,
   });
 
-  if (isLoading) return <SkeletonTable />;
+  if (cruces === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudieron leer los cruces" onReintentar={refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
   if (cruces.length === 0) {
-    return <EmptyState titulo="Sin cruces todavía" descripcion="Cada anticipo o saldo a favor que apliques queda acá." />;
+    return (
+      <EmptyState
+        titulo="Todavía no hay cruces"
+        descripcion="Elegí un cliente arriba y aplicá su anticipo o saldo a favor a una factura que deba: cada cruce queda acá."
+      />
+    );
   }
 
   return (

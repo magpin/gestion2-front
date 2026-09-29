@@ -5,6 +5,7 @@ import { AlertTriangle, Hourglass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormDialog } from "@/components/shared/FormDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 
 export type TonoGrupo = "normal" | "espera" | "traba";
@@ -58,6 +59,8 @@ interface SelectorDocumentoModalProps<T extends DocumentoEnSelector> {
   descripcionVaciaConEncabezado?: string;
   isLoading?: boolean;
   isError?: boolean;
+  /** El error de la consulta, para decir qué pasó. Sin él se dice lo que se sabe. */
+  error?: unknown;
   onReintentar?: () => void;
 }
 
@@ -144,6 +147,7 @@ export function SelectorDocumentoModal<T extends DocumentoEnSelector>({
   descripcionVaciaConEncabezado,
   isLoading = false,
   isError = false,
+  error,
   onReintentar,
 }: SelectorDocumentoModalProps<T>) {
   // Un grupo en 0 no se imprime: "Trabadas (0)" es ruido, y su ausencia ya dice
@@ -157,12 +161,7 @@ export function SelectorDocumentoModal<T extends DocumentoEnSelector>({
       {isLoading && <SkeletonTable filas={4} columnas={4} />}
 
       {!isLoading && isError && (
-        <EmptyState
-          titulo={`No se pudieron cargar las ${plural}`}
-          descripcion="Puede ser un problema de conexión con el servidor."
-          icon={AlertTriangle}
-          accion={onReintentar ? { label: "Reintentar", onClick: onReintentar } : undefined}
-        />
+        <ErrorCarga error={error} titulo={`No se pudieron cargar las ${plural}`} onReintentar={onReintentar} />
       )}
 
       {!isLoading && !isError && visibles.length === 0 && (

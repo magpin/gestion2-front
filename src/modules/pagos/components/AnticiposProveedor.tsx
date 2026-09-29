@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,10 +46,16 @@ export function AnticiposProveedor({ puedeCruzar }: { puedeCruzar: boolean }) {
   const [proveedor, setProveedor] = useState<TerceroResumen | null>(null);
   const [anticipo, setAnticipo] = useState<AnticipoProveedor | null>(null);
 
-  const { data: anticipos, isFetching } = useQuery({
+  const {
+    data: anticipos,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["cruces-pago", "anticipos", proveedor?.id],
     queryFn: () => pagosApi.anticiposDe(proveedor!.id),
     enabled: proveedor !== null,
+    meta: SILENCIOSO,
   });
   const conSaldo = (anticipos ?? []).filter((a) => a.saldo > 0);
 
@@ -63,13 +70,23 @@ export function AnticiposProveedor({ puedeCruzar }: { puedeCruzar: boolean }) {
         <div className="mt-5">
           {proveedor === null ? (
             <p className="text-sm text-muted-foreground">Elegí un proveedor para ver sus anticipos.</p>
-          ) : isFetching && anticipos === undefined ? (
-            <div className="flex justify-center py-6 text-muted-foreground">
-              <Loader2 className="size-5 animate-spin" />
-            </div>
+          ) : anticipos === undefined ? (
+            isError ? (
+              <ErrorCarga
+                sinMarco
+                error={error}
+                titulo="No se pudieron leer los anticipos de este proveedor"
+                onReintentar={refetch}
+              />
+            ) : (
+              <div className="flex justify-center py-6 text-muted-foreground">
+                <Loader2 className="size-5 animate-spin" />
+              </div>
+            )
           ) : conSaldo.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Este proveedor no tiene anticipos por cruzar. Se entregan desde un comprobante de egreso.
+              Este proveedor no tiene anticipos por cruzar. Si le adelantás plata, registrala como anticipo en un
+              comprobante de egreso y aparece acá para cruzarla cuando llegue la factura.
             </p>
           ) : (
             <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
@@ -135,9 +152,16 @@ function ContenidoCruce({
   const [valor, setValor] = useState("");
   const [fecha, setFecha] = useState(hoy());
 
-  const { data: compras = [], isLoading } = useQuery({
+  const {
+    data: compras = [],
+    isLoading,
+    isError: falloCompras,
+    error: errorCompras,
+    refetch: releerCompras,
+  } = useQuery({
     queryKey: ["pagos", "compras", proveedorId],
     queryFn: () => pagosApi.comprasDe(proveedorId),
+    meta: SILENCIOSO,
   });
   const compra = compras.find((c) => c.id === compraId) ?? null;
   // El cruce baja la compra en el valor menos la retención que se reversa:
@@ -187,6 +211,8 @@ function ContenidoCruce({
           <div className="flex justify-center py-6 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
           </div>
+        ) : falloCompras ? (
+          <ErrorCarga error={errorCompras} titulo="No se pudieron leer las compras del proveedor" onReintentar={releerCompras} sinMarco />
         ) : compras.length === 0 ? (
           <p className="text-sm text-muted-foreground">No se le debe nada a este proveedor: no hay con qué cruzarlo.</p>
         ) : (
@@ -254,14 +280,31 @@ function ContenidoCruce({
 
 function ListaCruces({ puedeAnular }: { puedeAnular: boolean }) {
   const [anulando, setAnulando] = useState<CrucePago | null>(null);
-  const { data: cruces = [], isLoading } = useQuery({
+  const {
+    data: cruces,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["cruces-pago", "lista"],
     queryFn: pagosApi.cruces,
+    meta: SILENCIOSO,
   });
 
-  if (isLoading) return <SkeletonTable />;
+  if (cruces === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudieron leer los cruces" onReintentar={refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
   if (cruces.length === 0) {
-    return <EmptyState titulo="Sin cruces todavía" descripcion="Cada anticipo que cruces con una compra queda acá." />;
+    return (
+      <EmptyState
+        titulo="Todavía no hay cruces"
+        descripcion="Cuando llegue la factura de un proveedor al que le adelantaste plata, elegilo arriba y cruzá su anticipo con la compra: cada cruce queda acá."
+      />
+    );
   }
 
   return (

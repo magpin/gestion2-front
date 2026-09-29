@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Aviso } from "@/components/shared/Aviso";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { cn, formatCOP } from "@/lib/utils";
 import { fechaCorta, mesCorto } from "../lib/estados";
@@ -19,12 +20,15 @@ export function FlujoCajaTab({ mes, vista }: { mes: string; vista: VistaFlujo })
 }
 
 function Real({ mes }: { mes: string }) {
-  const { data, isLoading } = useQuery({
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["estados-financieros", "flujo", mes],
     queryFn: () => estadosApi.flujo(mes),
+    meta: SILENCIOSO,
   });
 
-  if (isLoading || data === undefined) return <SkeletonTable />;
+  if (data === undefined) {
+    return isError ? <ErrorCarga error={error} titulo="No se pudo armar el estado" onReintentar={refetch} /> : <SkeletonTable />;
+  }
   const f = data.directo;
 
   return (
@@ -86,12 +90,15 @@ function EntraSale({ flujo }: { flujo: FlujoDirecto }) {
 }
 
 function ProximasSemanas() {
-  const { data, isLoading } = useQuery({
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["estados-financieros", "flujo-proyectado"],
     queryFn: () => estadosApi.proyectado(8),
+    meta: SILENCIOSO,
   });
 
-  if (isLoading || data === undefined) return <SkeletonTable />;
+  if (data === undefined) {
+    return isError ? <ErrorCarga error={error} titulo="No se pudo armar el estado" onReintentar={refetch} /> : <SkeletonTable />;
+  }
   // Lo vencido solo se muestra si hay algo vencido.
   const semanas = data.semanas.filter((s) => s.desde !== null || s.entradas !== 0 || s.salidas !== 0);
   const faltante = data.semanas.find((s) => s.saldo < 0);

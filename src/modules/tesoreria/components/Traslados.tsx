@@ -6,6 +6,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,15 +60,31 @@ const aEnvio = (l: Lado): ExtremoTrasladoInput =>
  */
 export function ListaTraslados({ puedeAnular }: { puedeAnular: boolean }) {
   const [anulando, setAnulando] = useState<Traslado | null>(null);
-  const { data = [], isLoading } = useQuery({ queryKey: ["traslados"], queryFn: trasladosApi.listar });
+  const [trasladando, setTrasladando] = useState(false);
+  const { data, isError, error, refetch } = useQuery({
+    queryKey: ["traslados"],
+    queryFn: trasladosApi.listar,
+    meta: SILENCIOSO,
+  });
 
-  if (isLoading) return <SkeletonTable />;
+  if (data === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudieron leer los traslados" onReintentar={refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
   if (data.length === 0) {
+    // Quien puede anular es quien puede trasladar: los dos son CAJA o DIRECTOR.
     return (
-      <EmptyState
-        titulo="Sin traslados todavía"
-        descripcion="Cada consignación, retiro o transferencia entre tus cuentas queda acá, con su número."
-      />
+      <>
+        <EmptyState
+          titulo="Todavía no hay traslados"
+          descripcion="Cuando consignés el efectivo de la caja, retirés del banco o pasés plata entre tus cuentas, registralo acá: no es ingreso ni gasto, la plata cambia de lugar."
+          accion={puedeAnular ? { label: "Registrar traslado", onClick: () => setTrasladando(true) } : undefined}
+        />
+        <TrasladoDialog abierto={trasladando} onCerrar={() => setTrasladando(false)} />
+      </>
     );
   }
 

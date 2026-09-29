@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { cn, formatCOP } from "@/lib/utils";
 import { periodosApi } from "../services/contabilidad.service";
@@ -73,9 +75,10 @@ export function PeriodosSeccion() {
   const [agrupacion, setAgrupacion] = useState<Agrupacion>("MENSUAL");
   const [anio, setAnio] = useState<number | undefined>(new Date().getFullYear());
 
-  const { data: grupos = [], isLoading } = useQuery({
+  const { data: grupos, isError, error, refetch } = useQuery({
     queryKey: ["periodos", "resumen", agrupacion, anio],
     queryFn: () => periodosApi.resumen(agrupacion, anio),
+    meta: SILENCIOSO,
   });
 
   const { dias, ultimo } = diasParaCierre();
@@ -139,14 +142,24 @@ export function PeriodosSeccion() {
         )}
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-24 text-muted-foreground">
-          <Loader2 className="size-6 animate-spin" />
-        </div>
+      {grupos === undefined ? (
+        isError ? (
+          <ErrorCarga error={error} titulo="No se pudieron leer los períodos" onReintentar={refetch} />
+        ) : (
+          <div className="flex justify-center py-24 text-muted-foreground">
+            <Loader2 className="size-6 animate-spin" />
+          </div>
+        )
       ) : grupos.length === 0 ? (
-        <div className="rounded-3xl border border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
-          No hay períodos en {anio}.
-        </div>
+        <EmptyState
+          icon={CalendarClock}
+          titulo={anio === undefined ? "Todavía no hay períodos" : `Sin períodos en ${anio}`}
+          descripcion={
+            anio === undefined
+              ? "Cada mes aparece acá con sus cifras a medida que la empresa registra movimientos."
+              : "La empresa no llevó contabilidad en ese año. Pasá a otro año con las flechas."
+          }
+        />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
