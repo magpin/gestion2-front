@@ -56,7 +56,11 @@ export function DialogoNuevaCaja({
         responsableTerceroId: d.responsableTerceroId || undefined,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["cajas"] });
+      // La caja nueva aparece en la tarjeta de saldos iniciales.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["cajas"] }),
+        queryClient.invalidateQueries({ queryKey: ["tesoreria", "saldos-iniciales"] }),
+      ]);
       aviso.exito("Caja registrada");
       cerrar();
     },
@@ -123,7 +127,11 @@ export function DialogoNuevaCuentaBancaria({
   const crear = useMutation({
     mutationFn: (d: DatosCuentaBancaria) => cuentasBancariasApi.crear(d),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["cuentas-bancarias"] });
+      // La cuenta nueva aparece en la tarjeta de saldos iniciales.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["cuentas-bancarias"] }),
+        queryClient.invalidateQueries({ queryKey: ["tesoreria", "saldos-iniciales"] }),
+      ]);
       aviso.exito("Cuenta bancaria registrada");
       cerrar();
     },
