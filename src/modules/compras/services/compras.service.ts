@@ -8,6 +8,8 @@ import type {
   FiltroCompras,
   PagarInput,
   PaginaCompras,
+  CompraPrevia,
+  NumeracionSoporte,
 } from "../types/compras.types";
 import type { PropuestaRenta } from "@/modules/retenciones/types/retenciones.types";
 
@@ -30,6 +32,12 @@ export const comprasApi = {
 
   porId: (id: string) =>
     api.get<CompraDocumentoDetalle>(`/compras/${id}`).then((r) => r.data),
+
+  /** Cómo quedaría en el libro, sin guardar nada. */
+  previo: (datos: CrearCompraInput) => api.post<CompraPrevia>("/compras/previo", datos).then((r) => r.data),
+
+  /** El siguiente número del documento soporte; `null` si no hay resolución. */
+  numeracionSoporte: () => api.get<NumeracionSoporte | null>("/compras/soporte/numeracion").then((r) => r.data),
 
   crear: (datos: CrearCompraInput) =>
     api.post<CompraDocumentoDetalle>("/compras", datos).then((r) => r.data),

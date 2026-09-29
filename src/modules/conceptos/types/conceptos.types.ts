@@ -21,7 +21,22 @@ export interface Concepto {
   pistas: string[];
   activo: boolean;
   usos: number;
+  /** Las líneas de asiento del mes en curso. */
+  usosMes: number;
+  /** Sugerencias para el motor (PC23). */
+  ivaCompra: IvaCompra | null;
+  retencionSugerida: string | null;
+  aplicaReteica: boolean;
+  deducible: boolean;
 }
+
+export type IvaCompra = "DESCONTABLE" | "NO_DESCONTABLE" | "SIN_IVA";
+
+export const NOMBRE_IVA_COMPRA: Record<IvaCompra, string> = {
+  DESCONTABLE: "Descontable",
+  NO_DESCONTABLE: "No descontable (va al gasto)",
+  SIN_IVA: "No lleva IVA",
+};
 
 export interface ResultadoPrepararConceptos {
   creados: number;
@@ -35,6 +50,12 @@ export interface CrearConceptoInput {
   tipo: TipoConcepto;
   cuentaId: string;
   tipoFlujo?: TipoFlujo;
+  /** Sugerencias para el motor (PC23): el motor sigue decidiendo por renglón. */
+  ivaCompra?: IvaCompra | null;
+  retencionSugerida?: string | null;
+  aplicaReteica?: boolean;
+  deducible?: boolean;
+  pistas?: string[];
 }
 
 export interface EditarConceptoInput {
@@ -43,6 +64,12 @@ export interface EditarConceptoInput {
   cuentaId?: string;
   tipoFlujo?: TipoFlujo;
   activo?: boolean;
+  /** Sugerencias para el motor (PC23): el motor sigue decidiendo por renglón. */
+  ivaCompra?: IvaCompra | null;
+  retencionSugerida?: string | null;
+  aplicaReteica?: boolean;
+  deducible?: boolean;
+  pistas?: string[];
 }
 
 export const NOMBRE_TIPO: Record<TipoConcepto, string> = {

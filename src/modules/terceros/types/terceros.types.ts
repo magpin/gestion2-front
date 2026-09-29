@@ -19,6 +19,9 @@ export interface TerceroResumen {
   esProveedor: boolean;
   /** Trabaja para la empresa: responde por una caja. */
   esEmpleado: boolean;
+  /** Plazo habitual como cliente y como proveedor, en días (PC25). */
+  diasPlazoCliente?: number | null;
+  diasPlazoProveedor?: number | null;
   responsableIva: boolean;
   /** Si declara renta. Decide la tarifa de retefuente donde hay dos (4% o 6%). */
   declaranteRenta: boolean;
@@ -52,6 +55,9 @@ export interface TerceroDetalle {
   es_cliente: boolean;
   es_proveedor: boolean;
   es_empleado: boolean;
+  /** Plazo habitual en días (PC25): propone el vencimiento de la factura y de la compra. */
+  dias_plazo_cliente: number | null;
+  dias_plazo_proveedor: number | null;
   responsable_iva: boolean;
   es_agente_retenedor: boolean;
   es_autorretenedor: boolean;

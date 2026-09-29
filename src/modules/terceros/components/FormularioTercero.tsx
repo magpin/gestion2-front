@@ -44,6 +44,8 @@ const esquema = z
     esCliente: z.boolean(),
     esProveedor: z.boolean(),
     esEmpleado: z.boolean(),
+    diasPlazoCliente: z.union([z.literal(""), z.string().regex(/^d{1,3}$/, "Días enteros").refine((v) => Number(v) <= 365, "Máximo 365")]),
+    diasPlazoProveedor: z.union([z.literal(""), z.string().regex(/^d{1,3}$/, "Días enteros").refine((v) => Number(v) <= 365, "Máximo 365")]),
     responsableIva: z.boolean(),
     esAgenteRetenedor: z.boolean(),
     esAutorretenedor: z.boolean(),
@@ -83,6 +85,8 @@ const VACIO: DatosTercero = {
   esCliente: true,
   esProveedor: false,
   esEmpleado: false,
+  diasPlazoCliente: "",
+  diasPlazoProveedor: "",
   responsableIva: false,
   esAgenteRetenedor: false,
   esAutorretenedor: false,
@@ -174,6 +178,8 @@ export function FormularioTercero({
       esCliente: inicial.es_cliente,
       esProveedor: inicial.es_proveedor,
       esEmpleado: inicial.es_empleado,
+      diasPlazoCliente: inicial.dias_plazo_cliente?.toString() ?? "",
+      diasPlazoProveedor: inicial.dias_plazo_proveedor?.toString() ?? "",
       responsableIva: inicial.responsable_iva,
       esAgenteRetenedor: inicial.es_agente_retenedor,
       esAutorretenedor: inicial.es_autorretenedor,
@@ -462,6 +468,44 @@ export function FormularioTercero({
         </div>
         {errores.esCliente && (
           <p className="text-[13px] text-danger">{errores.esCliente.message}</p>
+        )}
+        {(form.watch("esCliente") || form.watch("esProveedor")) && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {form.watch("esCliente") && (
+              <Campo
+                id="diasPlazoCliente"
+                etiqueta="Le das plazo de"
+                ayuda="Días. La factura a crédito propone el vencimiento con esto."
+                error={errores.diasPlazoCliente?.message}
+                escala="grande"
+              >
+                <Input
+                  id="diasPlazoCliente"
+                  inputMode="numeric"
+                  placeholder="30"
+                  className={`${CONTROL} font-mono`}
+                  {...form.register("diasPlazoCliente")}
+                />
+              </Campo>
+            )}
+            {form.watch("esProveedor") && (
+              <Campo
+                id="diasPlazoProveedor"
+                etiqueta="Te da plazo de"
+                ayuda="Días. La compra a crédito propone el vencimiento con esto."
+                error={errores.diasPlazoProveedor?.message}
+                escala="grande"
+              >
+                <Input
+                  id="diasPlazoProveedor"
+                  inputMode="numeric"
+                  placeholder="30"
+                  className={`${CONTROL} font-mono`}
+                  {...form.register("diasPlazoProveedor")}
+                />
+              </Campo>
+            )}
+          </div>
         )}
       </Seccion>
 

@@ -82,6 +82,8 @@ export function DialogoTercero({
         telefono: d.telefono || undefined,
         direccion: d.direccion || undefined,
         municipioCodigo: d.municipioCodigo || undefined,
+        diasPlazoCliente: d.diasPlazoCliente === "" ? undefined : Number(d.diasPlazoCliente),
+        diasPlazoProveedor: d.diasPlazoProveedor === "" ? undefined : Number(d.diasPlazoProveedor),
       };
 
       if (creando) return tercerosApi.crear(datos);

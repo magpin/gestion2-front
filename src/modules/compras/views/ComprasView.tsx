@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { FileMinus, FilePlus, ReceiptText } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
+import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
 import { AtajoLeidos } from "@/modules/asistente/components/AtajoLeidos";
 import { FacturasCompraSeccion } from "./FacturasCompraSeccion";
@@ -42,6 +44,13 @@ export function ComprasView() {
   const [creando, setCreando] = useState(false);
   const puedeCrear = useTieneRol("COMPRAS", "DIRECTOR");
   const cerrarCreacion = () => setCreando(false);
+  const router = useRouter();
+  // Con la página prendida, la factura nueva se registra allá, con su resumen
+  // y el asiento previo. Las notas siguen en su diálogo.
+  const nuevo = () =>
+    seccion === "Facturas" && funcionActiva("compraPagina")
+      ? router.push("/dashboard/compras/nueva")
+      : setCreando(true);
 
   return (
     <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
@@ -65,7 +74,7 @@ export function ComprasView() {
           {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
             <BotonNuevo
               etiqueta={ETIQUETA_NUEVO[seccion]}
-              onClick={() => setCreando(true)}
+              onClick={nuevo}
             />
           )}
         </div>

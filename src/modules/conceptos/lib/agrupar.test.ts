@@ -18,6 +18,11 @@ const concepto = (nombre: string, grupo: string, codigo: string, pistas: string[
   pistas,
   activo: true,
   usos: 0,
+  usosMes: 0,
+  ivaCompra: null,
+  retencionSugerida: null,
+  aplicaReteica: false,
+  deducible: true,
 });
 
 const lista = [

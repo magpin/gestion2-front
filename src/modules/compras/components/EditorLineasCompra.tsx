@@ -1,13 +1,18 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Sparkles, Trash2 } from "lucide-react";
 
 import { CampoCantidad, CampoPesos } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
+import { useQuieto } from "@/hooks/useQuieto";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
+import { conceptosApi } from "@/modules/conceptos/services/conceptos.service";
+import { gastosApi } from "@/modules/gastos/services/gastos.service";
+import { PALABRAS_CERTEZA } from "@/modules/gastos/types/gastos.types";
 import type { Concepto } from "@/modules/conceptos/types/conceptos.types";
 import { SelectorProducto } from "@/modules/inventario/components/SelectorProducto";
 import type { ProductoResumen } from "@/modules/inventario/types/inventario.types";
@@ -76,9 +81,15 @@ export function lineaCompleta(l: LineaCompraBorrador): boolean {
 export function EditorLineasCompra({
   lineas,
   onCambiar,
+  sugerirPara,
 }: {
   lineas: LineaCompraBorrador[];
   onCambiar: (lineas: LineaCompraBorrador[]) => void;
+  /**
+   * Si María sugiere el concepto de cada gasto: el id del proveedor (o `null`
+   * si todavía no hay). Sin esto, no sugiere.
+   */
+  sugerirPara?: string | null;
 }) {
   const conIva = useResponsableIva();
 
@@ -182,6 +193,14 @@ export function EditorLineasCompra({
                           className="h-11 rounded-xl px-4"
                           aria-label={`Detalle de la línea ${i + 1}`}
                         />
+                        {sugerirPara !== undefined && (
+                          <SugerenciaConcepto
+                            detalle={l.detalle}
+                            terceroId={sugerirPara}
+                            actual={l.concepto}
+                            onUsar={(concepto) => actualizar(l.clave, { concepto })}
+                          />
+                        )}
                       </>
                     )}
                   </div>
@@ -287,5 +306,52 @@ export function EditorLineasCompra({
         </Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * «María sugiere: X · Usar» debajo de un gasto. Lee el detalle y el historial
+ * del proveedor; nunca cambia el concepto sola (PC22).
+ */
+function SugerenciaConcepto({
+  detalle,
+  terceroId,
+  actual,
+  onUsar,
+}: {
+  detalle: string;
+  terceroId: string | null;
+  actual: Concepto | null;
+  onUsar: (c: Concepto) => void;
+}) {
+  const quieto = useQuieto(detalle.trim());
+  const { data: sugerencia } = useQuery({
+    queryKey: ["gastos", "sugerir", quieto, terceroId],
+    queryFn: () => gastosApi.sugerir(quieto, terceroId ?? undefined),
+    enabled: quieto.length >= 3,
+  });
+  const { data: conceptos = [] } = useQuery({
+    queryKey: ["conceptos", false],
+    queryFn: () => conceptosApi.listar(),
+    staleTime: 60_000,
+    enabled: sugerencia?.conceptoId != null,
+  });
+  const sugerido = conceptos.find((c) => c.id === sugerencia?.conceptoId && c.cuenta !== null);
+  if (!sugerencia || !sugerido || sugerido.id === actual?.id) return null;
+  return (
+    <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <Sparkles className="size-3.5 text-brand" />
+      <span>
+        María sugiere: <span className="font-semibold text-foreground">{sugerido.nombre}</span> ·{" "}
+        {PALABRAS_CERTEZA[sugerencia.certeza]}
+      </span>
+      <button
+        type="button"
+        onClick={() => onUsar(sugerido)}
+        className="rounded-md border border-border px-2 py-0.5 font-semibold text-foreground hover:bg-accent"
+      >
+        Usar
+      </button>
+    </p>
   );
 }

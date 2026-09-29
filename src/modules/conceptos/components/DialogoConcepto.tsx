@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -27,12 +28,15 @@ import { aviso } from "@/lib/avisos";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { SelectorCuenta } from "@/modules/contabilidad/components/SelectorCuenta";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
+import { retencionesApi } from "@/modules/retenciones/services/retenciones.service";
 import { conceptosApi } from "../services/conceptos.service";
 import {
   CLASES_TIPO,
   NOMBRE_FLUJO,
+  NOMBRE_IVA_COMPRA,
   NOMBRE_TIPO,
   type Concepto,
+  type IvaCompra,
   type TipoConcepto,
   type TipoFlujo,
 } from "../types/conceptos.types";
@@ -104,6 +108,33 @@ function Formulario({
     concepto?.cuenta ? ({ ...concepto.cuenta } as CuentaEmpresa) : null,
   );
   const [intentado, setIntentado] = useState(false);
+  // Lo que el concepto le sugiere al motor al comprar (PC23). Solo en gastos y costos.
+  const [ivaCompra, setIvaCompra] = useState<IvaCompra | "">(concepto?.ivaCompra ?? "");
+  const [retencion, setRetencion] = useState(concepto?.retencionSugerida ?? "");
+  const [reteica, setReteica] = useState(concepto?.aplicaReteica ?? false);
+  const [deducible, setDeducible] = useState(concepto?.deducible ?? true);
+  const [pistas, setPistas] = useState<string[]>(concepto?.pistas ?? []);
+  const [pista, setPista] = useState("");
+  const esCompra = tipo === "GASTO" || tipo === "COSTO";
+  const { data: retenciones = [] } = useQuery({
+    queryKey: ["retenciones", "conceptos"],
+    queryFn: () => retencionesApi.conceptos(),
+    enabled: esCompra,
+  });
+  const deRenta = retenciones.filter((c) => c.tipo === "RENTA");
+  const agregarPista = () => {
+    const p = pista.trim().toLowerCase();
+    if (p.length >= 2 && !pistas.includes(p) && pistas.length < 20) setPistas([...pistas, p]);
+    setPista("");
+  };
+  const sugerencias = esCompra
+    ? {
+        ivaCompra: ivaCompra === "" ? null : ivaCompra,
+        retencionSugerida: retencion === "" ? null : retencion,
+        aplicaReteica: reteica,
+        deducible,
+      }
+    : {};
 
   const guardar = useMutation({
     mutationFn: () =>
@@ -114,12 +145,16 @@ function Formulario({
             tipo,
             cuentaId: cuenta!.id,
             tipoFlujo: flujo,
+            pistas,
+            ...sugerencias,
           })
         : conceptosApi.editar(concepto.id, {
             nombre: nombre.trim(),
             grupo: grupo.trim(),
             cuentaId: cuenta?.id !== concepto.cuenta?.id ? cuenta?.id : undefined,
             tipoFlujo: flujo,
+            pistas,
+            ...sugerencias,
           }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["conceptos"] });
@@ -245,6 +280,134 @@ function Formulario({
               </SelectContent>
             </Select>
           </Campo>
+
+          {esCompra && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Campo id="concepto-iva" etiqueta="IVA de la compra" ayuda="Sugerencia: en cada compra se puede cambiar.">
+                  <select
+                    id="concepto-iva"
+                    value={ivaCompra}
+                    onChange={(e) => setIvaCompra(e.target.value as IvaCompra | "")}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">Según la factura</option>
+                    {(Object.keys(NOMBRE_IVA_COMPRA) as IvaCompra[]).map((i) => (
+                      <option key={i} value={i}>
+                        {NOMBRE_IVA_COMPRA[i]}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo id="concepto-retencion" etiqueta="Retención en la fuente" ayuda="La que se propone; el motor decide con el proveedor y la base.">
+                  <select
+                    id="concepto-retencion"
+                    value={retencion}
+                    onChange={(e) => setRetencion(e.target.value)}
+                    className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">Que la proponga el motor</option>
+                    {deRenta.map((c) => (
+                      <option key={c.codigo} value={c.codigo}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+              </div>
+              <div className="flex flex-col gap-3 rounded-2xl border border-border p-4">
+                <label className="flex items-start gap-2.5 text-sm">
+                  <Checkbox checked={reteica} onCheckedChange={(v) => setReteica(v === true)} className="mt-0.5" />
+                  <span>
+                    Se le practica ReteICA
+                    <span className="block text-xs text-muted-foreground">
+                      La tarifa depende del municipio y la actividad del proveedor: la pone el motor.
+                    </span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-2.5 text-sm">
+                  <Checkbox checked={deducible} onCheckedChange={(v) => setDeducible(v === true)} className="mt-0.5" />
+                  <span>
+                    Se puede restar en la renta
+                    <span className="block text-xs text-muted-foreground">Siempre que tenga factura electrónica o documento soporte.</span>
+                  </span>
+                </label>
+              </div>
+            </>
+          )}
+
+          <Campo id="concepto-pistas" etiqueta="Palabras con las que María lo reconoce">
+            <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-input px-2 py-2">
+              {pistas.map((p) => (
+                <span key={p} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs">
+                  {p}
+                  <button type="button" aria-label={`Quitar «${p}»`} onClick={() => setPistas(pistas.filter((x) => x !== p))}>
+                    <X className="size-3" />
+                  </button>
+                </span>
+              ))}
+              <input
+                id="concepto-pistas"
+                value={pista}
+                onChange={(e) => setPista(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault();
+                    agregarPista();
+                  }
+                }}
+                onBlur={agregarPista}
+                placeholder="Agregar…"
+                className="min-w-24 flex-1 bg-transparent px-1 text-sm outline-none"
+              />
+            </div>
+          </Campo>
+
+          {esCompra && cuenta && (
+            <div className="rounded-2xl bg-muted px-4 py-3 text-xs">
+              <p className="mb-1 font-bold uppercase tracking-[0.14em] text-muted-foreground">Así se registra una compra con este concepto</p>
+              <ul className="flex flex-col gap-0.5">
+                <li className="flex justify-between gap-3">
+                  <span>
+                    <span className="font-mono text-muted-foreground">{cuenta.codigo}</span> {cuenta.nombre}
+                  </span>
+                  <span>Débito</span>
+                </li>
+                {ivaCompra === "DESCONTABLE" && (
+                  <li className="flex justify-between gap-3">
+                    <span>
+                      <span className="font-mono text-muted-foreground">2408</span> IVA descontable
+                    </span>
+                    <span>Débito</span>
+                  </li>
+                )}
+                {(retencion !== "" || reteica) && (
+                  <li className="flex justify-between gap-3">
+                    <span>
+                      {retencion !== "" && (
+                        <>
+                          <span className="font-mono text-muted-foreground">2365</span> Retención en la fuente
+                        </>
+                      )}
+                      {retencion !== "" && reteica && " · "}
+                      {reteica && (
+                        <>
+                          <span className="font-mono text-muted-foreground">2368</span> ReteICA
+                        </>
+                      )}
+                    </span>
+                    <span>Crédito</span>
+                  </li>
+                )}
+                <li className="flex justify-between gap-3">
+                  <span>
+                    <span className="font-mono text-muted-foreground">2205</span> Proveedores, o la caja o el banco si es de contado
+                  </span>
+                  <span>Crédito</span>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
       </DialogBody>
 

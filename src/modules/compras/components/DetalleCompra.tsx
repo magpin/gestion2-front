@@ -49,7 +49,13 @@ export function DetalleCompra({
             <DialogHeader>
               <div>
                 <DialogTitle>
-                  Factura de compra {documento.numero_factura_proveedor}
+                  {documento.clase_documento === "DOCUMENTO_SOPORTE" ? "Documento soporte" : "Factura de compra"}{" "}
+                  {documento.numero_factura_proveedor}
+                  {documento.transmision === "SIN_TRANSMITIR" && (
+                        <span className="ml-2 rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 font-sans text-[11px] font-medium">
+                          Sin transmitir
+                        </span>
+                      )}
                 </DialogTitle>
                 <DialogDescription>
                   {documento.tercero_nombre}

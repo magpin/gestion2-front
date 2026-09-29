@@ -35,6 +35,11 @@ export const CONCEPTOS_RETENCION: Array<{
 export interface CompraDocumentoResumen {
   id: string;
   tipo: TipoCompraDocumento;
+  /** Quién la emitió: el proveedor, o la empresa si es documento soporte. */
+  clase_documento?: "FACTURA_ELECTRONICA" | "DOCUMENTO_SOPORTE";
+  /** El soporte nace sin transmitir: no hay módulo DIAN (PC2). `null` en una factura. */
+  transmision?: "SIN_TRANSMITIR" | "TRANSMITIDO" | "ACEPTADO" | null;
+  cufe?: string | null;
   /** La factura del proveedor que esta nota corrige. `null` en una factura. */
   documento_origen_id: string | null;
   tercero_id: string;
@@ -168,6 +173,10 @@ export interface CrearCompraInput {
   terceroId: string;
   fecha: string;
   numeroFacturaProveedor: string;
+  /** Factura electrónica del proveedor, o documento soporte que numera la empresa. */
+  claseDocumento?: "FACTURA_ELECTRONICA" | "DOCUMENTO_SOPORTE";
+  /** El CUFE, como dato: no se valida en la DIAN (PC2). */
+  cufe?: string;
   lineas: LineaCompraInput[];
   retenciones?: RetencionCompraInput[];
   /** El concepto de renta de los renglones que lo necesitaban (motor, Fase 1). */
@@ -241,4 +250,27 @@ export interface CrearNotaDebitoCompraInput {
   /** Los conceptos de renta contestados, como en la compra (Fase 8, §8.7). */
   conceptosRenta?: Array<{ orden: number; conceptoCodigo: string }>;
   sinRetencionMotivo?: string;
+}
+
+/** Cómo quedaría la compra en el libro, sin guardarla (`POST /compras/previo`). */
+export interface CompraPrevia {
+  numero: string;
+  subtotal: number;
+  iva: number;
+  total: number;
+  retenciones: number;
+  /** Cada retención del motor, con la cuenta a la que va. */
+  detalleRetenciones: Array<{ tipo: string | null; nombre: string; tarifa: number | null; base: number; valor: number }>;
+  neto: number;
+  vence: string | null;
+  asiento: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
+}
+
+/** La numeración del documento soporte (`GET /compras/soporte/numeracion`). */
+export interface NumeracionSoporte {
+  siguiente: string;
+  resolucion: string;
+  desde: number;
+  hasta: number;
+  quedan: number;
 }

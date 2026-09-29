@@ -52,6 +52,7 @@ export function ConceptosView() {
   const [tipo, setTipo] = useState<TipoConcepto>("GASTO");
   const [busqueda, setBusqueda] = useState("");
   const [verInactivos, setVerInactivos] = useState(false);
+  const [naturaleza, setNaturaleza] = useState<"TODAS" | "OPERACIONAL" | "NO_OPERACIONAL">("TODAS");
   const [editando, setEditando] = useState<Concepto | null>(null);
   const [creando, setCreando] = useState(false);
 
@@ -100,8 +101,14 @@ export function ConceptosView() {
     onError: (e: unknown) => aviso.falla(e),
   });
 
-  const delTipo = conceptos.filter((c) => c.tipo === tipo);
+  // Naturaleza: operacional o no (41/51/52 frente a 42/53), para lo que va al resultado.
+  const delTipoTodos = conceptos.filter((c) => c.tipo === tipo);
+  const delTipo = delTipoTodos.filter(
+    (c) => naturaleza === "TODAS" || c.operacional === (naturaleza === "OPERACIONAL"),
+  );
   const grupos = agruparConceptos(delTipo, busqueda);
+  const filtrando = busqueda.trim() !== "" || naturaleza !== "TODAS";
+  const visibles = grupos.reduce((t, g) => t + g.conceptos.length, 0);
   const sinCuenta = conceptos.filter((c) => c.activo && c.cuenta === null).length;
 
   return (
@@ -167,6 +174,28 @@ export function ConceptosView() {
             className="h-11 rounded-xl pl-10"
           />
         </div>
+        <select
+          aria-label="Naturaleza"
+          value={naturaleza}
+          onChange={(e) => setNaturaleza(e.target.value as typeof naturaleza)}
+          className="h-11 rounded-xl border border-input bg-card px-3 text-sm"
+        >
+          <option value="TODAS">Naturaleza: todas</option>
+          <option value="OPERACIONAL">Operacional</option>
+          <option value="NO_OPERACIONAL">No operacional</option>
+        </select>
+        {filtrando && (
+          <button
+            type="button"
+            className="h-11 rounded-xl border border-border px-4 text-sm"
+            onClick={() => {
+              setBusqueda("");
+              setNaturaleza("TODAS");
+            }}
+          >
+            Limpiar
+          </button>
+        )}
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input
             type="checkbox"
@@ -178,6 +207,12 @@ export function ConceptosView() {
         </label>
       </div>
 
+      {filtrando && leidos !== undefined && (
+        <p className="mb-3 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">{visibles}</span> de {delTipoTodos.length} conceptos de{" "}
+          {NOMBRE_TIPO[tipo].toLowerCase()}
+        </p>
+      )}
       {leidos === undefined ? (
         isError ? (
           <ErrorCarga error={error} titulo="No se pudieron leer los conceptos" onReintentar={refetch} />
@@ -207,7 +242,7 @@ export function ConceptosView() {
                 <th className="px-5 py-3">Concepto</th>
                 <th className="px-5 py-3">Va a la cuenta</th>
                 <th className="px-5 py-3">{tipo === "NO_GASTO" ? "Flujo de caja" : "Naturaleza"}</th>
-                <th className="px-5 py-3 text-right">Usos</th>
+                <th className="px-5 py-3 text-right">Usos del mes</th>
                 {puedeEditar && <th className="px-5 py-3" />}
               </tr>
             </thead>
@@ -257,7 +292,9 @@ export function ConceptosView() {
                             ? "Operacional"
                             : "No operacional"}
                     </td>
-                    <td className="px-5 py-3 text-right font-mono tabular-nums">{c.usos}</td>
+                    <td className="px-5 py-3 text-right font-mono tabular-nums" title={`${c.usos} en total`}>
+                      {c.usosMes}
+                    </td>
                     {puedeEditar && (
                       <td className="px-5 py-3">
                         <div className="flex justify-end gap-2">
