@@ -91,7 +91,7 @@ export function FormularioConvertirCotizacion({
             </p>
           </Campo>
 
-          <SelectorFormaPago valor={formaPago} onCambiar={setFormaPago} cajaFija />
+          <SelectorFormaPago valor={formaPago} onCambiar={setFormaPago} cajaFija conVence />
         </DialogBody>
 
         <DialogFooter className="sm:justify-between">

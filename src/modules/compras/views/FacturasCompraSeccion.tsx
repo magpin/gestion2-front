@@ -29,11 +29,13 @@ import {
 } from "@/components/shared/AccionesDropdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import { avisoNotasVivas } from "@/lib/notas-vivas";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { VacioConMaria } from "@/modules/asistente/components/VacioConMaria";
+import { ComprobanteEgresoDialog } from "@/modules/pagos/components/ComprobanteEgresoDialog";
 import { DetalleCompra } from "../components/DetalleCompra";
 import { FormularioCompra } from "../components/FormularioCompra";
 import { FormularioNotaCreditoCompra } from "../components/FormularioNotaCreditoCompra";
@@ -377,14 +379,30 @@ export function FacturasCompraSeccion({
         compraFija={notaDebitoDe ?? undefined}
       />
 
-      <FormularioPago
-        compra={pagandoDe}
-        onCerrar={() => setPagandoDe(null)}
-        onGuardar={(datos) =>
-          pagandoDe && pagar.mutate({ id: pagandoDe.id, datos })
-        }
-        guardando={pagar.isPending}
-      />
+      {/* Un hecho, un documento: con Pagos encendido, «Pagar» abre el mismo
+          comprobante de egreso que la pantalla de Pagos, con esta compra
+          marcada. Mientras tanto, el pago de siempre. */}
+      {funcionActiva("pagos") ? (
+        <ComprobanteEgresoDialog
+          abierto={pagandoDe !== null}
+          proveedor={
+            pagandoDe === null
+              ? null
+              : { id: pagandoDe.tercero_id, nombre: pagandoDe.tercero_nombre }
+          }
+          compraId={pagandoDe?.id}
+          onCerrar={() => setPagandoDe(null)}
+        />
+      ) : (
+        <FormularioPago
+          compra={pagandoDe}
+          onCerrar={() => setPagandoDe(null)}
+          onGuardar={(datos) =>
+            pagandoDe && pagar.mutate({ id: pagandoDe.id, datos })
+          }
+          guardando={pagar.isPending}
+        />
+      )}
 
       <FormularioPago
         modo="DEVOLVER"

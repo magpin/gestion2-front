@@ -78,4 +78,14 @@ describe("aFormaPago", () => {
       formaPago: "CREDITO",
     });
   });
+
+  it("crédito con vencimiento lo manda; sin él, no manda nada", () => {
+    expect(aFormaPago(con({ modo: "CREDITO", vence: "2026-10-31" }))).toEqual({
+      formaPago: "CREDITO",
+      vence: "2026-10-31",
+    });
+    expect(aFormaPago(con({ modo: "CREDITO", vence: "" }))).toEqual({
+      formaPago: "CREDITO",
+    });
+  });
 });

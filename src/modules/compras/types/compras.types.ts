@@ -180,6 +180,11 @@ export interface CrearCompraInput {
    */
   formaPago: "CREDITO" | "CONTADO";
   pagos?: MedioAlEmitirInput[];
+  /** A crédito: cuándo vence. Sin ella, «Por pagar» cuenta 30 días. */
+  vence?: string;
+  /** La condición de pronto pago de la factura: van juntos o ninguno. */
+  descuentoProntoPagoPct?: number;
+  descuentoProntoPagoHasta?: string;
 }
 
 /**

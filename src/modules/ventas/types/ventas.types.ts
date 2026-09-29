@@ -25,6 +25,8 @@ export interface VentaDocumentoResumen {
   /** Ya formateada por el backend: `NIT 900123456-7`, `CC 19400748`. */
   tercero_identificacion: string;
   fecha: string;
+  /** Cuándo vence lo pactado. `null` si no hay: la cartera cuenta 30 días desde la emisión. */
+  vence: string | null;
   estado: EstadoVentaDocumento;
   prefijo: string | null;
   consecutivo: number;

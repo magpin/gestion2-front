@@ -37,6 +37,8 @@ import { avisarErrorVenta } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { VacioConMaria } from "@/modules/asistente/components/VacioConMaria";
 import { DetalleVenta } from "../components/DetalleVenta";
+import { funcionActiva } from "@/core/config/funciones";
+import { ReciboCajaDialog } from "@/modules/cobros/components/ReciboCajaDialog";
 import { FormularioCobro } from "../components/FormularioCobro";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
 import { FormularioNotaCredito } from "../components/FormularioNotaCredito";
@@ -384,14 +386,30 @@ export function FacturasSeccion({
         facturaFija={notaDebitoDe ?? undefined}
       />
 
-      <FormularioCobro
-        factura={cobrandoDe}
-        onCerrar={() => setCobrandoDe(null)}
-        onGuardar={(datos) =>
-          cobrandoDe && cobrar.mutate({ id: cobrandoDe.id, datos })
-        }
-        guardando={cobrar.isPending}
-      />
+      {/* Un hecho, un documento: con Cobros encendido, «Cobrar» abre el
+          mismo recibo de caja que la pantalla de Cobros, con esta factura
+          marcada. Mientras tanto, el cobro de siempre. */}
+      {funcionActiva("cobros") ? (
+        <ReciboCajaDialog
+          abierto={cobrandoDe !== null}
+          cliente={
+            cobrandoDe === null
+              ? null
+              : { id: cobrandoDe.tercero_id, nombre: cobrandoDe.tercero_nombre }
+          }
+          facturaId={cobrandoDe?.id}
+          onCerrar={() => setCobrandoDe(null)}
+        />
+      ) : (
+        <FormularioCobro
+          factura={cobrandoDe}
+          onCerrar={() => setCobrandoDe(null)}
+          onGuardar={(datos) =>
+            cobrandoDe && cobrar.mutate({ id: cobrandoDe.id, datos })
+          }
+          guardando={cobrar.isPending}
+        />
+      )}
 
       <FormularioCobro
         modo="DEVOLVER"

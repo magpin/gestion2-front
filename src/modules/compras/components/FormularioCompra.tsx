@@ -43,6 +43,7 @@ import {
   problemaFormaPago,
 } from "@/modules/tesoreria/lib/formaPago";
 import type { CrearCompraInput } from "../types/compras.types";
+import { aEnvioProntoPago, problemaProntoPago } from "../lib/prontoPago";
 
 const hoy = (): string => {
   const d = new Date();
@@ -82,6 +83,8 @@ export function FormularioCompra({
   const [renta, setRenta] = useState(respuestasRentaVacias);
   const [conTarjeta, setConTarjeta] = useState(false);
   const [formaPago, setFormaPago] = useState(formaPagoVacia);
+  const [prontoPct, setProntoPct] = useState("");
+  const [prontoHasta, setProntoHasta] = useState("");
   // Pagar de contado saca plata de una caja o un banco: el backend lo rechaza
   // de quien no tenga CAJA o DIRECTOR, así que acá ni se ofrece.
   const puedePagar = useTieneRol("CAJA", "DIRECTOR");
@@ -95,6 +98,8 @@ export function FormularioCompra({
     setRenta(respuestasRentaVacias());
     setConTarjeta(false);
     setFormaPago(formaPagoVacia());
+    setProntoPct("");
+    setProntoHasta("");
   };
 
   // Una línea está incompleta por razones distintas según lo que sea: a la
@@ -145,7 +150,10 @@ export function FormularioCompra({
       return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
     if (sinCosto.length > 0)
       return `El costo unitario tiene que ser válido en ${nombrar(sinCosto)}.`;
-    return problemaFormaPago(formaPago);
+    return (
+      problemaFormaPago(formaPago) ??
+      (formaPago.modo === "CREDITO" ? problemaProntoPago(prontoPct, prontoHasta, fecha) : null)
+    );
   };
 
   const lineasParaEnviar = () =>
@@ -201,6 +209,7 @@ export function FormularioCompra({
       ...(conTarjeta && { pagadaConTarjeta: true }),
       ...(municipio !== "" && { municipioCodigo: municipio }),
       ...aFormaPago(formaPago),
+      ...(formaPago.modo === "CREDITO" && aEnvioProntoPago(prontoPct, prontoHasta)),
     });
   };
 
@@ -305,7 +314,36 @@ export function FormularioCompra({
             onCambiar={setFormaPago}
             soloCredito={!puedePagar}
             motivoSoloCredito="Pagar de contado lo hace alguien con rol Caja o Director. Registrala a crédito y que caja la pague."
+            conVence
           />
+
+          {formaPago.modo === "CREDITO" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Campo id="compra-pronto-pct" etiqueta="Descuento por pronto pago (%, opcional)">
+                <Input
+                  id="compra-pronto-pct"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={99.99}
+                  step="0.01"
+                  value={prontoPct}
+                  onChange={(e) => setProntoPct(e.target.value)}
+                  placeholder="2"
+                  className="h-11 rounded-xl px-4"
+                />
+              </Campo>
+              <Campo id="compra-pronto-hasta" etiqueta="Pagando hasta">
+                <Input
+                  id="compra-pronto-hasta"
+                  type="date"
+                  value={prontoHasta}
+                  onChange={(e) => setProntoHasta(e.target.value)}
+                  className="h-11 rounded-xl px-4"
+                />
+              </Campo>
+            </div>
+          )}
         </DialogBody>
 
         <DialogFooter className="sm:justify-between">

@@ -24,10 +24,12 @@ export interface FormaPagoBorrador {
   caja: CajaResumen | null;
   cuenta: CuentaBancariaResumen | null;
   renglones: RenglonReparto[];
+  /** Cuándo vence, si es a crédito. Vacío: la cartera cuenta 30 días. */
+  vence: string;
 }
 
 export type FormaPagoInput =
-  | { formaPago: "CREDITO" }
+  | { formaPago: "CREDITO"; vence?: string }
   | { formaPago: "CONTADO"; pagos: MedioAlEmitirInput[] };
 
 export function renglonRepartoVacio(
@@ -48,6 +50,7 @@ export function formaPagoVacia(): FormaPagoBorrador {
     caja: null,
     cuenta: null,
     renglones: [renglonRepartoVacio("CAJA"), renglonRepartoVacio("BANCO")],
+    vence: "",
   };
 }
 
@@ -113,6 +116,8 @@ export function aFormaPago(b: FormaPagoBorrador): FormaPagoInput {
         }),
       };
     default:
-      return { formaPago: "CREDITO" };
+      return b.vence === ""
+        ? { formaPago: "CREDITO" }
+        : { formaPago: "CREDITO", vence: b.vence };
   }
 }

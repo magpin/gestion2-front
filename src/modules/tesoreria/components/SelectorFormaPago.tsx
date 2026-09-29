@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CampoPesos } from "@/components/shared/CampoNumero";
 import { cn } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
@@ -41,6 +42,7 @@ export function SelectorFormaPago({
   soloCredito = false,
   motivoSoloCredito,
   cajaFija = false,
+  conVence = false,
 }: {
   valor: FormaPagoBorrador;
   onCambiar: (valor: FormaPagoBorrador) => void;
@@ -52,6 +54,11 @@ export function SelectorFormaPago({
    * porque pagar con la caja menor sí tiene sentido.
    */
   cajaFija?: boolean;
+  /**
+   * A crédito, pedir cuándo vence. Sin fecha, la cartera y «Por pagar»
+   * cuentan 30 días desde el documento.
+   */
+  conVence?: boolean;
 }) {
   const cambiar = (cambio: Partial<FormaPagoBorrador>) =>
     onCambiar({ ...valor, ...cambio });
@@ -120,6 +127,23 @@ export function SelectorFormaPago({
               onElegir={(caja) => cambiar({ caja })}
             />
           ))}
+
+        {valor.modo === "CREDITO" && conVence && (
+          <label className="flex w-fit flex-col gap-1.5 text-sm">
+            <span className="font-medium">
+              Vence <span className="font-normal text-muted-foreground">(opcional)</span>
+            </span>
+            <Input
+              type="date"
+              value={valor.vence}
+              onChange={(e) => cambiar({ vence: e.target.value })}
+              className="h-11 w-52 rounded-xl px-4"
+            />
+            <span className="text-xs text-muted-foreground">
+              Sin fecha, la cartera cuenta 30 días desde la emisión.
+            </span>
+          </label>
+        )}
 
         {valor.modo === "TRANSFERENCIA" && (
           <SelectorCuentaBancaria
