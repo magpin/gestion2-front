@@ -147,6 +147,7 @@ test.describe("Móvil", () => {
 
     const barra = page.getByRole("navigation", { name: "Secciones" });
     await expect(barra).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Inicio", level: 1 })).toBeVisible();
     await page.screenshot({ path: "e2e/.capturas/movil-inicio.png", fullPage: true });
 
     await barra.getByRole("link", { name: "Pagos" }).click();

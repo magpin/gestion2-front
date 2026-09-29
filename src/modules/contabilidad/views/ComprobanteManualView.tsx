@@ -401,8 +401,9 @@ export function ComprobanteManualView() {
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              <div className="grid gap-4 sm:grid-cols-[1fr_180px_180px]">
-                <Campo id="tipo" etiqueta="Tipo">
+              {/* La tarjeta es angosta al lado de la lista previa: el tipo va arriba, a lo ancho. */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Campo id="tipo" etiqueta="Tipo" className="sm:col-span-2">
                   <select
                     id="tipo"
                     value={comprobanteTipoId}
