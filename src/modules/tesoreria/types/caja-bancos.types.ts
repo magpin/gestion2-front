@@ -45,6 +45,8 @@ export interface MovimientoTesoreria {
   sale: number;
   /** El saldo de esa cuenta después del movimiento. */
   saldo: number;
+  /** El saldo inicial de la cuenta: se lista, pero no suma en «entró». */
+  apertura?: boolean;
 }
 
 export interface MovimientosTesoreria {

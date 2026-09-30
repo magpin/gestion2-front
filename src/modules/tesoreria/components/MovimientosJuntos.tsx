@@ -36,7 +36,8 @@ export function MovimientosJuntos({ cuentaInicial }: { cuentaInicial?: string | 
   }
   const cuentas = [...new Map(data.movimientos.map((m) => [m.cuentaId, m.cuenta])).entries()];
   const visibles = cuenta === null ? data.movimientos : data.movimientos.filter((m) => m.cuentaId === cuenta);
-  const entro = visibles.reduce((t, m) => t + m.entra, 0);
+  // El saldo inicial se lista pero no suma: es con lo que se arrancó.
+  const entro = visibles.reduce((t, m) => t + (m.apertura ? 0 : m.entra), 0);
   const salio = visibles.reduce((t, m) => t + m.sale, 0);
   const porDia = [...new Map(visibles.map((m) => [m.fecha, visibles.filter((x) => x.fecha === m.fecha)])).entries()];
 
@@ -115,6 +116,11 @@ export function MovimientosJuntos({ cuentaInicial }: { cuentaInicial?: string | 
                       <td className="px-3 py-2.5">{m.cuenta}</td>
                       <td className="px-3 py-2.5">
                         {m.concepto}
+                        {m.apertura && (
+                          <span className="ml-2 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium">
+                            Saldo inicial
+                          </span>
+                        )}
                         {m.tercero && <span className="block text-xs text-muted-foreground">{m.tercero}</span>}
                       </td>
                       <td className="px-3 py-2.5 font-mono text-xs">{m.documento ?? "—"}</td>
