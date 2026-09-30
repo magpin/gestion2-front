@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ConNombreCompleto } from "@/components/shared/ConNombreCompleto";
 import { cn } from "@/lib/utils";
 import { DialogoProducto, type ProductoEnEdicion } from "./DialogoProducto";
 import { productosApi } from "../services/inventario.service";
@@ -141,8 +142,8 @@ export function SelectorProducto({
 
             {!isFetching &&
               productos.map((p) => (
+                <ConNombreCompleto key={p.id} texto={`${p.codigo} · ${p.nombre}`}>
                 <button
-                  key={p.id}
                   type="button"
                   onClick={() => {
                     onElegir(p);
@@ -162,12 +163,13 @@ export function SelectorProducto({
                       <span className="font-mono text-xs text-muted-foreground">
                         {p.codigo}
                       </span>
-                      <span className="truncate text-sm font-medium">
+                      <span data-recortable className="truncate text-sm font-medium">
                         {p.nombre}
                       </span>
                     </span>
                   </span>
                 </button>
+                </ConNombreCompleto>
               ))}
 
             {!isFetching && productos.length === 0 && (

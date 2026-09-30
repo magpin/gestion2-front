@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ConNombreCompleto } from "@/components/shared/ConNombreCompleto";
 import { cn } from "@/lib/utils";
 import { tercerosApi } from "@/modules/terceros/services/terceros.service";
 import {
@@ -122,8 +123,8 @@ export function SelectorTercero({
 
             {!isFetching &&
               terceros.map((t) => (
+                <ConNombreCompleto key={t.id} texto={t.nombre}>
                 <button
-                  key={t.id}
                   type="button"
                   onClick={() => {
                     onElegir(t);
@@ -139,7 +140,7 @@ export function SelectorTercero({
                     )}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">
+                    <span data-recortable className="block truncate text-sm font-medium">
                       {t.nombre}
                     </span>
                     <span className="block font-mono text-xs text-muted-foreground">
@@ -147,6 +148,7 @@ export function SelectorTercero({
                     </span>
                   </span>
                 </button>
+                </ConNombreCompleto>
               ))}
 
             {!isFetching && terceros.length === 0 && (

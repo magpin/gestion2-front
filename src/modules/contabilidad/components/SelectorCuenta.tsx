@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAuthStore } from "@/core/store/authStore";
+import { ConNombreCompleto } from "@/components/shared/ConNombreCompleto";
 import { cn } from "@/lib/utils";
 import { DialogoCuentaAuxiliar } from "@/modules/plan-cuentas/components/DialogoCuentaAuxiliar";
 import { puedeCrearBajo } from "@/modules/plan-cuentas/lib/madres";
@@ -116,8 +117,8 @@ export function SelectorCuenta({
 
           {!isFetching &&
             cuentas.map((c) => (
+              <ConNombreCompleto key={c.id} texto={`${c.codigo} · ${c.nombre}`}>
               <button
-                key={c.id}
                 type="button"
                 onClick={() => {
                   onElegir(c);
@@ -137,7 +138,7 @@ export function SelectorCuenta({
                     <span className="font-mono text-xs text-muted-foreground">
                       {c.codigo}
                     </span>
-                    <span className="truncate text-sm font-medium">
+                    <span data-recortable className="truncate text-sm font-medium">
                       {c.nombre}
                     </span>
                   </span>
@@ -159,6 +160,7 @@ export function SelectorCuenta({
                   )}
                 </span>
               </button>
+              </ConNombreCompleto>
             ))}
 
           {!isFetching && cuentas.length === 0 && (
