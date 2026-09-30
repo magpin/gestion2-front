@@ -431,7 +431,7 @@ function DialogoRegla({
             ayuda="El gasto o el ingreso. La elige el contador: no hay una sugerida."
             escala="grande"
           >
-            <SelectorCuenta valor={cuenta} onElegir={setCuenta} invalido={noSirve !== null} />
+            <SelectorCuenta valor={cuenta} onElegir={setCuenta} invalido={noSirve !== null} crear={{ madres: "cualquiera" }} />
           </Campo>
 
           {noSirve && (

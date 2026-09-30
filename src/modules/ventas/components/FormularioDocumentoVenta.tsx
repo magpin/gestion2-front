@@ -32,6 +32,7 @@ import {
   problemaFormaPago,
   type FormaPagoInput,
 } from "@/modules/tesoreria/lib/formaPago";
+import { useTotalesBorrador } from "../hooks/useTotalesBorrador";
 import type { CrearCotizacionInput } from "../types/ventas.types";
 
 /**
@@ -51,7 +52,6 @@ export function FormularioDocumentoVenta({
   descripcion,
   etiquetaBoton,
   fechaDeHoy = false,
-  precioEditable = false,
   conFormaPago = false,
   inicial,
 }: {
@@ -69,11 +69,6 @@ export function FormularioDocumentoVenta({
    * la resolución ni asienta— y puede fecharse cuando haga falta.
    */
   fechaDeHoy?: boolean;
-  /**
-   * Solo la cotización: deja digitar el precio del producto que no tiene
-   * precio de lista, en vez de trabarse. Ver `EditorLineasVenta`.
-   */
-  precioEditable?: boolean;
   /**
    * Solo la factura: pregunta cómo se paga. Una cotización no mueve plata.
    */
@@ -125,6 +120,19 @@ export function FormularioDocumentoVenta({
     )
     .filter((n): n is number => n !== null);
 
+  // Un producto sin precio de lista y sin precio digitado: el servidor lo
+  // rechaza. Mientras cargan los precios no se dice nada.
+  const { porLinea, cargando: cargandoPrecios } = useTotalesBorrador(lineas);
+  const sinPrecio = cargandoPrecios
+    ? []
+    : lineas
+        .map((l, i) =>
+          l.producto !== null && Number(l.cantidad) > 0 && porLinea[i] === null
+            ? i + 1
+            : null,
+        )
+        .filter((n): n is number => n !== null);
+
   const nombrar = (renglones: number[]) =>
     renglones.length === 1
       ? `el renglón ${renglones[0]}`
@@ -140,6 +148,8 @@ export function FormularioDocumentoVenta({
       return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;
     if (sinEntero.length > 0)
       return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
+    if (sinPrecio.length > 0)
+      return `Poné el precio en ${nombrar(sinPrecio)}: ese producto no tiene precio de lista.`;
     if (conFormaPago) return problemaFormaPago(formaPago);
     return null;
   };
@@ -155,7 +165,7 @@ export function FormularioDocumentoVenta({
         lineas: lineas.map((l) => ({
           productoId: l.producto!.id,
           cantidad: Number(l.cantidad),
-          // Solo viaja si se digitó: con precio de lista, el backend lo ignora.
+          // Solo viaja si se digitó: vacío es el de lista, y lo pone el backend.
           precioUnitario:
             l.precioUnitario === "" ? undefined : Number(l.precioUnitario),
         })),
@@ -221,7 +231,6 @@ export function FormularioDocumentoVenta({
           <EditorLineasVenta
             lineas={lineas}
             onCambiar={setLineas}
-            precioEditable={precioEditable}
           />
 
           {conFormaPago && (

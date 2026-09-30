@@ -17,6 +17,8 @@ import { CONTROL, EstadoVacio, Pildora } from "../components/Comunes";
 import { SelectorMunicipio } from "@/modules/catalogos/components/SelectorMunicipio";
 import { useGuardar } from "../hooks/useGuardar";
 import { empresaApi } from "../services/nucleo.service";
+import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
+import { configuracionCajaApi } from "@/modules/tesoreria/services/tesoreria.service";
 
 const esquema = z.object({
   codigo: z.string().min(1, "Requerido").max(20),
@@ -53,9 +55,21 @@ export function PasoSedes() {
   });
 
   const guardar = useGuardar<Datos>({
-    fn: (d) => empresaApi.crearSede({ ...d, telefono: d.telefono || undefined }),
+    fn: async (d) => {
+      const sede = await empresaApi.crearSede({ ...d, telefono: d.telefono || undefined });
+      // Una sede agregada con el plan ya armado necesita su caja y su cuenta
+      // «Caja - {sede}»: tesorería las crea al preparar. Antes del plan, las
+      // crea el paso de Plan de cuentas. Si falla, tesorería lo reintenta al
+      // abrirse.
+      try {
+        if ((await planCuentasApi.listar({ q: "110505" })).length > 0) await configuracionCajaApi.preparar();
+      } catch {
+        // Sin permiso o sin plan: no frena el registro de la sede.
+      }
+      return sede;
+    },
     exito: "Sede registrada",
-    invalidar: [["sedes"], ["estado-configuracion"]],
+    invalidar: [["sedes"], ["estado-configuracion"], ["cajas"], ["plan-cuentas"]],
     alTerminar: () => {
       form.reset({
         codigo: String(activas.length + 2).padStart(3, "0"),

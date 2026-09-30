@@ -20,13 +20,12 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { mensajeDeError } from "@/core/api/api";
+import { useVendeSinExistencia } from "@/core/hooks/useVendeSinExistencia";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
 import {
   avisarErrorVenta,
-  esFaltaDeExistencia,
-  esPrecioBajoCosto,
+  manejarErrorEmision,
 } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleVenta } from "../components/DetalleVenta";
@@ -61,6 +60,7 @@ export function CotizacionesSeccion({
   onCerrarCreacion: () => void;
 }) {
   const router = useRouter();
+  const vendeSinExistencia = useVendeSinExistencia();
   const queryClient = useQueryClient();
   const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
 
@@ -135,9 +135,9 @@ export function CotizacionesSeccion({
             clave: i,
             producto: productosACorregir[i],
             cantidad: String(Number(l.cantidad)),
-            // El precio se vuelve a resolver contra el vigente; si el producto
-            // sigue sin precio de lista, se muestra el que tenía la línea.
-            precioUnitario: "",
+            // El precio pactado se conserva: si es el de lista, la línea lo
+            // dice; si no, muestra cuál era el de lista y deja volver a él.
+            precioUnitario: String(Number(l.precio_unitario)),
           })),
         }
       : undefined;
@@ -177,36 +177,11 @@ export function CotizacionesSeccion({
       aviso.exito("Cotización convertida en factura");
       setConvirtiendo(null);
     },
-    // Cotizar no mira la existencia, facturar sí: es acá donde aparece el
-    // faltante. Mismo criterio que `FacturasSeccion`: se pregunta y, si
-    // confirma, se reintenta.
-    onError: async (e: unknown, datos) => {
-      // El precio de la cotización puede haberse digitado bajo costo, o el
-      // costo puede haber subido desde que se cotizó: las dos terminan acá.
-      if (esPrecioBajoCosto(e) && datos.confirmaPrecioBajoCosto !== true) {
-        const seguir = await aviso.confirmar(
-          mensajeDeError(e),
-          "Emitirla igual deja la venta con pérdida y anota en la línea quién lo autorizó. Solo un DIRECTOR puede hacerlo.",
-          "Emitir con pérdida",
-        );
-        if (seguir) {
-          convertir.mutate({ ...datos, confirmaPrecioBajoCosto: true });
-        }
-        return;
-      }
-      if (!esFaltaDeExistencia(e) || datos.confirmaSinExistencia === true) {
-        avisarErrorVenta(e, router.push);
-        return;
-      }
-      const seguir = await aviso.confirmar(
-        mensajeDeError(e),
-        "Si emitís la factura igual, el inventario de ese producto queda en negativo y lo que falte queda anotado en la lista de compras pendientes, con la factura que lo sacó.",
-        "Emitir igual",
-      );
-      if (seguir) {
-        convertir.mutate({ ...datos, confirmaSinExistencia: true });
-      }
-    },
+    // El modal ya avisa qué no alcanza antes de emitir; esto es la red, porque
+    // la existencia puede cambiar entre la consulta y la emisión. El precio
+    // cotizado puede estar bajo costo, o el costo haber subido desde entonces.
+    onError: (e: unknown, datos) =>
+      manejarErrorEmision(e, datos, (d) => convertir.mutate(d), router.push, vendeSinExistencia),
   });
 
   const cotizaciones = resultado?.datos ?? [];
@@ -354,9 +329,8 @@ export function CotizacionesSeccion({
         onGuardar={(datos) => crear.mutate(datos)}
         guardando={crear.isPending}
         titulo="Nueva cotización"
-        descripcion="El precio es el de lista vigente; al producto que todavía no tiene, se le digita acá."
+        descripcion="El precio arranca en el de lista y se puede cambiar: la factura sale al precio cotizado."
         etiquetaBoton="Crear cotización"
-        precioEditable
       />
 
       {/* Corregir es el mismo formulario, precargado: remontarlo por
@@ -371,7 +345,6 @@ export function CotizacionesSeccion({
           titulo="Corregir cotización"
           descripcion="Se reemplaza lo que había: el número no cambia, así el cliente sigue viendo el mismo."
           etiquetaBoton="Guardar cambios"
-          precioEditable
           inicial={inicialCorregir}
         />
       )}

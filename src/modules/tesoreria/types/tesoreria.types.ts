@@ -196,6 +196,8 @@ export type CajaConfiguracion = ConfiguracionCuentas<ConceptoArqueo>;
 export interface ResultadoPreparar {
   cuentasCreadas: string[];
   cajasCreadas: string[];
+  /** Lo que no se pudo dejar listo, en palabras. */
+  avisos?: string[];
 }
 
 /**

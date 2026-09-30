@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,7 @@ import { SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { useQuieto } from "@/hooks/useQuieto";
 import { aviso } from "@/lib/avisos";
-import { cn, formatCOP, formatFecha } from "@/lib/utils";
+import { cn, formatCOP, formatCOPExacto as pesos, formatFecha } from "@/lib/utils";
 import { cobrosApi } from "@/modules/cobros/services/cobros.service";
 import { Seccion } from "@/modules/compras/components/CamposCompra";
 import { Campo } from "@/modules/configuracion/components/Campo";
@@ -32,9 +33,11 @@ const VOLVER = "/dashboard/ventas?seccion=facturas";
  * documento y Plazo a la izquierda, el Resumen a la derecha, las líneas y el
  * asiento a lo ancho, y abajo emitir.
  *
- * El resumen y el asiento los arma el servidor corriendo la factura de verdad
- * y deshaciéndola (`POST /facturas/previo`): no hay una segunda cuenta en el
- * navegador que se pueda desalinear de la que se emite.
+ * Subtotal, IVA y total se calculan en el navegador (`useTotalesBorrador`,
+ * igual que el servidor, en centavos) para verse desde la primera línea y
+ * aunque el previo falle. Las retenciones, lo que se va a recibir y el asiento
+ * los arma el servidor corriendo la factura de verdad y deshaciéndola
+ * (`POST /facturas/previo`), que es el que decide.
  */
 export function FacturaNuevaView() {
   const router = useRouter();
@@ -58,6 +61,15 @@ export function FacturaNuevaView() {
     meta: SILENCIOSO,
   });
   const previa = pedido === null ? undefined : previo.data;
+  const local = b.totales;
+
+  // Las dos cuentas tienen que dar lo mismo: si no, algo del cálculo del
+  // navegador se desalineó del servidor.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production" && previa && previa.total !== local.totales.total) {
+      console.warn("El total del navegador no coincide con el del servidor", local.totales.total, previa.total);
+    }
+  }, [previa, local.totales.total]);
 
   const emitir = useEmitirFactura(facturasApi.crear, async (f) => {
     await queryClient.invalidateQueries({ queryKey: ["facturas"] });
@@ -101,7 +113,7 @@ export function FacturaNuevaView() {
           </Seccion>
 
           <Seccion id="v-plazo" titulo="Plazo">
-            <Plazo b={b} />
+            <Plazo b={b} total={previa?.neto ?? (local.porLinea.some((c) => c !== null) ? local.totales.total : null)} />
           </Seccion>
 
           {/* Fase 8: la retención que nos practican va por documento, como el
@@ -111,12 +123,13 @@ export function FacturaNuevaView() {
             titulo="Te retienen"
             derecha={<p className="text-xs text-muted-foreground">Lo que dice el certificado del cliente</p>}
           >
-            <Retenciones b={b} subtotal={previa?.subtotal ?? null} />
+            <Retenciones b={b} subtotal={local.porLinea.some((c) => c !== null) ? local.totales.subtotal : null} />
           </Seccion>
         </div>
 
         <aside className="flex flex-col gap-5 lg:sticky lg:top-6">
           <Resumen
+            local={local}
             previa={previa}
             cargando={pedido !== null && previo.isFetching}
             error={pedido !== null && previo.isError ? mensajeDe(previo.error) : null}
@@ -172,7 +185,7 @@ function mensajeDe(e: unknown): string {
 }
 
 /** Contado o A crédito; a crédito, el plazo (el del cliente) y el vence; y las vencidas del cliente. */
-function Plazo({ b }: { b: BorradorFactura }) {
+function Plazo({ b, total }: { b: BorradorFactura; total: number | null }) {
   const { data: facturas = [] } = useQuery({
     queryKey: ["cartera", "facturas", b.cliente?.id],
     queryFn: () => cobrosApi.facturasDe(b.cliente!.id),
@@ -192,6 +205,8 @@ function Plazo({ b }: { b: BorradorFactura }) {
         vence={b.vence}
         medio="Entra a"
         cajaFija
+        conRepartido
+        total={total}
       />
       {vencidas.length > 0 && (
         <p className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/15 px-4 py-3 text-sm">
@@ -277,11 +292,10 @@ function Retenciones({ b, subtotal }: { b: BorradorFactura; subtotal: number | n
   );
 }
 
-/** La tarifa de IVA si todas las líneas llevan la misma: «IVA 19 %». */
-function tarifaUnica(previa: FacturaPrevia): string {
-  if (previa.subtotal <= 0 || previa.iva <= 0) return "";
-  const t = Math.round((previa.iva / previa.subtotal) * 1000) / 10;
-  return [19, 5].includes(t) ? ` ${t} %` : "";
+/** «IVA 19 %» si todas las líneas llevan la misma tarifa. */
+function tarifaUnica(tarifas: number[]): string {
+  const distintas = [...new Set(tarifas.filter((t) => t > 0))];
+  return distintas.length === 1 ? ` ${distintas[0]} %` : "";
 }
 
 /** «28 oct». */
@@ -290,12 +304,18 @@ function diaMes(iso: string): string {
   return `${d} ${["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"][m - 1]}`;
 }
 
-/** Subtotal, IVA, total, lo que retienen y «Vas a recibir». */
+/**
+ * Subtotal, IVA y total, calculados en el navegador desde la primera línea;
+ * lo que retienen, «Vas a recibir» y el vence, del previo del servidor. Si
+ * el previo falla, el error va debajo, sin tapar los totales.
+ */
 function Resumen({
+  local,
   previa,
   cargando,
   error,
 }: {
+  local: BorradorFactura["totales"];
   previa: FacturaPrevia | undefined;
   cargando: boolean;
   error: string | null;
@@ -306,52 +326,76 @@ function Resumen({
       <span className="font-mono whitespace-nowrap tabular-nums">{valor}</span>
     </p>
   );
+  const hayLineas = local.porLinea.some((c) => c !== null);
+  const tarifas = local.porLinea.flatMap((c) => (c === null ? [] : [c.tarifa]));
   return (
     <section
       aria-labelledby="v-res"
-      className={cn("flex flex-col gap-2.5 rounded-[26px] border border-border bg-card p-5 shadow-sm", cargando && "opacity-60")}
+      className="flex flex-col gap-2.5 rounded-[26px] border border-border bg-card p-5 shadow-sm"
     >
       <h2 id="v-res" className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
         Resumen
       </h2>
-      {previa === undefined ? (
+      {!hayLineas ? (
         <p className="text-sm text-muted-foreground">
-          {cargando ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="size-4 animate-spin" /> Armando el resumen…
-            </span>
-          ) : error !== null ? (
-            <span className="text-danger">{error}</span>
-          ) : (
-            "Cuando esté todo, acá ves cuánto vas a recibir y el asiento, antes de emitir."
-          )}
+          Cuando agregues las líneas, acá ves el total y cuánto vas a recibir, antes de emitir.
         </p>
       ) : (
         <>
-          {fila("Subtotal", formatCOP(previa.subtotal))}
-          {previa.iva > 0 && fila(`IVA${tarifaUnica(previa)}`, formatCOP(previa.iva))}
-          {fila("Total factura", formatCOP(previa.total), true)}
-          {previa.retenciones.map((r, i) => (
-            <p key={i} className="flex justify-between gap-3 text-sm">
-              <span className="text-muted-foreground">
-                Te retienen {(r.tarifa * 100).toLocaleString("es-CO", { maximumFractionDigits: 3 })} %
-              </span>
-              <span className="font-mono whitespace-nowrap tabular-nums">− {formatCOP(r.valor)}</span>
+          {fila("Subtotal", pesos(local.totales.subtotal))}
+          {local.responsable === true && fila(`IVA${tarifaUnica(tarifas)}`, pesos(local.totales.iva))}
+          {fila("Total factura", pesos(local.totales.total), true)}
+          {local.pendientes > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {local.pendientes === 1
+                ? "Falta completar 1 línea: no está en el total."
+                : `Faltan completar ${local.pendientes} líneas: no están en el total.`}
             </p>
-          ))}
-          <div className="mt-2 border-t border-border pt-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Vas a recibir</p>
-            <p className="mt-1 font-mono text-[28px] leading-[34px] font-semibold tracking-[-0.03em]">
-              {formatCOP(previa.neto)}
-            </p>
-            {previa.vence !== null && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Aparece en Cobros → Por cobrar hasta el {diaMes(previa.vence)}
-              </p>
-            )}
-          </div>
+          )}
+          {previa !== undefined && (
+            <div className={cn("flex flex-col gap-2.5", cargando && "opacity-60")}>
+              {previa.retenciones.map((r, i) => (
+                <p key={i} className="flex justify-between gap-3 text-sm">
+                  <span className="text-muted-foreground">
+                    Te retienen {(r.tarifa * 100).toLocaleString("es-CO", { maximumFractionDigits: 3 })} %
+                  </span>
+                  <span className="font-mono whitespace-nowrap tabular-nums">− {pesos(r.valor)}</span>
+                </p>
+              ))}
+              <div className="mt-2 border-t border-border pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Vas a recibir</p>
+                <p className="mt-1 font-mono text-[28px] leading-[34px] font-semibold tracking-[-0.03em]">
+                  {pesos(previa.neto)}
+                </p>
+                {previa.vence !== null && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Aparece en Cobros → Por cobrar hasta el {diaMes(previa.vence)}
+                  </p>
+                )}
+              </div>
+              {(previa.pagos ?? []).length > 0 && (
+                <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Entra por</p>
+                  {previa.pagos.map((p, i) => (
+                    <p key={i} className="flex justify-between gap-3 text-sm">
+                      <span className="min-w-0 truncate text-muted-foreground">
+                        {p.medio === "CAJA" ? "Caja" : "Banco"} · {p.nombre}
+                      </span>
+                      <span className="font-mono whitespace-nowrap tabular-nums">{pesos(p.valor)}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
+      {cargando && previa === undefined && (
+        <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" /> Armando el resumen…
+        </p>
+      )}
+      {error !== null && !cargando && <p className="text-sm text-danger">{error}</p>}
     </section>
   );
 }

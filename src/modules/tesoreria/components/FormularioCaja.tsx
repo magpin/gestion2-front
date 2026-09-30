@@ -147,7 +147,12 @@ export function FormularioCaja({
         ayuda="No se puede cambiar después de creada"
         escala="grande"
       >
-        <SelectorCuenta valor={cuenta} onElegir={elegirCuenta} invalido={Boolean(errores.cuentaId)} />
+        <SelectorCuenta
+          valor={cuenta}
+          onElegir={elegirCuenta}
+          invalido={Boolean(errores.cuentaId)}
+          crear={{ madres: [tipo === "MENOR" ? "110510" : "110505"], nombreSugerido: form.watch("nombre") || undefined }}
+        />
       </Campo>
 
       <Campo

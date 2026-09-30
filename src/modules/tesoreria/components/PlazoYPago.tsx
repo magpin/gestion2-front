@@ -3,9 +3,21 @@
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
+import { useEffect, useRef } from "react";
+
 import { cn } from "@/lib/utils";
-import type { FormaPagoBorrador } from "../lib/formaPago";
+import type { FormaPagoBorrador, ModoPago } from "../lib/formaPago";
+import { CajaPrincipal } from "./CajaPrincipal";
+import { RepartoEnTarjetas } from "./RepartoEnTarjetas";
+import { SelectorCaja } from "./SelectorCaja";
+import { SelectorCuentaBancaria } from "./SelectorCuentaBancaria";
 import { SelectorMedio, type Medio } from "./SelectorMedio";
+
+const MODOS_CONTADO: { modo: ModoPago; etiqueta: string }[] = [
+  { modo: "EFECTIVO", etiqueta: "Efectivo" },
+  { modo: "TRANSFERENCIA", etiqueta: "Transferencia" },
+  { modo: "REPARTIDO", etiqueta: "Repartido" },
+];
 
 /** «Mié 28 oct 2026», como en el diseño. */
 export function fechaConDia(iso: string): string {
@@ -22,7 +34,8 @@ export const PLAZOS = [0, 8, 15, 30, 45, 60, 90];
  * contado, de qué caja o cuenta sale (o a cuál entra).
  *
  * Por debajo sigue siendo el `FormaPagoBorrador` de siempre: contado por caja
- * es EFECTIVO, contado por banco es TRANSFERENCIA.
+ * es EFECTIVO, contado por banco es TRANSFERENCIA. Con `conRepartido` (la
+ * factura), de contado también se puede repartir entre varios medios.
  */
 export function PlazoYPago({
   valor,
@@ -36,7 +49,16 @@ export function PlazoYPago({
   cajaFija = false,
   soloCredito = false,
   motivoSoloCredito,
+  conRepartido = false,
+  total,
 }: {
+  /**
+   * De contado, además de un solo medio, repartido entre varios (la factura).
+   * Compras no lo usa.
+   */
+  conRepartido?: boolean;
+  /** Lo que se reparte, si se sabe: para «Falta repartir» y «el resto». */
+  total?: number | null;
   valor: FormaPagoBorrador;
   onCambiar: (v: FormaPagoBorrador) => void;
   /** Días, como texto del selector. */
@@ -56,11 +78,26 @@ export function PlazoYPago({
 }) {
   const credito = valor.modo === "CREDITO";
   const contado = valor.modo === "EFECTIVO" || valor.modo === "TRANSFERENCIA" || valor.modo === "REPARTIDO";
+  const repartido = conRepartido && valor.modo === "REPARTIDO";
   const medioActual: Medio = valor.modo === "TRANSFERENCIA" ? "BANCO" : "CAJA";
   const plazos = [...new Set([...PLAZOS, ...(plazoHabitual === null ? [] : [plazoHabitual])])].sort((a, b) => a - b);
 
+  // Al volver de crédito a contado, se retoma el último modo de contado: los
+  // renglones del repartido no se pierden por mirar el plazo.
+  const ultimoContado = useRef<ModoPago>("EFECTIVO");
+  useEffect(() => {
+    if (contado && valor.modo !== null) ultimoContado.current = valor.modo;
+  }, [contado, valor.modo]);
   const elegir = (modo: "CONTADO" | "CREDITO") =>
-    onCambiar({ ...valor, modo: modo === "CREDITO" ? "CREDITO" : medioActual === "BANCO" ? "TRANSFERENCIA" : "EFECTIVO" });
+    onCambiar({
+      ...valor,
+      modo:
+        modo === "CREDITO"
+          ? "CREDITO"
+          : ultimoContado.current === "REPARTIDO" && !conRepartido
+            ? "EFECTIVO"
+            : ultimoContado.current,
+    });
 
   return (
     <div className="flex flex-col gap-3">
@@ -123,7 +160,30 @@ export function PlazoYPago({
           </>
         )}
 
-        {contado && (
+        {contado && conRepartido && (
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className="text-xs font-medium text-muted-foreground">{etiquetaMedio}</span>
+            <div role="radiogroup" aria-label="Medio de pago" className="flex h-[52px] gap-1 rounded-xl border border-border bg-muted p-1">
+              {MODOS_CONTADO.map(({ modo, etiqueta }) => (
+                <button
+                  key={modo}
+                  type="button"
+                  role="radio"
+                  aria-checked={valor.modo === modo}
+                  onClick={() => onCambiar({ ...valor, modo })}
+                  className={cn(
+                    "flex-1 rounded-[9.6px] px-2 text-sm font-semibold transition-colors",
+                    valor.modo === modo ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {etiqueta}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {contado && !conRepartido && (
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <span className="text-xs font-medium text-muted-foreground">{etiquetaMedio}</span>
             <SelectorMedio
@@ -138,6 +198,28 @@ export function PlazoYPago({
           </div>
         )}
       </div>
+
+      {/* Con repartido, un solo medio: la caja o la cuenta, a lo ancho. */}
+      {contado && conRepartido && !repartido && (
+        <div className="max-w-md">
+          {valor.modo === "TRANSFERENCIA" ? (
+            <SelectorCuentaBancaria valor={valor.cuenta} onElegir={(cuenta) => onCambiar({ ...valor, cuenta })} />
+          ) : cajaFija ? (
+            <CajaPrincipal valor={valor.caja} onElegir={(caja) => onCambiar({ ...valor, caja })} />
+          ) : (
+            <SelectorCaja valor={valor.caja} onElegir={(caja) => onCambiar({ ...valor, caja })} />
+          )}
+        </div>
+      )}
+
+      {repartido && (
+        <RepartoEnTarjetas
+          renglones={valor.renglones}
+          onCambiar={(renglones) => onCambiar({ ...valor, renglones })}
+          total={total}
+          cajaFija={cajaFija}
+        />
+      )}
       {soloCredito && motivoSoloCredito && <p className="text-xs text-muted-foreground">{motivoSoloCredito}</p>}
     </div>
   );

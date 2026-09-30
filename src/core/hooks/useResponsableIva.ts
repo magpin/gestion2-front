@@ -18,6 +18,14 @@ import { api } from "@/core/api/api";
  * esconder el IVA de una empresa que sí lo liquida.
  */
 export function useResponsableIva(): boolean {
+  return useResponsableIvaCargado() ?? true;
+}
+
+/**
+ * Lo mismo, pero `undefined` mientras carga: para lo que no debe aparecer y
+ * desaparecer, como la fila del IVA en los totales.
+ */
+export function useResponsableIvaCargado(): boolean | undefined {
   const { data } = useQuery({
     queryKey: ["empresa-legal", "regimen-vigente"],
     queryFn: () =>
@@ -26,7 +34,5 @@ export function useResponsableIva(): boolean {
         .then((r) => r.data),
     staleTime: 30 * 60_000,
   });
-
-  if (data === undefined) return true;
-  return data.includes("RESPONSABLE_IVA");
+  return data === undefined ? undefined : data.includes("RESPONSABLE_IVA");
 }

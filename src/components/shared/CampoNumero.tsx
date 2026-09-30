@@ -130,6 +130,20 @@ export function CampoPesos(
 }
 
 /**
+ * Un precio sin IVA: pesos con hasta dos decimales —coma—. Un precio de lista
+ * de $30.000 con IVA es $25.210,08 sin IVA, y un campo entero no lo podría ni
+ * mostrar ni corregir.
+ */
+export function CampoPrecio(
+  props: PropsDeInput & {
+    value: string;
+    onChange: (valor: string) => void;
+  },
+) {
+  return <CampoNumero {...props} decimales={2} />;
+}
+
+/**
  * Una cantidad: entera en unidades, cajas, pares y docenas; con decimales
  * —coma— en kilos, litros y metros. Sin unidad —todavía no se eligió el
  * producto— va entera.

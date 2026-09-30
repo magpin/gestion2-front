@@ -110,3 +110,18 @@ export const configuracionCajaApi = {
   preparar: () =>
     api.post<ResultadoPreparar>("/tesoreria/configuracion/preparar").then((r) => r.data),
 };
+
+/** Lo que dejó hecho cada paso de `preparar-todo`, y lo que no se pudo. */
+export interface ResultadoPrepararTodo {
+  pasos: Array<{ paso: string; hecho: string[]; error?: string }>;
+}
+
+/**
+ * Deja la empresa lista para operar: depreciación corregida, cajas por sede,
+ * cuentas de inventario según la actividad, conceptos y patrimonio. Lo corre
+ * el asistente al crear el plan. Idempotente.
+ */
+export const prepararTodoApi = {
+  preparar: () =>
+    api.post<ResultadoPrepararTodo>("/configuracion/preparar-todo").then((r) => r.data),
+};

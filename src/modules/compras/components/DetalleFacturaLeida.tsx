@@ -434,6 +434,7 @@ function Renglon({
             </p>
             {leido.clase === "GASTO" ? (
               <SelectorCuenta
+                crear={{ madres: ["5"] }}
                 valor={null}
                 onElegir={(cuenta) =>
                   onResolver({

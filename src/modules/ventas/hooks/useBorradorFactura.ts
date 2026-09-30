@@ -18,6 +18,7 @@ import {
   type LineaVentaBorrador,
 } from "../components/EditorLineasVenta";
 import type { CrearFacturaInput } from "../types/ventas.types";
+import { useTotalesBorrador } from "./useTotalesBorrador";
 
 
 /** Una retención que el cliente nos practica, mientras se edita. */
@@ -74,6 +75,22 @@ export function useBorradorFactura() {
   const sinPrecio = renglones(
     (l) => l.tipo === "CONCEPTO" && !(Number(l.precioUnitario) > 0),
   );
+  // Subtotal, IVA y total en el navegador (Fase 4 del plan de ventas). Una
+  // línea de producto completa que no da total es un producto sin precio de
+  // lista y sin precio digitado; mientras cargan los precios no se dice nada.
+  const totales = useTotalesBorrador(lineas);
+  const productoSinPrecio = totales.cargando
+    ? []
+    : lineas
+        .map((l, i) =>
+          l.tipo !== "CONCEPTO" &&
+          l.producto !== null &&
+          Number(l.cantidad) > 0 &&
+          totales.porLinea[i] === null
+            ? i + 1
+            : null,
+        )
+        .filter((n): n is number => n !== null);
 
   const problema = ((): string | null => {
     if (cliente === null) return "Elegí el cliente.";
@@ -85,6 +102,8 @@ export function useBorradorFactura() {
     if (sinEntero.length > 0)
       return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
     if (sinPrecio.length > 0) return `Poné el precio en ${nombrar(sinPrecio)}.`;
+    if (productoSinPrecio.length > 0)
+      return `Poné el precio en ${nombrar(productoSinPrecio)}: ese producto no tiene precio de lista.`;
     if (retenciones.some((r) => r.conceptoId === ""))
       return "Elegí el concepto de cada retención, o quitala.";
     if (retenciones.some((r) => !(Number(r.base) > 0)))
@@ -112,7 +131,14 @@ export function useBorradorFactura() {
               precioUnitario: Number(l.precioUnitario),
               ivaTarifa: conIva ? Number(l.ivaTarifa ?? 0) : 0,
             }
-          : { productoId: l.producto!.id, cantidad: Number(l.cantidad) },
+          : {
+              productoId: l.producto!.id,
+              cantidad: Number(l.cantidad),
+              // Vacío es el de lista: lo pone el servidor.
+              ...(l.precioUnitario.trim() !== "" && {
+                precioUnitario: Number(l.precioUnitario),
+              }),
+            },
       ),
       ...aFormaPago(formaPago),
       ...(vence !== null && { vence }),
@@ -133,6 +159,7 @@ export function useBorradorFactura() {
     plazoDelCliente,
     vence,
     retenciones,
+    totales,
     setRetenciones,
     problema,
     datos,

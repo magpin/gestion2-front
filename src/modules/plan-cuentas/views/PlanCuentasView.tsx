@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,8 +44,11 @@ const esquemaCentro = z.object({
  */
 export function PlanCuentasView() {
   const queryClient = useQueryClient();
-  const [busqueda, setBusqueda] = useState("");
-  const [inactivas, setInactivas] = useState(false);
+  // Se puede llegar filtrado desde un aviso («Ir al plan de cuentas»):
+  // `?q=130505&inactivas=1`.
+  const parametros = useSearchParams();
+  const [busqueda, setBusqueda] = useState(parametros.get("q") ?? "");
+  const [inactivas, setInactivas] = useState(parametros.get("inactivas") === "1");
 
   const { data: cuentas = [], isLoading } = useQuery({
     queryKey: [...CLAVE, busqueda, inactivas],
@@ -87,6 +91,26 @@ export function PlanCuentasView() {
       await refrescar();
       formCuenta.reset();
       aviso.exito("Cuenta agregada");
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
+  // El auxiliar se numera en el servidor: cuenta también los desactivados,
+  // que acá pueden no estar a la vista.
+  const crearAuxiliar = useMutation({
+    mutationFn: (d: { madre: string; nombre: string }) => planCuentasApi.crearAuxiliar(d),
+    onSuccess: async (c) => {
+      await refrescar();
+      aviso.exito(`Auxiliar ${c.codigo} creado`);
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
+  const activar = useMutation({
+    mutationFn: (id: string) => planCuentasApi.activar(id),
+    onSuccess: async () => {
+      await refrescar();
+      aviso.exito("Cuenta activada");
     },
     onError: (e: unknown) => aviso.falla(e),
   });
@@ -194,8 +218,9 @@ export function PlanCuentasView() {
       ) : (
         <ArbolPlan
           cuentas={cuentas}
-          creando={crearCuenta.isPending}
-          onCrearAuxiliar={(d) => crearCuenta.mutate(d)}
+          creando={crearAuxiliar.isPending}
+          onCrearAuxiliar={(d) => crearAuxiliar.mutate(d)}
+          onActivar={(id) => activar.mutate(id)}
           onDesactivar={(id) => desactivar.mutate(id)}
         />
       )}

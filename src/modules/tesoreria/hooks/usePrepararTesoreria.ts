@@ -18,7 +18,7 @@ import { configuracionCajaApi } from "../services/tesoreria.service";
  */
 export function usePrepararTesoreria() {
   const queryClient = useQueryClient();
-  const puedePreparar = useTieneRol("CONTADOR", "DIRECTOR");
+  const puedePreparar = useTieneRol("CONTADOR", "DIRECTOR", "ADMIN_TENANT");
 
   const preparado = useRef(false);
   const preparar = useMutation({
@@ -29,7 +29,9 @@ export function usePrepararTesoreria() {
         queryClient.invalidateQueries({ queryKey: ["tesoreria", "configuracion"] }),
       ]);
       const creado = [...r.cuentasCreadas, ...r.cajasCreadas];
-      if (creado.length > 0) {
+      if ((r.avisos ?? []).length > 0) {
+        aviso.info("Tesorería casi lista", [...creado, ...(r.avisos ?? [])].join(". "));
+      } else if (creado.length > 0) {
         aviso.exito(`Tesorería lista para operar. Se creó: ${creado.join(", ")}`);
       }
     },

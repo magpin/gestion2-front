@@ -3,6 +3,7 @@ import type { Page } from "@playwright/test";
 import { API } from "../fixtures/datos";
 import { prepararEmpresa, type EmpresaLista } from "../fixtures/empresa";
 import { entrarAlProducto } from "../fixtures/producto";
+import { prepararCaja, saldoCaja } from "../fixtures/tesoreria";
 import { expect, test } from "../fixtures/consola";
 
 /**
@@ -104,6 +105,14 @@ test.describe("Pantallas complementarias", () => {
     await page.getByLabel("Detalle de la línea 2").fill("Instalación en el local del cliente");
     await page.getByLabel("Precio de la línea 2").fill("120000");
 
+    // Subtotal, IVA y total se ven antes de decir cómo se paga: 150.000 +
+    // 120.000 sin IVA, 51.300 de IVA al 19 %.
+    const resumen = page.getByRole("region", { name: "Resumen" });
+    await expect(resumen).toContainText(/270\.000/);
+    await expect(resumen).toContainText(/51\.300/);
+    await expect(resumen).toContainText(/321\.300/);
+    await expect(page.getByLabel("Totales de las líneas")).toContainText(/321\.300/);
+
     await page.getByRole("radio", { name: "Crédito" }).click();
     await expect(page.getByText("Vas a recibir")).toBeVisible();
     // El servicio entra a su cuenta, no a la de la mercancía.
@@ -113,6 +122,41 @@ test.describe("Pantallas complementarias", () => {
 
     await page.getByRole("button", { name: "Emitir factura" }).click();
     await expect(page).toHaveURL(/\/dashboard\/ventas\?seccion=facturas$/);
+  });
+
+  test("la factura de contado se reparte entre la caja y el banco", async ({ page, request }) => {
+    const caja = await prepararCaja(request, e);
+    // El banco con su auxiliar, de una vez (Fase 6 del plan de ventas).
+    const banco = await request.post(`${API}/cuentas-bancarias/con-auxiliar`, {
+      headers: { Authorization: `Bearer ${e.token}` },
+      data: { banco: "Bancolombia", numeroCuenta: "123-456-1234", tipoCuenta: "AHORROS" },
+    });
+    expect(banco.ok(), await banco.text()).toBeTruthy();
+
+    await page.goto("/dashboard/ventas/nueva");
+    await page.getByRole("button", { name: /Seleccione un cliente/ }).click();
+    await page.getByLabel("Buscar cliente").fill("José");
+    await page.getByRole("button", { name: /José Vargas/ }).first().click();
+    await page.getByRole("button", { name: /Seleccione un producto/ }).click();
+    await page.getByLabel("Buscar producto").fill(e.producto.codigo);
+    await page.getByRole("button", { name: new RegExp(e.producto.nombre) }).first().click();
+    await page.getByLabel("Cantidad de la línea 1").fill("1");
+
+    await page.getByRole("radio", { name: "Contado" }).click();
+    await page.getByRole("radio", { name: "Repartido" }).click();
+    // Medio 1: caja (la principal se elige sola) con 100.000; medio 2: el
+    // banco, en blanco, se lleva el resto de los 178.500.
+    await page.getByLabel("Valor del medio 1").fill("100000");
+    await page.getByRole("combobox").filter({ hasText: "Seleccione una cuenta bancaria" }).click();
+    await page.getByRole("option", { name: /Bancolombia/ }).click();
+
+    const resumen = page.getByRole("region", { name: "Resumen" });
+    await expect(resumen).toContainText("Entra por");
+    await expect(resumen).toContainText(/78\.500/);
+
+    await page.getByRole("button", { name: "Emitir factura" }).click();
+    await expect(page).toHaveURL(/\/dashboard\/ventas\?seccion=facturas$/);
+    expect(await saldoCaja(request, e, caja.id)).toBe(100000);
   });
 
   test("María arma la depreciación y explica la cuenta", async ({ page, request }) => {

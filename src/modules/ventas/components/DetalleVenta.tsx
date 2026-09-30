@@ -13,7 +13,7 @@ import { useState } from "react";
 
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { mostrarCantidad } from "@/lib/numeros";
-import { formatCOP, formatFecha } from "@/lib/utils";
+import { formatCOP, formatCOPExacto, formatFecha } from "@/lib/utils";
 import { DetalleAsiento } from "@/modules/contabilidad/components/DetalleAsiento";
 import { PanelMaria } from "./PanelMaria";
 import type {
@@ -50,7 +50,10 @@ export function DetalleVenta({
   const [asiento, setAsiento] = useState<string | null>(null);
   // Una empresa que no liquida IVA no tiene que ver una columna de ceros: el
   // dato es siempre `0` y ocupa lugar sin decir nada.
-  const conIva = useResponsableIva();
+  const responsable = useResponsableIva();
+  // Si el documento trae IVA se muestra aunque hoy la empresa ya no sea
+  // responsable: lo que se emitió no cambia con el régimen de hoy.
+  const conIva = responsable || Number(documento?.total_iva ?? 0) > 0;
 
   return (
     <Dialog open={documento !== null} onOpenChange={(a) => !a && onCerrar()}>
@@ -91,7 +94,7 @@ export function DetalleVenta({
                         Cantidad
                       </th>
                       <th scope="col" className="px-4 py-3 text-right">
-                        Precio
+                        Precio sin IVA
                       </th>
                       {conIva && (
                         <th scope="col" className="px-4 py-3 text-right">
@@ -132,15 +135,15 @@ export function DetalleVenta({
                           {mostrarCantidad(l.cantidad)}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
-                          {formatCOP(Number(l.precio_unitario))}
+                          {formatCOPExacto(Number(l.precio_unitario))}
                         </td>
                         {conIva && (
                           <td className="px-4 py-3 text-right font-mono text-sm text-muted-foreground">
-                            {formatCOP(Number(l.iva_valor))}
+                            {formatCOPExacto(Number(l.iva_valor))}
                           </td>
                         )}
                         <td className="px-4 py-3 text-right font-mono text-sm font-semibold">
-                          {formatCOP(Number(l.total))}
+                          {formatCOPExacto(Number(l.total))}
                         </td>
                       </tr>
                     ))}
@@ -152,21 +155,21 @@ export function DetalleVenta({
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
                   <span className="font-mono">
-                    {formatCOP(Number(documento.subtotal))}
+                    {formatCOPExacto(Number(documento.subtotal))}
                   </span>
                 </div>
                 {conIva && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>IVA</span>
                     <span className="font-mono">
-                      {formatCOP(Number(documento.total_iva))}
+                      {formatCOPExacto(Number(documento.total_iva))}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
                   <span>Total</span>
                   <span className="font-mono">
-                    {formatCOP(Number(documento.total))}
+                    {formatCOPExacto(Number(documento.total))}
                   </span>
                 </div>
 

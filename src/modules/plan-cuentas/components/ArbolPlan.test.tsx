@@ -82,7 +82,7 @@ describe("ArbolPlan", () => {
     await userEvent.click(screen.getByRole("button", { name: /^Crear/ }));
 
     expect(onCrear).toHaveBeenCalledWith({
-      codigo: "11100501",
+      madre: "111005",
       nombre: "Bancolombia ahorros",
     });
   });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useAuthStore } from "@/core/store/authStore";
 import { cn } from "@/lib/utils";
+import { DialogoCuentaAuxiliar } from "@/modules/plan-cuentas/components/DialogoCuentaAuxiliar";
+import { puedeCrearBajo } from "@/modules/plan-cuentas/lib/madres";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 
@@ -32,6 +35,7 @@ export function SelectorCuenta({
   onElegir,
   invalido,
   clases,
+  crear = false,
 }: {
   valor: CuentaEmpresa | null;
   onElegir: (cuenta: CuentaEmpresa) => void;
@@ -41,9 +45,20 @@ export function SelectorCuenta({
    * gasto, por ejemplo, solo puede ir a la clase 5.
    */
   clases?: string[];
+  /**
+   * Ofrecer «+ Crear cuenta auxiliar» al pie, bajo estas madres (códigos o
+   * prefijos) o bajo cualquiera. Solo se muestra si el rol puede crear ahí.
+   * `false` donde la cuenta es un filtro y no un dato que se guarda.
+   */
+  crear?: false | { madres: readonly string[] | "cualquiera"; nombreSugerido?: string };
 }) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  // El diálogo se abre CERRANDO el popover: dentro del `PopoverContent` se
+  // desmontaría con él en el mismo clic (mismo truco que `SelectorProducto`).
+  const [creando, setCreando] = useState(false);
+  const roles = useAuthStore((s) => s.roles);
+  const puedeCrear = crear !== false && puedeCrearBajo(roles, crear.madres);
 
   const { data: todas = [], isFetching } = useQuery({
     queryKey: ["plan-cuentas", "auxiliares", busqueda],
@@ -59,6 +74,7 @@ export function SelectorCuenta({
     clases === undefined ? todas : todas.filter((c) => clases.includes(c.codigo[0]));
 
   return (
+    <>
     <Popover open={abierto} onOpenChange={setAbierto}>
       <PopoverTrigger
         render={<Button type="button" variant="outline" />}
@@ -151,7 +167,40 @@ export function SelectorCuenta({
             </p>
           )}
         </div>
+
+        {/* Que la cuenta no exista todavía no debería frenar el formulario: se
+            crea acá mismo y queda elegida. */}
+        {puedeCrear && (
+          <div className="border-t border-border p-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-10 w-full justify-start gap-2 rounded-xl px-3 text-sm"
+              onClick={() => {
+                setAbierto(false);
+                setCreando(true);
+              }}
+            >
+              <Plus className="size-4" />
+              Crear cuenta auxiliar
+            </Button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
+
+    {crear !== false && (
+      <DialogoCuentaAuxiliar
+        abierto={creando}
+        onCerrar={() => setCreando(false)}
+        madres={crear.madres}
+        nombreSugerido={crear.nombreSugerido ?? (busqueda.trim() || undefined)}
+        alGuardar={(c) => {
+          onElegir(c);
+          setBusqueda("");
+        }}
+      />
+    )}
+    </>
   );
 }

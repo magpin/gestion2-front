@@ -1,20 +1,15 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CampoPesos } from "@/components/shared/CampoNumero";
 import { cn } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { CajaPrincipal } from "./CajaPrincipal";
+import { RepartoEnTarjetas } from "./RepartoEnTarjetas";
 import { SelectorCaja } from "./SelectorCaja";
 import { SelectorCuentaBancaria } from "./SelectorCuentaBancaria";
 import {
-  renglonRepartoVacio,
   type FormaPagoBorrador,
   type ModoPago,
-  type RenglonReparto,
 } from "../lib/formaPago";
 
 const MODOS: { modo: ModoPago; etiqueta: string }[] = [
@@ -43,7 +38,10 @@ export function SelectorFormaPago({
   motivoSoloCredito,
   cajaFija = false,
   conVence = false,
+  total,
 }: {
+  /** El total que se reparte, si se sabe: para «Falta repartir» y «el resto». */
+  total?: number | null;
   valor: FormaPagoBorrador;
   onCambiar: (valor: FormaPagoBorrador) => void;
   soloCredito?: boolean;
@@ -62,13 +60,6 @@ export function SelectorFormaPago({
 }) {
   const cambiar = (cambio: Partial<FormaPagoBorrador>) =>
     onCambiar({ ...valor, ...cambio });
-
-  const cambiarRenglon = (clave: number, cambio: Partial<RenglonReparto>) =>
-    cambiar({
-      renglones: valor.renglones.map((r) =>
-        r.clave === clave ? { ...r, ...cambio } : r,
-      ),
-    });
 
   return (
     <Campo
@@ -89,7 +80,7 @@ export function SelectorFormaPago({
         <div
           id="formaPago"
           role="radiogroup"
-          className="inline-flex w-fit flex-wrap gap-1 rounded-2xl border border-border bg-muted p-1"
+          className="flex w-full flex-wrap gap-1 rounded-xl border border-border bg-muted p-1"
         >
           {MODOS.map(({ modo, etiqueta }) => {
             const deshabilitado = soloCredito && modo !== "CREDITO";
@@ -102,10 +93,10 @@ export function SelectorFormaPago({
                 disabled={deshabilitado}
                 onClick={() => cambiar({ modo })}
                 className={cn(
-                  "rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
+                  "min-w-24 flex-1 rounded-[9.6px] px-4 py-2 text-sm font-semibold transition-colors",
                   valor.modo === modo
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent",
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                   deshabilitado && "cursor-not-allowed opacity-50",
                 )}
               >
@@ -153,94 +144,12 @@ export function SelectorFormaPago({
         )}
 
         {valor.modo === "REPARTIDO" && (
-          <div className="flex flex-col gap-3">
-            {valor.renglones.map((r, i) => (
-              <div
-                key={r.clave}
-                className="grid items-center gap-3 rounded-2xl border border-border p-3 sm:grid-cols-[auto_1fr_180px_auto]"
-              >
-                <div className="inline-flex w-fit gap-1 rounded-xl border border-border bg-muted p-1">
-                  {(["CAJA", "BANCO"] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => cambiarRenglon(r.clave, { medio: m })}
-                      className={cn(
-                        "rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-                        r.medio === m
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:bg-accent",
-                      )}
-                    >
-                      {m === "CAJA" ? "Caja" : "Banco"}
-                    </button>
-                  ))}
-                </div>
-
-                {r.medio === "CAJA" ? (
-                  cajaFija ? (
-                    <CajaPrincipal
-                      valor={r.caja}
-                      onElegir={(caja) => cambiarRenglon(r.clave, { caja })}
-                    />
-                  ) : (
-                    <SelectorCaja
-                      valor={r.caja}
-                      onElegir={(caja) => cambiarRenglon(r.clave, { caja })}
-                    />
-                  )
-                ) : (
-                  <SelectorCuentaBancaria
-                    valor={r.cuenta}
-                    onElegir={(cuenta) => cambiarRenglon(r.clave, { cuenta })}
-                  />
-                )}
-
-                <CampoPesos
-                  value={r.valor}
-                  onChange={(valor) => cambiarRenglon(r.clave, { valor })}
-                  placeholder="el resto"
-                  className="h-11 rounded-xl px-4 text-right font-mono"
-                  aria-label={`Valor del medio ${i + 1}`}
-                />
-
-                {valor.renglones.length > 2 ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Quitar el medio ${i + 1}`}
-                    className="text-muted-foreground hover:text-danger"
-                    onClick={() =>
-                      cambiar({
-                        renglones: valor.renglones.filter(
-                          (x) => x.clave !== r.clave,
-                        ),
-                      })
-                    }
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                ) : (
-                  <span className="hidden sm:block sm:w-9" />
-                )}
-              </div>
-            ))}
-
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-11 w-fit rounded-xl px-4 text-brand-text"
-              onClick={() =>
-                cambiar({
-                  renglones: [...valor.renglones, renglonRepartoVacio()],
-                })
-              }
-            >
-              <Plus className="size-4" />
-              Agregar medio
-            </Button>
-          </div>
+          <RepartoEnTarjetas
+            renglones={valor.renglones}
+            onCambiar={(renglones) => cambiar({ renglones })}
+            total={total}
+            cajaFija={cajaFija}
+          />
         )}
       </div>
     </Campo>

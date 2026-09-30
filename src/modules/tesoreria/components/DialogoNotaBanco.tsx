@@ -109,7 +109,7 @@ export function DialogoNotaBanco({
           <div className="rounded-2xl bg-muted p-4 text-sm">{resumen}</div>
 
           <Campo id="contraCuenta" etiqueta="Cuenta contable" ayuda={ayudaCuenta} escala="grande">
-            <SelectorCuenta valor={cuenta} onElegir={setCuenta} invalido={noSirve !== null} />
+            <SelectorCuenta valor={cuenta} onElegir={setCuenta} invalido={noSirve !== null} crear={{ madres: "cualquiera" }} />
           </Campo>
 
           {noSirve && (

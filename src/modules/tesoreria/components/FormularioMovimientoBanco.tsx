@@ -131,6 +131,7 @@ export function FormularioMovimientoBanco({
           escala="grande"
         >
           <SelectorCuenta
+            crear={{ madres: "cualquiera" }}
             valor={contraCuenta}
             onElegir={onContraCuenta}
             invalido={Boolean(form.formState.errors.root)}

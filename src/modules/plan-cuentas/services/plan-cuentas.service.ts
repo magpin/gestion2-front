@@ -42,6 +42,22 @@ export const planCuentasApi = {
   editar: (id: string, datos: Record<string, unknown>) =>
     api.patch<CuentaEmpresa>(`/plan-cuentas/${id}`, datos).then((r) => r.data),
 
+  /**
+   * «+ Crear cuenta auxiliar» desde un formulario: la madre y el nombre; el
+   * código lo pone el servidor. Devuelve la cuenta como `listar`.
+   */
+  crearAuxiliar: (datos: { madre: string; nombre: string; contexto?: string }) =>
+    api.post<CuentaEmpresa>("/plan-cuentas/auxiliar", datos).then((r) => r.data),
+
+  /** El código que saldría bajo una madre, antes de guardar. */
+  siguiente: (madre: string) =>
+    api
+      .get<{ codigo: string }>("/plan-cuentas/siguiente", { params: { madre } })
+      .then((r) => r.data.codigo),
+
+  /** La vuelve a ofrecer. Si la madre está inactiva, el servidor lo dice. */
+  activar: (id: string) => api.post(`/plan-cuentas/${id}/activar`).then(() => undefined),
+
   desactivar: (id: string) =>
     api.post(`/plan-cuentas/${id}/desactivar`).then(() => undefined),
 

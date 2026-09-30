@@ -123,7 +123,7 @@ export function LibrosSeccion() {
             {libro === "mayor" && (
               <label className="flex min-w-72 flex-1 flex-col gap-2 text-sm font-medium">
                 Cuenta
-                <SelectorCuenta valor={cuenta} onElegir={setCuenta} />
+                <SelectorCuenta valor={cuenta} onElegir={setCuenta} crear={false} />
               </label>
             )}
             <label className="flex flex-col gap-2 text-sm font-medium">

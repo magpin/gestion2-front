@@ -254,6 +254,7 @@ function Formulario({
               valor={cuenta}
               onElegir={setCuenta}
               clases={CLASES_TIPO[tipo]}
+              crear={{ madres: CLASES_TIPO[tipo] }}
               invalido={intentado && faltaCuenta}
             />
           </Campo>

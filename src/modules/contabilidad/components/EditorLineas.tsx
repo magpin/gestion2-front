@@ -159,6 +159,7 @@ export function EditorLineas({
                 <tr key={l.clave} className="align-top">
                   <td className="px-4 py-3">
                     <SelectorCuenta
+                      crear={{ madres: "cualquiera" }}
                       valor={l.cuenta}
                       onElegir={(cuenta) => actualizar(l.clave, { cuenta })}
                     />

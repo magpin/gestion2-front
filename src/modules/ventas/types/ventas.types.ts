@@ -121,7 +121,7 @@ export interface FiltroVentas {
   pagina?: number;
 }
 
-/** Sin `precioUnitario`: el precio es siempre el de lista vigente del producto. */
+/** Una línea de cotización o factura. Sin `precioUnitario`, el de lista vigente. */
 export interface LineaDocumentoInput {
   /** Un producto del catálogo, o —solo en la factura— un concepto de ingreso. */
   productoId?: string;
@@ -132,17 +132,13 @@ export interface LineaDocumentoInput {
   ivaTarifa?: number;
   cantidad: number;
   /**
-   * Solo en cotizaciones, y solo cuando el producto no tiene precio de lista:
-   * si lo tiene, el backend manda el de lista y este se ignora.
+   * Sin IVA. En la de producto, si viene, manda sobre el de lista: es el
+   * precio pactado con el cliente. En la de concepto, obligatorio.
    */
   precioUnitario?: number;
 }
 
-/**
- * El precio por línea solo lo acepta la cotización, y solo se manda cuando el
- * producto no tiene precio de lista: si lo tiene, el backend usa el de lista y
- * lo ignora.
- */
+/** Una cotización: el cliente, la fecha y las líneas con su precio si se cambió. */
 export interface CrearCotizacionInput {
   terceroId: string;
   fecha: string;
@@ -190,6 +186,8 @@ export interface FacturaPrevia {
   asiento: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
   /** El costo de lo que sale del inventario, aparte del asiento que se muestra. */
   costo: number;
+  /** De contado: por dónde entra la plata y cuánto por cada medio (el renglón en blanco, el resto). */
+  pagos: Array<{ medio: "CAJA" | "BANCO"; nombre: string; valor: number }>;
 }
 
 /** El número que sale si se emite ahora (`GET /facturas/numeracion`). */
@@ -240,10 +238,9 @@ export interface CrearNotaCreditoInput {
 }
 
 /**
- * Convertir una cotización en factura: solo la fecha — el cliente y las
- * líneas salen de la propia cotización, no se vuelven a pedir. El precio de
- * cada línea se recalcula contra el vigente en ese momento, no el que tenía
- * la cotización.
+ * Convertir una cotización en factura: la fecha y cómo se paga — el cliente,
+ * las líneas y el precio de cada una salen de la propia cotización. Se
+ * factura al precio cotizado.
  */
 export interface ConvertirCotizacionInput {
   fecha: string;
@@ -260,31 +257,6 @@ export interface ConvertirCotizacionInput {
   retenciones?: Array<{ conceptoId: string; base: number }>;
 }
 
-/** Cómo quedaría la factura, sin emitirla (`POST /facturas/previo`). */
-export interface FacturaPrevia {
-  numero: string;
-  subtotal: number;
-  iva: number;
-  total: number;
-  retenciones: Array<{ tipo: string; nombre: string; tarifa: number; base: number; valor: number }>;
-  retenido: number;
-  /** Lo que va a entrar: el total menos lo retenido. */
-  neto: number;
-  vence: string | null;
-  asiento: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
-  /** El costo de lo que sale del inventario, aparte del asiento que se muestra. */
-  costo: number;
-}
-
-/** El número que sale si se emite ahora (`GET /facturas/numeracion`). */
-export interface NumeracionFactura {
-  siguiente: string;
-  resolucion: string;
-  desde: number;
-  hasta: number;
-  quedan: number;
-}
-
 /**
  * Cobra una factura repartida entre uno o varios medios: una fecha —es un
  * solo acto— y un renglón por caja o cuenta que recibe. Con un renglón se
@@ -294,4 +266,22 @@ export interface NumeracionFactura {
 export interface CobrarInput {
   fecha: string;
   pagos: MedioPagoInput[];
+}
+
+/** Un producto que no alcanza para la venta (`POST /facturas/existencia`). */
+export interface FaltanteExistencia {
+  productoId: string;
+  codigo: string;
+  nombre: string;
+  pide: number;
+  hay: number;
+  faltan: number;
+  /** Sin saldo o sin costo: no se puede vender en descubierto; primero una entrada. */
+  nuncaTuvoEntrada: boolean;
+}
+
+/** Qué no alcanza, y si la empresa vende sin existencia (`VENDE_SIN_EXISTENCIA`). */
+export interface ExistenciaVenta {
+  vendeSinExistencia: boolean;
+  faltantes: FaltanteExistencia[];
 }

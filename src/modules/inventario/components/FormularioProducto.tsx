@@ -316,6 +316,7 @@ export function FormularioProducto({
                 escala="grande"
               >
                 <SelectorCuenta
+                  crear={{ madres: ["1435"] }}
                   valor={cuenta}
                   onElegir={elegirCuenta}
                   invalido={Boolean(errores.cuentaInventarioId)}
@@ -324,11 +325,11 @@ export function FormularioProducto({
             )}
 
             <Campo id="cuentaCostoVentaId" etiqueta="Cuenta de costo de venta" escala="grande">
-              <SelectorCuenta valor={cuentaCosto} onElegir={onCuentaCosto} />
+              <SelectorCuenta valor={cuentaCosto} onElegir={onCuentaCosto} crear={{ madres: ["61"] }} />
             </Campo>
 
             <Campo id="cuentaIngresoId" etiqueta="Cuenta de ingreso" escala="grande">
-              <SelectorCuenta valor={cuentaIngreso} onElegir={onCuentaIngreso} />
+              <SelectorCuenta valor={cuentaIngreso} onElegir={onCuentaIngreso} crear={{ madres: ["41"] }} />
             </Campo>
           </div>
         </details>

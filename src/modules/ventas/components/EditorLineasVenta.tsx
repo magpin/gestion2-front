@@ -1,13 +1,13 @@
 "use client";
 
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 
-import { CampoCantidad, CampoPesos } from "@/components/shared/CampoNumero";
+import { CampoCantidad, CampoPrecio } from "@/components/shared/CampoNumero";
+import { mostrarNumero } from "@/lib/numeros";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useResponsableIva } from "@/core/hooks/useResponsableIva";
-import { cn, formatCOP } from "@/lib/utils";
+import { cn, formatCOP, formatCOPExacto as pesos } from "@/lib/utils";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
 import type { Concepto } from "@/modules/conceptos/types/conceptos.types";
 import { SelectorProducto } from "@/modules/inventario/components/SelectorProducto";
@@ -16,24 +16,7 @@ import {
   precioApi,
 } from "@/modules/inventario/services/inventario.service";
 import type { ProductoResumen } from "@/modules/inventario/types/inventario.types";
-import {
-  sumarTotales,
-  totalesDeLinea,
-  type TotalesLinea,
-} from "../lib/totales";
-
-/**
- * Pesos con centavos solo si los hay: el precio sin IVA de la tinta es
- * $25.210,08 y mostrarlo como $25.210 sería decir otro número.
- */
-function pesos(valor: number): string {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(valor);
-}
+import { useTotalesBorrador } from "../hooks/useTotalesBorrador";
 
 /** Una línea mientras se edita. La cantidad es texto: vacío es "sin llenar", no cero. */
 export interface LineaVentaBorrador {
@@ -42,8 +25,8 @@ export interface LineaVentaBorrador {
   producto: ProductoResumen | null;
   cantidad: string;
   /**
-   * Solo se llena —y solo se manda— si el producto no tiene precio de lista.
-   * En la línea de concepto es el precio que se cobra.
+   * El precio sin IVA digitado. Vacío en la de producto es «el de lista», y
+   * entonces no se manda. En la línea de concepto es el precio que se cobra.
    */
   precioUnitario: string;
   /**
@@ -106,12 +89,11 @@ export function usePrecioVigente(producto: ProductoResumen | null) {
 /**
  * Las líneas de una cotización o factura: producto y cantidad.
  *
- * El precio es el de lista vigente del producto y el IVA lo decide el backend
- * según si la empresa es responsable: no se negocian acá (ver "Descuentos por
- * línea o por documento" en `docs/planes/ventas-backend.md`). La única
- * excepción es `precioEditable` —la cotización— y solo para el producto que
- * todavía no tiene precio de lista: de los 1.638 importados, muchos llegaron
- * sin ese dato, y una cotización no puede quedar trabada por eso.
+ * El precio sin IVA arranca en el de lista vigente del producto y se puede
+ * cambiar: es el que se pacta con el cliente, y la factura que salga de una
+ * cotización lo respeta. Sin precio de lista —muchos de los 1.638 importados
+ * llegaron así— se digita. El IVA lo decide el backend según si la empresa es
+ * responsable.
  *
  * Cada línea muestra su precio sin IVA, el subtotal, el IVA y el total, y al
  * pie van los del documento, calculados igual que el servidor
@@ -121,15 +103,12 @@ export function usePrecioVigente(producto: ProductoResumen | null) {
 export function EditorLineasVenta({
   lineas,
   onCambiar,
-  precioEditable = false,
   precioSiempreDigitado = false,
   mostrarExistencia = true,
   conConceptos = false,
 }: {
   lineas: LineaVentaBorrador[];
   onCambiar: (lineas: LineaVentaBorrador[]) => void;
-  /** Solo la cotización: deja digitar el precio del producto que no tiene. */
-  precioEditable?: boolean;
   /**
    * Solo la nota débito: el precio se digita siempre, tenga o no el producto
    * uno de lista. Lo que se le cobra de más al cliente —un flete, un interés,
@@ -150,47 +129,14 @@ export function EditorLineasVenta({
 
   // El IVA de la línea: el del producto, si la empresa lo liquida. Es lo
   // mismo que decide el servidor, que fuerza 0 a quien no es responsable.
-  const responsable = useResponsableIva();
-  // Los precios de todas las líneas, con la misma llave que `usePrecioVigente`:
-  // comparten el caché, no son consultas de más.
-  const consultas = useQueries({
-    queries: lineas.map((l) => ({
-      queryKey: ["productos", "precios", l.producto?.id],
-      queryFn: () => precioApi.historialDe(l.producto!.id),
-      enabled: l.producto !== null,
-      staleTime: 60_000,
-    })),
-  });
-  const calculos: Array<(TotalesLinea & { tarifa: number }) | null> =
-    lineas.map((l, i) => {
-      if (l.tipo === "CONCEPTO") {
-        const precio = Number(l.precioUnitario);
-        const cantidad = Number(l.cantidad);
-        if (!(precio > 0) || !(cantidad > 0)) return null;
-        const tarifa = responsable ? Number(l.ivaTarifa ?? 0) : 0;
-        return { ...totalesDeLinea(cantidad, precio, tarifa), tarifa };
-      }
-      if (l.producto === null) return null;
-      const vigente = consultas[i]?.data?.find((p) => p.fecha_fin === null);
-      const deLista =
-        vigente && Number(vigente.precio_venta) > 0
-          ? Number(vigente.precio_venta)
-          : null;
-      const digitado =
-        l.precioUnitario.trim() === "" ? null : Number(l.precioUnitario);
-      const precio = precioSiempreDigitado
-        ? digitado
-        : (deLista ?? (precioEditable ? digitado : null));
-      const cantidad = Number(l.cantidad);
-      if (precio === null || !(precio > 0) || !(cantidad > 0)) return null;
-      const tarifa = responsable ? Number(l.producto.iva_tarifa) : 0;
-      return { ...totalesDeLinea(cantidad, precio, tarifa), tarifa };
-    });
-  const completas = calculos.filter(
-    (c): c is TotalesLinea & { tarifa: number } => c !== null,
-  );
-  const totales = sumarTotales(completas);
-  const pendientes = lineas.length - completas.length;
+  const {
+    porLinea: calculos,
+    totales,
+    pendientes,
+    responsable: responsableCargado,
+  } = useTotalesBorrador(lineas, { siempreDigitado: precioSiempreDigitado });
+  const responsable = responsableCargado ?? true;
+  const completas = calculos.filter((c) => c !== null);
 
   const agregar = () => onCambiar([...lineas, lineaVentaVacia()]);
   const quitar = (clave: number) =>
@@ -209,9 +155,9 @@ export function EditorLineasVenta({
               <th scope="col" className={cn(th, "min-w-72 pl-6")}>Qué</th>
               <th scope="col" className={th}>Tipo y a dónde va</th>
               <th scope="col" className={cn(th, "text-right")}>Cant.</th>
-              <th scope="col" className={cn(th, "text-right")}>Precio</th>
+              <th scope="col" className={cn(th, "text-right")}>Precio sin IVA</th>
               {responsable && <th scope="col" className={cn(th, "text-right")}>IVA</th>}
-              <th scope="col" className={cn(th, "text-right")}>Subtotal</th>
+              <th scope="col" className={cn(th, "text-right")}>Total</th>
               <th scope="col" className="w-12 pr-6" />
             </tr>
           </thead>
@@ -289,7 +235,7 @@ export function EditorLineasVenta({
                   </td>
                   <td className="px-3 py-3.5 text-right">
                     {l.tipo === "CONCEPTO" ? (
-                      <CampoPesos
+                      <CampoPrecio
                         value={l.precioUnitario}
                         onChange={(precioUnitario) => actualizar(l.clave, { precioUnitario })}
                         placeholder="0"
@@ -302,7 +248,6 @@ export function EditorLineasVenta({
                         valor={l.precioUnitario}
                         onCambiar={(precioUnitario) => actualizar(l.clave, { precioUnitario })}
                         etiqueta={`Precio de la línea ${i + 1}`}
-                        editable={precioEditable}
                         siempreDigitado={precioSiempreDigitado}
                       />
                     )}
@@ -310,25 +255,35 @@ export function EditorLineasVenta({
                   {responsable && (
                     <td className="px-3 py-3.5 text-right">
                       {l.tipo === "CONCEPTO" ? (
-                        <select
-                          value={l.ivaTarifa ?? "19"}
-                          onChange={(e) => actualizar(l.clave, { ivaTarifa: e.target.value })}
-                          className="h-11 rounded-xl border border-input bg-card px-2 font-mono text-sm"
-                          aria-label={`IVA de la línea ${i + 1}`}
-                        >
-                          <option value="19">19 %</option>
-                          <option value="5">5 %</option>
-                          <option value="0">0 %</option>
-                        </select>
+                        <>
+                          <select
+                            value={l.ivaTarifa ?? "19"}
+                            onChange={(e) => actualizar(l.clave, { ivaTarifa: e.target.value })}
+                            className="h-11 rounded-xl border border-input bg-card px-2 font-mono text-sm"
+                            aria-label={`IVA de la línea ${i + 1}`}
+                          >
+                            <option value="19">19 %</option>
+                            <option value="5">5 %</option>
+                            <option value="0">0 %</option>
+                          </select>
+                          <span className="mt-1 block font-mono text-xs whitespace-nowrap tabular-nums">
+                            {calculos[i] === null ? "—" : pesos(calculos[i]!.iva)}
+                          </span>
+                        </>
                       ) : (
-                        <span className="block pt-3 font-mono">
-                          {l.producto ? `${Number(l.producto.iva_tarifa)} %` : "—"}
+                        <span className="block pt-3 font-mono whitespace-nowrap tabular-nums">
+                          {calculos[i] === null ? "—" : pesos(calculos[i]!.iva)}
+                          {l.producto && (
+                            <span className="mt-0.5 block font-sans text-[10px] text-muted-foreground">
+                              {Number(l.producto.iva_tarifa)} %
+                            </span>
+                          )}
                         </span>
                       )}
                     </td>
                   )}
                   <td className="px-3 py-3.5 pt-6 text-right font-mono font-semibold whitespace-nowrap tabular-nums">
-                    {calculos[i] === null ? "—" : pesos(calculos[i]!.subtotal)}
+                    {calculos[i] === null ? "—" : pesos(calculos[i]!.total)}
                   </td>
                   <td className="py-3.5 pr-6">
                     {lineas.length > 1 && (
@@ -348,7 +303,8 @@ export function EditorLineasVenta({
               );
             })}
             <tr>
-              <td colSpan={7} className="px-6 py-3">
+              <td colSpan={responsable ? 7 : 6} className="px-6 py-3">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="outline" className="h-9 rounded-xl border-dashed px-3 text-sm" onClick={agregar}>
                     <Plus className="size-3.5" />
@@ -363,6 +319,13 @@ export function EditorLineasVenta({
                     <Plus className="size-3.5" />
                     Agregar servicio u otro ingreso
                   </Button>
+                </div>
+                <PieTotales
+                  totales={totales}
+                  pendientes={pendientes}
+                  conIva={responsableCargado === true}
+                  hayLineas={completas.length > 0}
+                />
                 </div>
               </td>
             </tr>
@@ -444,7 +407,7 @@ export function EditorLineasVenta({
                 </td>
                 <td className="px-4 py-3">
                   {l.tipo === "CONCEPTO" ? (
-                    <CampoPesos
+                    <CampoPrecio
                       value={l.precioUnitario}
                       onChange={(precioUnitario) =>
                         actualizar(l.clave, { precioUnitario })
@@ -461,7 +424,6 @@ export function EditorLineasVenta({
                         actualizar(l.clave, { precioUnitario })
                       }
                       etiqueta={`Precio de la línea ${i + 1}`}
-                      editable={precioEditable}
                       siempreDigitado={precioSiempreDigitado}
                     />
                   )}
@@ -541,38 +503,55 @@ export function EditorLineasVenta({
           </Button>
         )}
 
-        {/* En la página de la factura el resumen va a la derecha: acá sobra. */}
-        {completas.length > 0 && !conConceptos && (
-          <dl className="grid min-w-[260px] grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
-            <dt className="text-muted-foreground">Subtotal</dt>
-            <dd className="text-right font-mono tabular-nums">
-              {pesos(totales.subtotal)}
-            </dd>
-            {responsable && (
-              <>
-                <dt className="text-muted-foreground">IVA</dt>
-                <dd className="text-right font-mono tabular-nums">
-                  {pesos(totales.iva)}
-                </dd>
-              </>
-            )}
-            <dt className="border-t border-border pt-1.5 font-semibold">
-              Total
-            </dt>
-            <dd className="border-t border-border pt-1.5 text-right font-mono text-base font-semibold tabular-nums">
-              {pesos(totales.total)}
-            </dd>
-            {pendientes > 0 && (
-              <dd className="col-span-2 text-xs text-muted-foreground">
-                {pendientes === 1
-                  ? "Falta completar 1 línea: no está en el total."
-                  : `Faltan completar ${pendientes} líneas: no están en el total.`}
-              </dd>
-            )}
-          </dl>
-        )}
+        <PieTotales
+          totales={totales}
+          pendientes={pendientes}
+          conIva={responsable}
+          hayLineas={completas.length > 0}
+        />
       </div>
     </div>
+  );
+}
+
+/** Subtotal, IVA y total del documento, y cuántas líneas faltan completar. */
+function PieTotales({
+  totales,
+  pendientes,
+  conIva,
+  hayLineas,
+}: {
+  totales: { subtotal: number; iva: number; total: number };
+  pendientes: number;
+  conIva: boolean;
+  hayLineas: boolean;
+}) {
+  if (!hayLineas) return null;
+  return (
+    <dl
+      aria-label="Totales de las líneas"
+      className="grid min-w-[260px] grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 rounded-2xl border border-border bg-muted/30 p-4 text-sm"
+    >
+      <dt className="text-muted-foreground">Subtotal</dt>
+      <dd className="text-right font-mono tabular-nums">{pesos(totales.subtotal)}</dd>
+      {conIva && (
+        <>
+          <dt className="text-muted-foreground">IVA</dt>
+          <dd className="text-right font-mono tabular-nums">{pesos(totales.iva)}</dd>
+        </>
+      )}
+      <dt className="border-t border-border pt-1.5 font-semibold">Total</dt>
+      <dd className="border-t border-border pt-1.5 text-right font-mono text-base font-semibold tabular-nums">
+        {pesos(totales.total)}
+      </dd>
+      {pendientes > 0 && (
+        <dd className="col-span-2 text-xs text-muted-foreground">
+          {pendientes === 1
+            ? "Falta completar 1 línea: no está en el total."
+            : `Faltan completar ${pendientes} líneas: no están en el total.`}
+        </dd>
+      )}
+    </dl>
   );
 }
 
@@ -604,24 +583,22 @@ function Existencia({ producto }: { producto: ProductoResumen }) {
 }
 
 /**
- * El precio de la línea. Si el producto tiene precio de lista, se muestra y no
- * se toca: cambiarlo acá sería prometer una negociación por documento que no
- * existe. Si no tiene, se digita, y es lo único que deja seguir.
+ * El precio sin IVA de la línea. Arranca en el de lista —se ve como
+ * sugerencia, y vacío quiere decir «el de lista», que no viaja— y se puede
+ * cambiar: es el precio que se pacta con el cliente. Si se cambió, dice cuál
+ * era el de lista y deja volver a él. Sin precio de lista, se digita.
  */
 function PrecioDeLinea({
   producto,
   valor,
   onCambiar,
   etiqueta,
-  editable = false,
   siempreDigitado = false,
 }: {
   producto: ProductoResumen | null;
   valor: string;
   onCambiar: (valor: string) => void;
   etiqueta: string;
-  /** La cotización: deja digitar el precio del producto que no tiene. */
-  editable?: boolean;
   siempreDigitado?: boolean;
 }) {
   const { precio, cargando } = usePrecioVigente(producto);
@@ -629,53 +606,57 @@ function PrecioDeLinea({
   if (producto === null) {
     return <span className="text-sm text-muted-foreground">—</span>;
   }
-  if (!siempreDigitado && cargando && precio === null) {
-    return <span className="text-sm text-muted-foreground">…</span>;
-  }
-  if (!siempreDigitado && precio !== null) {
-    return (
-      <span className="ml-auto block w-32 pt-3 text-right font-mono text-sm">
-        {pesos(precio)}
-        <span className="mt-1 block text-[10px] font-sans text-muted-foreground">
-          de lista
-        </span>
-      </span>
-    );
-  }
-  // En una factura el precio no se digita: sin precio de lista, el servidor
-  // la rechaza. Se dice acá, antes de intentarlo.
-  if (!siempreDigitado && !editable) {
-    return (
-      <span className="ml-auto block w-32 pt-3 text-right text-xs text-warning-foreground">
-        Sin precio de lista
-      </span>
-    );
-  }
+  const deLista = siempreDigitado ? null : precio;
+  const digitado = valor.trim() === "" ? null : Number(valor);
+  const cambiado = deLista !== null && digitado !== null && digitado !== deLista;
+  const efectivo = digitado ?? deLista;
+  const costo = Number(producto.saldo_costo_promedio);
+
   return (
-    <>
-      <CampoPesos
+    <div className="ml-auto flex w-36 flex-col items-end">
+      <CampoPrecio
         value={valor}
         onChange={onCambiar}
-        placeholder="0"
-        className="h-11 w-32 rounded-xl px-4 text-right font-mono"
+        placeholder={
+          deLista !== null
+            ? mostrarNumero(String(deLista))
+            : cargando && !siempreDigitado
+              ? "…"
+              : "0"
+        }
+        className="h-11 w-full rounded-xl px-3 text-right font-mono placeholder:text-foreground/70"
         aria-label={etiqueta}
       />
-      <span className="mt-1 block text-[10px] text-muted-foreground">
-        {siempreDigitado ? "lo que se cobra de más" : "sin precio de lista"}
+      <span className="mt-1 block text-right text-[10px] text-muted-foreground">
+        {siempreDigitado
+          ? "lo que se cobra de más"
+          : cambiado
+            ? `de lista ${pesos(deLista)}`
+            : deLista !== null
+              ? "de lista"
+              : cargando
+                ? ""
+                : "sin precio de lista"}
       </span>
+      {cambiado && (
+        <button
+          type="button"
+          onClick={() => onCambiar("")}
+          className="mt-0.5 text-[10px] font-medium text-brand-text underline-offset-2 hover:underline"
+        >
+          Volver al de lista
+        </button>
+      )}
       {/* Avisar acá y no solo al facturar: el precio se decide mientras se
           cotiza, con el cliente esperando. El costo sale del catálogo, que ya
           lo trae. No aplica a la nota débito —lo que se cobra de más no tiene
           costo contra el cual compararse—. */}
-      {!siempreDigitado &&
-        Number(producto.saldo_costo_promedio) > 0 &&
-        Number(valor) > 0 &&
-        Number(valor) < Number(producto.saldo_costo_promedio) && (
-          <span className="mt-1 block text-[10px] font-semibold text-danger">
-            cuesta {formatCOP(Number(producto.saldo_costo_promedio))}
-          </span>
-        )}
-    </>
+      {!siempreDigitado && costo > 0 && efectivo !== null && efectivo > 0 && efectivo < costo && (
+        <span className="mt-1 block text-[10px] font-semibold text-danger">
+          cuesta {formatCOP(costo)}
+        </span>
+      )}
+    </div>
   );
 }
 

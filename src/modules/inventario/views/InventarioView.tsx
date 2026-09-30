@@ -48,7 +48,7 @@ const SECCIONES: Array<[Seccion, typeof Package]> = [
  */
 export function InventarioView() {
   const puedeCrear = useTieneRol("INVENTARIO", "DIRECTOR");
-  const puedePreparar = useTieneRol("CONTADOR", "DIRECTOR");
+  const puedePreparar = useTieneRol("CONTADOR", "DIRECTOR", "ADMIN_TENANT");
   const queryClient = useQueryClient();
 
   // Deja inventario listo para operar: crea las cuentas automáticas que

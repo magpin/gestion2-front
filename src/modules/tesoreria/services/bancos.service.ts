@@ -42,6 +42,13 @@ export const cuentasBancariasApi = {
   porId: (id: string) =>
     api.get<CuentaBancariaResumen>(`/cuentas-bancarias/${id}`).then((r) => r.data),
 
+  /**
+   * La cuenta bancaria con su auxiliar «Bancos - {banco} ···{últimos 4}» bajo
+   * 111005, de una vez: nadie tiene que ir antes al plan de cuentas.
+   */
+  crearConAuxiliar: (datos: Omit<CrearCuentaBancariaInput, "cuentaId">) =>
+    api.post<CuentaBancariaResumen>("/cuentas-bancarias/con-auxiliar", datos).then((r) => r.data),
+
   crear: (datos: CrearCuentaBancariaInput) =>
     api.post<CuentaBancariaResumen>("/cuentas-bancarias", datos).then((r) => r.data),
 

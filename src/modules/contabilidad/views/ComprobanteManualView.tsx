@@ -185,6 +185,23 @@ export function ComprobanteManualView() {
     onError: (e: unknown) => aviso.falla(e),
   });
 
+  // La cuenta que la plantilla usa y la empresa no tiene (la 170520 de los
+  // seguros, la 261020 de la prima): se agrega con el nombre del decreto y se
+  // vuelve a pedir la propuesta.
+  const agregarCuenta = useMutation({
+    mutationFn: async (codigo: string) => {
+      const { cuentas } = await planCuentasApi.catalogo({ q: codigo });
+      const puc = cuentas.find((c) => c.codigo === codigo);
+      return planCuentasApi.crear({ codigo, nombre: puc?.nombre ?? codigo });
+    },
+    onSuccess: async (c) => {
+      await queryClient.invalidateQueries({ queryKey: ["plan-cuentas"] });
+      aviso.exito(`Cuenta ${c.codigo} agregada al plan`);
+      if (plantilla !== null) pedir.mutate({ plantilla });
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
   const contabilizar = useMutation({
     mutationFn: async () => {
       const subido =
@@ -509,9 +526,31 @@ export function ComprobanteManualView() {
               {propuesta.renglones
                 .filter((r) => r.problema !== null)
                 .map((r) => (
-                  <p key={r.codigo} className="mt-2 text-xs text-danger">
-                    {r.problema}
-                  </p>
+                  <div key={r.codigo} className="mt-2 flex flex-wrap items-center gap-2">
+                    <p className="text-xs text-danger">{r.problema}</p>
+                    {/* La cuenta que falta se agrega acá mismo, con el nombre
+                        del decreto, y la propuesta se vuelve a armar; la
+                        inactiva se activa en el plan, ya filtrado. */}
+                    {/inactiva/i.test(r.problema ?? "") ? (
+                      <Button
+                        variant="outline"
+                        className="h-7 rounded-lg px-2 text-xs"
+                        render={<Link href={`/dashboard/plan-cuentas?q=${r.codigo}&inactivas=1`} />}
+                      >
+                        Ir al plan de cuentas
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-7 rounded-lg px-2 text-xs"
+                        disabled={agregarCuenta.isPending}
+                        onClick={() => agregarCuenta.mutate(r.codigo)}
+                      >
+                        Crear cuenta {r.codigo}
+                      </Button>
+                    )}
+                  </div>
                 ))}
             </div>
           )}
