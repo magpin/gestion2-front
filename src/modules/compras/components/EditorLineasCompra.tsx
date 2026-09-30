@@ -6,7 +6,7 @@ import { Plus, Sparkles, Trash2 } from "lucide-react";
 import { CampoCantidad, CampoPesos } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn, formatCOP } from "@/lib/utils";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { useQuieto } from "@/hooks/useQuieto";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
@@ -278,7 +278,7 @@ export function EditorLineasCompra({
                     </td>
                   )}
                   <td className="px-3 py-3.5 pt-6 text-right font-mono font-semibold whitespace-nowrap">
-                    {subtotal === null ? "—" : `$ ${subtotal.toLocaleString("es-CO")}`}
+                    {subtotal === null ? "—" : formatCOP(subtotal)}
                   </td>
                   <td className="py-3.5 pr-6">
                     {/* Con una sola línea no se ofrece quitar: es el mínimo del documento. */}

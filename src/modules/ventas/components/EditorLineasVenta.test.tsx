@@ -45,9 +45,11 @@ describe("EditorLineasVenta en la factura (con conceptos)", () => {
     const totales = await screen.findByLabelText("Totales de las líneas");
     expect(within(totales).getByText("Subtotal")).toBeInTheDocument();
     expect(within(totales).getByText("IVA")).toBeInTheDocument();
-    expect(within(totales).getByText(/59\.999,99/)).toBeInTheDocument();
+    // Los montos se muestran en pesos enteros: 59.999,99 se ve 60.000.
+    expect(within(totales).getByText(/60\.000/)).toBeInTheDocument();
     // El IVA de la línea, en pesos, sobre el subtotal de 50.420,16.
-    expect(screen.getAllByText(/9\.579,83/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/9\.580/).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/9\.579,83/)).toHaveLength(0);
   });
 
   it("sin líneas completas no hay pie", () => {
@@ -73,7 +75,7 @@ describe("EditorLineasVenta: el precio de la línea", () => {
 
   it("cambiado: dice el de lista y deja volver a él", async () => {
     const onCambiar = montar([{ clave: 1, producto: tinta, cantidad: "1", precioUnitario: "20000" }]);
-    expect(await screen.findByText(/de lista \$\s?25\.210,08/)).toBeInTheDocument();
+    expect(await screen.findByText(/de lista \$\s?25\.210$/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Volver al de lista" }));
     expect(onCambiar).toHaveBeenLastCalledWith([expect.objectContaining({ precioUnitario: "" })]);
   });

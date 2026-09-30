@@ -16,17 +16,9 @@ export function formatCOP(valor: number | null | undefined): string {
   }).format(valor ?? 0);
 }
 
-// Pesos con centavos solo si los hay: el precio sin IVA de la tinta es
-// $25.210,08 y mostrarlo como $25.210 sería decir otro número. Es el formato de
-// los totales de una factura, que el servidor lleva en centavos.
-export function formatCOPExacto(valor: number | null | undefined): string {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(valor ?? 0);
-}
+// Los totales de una factura se llevan en centavos, pero se muestran en pesos
+// enteros como el resto del sistema (decisión del dueño, 30 sep).
+export const formatCOPExacto = formatCOP;
 
 // Formatea una fecha del backend a "dd MMM yyyy" en locale es. Devuelve "—" si no hay fecha.
 //

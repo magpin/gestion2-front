@@ -87,31 +87,42 @@ export function FacturaNuevaView() {
         subtitulo="Productos, servicios y otros ingresos en la misma factura. El plazo decide cuándo aparece en Por cobrar."
       />
 
+      {/* El orden en que se llena: cliente, qué se vende, cómo se paga y lo que retienen. */}
+      <Seccion id="v-cli" titulo="Cliente y documento">
+        <div className="grid gap-3.5 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
+          <Campo id="cliente" etiqueta="Cliente">
+            <SelectorTercero valor={b.cliente} onElegir={b.setCliente} />
+          </Campo>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">Número</span>
+            <div className="flex h-[52px] flex-col justify-center rounded-[9.6px] bg-muted px-3.5">
+              <span className="font-mono text-sm font-semibold">{numeracion?.siguiente ?? "—"}</span>
+              <span className="text-[11px] text-muted-foreground">
+                {numeracion === null ? "No hay resolución vigente" : "Siguiente de la resolución"}
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">Fecha</span>
+            <div className="flex h-[52px] items-center rounded-xl border border-input px-4 text-sm">
+              {formatFecha(b.fecha)}
+            </div>
+          </div>
+        </div>
+      </Seccion>
+
+      <section aria-labelledby="v-lineas" className="overflow-hidden rounded-[26px] border border-border bg-card shadow-sm">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 px-6 pt-5 pb-4">
+          <h2 id="v-lineas" className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            Líneas de la factura
+          </h2>
+          <p className="text-xs text-muted-foreground">Producto sale del inventario · servicio y otro ingreso van por concepto</p>
+        </div>
+        <EditorLineasVenta lineas={b.lineas} onCambiar={b.setLineas} conConceptos />
+      </section>
+
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-w-0 flex-col gap-5">
-          <Seccion id="v-cli" titulo="Cliente y documento">
-            <div className="grid gap-3.5 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
-              <Campo id="cliente" etiqueta="Cliente">
-                <SelectorTercero valor={b.cliente} onElegir={b.setCliente} />
-              </Campo>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-muted-foreground">Número</span>
-                <div className="flex h-[52px] flex-col justify-center rounded-[9.6px] bg-muted px-3.5">
-                  <span className="font-mono text-sm font-semibold">{numeracion?.siguiente ?? "—"}</span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {numeracion === null ? "No hay resolución vigente" : "Siguiente de la resolución"}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-muted-foreground">Fecha</span>
-                <div className="flex h-[52px] items-center rounded-xl border border-input px-4 text-sm">
-                  {formatFecha(b.fecha)}
-                </div>
-              </div>
-            </div>
-          </Seccion>
-
           <Seccion id="v-plazo" titulo="Plazo">
             <Plazo b={b} total={previa?.neto ?? (local.porLinea.some((c) => c !== null) ? local.totales.total : null)} />
           </Seccion>
@@ -137,15 +148,6 @@ export function FacturaNuevaView() {
         </aside>
       </div>
 
-      <section aria-labelledby="v-lineas" className="overflow-hidden rounded-[26px] border border-border bg-card shadow-sm">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 px-6 pt-5 pb-4">
-          <h2 id="v-lineas" className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-            Líneas de la factura
-          </h2>
-          <p className="text-xs text-muted-foreground">Producto sale del inventario · servicio y otro ingreso van por concepto</p>
-        </div>
-        <EditorLineasVenta lineas={b.lineas} onCambiar={b.setLineas} conConceptos />
-      </section>
 
       {previa && (
         <AsientoPrevio

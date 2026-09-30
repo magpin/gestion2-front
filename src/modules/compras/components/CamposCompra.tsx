@@ -255,8 +255,8 @@ export function PlazoCompra({ b, ahorro }: { b: BorradorCompra; ahorro?: number 
   );
 }
 
-/** Lo del motor de retenciones que va con las líneas: la propuesta, la tarjeta y el municipio. */
-function RetencionCompra({ b }: { b: BorradorCompra }) {
+/** Lo del motor de retenciones: la propuesta, la tarjeta y el municipio. Va después del plazo. */
+export function RetencionCompra({ b }: { b: BorradorCompra }) {
   return (
     <>
       <PropuestaRenta
@@ -302,20 +302,15 @@ function RetencionCompra({ b }: { b: BorradorCompra }) {
   );
 }
 
-/** Las líneas de la factura: la tabla editable y lo que propone el motor. */
+/** Las líneas de la factura: la tabla editable. Las retenciones van aparte, después del plazo. */
 export function LineasCompra({ b, completa = false }: { b: BorradorCompra; completa?: boolean }) {
   return (
-    <div className="flex flex-col gap-5">
-      <EditorLineasCompra
-        lineas={b.lineas}
-        onCambiar={b.setLineas}
-        sugerirPara={completa ? (b.proveedor?.id ?? null) : undefined}
-        sinMarco
-      />
-      <div className="flex flex-col gap-3 px-6 pb-6">
-        <RetencionCompra b={b} />
-      </div>
-    </div>
+    <EditorLineasCompra
+      lineas={b.lineas}
+      onCambiar={b.setLineas}
+      sugerirPara={completa ? (b.proveedor?.id ?? null) : undefined}
+      sinMarco
+    />
   );
 }
 
@@ -388,8 +383,8 @@ export function CamposCompra({ b, completa = false }: { b: BorradorCompra; compl
         onCambiar={b.setLineas}
         sugerirPara={completa ? (b.proveedor?.id ?? null) : undefined}
       />
-      <RetencionCompra b={b} />
       <PlazoCompra b={b} />
+      <RetencionCompra b={b} />
     </div>
   );
 }

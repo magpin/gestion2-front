@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useQuieto } from "@/hooks/useQuieto";
 import { aviso } from "@/lib/avisos";
 import { formatCOP } from "@/lib/utils";
-import { DocumentoCompra, LineasCompra, PlazoCompra, QueSeCompro, Seccion } from "../components/CamposCompra";
+import { DocumentoCompra, LineasCompra, PlazoCompra, QueSeCompro, RetencionCompra, Seccion } from "../components/CamposCompra";
 import { useBorradorCompra, type BorradorCompra } from "../hooks/useBorradorCompra";
 import { comprasApi } from "../services/compras.service";
 import type { CompraPrevia, CrearCompraInput } from "../types/compras.types";
@@ -71,31 +71,10 @@ export function CompraNuevaView() {
         }
       />
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-w-0 flex-col gap-5">
-          <Seccion id="c-doc" titulo="Documento">
-            <DocumentoCompra b={b} completa />
-          </Seccion>
-          {b.soporte ? (
-            <Seccion id="ds-lin" titulo="Qué se compró">
-              <QueSeCompro b={b} />
-            </Seccion>
-          ) : (
-            <Seccion id="c-plazo" titulo="Plazo y pago">
-              <PlazoCompra b={b} ahorro={ahorro} />
-            </Seccion>
-          )}
-        </div>
-
-        <aside className="flex flex-col gap-5 lg:sticky lg:top-6">
-          <Resumen
-            b={b}
-            previa={previa}
-            cargando={pedido !== null && previo.isFetching}
-            error={pedido !== null && previo.isError ? mensajeDe(previo.error) : null}
-          />
-        </aside>
-      </div>
+      {/* El orden en que se llena: proveedor, qué se compró, cómo se paga y las retenciones. */}
+      <Seccion id="c-doc" titulo="Documento">
+        <DocumentoCompra b={b} completa />
+      </Seccion>
 
       {!b.soporte && (
         <section
@@ -111,6 +90,37 @@ export function CompraNuevaView() {
           <LineasCompra b={b} completa />
         </section>
       )}
+
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-5">
+          {b.soporte ? (
+            <Seccion id="ds-lin" titulo="Qué se compró">
+              <QueSeCompro b={b} />
+            </Seccion>
+          ) : (
+            <>
+              <Seccion id="c-plazo" titulo="Plazo y pago">
+                <PlazoCompra b={b} ahorro={ahorro} />
+              </Seccion>
+              <Seccion id="c-ret" titulo="Retenciones">
+                <div className="flex flex-col gap-3">
+                  <RetencionCompra b={b} />
+                </div>
+              </Seccion>
+            </>
+          )}
+        </div>
+
+        <aside className="flex flex-col gap-5 lg:sticky lg:top-6">
+          <Resumen
+            b={b}
+            previa={previa}
+            cargando={pedido !== null && previo.isFetching}
+            error={pedido !== null && previo.isError ? mensajeDe(previo.error) : null}
+          />
+        </aside>
+      </div>
+
 
       {previa && <AsientoPrevio lineas={previa.asiento} />}
 

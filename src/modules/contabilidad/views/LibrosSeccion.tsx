@@ -77,7 +77,7 @@ export function LibrosSeccion() {
       <div className="grid gap-4 md:grid-cols-3 print:hidden">
         {(
           [
-            ["diario", "Diario", "Movimientos en orden cronológico"],
+            ["diario", "Diario", "Movimientos, lo más reciente arriba"],
             ["mayor", "Mayor", "Saldos corridos por cuenta"],
             ["balance", "Balance de prueba", "Saldos del período"],
           ] as const
