@@ -80,23 +80,17 @@ export function BancosResumen({ onVerMovimientos, onAgregar }: { onVerMovimiento
             <p className={cn("mt-4 font-mono text-2xl font-semibold whitespace-nowrap tabular-nums", Number(c.saldo) < 0 && "text-danger")}>
               {formatCOP(Number(c.saldo))}
             </p>
-            <dl className="mt-3 flex flex-col gap-1 text-xs">
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Último movimiento</dt>
-                <dd>{c.ultimo_movimiento ? fechaCorta(c.ultimo_movimiento) : "—"}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Conciliada hasta</dt>
-                <dd>
-                  <span className={cn(atrasada(c.conciliada_hasta) && "rounded-full border border-warning/30 bg-warning/15 px-2 py-0.5")}>
-                    {c.conciliada_hasta ? fechaCorta(c.conciliada_hasta) : "Nunca"}
-                  </span>
-                </dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">4×1000</dt>
-                <dd>{c.exenta_gmf ? "Exenta" : "Paga"}</dd>
-              </div>
+            {/* Los tres datos de la cuenta en una franja, como «Abrió el día /
+                Hoy entró / Hoy salió» de la caja: se leen como parte de la
+                cuenta y no como notas sueltas al margen. */}
+            <dl className="mt-4 grid grid-cols-3 overflow-hidden rounded-2xl border border-border bg-muted/30">
+              <Indicador etiqueta="Último movimiento">
+                {c.ultimo_movimiento ? fechaCorta(c.ultimo_movimiento) : <span className="text-muted-foreground">Ninguno</span>}
+              </Indicador>
+              <Indicador etiqueta="Conciliada" tono={atrasada(c.conciliada_hasta) ? "aviso" : "bien"}>
+                {c.conciliada_hasta ? `al ${fechaCorta(c.conciliada_hasta)}` : "Nunca"}
+              </Indicador>
+              <Indicador etiqueta="4×1000">{c.exenta_gmf ? "Exenta" : "Paga"}</Indicador>
             </dl>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button type="button" variant="outline" className="h-10 rounded-xl" onClick={() => onVerMovimientos(c.id)}>
@@ -157,6 +151,32 @@ export function BancosResumen({ onVerMovimientos, onAgregar }: { onVerMovimiento
           </ul>
         )}
       </section>
+    </div>
+  );
+}
+
+/** Un dato de la cuenta: la etiqueta arriba, el valor abajo; con tono, un punto de color. */
+function Indicador({
+  etiqueta,
+  tono,
+  children,
+}: {
+  etiqueta: string;
+  tono?: "bien" | "aviso";
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0 border-r border-border px-3 py-2.5 last:border-r-0">
+      <dt className="truncate text-[11px] text-muted-foreground">{etiqueta}</dt>
+      <dd className="mt-0.5 flex items-center gap-1.5 truncate text-sm font-semibold">
+        {tono && (
+          <span
+            aria-hidden
+            className={cn("size-1.5 shrink-0 rounded-full", tono === "aviso" ? "bg-warning" : "bg-success")}
+          />
+        )}
+        {children}
+      </dd>
     </div>
   );
 }
