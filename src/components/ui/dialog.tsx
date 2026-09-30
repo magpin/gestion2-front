@@ -91,7 +91,10 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-body"
-      className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8", className)}
+      // `*:shrink-0`: el cuerpo hace scroll; sus hijos no se encogen. Un
+      // recuadro con overflow-hidden en una columna flexible se aplastaba y
+      // cortaba su contenido (el de las compras por pagar del egreso).
+      className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8 *:shrink-0", className)}
       {...props}
     />
   )
