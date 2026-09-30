@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Check, ClipboardCheck, TriangleAlert, Wallet } from "lucide-react";
+import { ArrowLeftRight, Check, ClipboardCheck, TriangleAlert, Wallet } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
@@ -14,7 +14,6 @@ import { cn, formatCOP } from "@/lib/utils";
 import { Maria } from "@/modules/asistente/components/Maria";
 import { fechaCorta } from "@/modules/impuestos/lib/impuestos";
 import { useCajaPrincipal } from "./CajaPrincipal";
-import { MovimientoConceptoDialog } from "./MovimientoConceptoDialog";
 import { TrasladoDialog } from "./Traslados";
 import { cajaBancosApi } from "../services/caja-bancos.service";
 import { cajasApi } from "../services/tesoreria.service";
@@ -90,7 +89,7 @@ export function CajaHoy({ onVerMovimientos, onAgregar }: { onVerMovimientos: () 
 
 function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: () => void }) {
   const puedeMover = useTieneRol("CAJA", "DIRECTOR");
-  const [dialogo, setDialogo] = useState<"ENTRADA" | "SALIDA" | "TRASLADO" | null>(null);
+  const [dialogo, setDialogo] = useState<"TRASLADO" | null>(null);
   const a = d.ultimoArqueo;
 
   return (
@@ -139,14 +138,10 @@ function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: ()
             <p className="font-mono font-semibold whitespace-nowrap tabular-nums">− {formatCOP(d.salio)}</p>
           </li>
         </ul>
+        {/* Lo que entra y sale sin factura va por Ingresos y Egresos, con su
+            concepto: acá solo contar la caja y llevar al banco. */}
         {puedeMover && (
-          <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-            <Accion icono={ArrowDownLeft} principal onClick={() => setDialogo("ENTRADA")}>
-              Entró plata
-            </Accion>
-            <Accion icono={ArrowUpRight} onClick={() => setDialogo("SALIDA")}>
-              Salió plata
-            </Accion>
+          <div className="mt-5 grid grid-cols-2 gap-3">
             <Button variant="outline" className="h-auto flex-col gap-1.5 rounded-2xl py-4" render={<Link href="/dashboard/control" />}>
               <ClipboardCheck className="size-5" />
               Contar la caja
@@ -212,11 +207,6 @@ function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: ()
         </section>
       </aside>
 
-      <MovimientoConceptoDialog
-        abierto={dialogo === "ENTRADA" || dialogo === "SALIDA"}
-        direccion={dialogo === "SALIDA" ? "SALIDA" : "ENTRADA"}
-        onCerrar={() => setDialogo(null)}
-      />
       <TrasladoDialog abierto={dialogo === "TRASLADO"} onCerrar={() => setDialogo(null)} desdeCaja={d.caja.id} />
     </div>
   );

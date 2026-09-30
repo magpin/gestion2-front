@@ -34,11 +34,12 @@ const ORIGENES: Array<{ valor: OrigenSaldos; titulo: string; ayuda: string }> = 
 
 /**
  * El arranque de caja y bancos: mientras haya cajas o cuentas que nunca se
- * movieron, una tarjeta invita a poner la plata con la que se empieza. Un
- * solo guardado y un asiento de apertura (CA). Solo lo cargan el director y
- * el contador, porque asienta en el patrimonio.
+ * movieron, un botón discreto en el encabezado —no un panel que se queda a la
+ * vista (pedido del dueño, 30-09)— deja poner la plata con la que se empieza.
+ * Un solo guardado y un asiento de apertura (CA). Solo lo cargan el director
+ * y el contador, porque asienta en el patrimonio. Cargado, desaparece.
  */
-export function ArranqueSaldos({ onAgregarCuenta }: { onAgregarCuenta?: () => void }) {
+export function ArranqueSaldos() {
   const puedeCargar = useTieneRol("DIRECTOR", "CONTADOR");
   const [abierto, setAbierto] = useState(false);
   const estado = useQuery({
@@ -54,32 +55,21 @@ export function ArranqueSaldos({ onAgregarCuenta }: { onAgregarCuenta?: () => vo
   const cuentas = d.cuentas.filter((c) => c.sinMovimientos).length;
 
   return (
-    <section className="mb-7 rounded-3xl border border-brand/40 bg-brand/5 px-6 py-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold">
-            Empezá con la plata que tenés hoy<span className="text-brand">.</span>
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Poné cuánto hay en la caja y en cada cuenta del banco para arrancar.{" "}
-            {partes(cajas, cuentas)} todavía sin saldo inicial.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {onAgregarCuenta && (
-            <Button type="button" variant="outline" className="h-11 rounded-xl px-5" onClick={onAgregarCuenta}>
-              Agregar cuenta del banco
-            </Button>
-          )}
-          <Button type="button" className="h-11 rounded-xl px-5" onClick={() => setAbierto(true)}>
-            Poner saldos iniciales
-          </Button>
-        </div>
-      </div>
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-10 rounded-xl px-4"
+        title={`${partes(cajas, cuentas)} todavía sin saldo inicial.`}
+        onClick={() => setAbierto(true)}
+      >
+        <Wallet className="size-4" />
+        Poner saldos iniciales
+      </Button>
       <Dialog open={abierto} onOpenChange={(a) => !a && setAbierto(false)}>
         <DialogContent size="lg">{abierto && <Formulario estado={d} onCerrar={() => setAbierto(false)} />}</DialogContent>
       </Dialog>
-    </section>
+    </>
   );
 }
 

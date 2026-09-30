@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { ArrowLeftRight, History, Landmark, Plus, Wallet } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
+import { SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
@@ -20,6 +22,7 @@ import { CajaHoy } from "../components/CajaHoy";
 import { MovimientosJuntos } from "../components/MovimientosJuntos";
 import { ListaTraslados, TrasladoDialog } from "../components/Traslados";
 import { usePrepararTesoreria } from "../hooks/usePrepararTesoreria";
+import { cajasApi } from "../services/tesoreria.service";
 import { CajasSeccion } from "./CajasSeccion";
 import { CuentasBancariasSeccion } from "./CuentasBancariasSeccion";
 import { LibroBancoSeccion } from "./LibroBancoSeccion";
@@ -55,6 +58,9 @@ export function CajaBancosView() {
   const [creandoCaja, setCreandoCaja] = useState(false);
   const [creandoCuenta, setCreandoCuenta] = useState(false);
   const [trasladando, setTrasladando] = useState(false);
+  // Una empresa maneja una sola caja, la principal: con ella, no se ofrece otra.
+  const { data: cajas = [] } = useQuery({ queryKey: ["cajas"], queryFn: () => cajasApi.listar(), meta: SILENCIOSO });
+  const hayCaja = cajas.some((c) => c.activa);
 
   return (
     <div className="w-full">
@@ -74,13 +80,14 @@ export function CajaBancosView() {
             La plata en efectivo y la plata en el banco, cada una en su pestaña.
           </p>
         </div>
-        {(seccion === "Traslados" || seccion === "Movimientos") && puedeCrear && (
-          <BotonNuevo etiqueta="Nuevo traslado" onClick={() => setTrasladando(true)} />
-        )}
-        {seccion === "Bancos" && puedeCrear && <BotonNuevo etiqueta="Agregar cuenta" onClick={() => setCreandoCuenta(true)} />}
+        <div className="flex flex-wrap items-center gap-2">
+          <ArranqueSaldos />
+          {(seccion === "Traslados" || seccion === "Movimientos") && puedeCrear && (
+            <BotonNuevo etiqueta="Nuevo traslado" onClick={() => setTrasladando(true)} />
+          )}
+          {seccion === "Bancos" && puedeCrear && <BotonNuevo etiqueta="Agregar cuenta" onClick={() => setCreandoCuenta(true)} />}
+        </div>
       </header>
-
-      <ArranqueSaldos onAgregarCuenta={puedeCrear ? () => setCreandoCuenta(true) : undefined} />
 
       <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
         {SECCIONES.map(([nombre, Icono]) => (
@@ -106,11 +113,11 @@ export function CajaBancosView() {
 
       {seccion === "Caja" && (
         <div className="flex flex-col gap-10">
-          <CajaHoy onVerMovimientos={() => setSeccion("Movimientos")} onAgregar={puedeCrear ? () => setCreandoCaja(true) : undefined} />
+          <CajaHoy onVerMovimientos={() => setSeccion("Movimientos")} onAgregar={puedeCrear && !hayCaja ? () => setCreandoCaja(true) : undefined} />
           <section>
             <TituloBloque
               titulo="Todas las cajas"
-              accion={puedeCrear ? "Nueva caja" : undefined}
+              accion={puedeCrear && !hayCaja ? "Nueva caja" : undefined}
               onAccion={() => setCreandoCaja(true)}
             />
             <CajasSeccion />
