@@ -387,7 +387,7 @@ test.describe("Motor de retenciones: empresa nueva", () => {
       );
     });
 
-    await test.step("Una sede nueva en Bogotá, sin ICA: Impuestos queda pendiente y el Inicio lo dice", async () => {
+    await test.step("Una sede nueva en Bogotá, sin ICA: Impuestos queda pendiente y se entra a completarlo", async () => {
       // Sin tocar la base: abrir una sede en otro municipio deja ese municipio sin ICA.
       const r = await request.post(`${API}/empresas/actual/sedes`, {
         headers: cab,
@@ -401,24 +401,14 @@ test.describe("Motor de retenciones: empresa nueva", () => {
       });
       expect(r.ok(), await r.text()).toBeTruthy();
 
+      // Con la configuración a medias no se opera (decisión del dueño,
+      // 30-09): entrar al área de trabajo lleva directo al paso que falta.
       await page.goto("/dashboard");
-      await expect(page.getByRole("heading", { name: "Configuración", level: 1 })).toBeVisible();
-      const fila = page.getByRole("link").filter({ hasText: /^Impuestos/ });
-      await expect(fila, "el paso Impuestos tiene que quedar con datos faltantes").toContainText("Faltan datos");
-      await expect(fila).toContainText(/Te falta contarme el ICA de Bogot/);
-      await expect(page.getByRole("link", { name: /^Continuar/ })).toHaveAttribute(
-        "href",
-        "/configuracion/impuestos",
-      );
+      await expect(page).toHaveURL(/\/configuracion\/impuestos$/);
       // El plan de cuentas ya estaba hecho: el ICA pendiente no lo bloquea
-      // (bug #23). Bloqueado sería un bloque sin enlace; listo es un enlace.
-      const plan = page.locator('a[href="/configuracion/plan_cuentas"]');
-      await expect(plan, "el Plan de cuentas sigue listo").toContainText("Listo");
-      await expect(plan).not.toContainText(/Bloqueado|Requiere impuestos/);
+      // (bug #23).
       await expect(page.getByText(/Bloqueado · Requiere impuestos|Requiere impuestos/)).toHaveCount(0);
-      const avance = page.getByText("5 de 6");
-      await expect(avance, "solo Impuestos quedó pendiente").toBeVisible();
-      await mirar(page, [fila, plan, avance, page.getByRole("link", { name: /^Continuar/ })], 8);
+      await mirar(page, [page.getByRole("heading", { level: 1 })], 8);
     });
   });
 });

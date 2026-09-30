@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { EstadoConfiguracion, EstadoPaso, Paso } from "../types/configuracion.types";
-import { destinoAlEntrar } from "./entrada";
+import { destinoAlEntrar, permitidaSinConfigurar } from "./entrada";
 
 const paso = (clave: Paso["clave"], estado: EstadoPaso): Paso => ({
   clave,
@@ -43,7 +43,7 @@ describe("destinoAlEntrar", () => {
     ).toBe("/configuracion/bienvenida");
   });
 
-  it("si ya empezó otro paso, entra a operar", () => {
+  it("si ya empezó otro paso, va directo al que sigue: no entra a operar a medio configurar", () => {
     expect(
       destinoAlEntrar(
         estado([
@@ -52,10 +52,32 @@ describe("destinoAlEntrar", () => {
           ["SITUACION_LEGAL", "PENDIENTE"],
         ]),
       ),
-    ).toBe("/dashboard");
+    ).toBe("/configuracion/sedes");
   });
 
   it("completa, al tablero", () => {
     expect(destinoAlEntrar(estado([["EMPRESA", "LISTO"]], null))).toBe("/dashboard");
+  });
+});
+
+describe("destinoAlEntrar con modo y paso", () => {
+  it("quien eligió IA vuelve a IA", () => {
+    expect(destinoAlEntrar({ ...estado([["EMPRESA", "LISTO"], ["SEDES", "FALTA"]]), modo: "IA" })).toBe(
+      "/configuracion/ia",
+    );
+  });
+
+  it("el paso que sigue, con la ruta del paso", () => {
+    expect(
+      destinoAlEntrar(estado([["EMPRESA", "LISTO"], ["SEDES", "LISTO"]], "PLAN_CUENTAS")),
+    ).toBe("/configuracion/plan_cuentas");
+  });
+});
+
+describe("permitidaSinConfigurar", () => {
+  it("el plan de cuentas se puede mirar desde el paso; el resto no", () => {
+    expect(permitidaSinConfigurar("/dashboard/plan-cuentas")).toBe(true);
+    expect(permitidaSinConfigurar("/dashboard/ventas")).toBe(false);
+    expect(permitidaSinConfigurar("/dashboard")).toBe(false);
   });
 });

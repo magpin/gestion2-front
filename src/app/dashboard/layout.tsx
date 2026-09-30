@@ -6,6 +6,7 @@ import { BarraLateral } from "@/components/layout/BarraLateral";
 import { BarraSuperior } from "@/components/layout/BarraSuperior";
 import { FaviconConEstado } from "@/components/layout/FaviconConEstado";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { GuardiaConfiguracion } from "@/modules/configuracion/components/GuardiaConfiguracion";
 
 /**
  * Armazón del área de trabajo: la barra lateral con los módulos, y a la
@@ -34,7 +35,10 @@ export default async function DashboardLayout({
         <AnunciosPlataforma />
         {/* En el móvil, espacio para la barra inferior: que no tape lo último. */}
         <div className="min-w-0 flex-1 px-4 pt-7 pb-28 md:px-10 md:pb-7 lg:px-16">
-          <div className="mx-auto max-w-7xl">{children}</div>
+          {/* Con la configuración a medias no se opera: lleva a terminarla. */}
+          <div className="mx-auto max-w-7xl">
+            <GuardiaConfiguracion>{children}</GuardiaConfiguracion>
+          </div>
         </div>
         <BarraInferior />
       </SidebarInset>
