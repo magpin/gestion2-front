@@ -21,12 +21,8 @@ import { retencionesApi } from "@/modules/retenciones/services/retenciones.servi
 import { PlazoYPago } from "@/modules/tesoreria/components/PlazoYPago";
 import { EditorLineasVenta } from "../components/EditorLineasVenta";
 import { SelectorTercero } from "../components/SelectorTercero";
-import {
-  useBorradorFactura,
-  type AplicadoBorrador,
-  type BorradorFactura,
-  type InicioFactura,
-} from "../hooks/useBorradorFactura";
+import { useBorradorFactura, type BorradorFactura, type InicioFactura } from "../hooks/useBorradorFactura";
+import { useAnticiposDelCliente } from "@/modules/cobros/hooks/useAnticiposDelCliente";
 import { lineaVentaVacia } from "../components/EditorLineasVenta";
 import { productosApi } from "@/modules/inventario/services/inventario.service";
 import { resumirTercero } from "@/modules/terceros/types/terceros.types";
@@ -195,16 +191,8 @@ function FacturaNueva({ inicio }: { inicio?: InicioFactura }) {
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-w-0 flex-col gap-5">
-          <AnticiposDelCliente b={b} />
-
           <Seccion id="v-plazo" titulo="Plazo">
-            {b.cubierta ? (
-              <p className="text-sm text-muted-foreground">
-                Los anticipos cubren la factura entera: no entra plata a caja ni a banco.
-              </p>
-            ) : (
-              <Plazo b={b} total={b.falta} />
-            )}
+            <Plazo b={b} total={previa?.neto ?? (local.porLinea.some((c) => c !== null) ? local.totales.total : null)} />
           </Seccion>
 
           {/* Fase 8: la retención que nos practican va por documento, como el
@@ -275,6 +263,8 @@ function Plazo({ b, total }: { b: BorradorFactura; total: number | null }) {
     enabled: b.cliente !== null,
   });
   const vencidas = facturas.filter((f) => f.diasVencidos > 0);
+  // Con anticipos o saldo a favor, «Entra a» ofrece pagar con ellos.
+  const anticipos = useAnticiposDelCliente(b.cliente?.id);
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -290,6 +280,7 @@ function Plazo({ b, total }: { b: BorradorFactura; total: number | null }) {
         cajaFija
         conRepartido
         total={total}
+        anticipos={anticipos}
       />
       {vencidas.length > 0 && (
         <p className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/15 px-4 py-3 text-sm">
@@ -496,88 +487,5 @@ function Resumen({
       )}
       {error !== null && !cargando && <p className="text-sm text-danger">{error}</p>}
     </section>
-  );
-}
-
-/**
- * Los anticipos y saldos a favor del cliente, para pagar con ellos parte de
- * la factura sin mover caja. Solo aparece si el cliente tiene alguno.
- */
-function AnticiposDelCliente({ b }: { b: BorradorFactura }) {
-  const { data } = useQuery({
-    queryKey: ["cartera", "disponibles", b.cliente?.id],
-    queryFn: () => cobrosApi.disponibles(b.cliente!.id),
-    enabled: b.cliente !== null,
-  });
-  const opciones: AplicadoBorrador[] = [
-    ...(data?.anticipos ?? []).map((a) => ({
-      tipo: "ANTICIPO" as const,
-      origenId: a.movimientoId,
-      etiqueta: `Anticipo del ${formatFecha(a.fecha)}`,
-      disponible: a.saldo,
-      valor: "",
-    })),
-    ...(data?.saldosAFavor ?? []).map((s) => ({
-      tipo: "SALDO_A_FAVOR" as const,
-      origenId: s.facturaId,
-      etiqueta: `Saldo a favor ${s.factura}`,
-      disponible: s.saldo,
-      valor: "",
-    })),
-  ];
-  // Lo ya aplicado se muestra aunque la consulta no haya llegado.
-  for (const a of b.aplicados) {
-    if (!opciones.some((o) => o.origenId === a.origenId)) opciones.unshift(a);
-  }
-  if (b.cliente === null || opciones.length === 0) return null;
-
-  const aplicadoDe = (origenId: string) => b.aplicados.find((a) => a.origenId === origenId);
-  const alternar = (o: AplicadoBorrador) => {
-    if (aplicadoDe(o.origenId) !== undefined) {
-      b.setAplicados(b.aplicados.filter((a) => a.origenId !== o.origenId));
-      return;
-    }
-    // Propone lo que le queda, sin pasar de lo que falta por pagar.
-    const falta = b.falta ?? o.disponible;
-    b.setAplicados([...b.aplicados, { ...o, valor: String(Math.min(o.disponible, Math.max(0, falta))) }]);
-  };
-  const cambiarValor = (origenId: string, valor: string) =>
-    b.setAplicados(b.aplicados.map((a) => (a.origenId === origenId ? { ...a, valor } : a)));
-
-  return (
-    <Seccion
-      id="v-ant"
-      titulo="Anticipos y saldos a favor"
-      derecha={<p className="text-xs text-muted-foreground">Pagan parte de la factura sin mover caja</p>}
-    >
-      <ul className="flex flex-col gap-3">
-        {opciones.map((o) => {
-          const aplicado = aplicadoDe(o.origenId);
-          return (
-            <li key={o.origenId} className="flex flex-wrap items-center gap-3">
-              <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-foreground"
-                  checked={aplicado !== undefined}
-                  onChange={() => alternar(o)}
-                />
-                <span className="truncate">{o.etiqueta}</span>
-                <span className="text-xs text-muted-foreground">· le quedan {formatCOP(o.disponible)}</span>
-              </label>
-              {aplicado !== undefined && (
-                <CampoPesos
-                  id={`aplicar-${o.origenId}`}
-                  aria-label={`Cuánto se aplica de ${o.etiqueta}`}
-                  value={aplicado.valor}
-                  onChange={(v) => cambiarValor(o.origenId, v)}
-                  className="h-11 w-44 rounded-xl px-4 text-right font-mono"
-                />
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </Seccion>
   );
 }

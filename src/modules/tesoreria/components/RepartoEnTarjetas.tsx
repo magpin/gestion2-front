@@ -3,10 +3,10 @@
 import { useLayoutEffect, useRef } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
-import { CampoPrecio } from "@/components/shared/CampoNumero";
+import { CampoPesos, CampoPrecio } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
-import { cn, formatCOPExacto } from "@/lib/utils";
-import { renglonRepartoVacio, type RenglonReparto } from "../lib/formaPago";
+import { cn, formatCOP, formatCOPExacto } from "@/lib/utils";
+import { renglonRepartoVacio, type AnticipoDisponible, type RenglonReparto } from "../lib/formaPago";
 import { CajaPrincipal } from "./CajaPrincipal";
 import { SelectorCaja } from "./SelectorCaja";
 import { SelectorCuentaBancaria } from "./SelectorCuentaBancaria";
@@ -29,7 +29,7 @@ export function estadoDelReparto(
   total: number,
 ): { resto: number; falta: number; sobra: number } {
   const diferencia = Math.round((total - sumaDigitada(renglones)) * 100) / 100;
-  const hayAbierto = renglones.some((r) => r.valor.trim() === "");
+  const hayAbierto = renglones.some((r) => r.medio !== "ANTICIPO" && r.valor.trim() === "");
   return {
     resto: hayAbierto && diferencia > 0 ? diferencia : 0,
     falta: !hayAbierto && diferencia > 0 ? diferencia : 0,
@@ -51,7 +51,10 @@ export function RepartoEnTarjetas({
   onCambiar,
   total,
   cajaFija = false,
+  anticipos = [],
 }: {
+  /** Los anticipos del cliente: con alguno, un renglón puede ser de anticipo. */
+  anticipos?: AnticipoDisponible[];
   renglones: RenglonReparto[];
   onCambiar: (renglones: RenglonReparto[]) => void;
   total?: number | null;
@@ -85,7 +88,7 @@ export function RepartoEnTarjetas({
               aria-label={`Medio ${i + 1}`}
               className="inline-flex h-10 w-fit gap-1 rounded-xl border border-border bg-muted p-1"
             >
-              {(["CAJA", "BANCO"] as const).map((m) => (
+              {(anticipos.length > 0 ? (["CAJA", "BANCO", "ANTICIPO"] as const) : (["CAJA", "BANCO"] as const)).map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -97,7 +100,7 @@ export function RepartoEnTarjetas({
                     r.medio === m ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {m === "CAJA" ? "Caja" : "Banco"}
+                  {m === "CAJA" ? "Caja" : m === "BANCO" ? "Banco" : "Anticipo"}
                 </button>
               ))}
             </div>
@@ -117,7 +120,27 @@ export function RepartoEnTarjetas({
 
           <div className="grid grid-cols-1 gap-3 @md:grid-cols-[minmax(0,1fr)_200px]">
             <div className="min-w-0">
-              {r.medio === "CAJA" ? (
+              {r.medio === "ANTICIPO" ? (
+                <select
+                  aria-label={`Anticipo del medio ${i + 1}`}
+                  value={r.anticipo?.origenId ?? ""}
+                  onChange={(e) => {
+                    const anticipo = anticipos.find((a) => a.origenId === e.target.value) ?? null;
+                    cambiarRenglon(r.clave, {
+                      anticipo,
+                      valor: anticipo !== null && r.valor.trim() === "" ? String(anticipo.disponible) : r.valor,
+                    });
+                  }}
+                  className="h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm"
+                >
+                  <option value="">Elegir el anticipo…</option>
+                  {anticipos.map((a) => (
+                    <option key={a.origenId} value={a.origenId}>
+                      {a.etiqueta} · le quedan {formatCOP(a.disponible)}
+                    </option>
+                  ))}
+                </select>
+              ) : r.medio === "CAJA" ? (
                 cajaFija ? (
                   <CajaPrincipal valor={r.caja} onElegir={(caja) => cambiarRenglon(r.clave, { caja })} />
                 ) : (
@@ -127,13 +150,23 @@ export function RepartoEnTarjetas({
                 <SelectorCuentaBancaria valor={r.cuenta} onElegir={(cuenta) => cambiarRenglon(r.clave, { cuenta })} />
               )}
             </div>
-            <CampoPrecio
-              value={r.valor}
-              onChange={(valor) => cambiarRenglon(r.clave, { valor })}
-              placeholder={estado !== null && estado.resto > 0 ? `el resto: ${formatCOPExacto(estado.resto)}` : "el resto"}
-              className="h-11 rounded-xl px-4 text-right font-mono"
-              aria-label={`Valor del medio ${i + 1}`}
-            />
+            {r.medio === "ANTICIPO" ? (
+              <CampoPesos
+                value={r.valor}
+                onChange={(valor) => cambiarRenglon(r.clave, { valor })}
+                placeholder="$ 0"
+                className="h-11 rounded-xl px-4 text-right font-mono"
+                aria-label={`Valor del medio ${i + 1}`}
+              />
+            ) : (
+              <CampoPrecio
+                value={r.valor}
+                onChange={(valor) => cambiarRenglon(r.clave, { valor })}
+                placeholder={estado !== null && estado.resto > 0 ? `el resto: ${formatCOPExacto(estado.resto)}` : "el resto"}
+                className="h-11 rounded-xl px-4 text-right font-mono"
+                aria-label={`Valor del medio ${i + 1}`}
+              />
+            )}
           </div>
         </div>
       ))}

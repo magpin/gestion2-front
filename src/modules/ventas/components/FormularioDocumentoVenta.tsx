@@ -26,6 +26,7 @@ import {
   type LineaVentaBorrador,
 } from "./EditorLineasVenta";
 import { SelectorFormaPago } from "@/modules/tesoreria/components/SelectorFormaPago";
+import { useAnticiposDelCliente } from "@/modules/cobros/hooks/useAnticiposDelCliente";
 import {
   aFormaPago,
   formaPagoVacia,
@@ -88,6 +89,8 @@ export function FormularioDocumentoVenta({
     inicial?.tercero ?? null,
   );
   const [fecha, setFecha] = useState(inicial?.fecha ?? hoyEnColombia());
+  // Solo la factura se paga: con anticipos del cliente, «Anticipo» los aplica.
+  const anticiposDelCliente = useAnticiposDelCliente(conFormaPago ? tercero?.id : null);
   const [lineas, setLineas] = useState<LineaVentaBorrador[]>(
     inicial?.lineas ?? [lineaVentaVacia()],
   );
@@ -234,7 +237,13 @@ export function FormularioDocumentoVenta({
           />
 
           {conFormaPago && (
-            <SelectorFormaPago valor={formaPago} onCambiar={setFormaPago} cajaFija conVence />
+            <SelectorFormaPago
+              valor={formaPago}
+              onCambiar={setFormaPago}
+              cajaFija
+              conVence
+              anticipos={anticiposDelCliente}
+            />
           )}
         </DialogBody>
 

@@ -3,11 +3,13 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { AnticiposAlPagar } from "./AnticiposAlPagar";
 import { CajaPrincipal } from "./CajaPrincipal";
 import { RepartoEnTarjetas } from "./RepartoEnTarjetas";
 import { SelectorCaja } from "./SelectorCaja";
 import { SelectorCuentaBancaria } from "./SelectorCuentaBancaria";
 import {
+  type AnticipoDisponible,
   type FormaPagoBorrador,
   type ModoPago,
 } from "../lib/formaPago";
@@ -16,6 +18,7 @@ const MODOS: { modo: ModoPago; etiqueta: string }[] = [
   { modo: "CREDITO", etiqueta: "Crédito" },
   { modo: "EFECTIVO", etiqueta: "Efectivo" },
   { modo: "TRANSFERENCIA", etiqueta: "Transferencia" },
+  { modo: "ANTICIPO", etiqueta: "Anticipo" },
   { modo: "REPARTIDO", etiqueta: "Repartido" },
 ];
 
@@ -39,7 +42,10 @@ export function SelectorFormaPago({
   cajaFija = false,
   conVence = false,
   total,
+  anticipos = [],
 }: {
+  /** Los anticipos y saldos a favor del cliente: con alguno, se puede pagar con ellos. */
+  anticipos?: AnticipoDisponible[];
   /** El total que se reparte, si se sabe: para «Falta repartir» y «el resto». */
   total?: number | null;
   valor: FormaPagoBorrador;
@@ -60,6 +66,22 @@ export function SelectorFormaPago({
 }) {
   const cambiar = (cambio: Partial<FormaPagoBorrador>) =>
     onCambiar({ ...valor, ...cambio });
+  const campoVence = (
+    <label className="flex w-fit flex-col gap-1.5 text-sm">
+      <span className="font-medium">
+        Vence <span className="font-normal text-muted-foreground">(opcional)</span>
+      </span>
+      <Input
+        type="date"
+        value={valor.vence}
+        onChange={(e) => cambiar({ vence: e.target.value })}
+        className="h-11 w-52 rounded-xl px-4"
+      />
+      <span className="text-xs text-muted-foreground">
+        Sin fecha, la cartera cuenta 30 días desde la emisión.
+      </span>
+    </label>
+  );
 
   return (
     <Campo
@@ -82,7 +104,7 @@ export function SelectorFormaPago({
           role="radiogroup"
           className="flex w-full flex-wrap gap-1 rounded-xl border border-border bg-muted p-1"
         >
-          {MODOS.map(({ modo, etiqueta }) => {
+          {MODOS.filter((m) => m.modo !== "ANTICIPO" || anticipos.length > 0).map(({ modo, etiqueta }) => {
             const deshabilitado = soloCredito && modo !== "CREDITO";
             return (
               <button
@@ -119,21 +141,17 @@ export function SelectorFormaPago({
             />
           ))}
 
-        {valor.modo === "CREDITO" && conVence && (
-          <label className="flex w-fit flex-col gap-1.5 text-sm">
-            <span className="font-medium">
-              Vence <span className="font-normal text-muted-foreground">(opcional)</span>
-            </span>
-            <Input
-              type="date"
-              value={valor.vence}
-              onChange={(e) => cambiar({ vence: e.target.value })}
-              className="h-11 w-52 rounded-xl px-4"
-            />
-            <span className="text-xs text-muted-foreground">
-              Sin fecha, la cartera cuenta 30 días desde la emisión.
-            </span>
-          </label>
+        {valor.modo === "CREDITO" && conVence && campoVence}
+
+        {valor.modo === "ANTICIPO" && anticipos.length > 0 && (
+          <AnticiposAlPagar
+            valor={valor}
+            onCambiar={onCambiar}
+            anticipos={anticipos}
+            total={total}
+            cajaFija={cajaFija}
+            plazo={conVence ? campoVence : undefined}
+          />
         )}
 
         {valor.modo === "TRANSFERENCIA" && (
@@ -149,6 +167,7 @@ export function SelectorFormaPago({
             onCambiar={(renglones) => cambiar({ renglones })}
             total={total}
             cajaFija={cajaFija}
+            anticipos={anticipos}
           />
         )}
       </div>

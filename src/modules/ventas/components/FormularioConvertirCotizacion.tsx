@@ -28,6 +28,7 @@ import {
 } from "@/modules/inventario/components/FormularioMovimiento";
 import { kardexApi, productosApi } from "@/modules/inventario/services/inventario.service";
 import { SelectorFormaPago } from "@/modules/tesoreria/components/SelectorFormaPago";
+import { useAnticiposDelCliente } from "@/modules/cobros/hooks/useAnticiposDelCliente";
 import {
   aFormaPago,
   formaPagoVacia,
@@ -84,7 +85,8 @@ function Formulario({
 }) {
   const fecha = hoyEnColombia();
   const [formaPago, setFormaPago] = useState(formaPagoVacia);
-  const problemaPago = problemaFormaPago(formaPago);
+  // Con anticipos o saldo a favor del cliente, «Anticipo» paga con ellos.
+  const anticipos = useAnticiposDelCliente(cotizacion.tercero_id);
 
   const { data: detalle } = useQuery({
     queryKey: ["cotizaciones", "detalle", cotizacion.id],
@@ -110,7 +112,10 @@ function Formulario({
   // pago, se pregunta como a crédito: los totales no dependen de eso.
   const datosPrevio: ConvertirCotizacionInput = {
     fecha,
-    ...(problemaPago === null ? aFormaPago(formaPago) : { formaPago: "CREDITO" as const }),
+    // El neto todavía no se sabe: para esta pregunta basta el total de la cotización.
+    ...(problemaFormaPago(formaPago, detalle ? Number(detalle.total) : null) === null
+      ? aFormaPago(formaPago)
+      : { formaPago: "CREDITO" as const }),
     ...(sinAlcanzar && vendeSinExistencia && { confirmaSinExistencia: true }),
   };
   const previo = useQuery({
@@ -122,6 +127,8 @@ function Formulario({
     meta: SILENCIOSO,
   });
   const previa = previo.data;
+  const neto = previa?.neto ?? (detalle ? Number(detalle.total) : null);
+  const problemaPago = problemaFormaPago(formaPago, neto);
 
   const bloqueadoPorExistencia = sinAlcanzar && !vendeSinExistencia;
   const problema =
@@ -204,7 +211,8 @@ function Formulario({
             onCambiar={setFormaPago}
             cajaFija
             conVence
-            total={previa?.neto ?? (detalle ? Number(detalle.total) : null)}
+            total={neto}
+            anticipos={anticipos}
           />
         </Seccion>
 

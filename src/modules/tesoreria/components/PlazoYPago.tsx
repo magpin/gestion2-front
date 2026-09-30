@@ -6,7 +6,8 @@ import { es } from "date-fns/locale";
 import { useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
-import type { FormaPagoBorrador, ModoPago } from "../lib/formaPago";
+import type { AnticipoDisponible, FormaPagoBorrador, ModoPago } from "../lib/formaPago";
+import { AnticiposAlPagar } from "./AnticiposAlPagar";
 import { CajaPrincipal } from "./CajaPrincipal";
 import { RepartoEnTarjetas } from "./RepartoEnTarjetas";
 import { SelectorCaja } from "./SelectorCaja";
@@ -16,6 +17,7 @@ import { SelectorMedio, type Medio } from "./SelectorMedio";
 const MODOS_CONTADO: { modo: ModoPago; etiqueta: string }[] = [
   { modo: "EFECTIVO", etiqueta: "Efectivo" },
   { modo: "TRANSFERENCIA", etiqueta: "Transferencia" },
+  { modo: "ANTICIPO", etiqueta: "Anticipo" },
   { modo: "REPARTIDO", etiqueta: "Repartido" },
 ];
 
@@ -51,7 +53,13 @@ export function PlazoYPago({
   motivoSoloCredito,
   conRepartido = false,
   total,
+  anticipos = [],
 }: {
+  /**
+   * Los anticipos y saldos a favor del tercero (la factura): con alguno,
+   * «Entra a» ofrece pagar con anticipo, solo o como un renglón del reparto.
+   */
+  anticipos?: AnticipoDisponible[];
   /**
    * De contado, además de un solo medio, repartido entre varios (la factura).
    * Compras no lo usa.
@@ -77,8 +85,15 @@ export function PlazoYPago({
   motivoSoloCredito?: string;
 }) {
   const credito = valor.modo === "CREDITO";
-  const contado = valor.modo === "EFECTIVO" || valor.modo === "TRANSFERENCIA" || valor.modo === "REPARTIDO";
+  const conAnticipo = conRepartido && anticipos.length > 0;
+  const contado =
+    valor.modo === "EFECTIVO" ||
+    valor.modo === "TRANSFERENCIA" ||
+    valor.modo === "REPARTIDO" ||
+    (conAnticipo && valor.modo === "ANTICIPO");
   const repartido = conRepartido && valor.modo === "REPARTIDO";
+  const pagaConAnticipo = conAnticipo && valor.modo === "ANTICIPO";
+  const modosContado = MODOS_CONTADO.filter((m) => m.modo !== "ANTICIPO" || conAnticipo);
   const medioActual: Medio = valor.modo === "TRANSFERENCIA" ? "BANCO" : "CAJA";
   const plazos = [...new Set([...PLAZOS, ...(plazoHabitual === null ? [] : [plazoHabitual])])].sort((a, b) => a - b);
 
@@ -94,10 +109,43 @@ export function PlazoYPago({
       modo:
         modo === "CREDITO"
           ? "CREDITO"
-          : ultimoContado.current === "REPARTIDO" && !conRepartido
+          : (ultimoContado.current === "REPARTIDO" && !conRepartido) ||
+              (ultimoContado.current === "ANTICIPO" && !conAnticipo)
             ? "EFECTIVO"
             : ultimoContado.current,
     });
+
+  // El plazo y el vence: a crédito, o en lo que falta de un pago con anticipo.
+  const camposPlazo = (
+    <>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Plazo</span>
+        <select
+          aria-label="Plazo"
+          value={plazo}
+          onChange={(e) => onPlazo(e.target.value)}
+          className="h-[52px] w-full rounded-xl border border-input bg-card px-3.5 text-sm font-semibold"
+        >
+          {plazos.map((d) => (
+            <option key={d} value={String(d)}>
+              {d === 0 ? "Mismo día" : `${d} días`}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Vence</span>
+        <div className="flex h-[52px] flex-col justify-center rounded-[9.6px] bg-muted px-3.5">
+          <span className="text-sm font-semibold">{vence ? fechaConDia(vence) : "—"}</span>
+          <span className="text-[11px] text-muted-foreground">
+            {plazoHabitual !== null && Number(plazo) === plazoHabitual
+              ? `Plazo habitual de ${quien}`
+              : "Lo calcula el sistema"}
+          </span>
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -129,42 +177,13 @@ export function PlazoYPago({
           </div>
         </div>
 
-        {credito && (
-          <>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-muted-foreground">Plazo</span>
-              <select
-                aria-label="Plazo"
-                value={plazo}
-                onChange={(e) => onPlazo(e.target.value)}
-                className="h-[52px] w-full rounded-xl border border-input bg-card px-3.5 text-sm font-semibold"
-              >
-                {plazos.map((d) => (
-                  <option key={d} value={String(d)}>
-                    {d === 0 ? "Mismo día" : `${d} días`}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-muted-foreground">Vence</span>
-              <div className="flex h-[52px] flex-col justify-center rounded-[9.6px] bg-muted px-3.5">
-                <span className="text-sm font-semibold">{vence ? fechaConDia(vence) : "—"}</span>
-                <span className="text-[11px] text-muted-foreground">
-                  {plazoHabitual !== null && Number(plazo) === plazoHabitual
-                    ? `Plazo habitual de ${quien}`
-                    : "Lo calcula el sistema"}
-                </span>
-              </div>
-            </div>
-          </>
-        )}
+        {credito && camposPlazo}
 
         {contado && conRepartido && (
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <span className="text-xs font-medium text-muted-foreground">{etiquetaMedio}</span>
             <div role="radiogroup" aria-label="Medio de pago" className="flex h-[52px] gap-1 rounded-xl border border-border bg-muted p-1">
-              {MODOS_CONTADO.map(({ modo, etiqueta }) => (
+              {modosContado.map(({ modo, etiqueta }) => (
                 <button
                   key={modo}
                   type="button"
@@ -200,7 +219,7 @@ export function PlazoYPago({
       </div>
 
       {/* Con repartido, un solo medio: la caja o la cuenta, a lo ancho. */}
-      {contado && conRepartido && !repartido && (
+      {contado && conRepartido && !repartido && !pagaConAnticipo && (
         <div className="max-w-md">
           {valor.modo === "TRANSFERENCIA" ? (
             <SelectorCuentaBancaria valor={valor.cuenta} onElegir={(cuenta) => onCambiar({ ...valor, cuenta })} />
@@ -212,12 +231,24 @@ export function PlazoYPago({
         </div>
       )}
 
+      {pagaConAnticipo && (
+        <AnticiposAlPagar
+          valor={valor}
+          onCambiar={onCambiar}
+          anticipos={anticipos}
+          total={total}
+          cajaFija={cajaFija}
+          plazo={<div className="grid max-w-xl gap-3.5 sm:grid-cols-2">{camposPlazo}</div>}
+        />
+      )}
+
       {repartido && (
         <RepartoEnTarjetas
           renglones={valor.renglones}
           onCambiar={(renglones) => onCambiar({ ...valor, renglones })}
           total={total}
           cajaFija={cajaFija}
+          anticipos={conAnticipo ? anticipos : []}
         />
       )}
       {soloCredito && motivoSoloCredito && <p className="text-xs text-muted-foreground">{motivoSoloCredito}</p>}

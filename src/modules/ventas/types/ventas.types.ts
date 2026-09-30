@@ -268,6 +268,8 @@ export interface ConvertirCotizacionInput {
   vence?: string;
   /** Lo que el cliente nos retiene: el concepto y la base. */
   retenciones?: Array<{ conceptoId: string; base: number }>;
+  /** Ver `CrearFacturaInput.aplicar`. */
+  aplicar?: AplicarAlFacturarInput[];
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   aFormaPago,
   formaPagoVacia,
   problemaFormaPago,
+  renglonRepartoVacio,
   type FormaPagoBorrador,
 } from "./formaPago";
 
@@ -86,6 +87,50 @@ describe("aFormaPago", () => {
     });
     expect(aFormaPago(con({ modo: "CREDITO", vence: "" }))).toEqual({
       formaPago: "CREDITO",
+    });
+  });
+});
+
+describe("pagar con anticipo", () => {
+  const anticipo = { tipo: "ANTICIPO" as const, origenId: "ant-1", etiqueta: "Anticipo del 28 sep", disponible: 300000 };
+
+  it("pide marcar un anticipo y no deja pasar de lo que le queda", () => {
+    expect(problemaFormaPago(con({ modo: "ANTICIPO" }))).toMatch(/marcar el anticipo/);
+    expect(problemaFormaPago(con({ modo: "ANTICIPO", aplicados: [{ ...anticipo, valor: "300001" }] }))).toMatch(
+      /solo le quedan/,
+    );
+  });
+
+  it("si el anticipo cubre la factura, no pide cómo se paga el resto", () => {
+    const b = con({ modo: "ANTICIPO", aplicados: [{ ...anticipo, valor: "300000" }] });
+    expect(problemaFormaPago(b, 300000)).toBeNull();
+    expect(problemaFormaPago(b, 500000)).toMatch(/caja donde entra el resto/);
+  });
+
+  it("aplica el anticipo y el resto va por el medio elegido, sin valor", () => {
+    expect(aFormaPago(con({ modo: "ANTICIPO", caja, aplicados: [{ ...anticipo, valor: "100000" }] }))).toEqual({
+      formaPago: "CONTADO",
+      pagos: [{ medio: "CAJA", cajaId: "caja-1" }],
+      aplicar: [{ tipo: "ANTICIPO", origenId: "ant-1", valor: 100000 }],
+    });
+    expect(
+      aFormaPago(con({ modo: "ANTICIPO", resto: "CREDITO", aplicados: [{ ...anticipo, valor: "100000" }] })),
+    ).toEqual({ formaPago: "CREDITO", aplicar: [{ tipo: "ANTICIPO", origenId: "ant-1", valor: 100000 }] });
+  });
+
+  it("en el repartido, el renglón de anticipo va a `aplicar` y los demás a `pagos`", () => {
+    const b = con({
+      modo: "REPARTIDO",
+      renglones: [
+        { ...renglonRepartoVacio("ANTICIPO"), anticipo, valor: "300000" },
+        { ...renglonRepartoVacio("CAJA"), caja, valor: "" },
+      ],
+    });
+    expect(problemaFormaPago(b)).toBeNull();
+    expect(aFormaPago(b)).toEqual({
+      formaPago: "CONTADO",
+      pagos: [{ medio: "CAJA", cajaId: "caja-1", valor: undefined }],
+      aplicar: [{ tipo: "ANTICIPO", origenId: "ant-1", valor: 300000 }],
     });
   });
 });

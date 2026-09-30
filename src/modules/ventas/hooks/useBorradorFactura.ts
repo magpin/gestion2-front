@@ -9,15 +9,18 @@ import { hoyEnColombia } from "@/lib/utils";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import {
   aFormaPago,
+  aplicadoEn,
+  cubiertaPorAnticipo,
   formaPagoVacia,
   problemaFormaPago,
+  type AplicadoPago,
 } from "@/modules/tesoreria/lib/formaPago";
 import {
   lineaVentaCompleta,
   lineaVentaVacia,
   type LineaVentaBorrador,
 } from "../components/EditorLineasVenta";
-import type { AplicarAlFacturarInput, CrearFacturaInput } from "../types/ventas.types";
+import type { CrearFacturaInput } from "../types/ventas.types";
 import { useTotalesBorrador } from "./useTotalesBorrador";
 
 
@@ -29,21 +32,11 @@ export interface RetencionBorrador {
   base: string;
 }
 
-/** Un anticipo o saldo a favor del cliente que se aplica a la factura. */
-export interface AplicadoBorrador {
-  tipo: AplicarAlFacturarInput["tipo"];
-  origenId: string;
-  /** «Anticipo RC-000231», «Saldo a favor FEV-1180». */
-  etiqueta: string;
-  disponible: number;
-  valor: string;
-}
-
-/** Con qué arranca la factura cuando viene de un anticipo. */
+/** Con qué arranca la factura cuando viene de un anticipo: pagada con él. */
 export interface InicioFactura {
   cliente: TerceroResumen;
   lineas: LineaVentaBorrador[];
-  aplicados: AplicadoBorrador[];
+  aplicados: AplicadoPago[];
 }
 
 /**
@@ -58,15 +51,25 @@ export function useBorradorFactura(inicio?: InicioFactura) {
   const [lineas, setLineas] = useState<LineaVentaBorrador[]>(
     inicio?.lineas.length ? inicio.lineas : [lineaVentaVacia()],
   );
-  const [aplicados, setAplicados] = useState<AplicadoBorrador[]>(inicio?.aplicados ?? []);
-  const [formaPago, setFormaPago] = useState(formaPagoVacia);
+  const [formaPago, setFormaPago] = useState(() =>
+    inicio?.aplicados.length
+      ? { ...formaPagoVacia(), modo: "ANTICIPO" as const, aplicados: inicio.aplicados }
+      : formaPagoVacia(),
+  );
   // El plazo sale del cliente (PC25) y se puede cambiar. Texto: "" es sin elegir.
   const [plazo, setPlazo] = useState("30");
   const [retenciones, setRetenciones] = useState<RetencionBorrador[]>([]);
 
   const setCliente = (t: TerceroResumen) => {
     // Los anticipos son del cliente: al cambiarlo, se sueltan.
-    if (t.id !== cliente?.id) setAplicados([]);
+    if (t.id !== cliente?.id) {
+      setFormaPago((f) => ({
+        ...f,
+        aplicados: [],
+        renglones: f.renglones.filter((r) => r.medio !== "ANTICIPO"),
+        modo: f.modo === "ANTICIPO" ? null : f.modo,
+      }));
+    }
     setClienteCrudo(t);
     if (t.diasPlazoCliente != null) setPlazo(String(t.diasPlazoCliente));
   };
@@ -74,12 +77,11 @@ export function useBorradorFactura(inicio?: InicioFactura) {
   // Lo que el cliente paga neto: el del previo del servidor (con lo que nos
   // retiene) o, mientras no llega, el total del navegador.
   const [netoServidor, setNeto] = useState<number | null>(null);
-  const aplicar = aplicados
-    .filter((a) => Number(a.valor) > 0)
-    .map((a) => ({ tipo: a.tipo, origenId: a.origenId, valor: Number(a.valor) }));
-  const aplicado = aplicar.reduce((s, a) => s + a.valor, 0);
+  const aplicado = aplicadoEn(formaPago);
 
-  const credito = formaPago.modo === "CREDITO";
+  // A crédito, o con anticipo y el resto a crédito: lleva plazo y vence.
+  const credito =
+    formaPago.modo === "CREDITO" || (formaPago.modo === "ANTICIPO" && formaPago.resto === "CREDITO");
   const vence = credito ? venceConPlazo(fecha, Number(plazo)) : null;
   const plazoDelCliente = cliente?.diasPlazoCliente ?? null;
 
@@ -122,7 +124,7 @@ export function useBorradorFactura(inicio?: InicioFactura) {
 
   const neto = netoServidor ?? (totales.porLinea.some((c) => c !== null) ? totales.totales.total : null);
   // Los anticipos pagan la factura entera: no hay forma de pago que elegir.
-  const cubierta = aplicado > 0 && neto !== null && aplicado >= neto - 0.004;
+  const cubierta = cubiertaPorAnticipo(formaPago, neto);
   const falta = neto === null ? null : Math.max(0, Math.round((neto - aplicado) * 100) / 100);
 
   const problema = ((): string | null => {
@@ -141,13 +143,12 @@ export function useBorradorFactura(inicio?: InicioFactura) {
       return "Elegí el concepto de cada retención, o quitala.";
     if (retenciones.some((r) => !(Number(r.base) > 0)))
       return "La base de la retención tiene que ser mayor que cero.";
-    const pasado = aplicados.find((a) => Number(a.valor) > a.disponible + 0.004);
-    if (pasado !== undefined) return `Al ${pasado.etiqueta.toLowerCase()} solo le quedan ${pasado.disponible}.`;
     if (neto !== null && aplicado > neto + 0.004)
-      return `Lo aplicado pasa del valor de la factura (${neto}).`;
-    if (cubierta) return null;
+      return `Lo aplicado con anticipo pasa del valor de la factura (${neto}).`;
+    const pago = problemaFormaPago(formaPago, neto);
+    if (pago !== null || cubierta) return pago;
     if (credito && plazo === "") return "Elegí el plazo.";
-    return problemaFormaPago(formaPago);
+    return null;
   })();
 
   /** Lo que viaja al servidor, o `null` mientras algo lo impida. */
@@ -178,10 +179,12 @@ export function useBorradorFactura(inicio?: InicioFactura) {
               }),
             },
       ),
-      ...(cubierta ? { formaPago: "CONTADO" as const } : aFormaPago(formaPago)),
+      // Si el anticipo la cubre, es de contado sin nada más que cobrar.
+      ...(cubierta
+        ? { formaPago: "CONTADO" as const, aplicar: aFormaPago(formaPago).aplicar }
+        : aFormaPago(formaPago)),
       ...(vence !== null && !cubierta && { vence }),
       ...(retenidas.length > 0 && { retenciones: retenidas }),
-      ...(aplicar.length > 0 && { aplicar }),
     };
   };
 
@@ -198,8 +201,6 @@ export function useBorradorFactura(inicio?: InicioFactura) {
     plazoDelCliente,
     vence,
     retenciones,
-    aplicados,
-    setAplicados,
     aplicado,
     cubierta,
     falta,
