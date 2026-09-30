@@ -236,6 +236,7 @@ export const SALDOS_A_FAVOR: Lado = {
   anticipoAlDebito: true,
   queda: "Queda debiendo",
   devolucionSale: true,
+  gmfLoAsumeElCliente: true,
   listar: async () => {
     const r = await cobrosApi.saldosAFavor();
     return {
@@ -687,9 +688,9 @@ function PanelDevolucion({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: A
         <p className="rounded-2xl bg-muted px-4 py-3 text-xs text-muted-foreground">
           {lado.devolucionSale
             ? gmf > 0
-              ? `El 4×1000 lo asume el cliente: le llegan ${formatCOP(monto - gmf)} y ${formatCOP(gmf)} se van en el impuesto. El anticipo baja ${formatCOP(monto)}.`
+              ? `El 4×1000 lo asume el cliente: le llegan ${formatCOP(monto - gmf)} y ${formatCOP(gmf)} se van en el impuesto. ${lado.nombreOrigen === "Anticipo" ? "El anticipo" : "El saldo a favor"} baja ${formatCOP(monto)}.`
               : lado.gmfLoAsumeElCliente
-                ? "Sale la plata y el anticipo baja. Si sale de un banco, el 4×1000 lo asume el cliente: sale de lo que se le devuelve."
+                ? `Sale la plata y ${lado.nombreOrigen === "Anticipo" ? "el anticipo" : "el saldo a favor"} baja. Si sale de un banco, el 4×1000 lo asume el cliente: sale de lo que se le devuelve.`
                 : "Sale la plata y el anticipo baja."
             : "Entra lo que devuelve el proveedor. Si al anticipo se le retuvo, esa retención se reversa en proporción y entra el neto."}
         </p>

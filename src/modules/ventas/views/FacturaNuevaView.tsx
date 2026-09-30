@@ -23,6 +23,7 @@ import { EditorLineasVenta } from "../components/EditorLineasVenta";
 import { SelectorTercero } from "../components/SelectorTercero";
 import { useBorradorFactura, type BorradorFactura, type InicioFactura } from "../hooks/useBorradorFactura";
 import { useAnticiposDelCliente } from "@/modules/cobros/hooks/useAnticiposDelCliente";
+import { sobranteDeAnticipos } from "@/modules/tesoreria/lib/formaPago";
 import { lineaVentaVacia } from "../components/EditorLineasVenta";
 import { productosApi } from "@/modules/inventario/services/inventario.service";
 import { resumirTercero } from "@/modules/terceros/types/terceros.types";
@@ -141,7 +142,15 @@ function FacturaNueva({ inicio }: { inicio?: InicioFactura }) {
 
   const emitir = useEmitirFactura(facturasApi.crear, async (f) => {
     await queryClient.invalidateQueries({ queryKey: ["facturas"] });
-    aviso.exito(`Factura ${f.prefijo ?? ""}${f.consecutivo} emitida`);
+    // Lo que sobró del anticipo o del saldo a favor se le devuelve: no se
+    // queda a favor de nadie.
+    const sobrante = sobranteDeAnticipos(b.formaPago);
+    aviso.exito(
+      `Factura ${f.prefijo ?? ""}${f.consecutivo} emitida`,
+      sobrante > 0
+        ? `Al cliente le quedan ${formatCOP(sobrante)} a favor: hay que devolvérselos desde Ingresos → Anticipos.`
+        : undefined,
+    );
     router.push(VOLVER);
   });
 

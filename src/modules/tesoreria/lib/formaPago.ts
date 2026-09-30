@@ -100,6 +100,24 @@ export function aplicadoEn(b: FormaPagoBorrador): number {
   return valores.reduce((t, v) => t + Math.round(Number(v || 0) * 100), 0) / 100;
 }
 
+/**
+ * Lo que les queda a los anticipos usados después de aplicarlos: eso se le
+ * devuelve al cliente, no se queda a favor de nadie.
+ */
+export function sobranteDeAnticipos(b: FormaPagoBorrador): number {
+  const usados =
+    b.modo === "ANTICIPO"
+      ? b.aplicados.filter((a) => Number(a.valor) > 0).map((a) => ({ disponible: a.disponible, valor: a.valor }))
+      : b.modo === "REPARTIDO"
+        ? b.renglones
+            .filter((r) => r.medio === "ANTICIPO" && r.anticipo)
+            .map((r) => ({ disponible: r.anticipo!.disponible, valor: r.valor }))
+        : [];
+  return (
+    usados.reduce((t, u) => t + Math.max(0, Math.round((u.disponible - Number(u.valor || 0)) * 100)), 0) / 100
+  );
+}
+
 /** Si los anticipos pagan todo `total`: entonces no hay resto que cobrar. */
 export function cubiertaPorAnticipo(b: FormaPagoBorrador, total: number | null | undefined): boolean {
   const aplicado = aplicadoEn(b);

@@ -158,7 +158,8 @@ function Contenido({
           <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
             La plata sale de la caja o del banco y la factura sigue valiendo lo mismo. Si el
             cliente devolvió producto o hay que bajarle el valor, lo que va es una nota
-            crédito. Una caja no puede quedar en negativo; un banco sí.
+            crédito. Una caja no puede quedar en negativo; un banco sí. Por banco, el 4×1000
+            lo asume el cliente: sale de lo que se le devuelve.
           </p>
         )}
 
