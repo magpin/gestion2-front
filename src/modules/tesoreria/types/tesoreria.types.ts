@@ -196,6 +196,8 @@ export type CajaConfiguracion = ConfiguracionCuentas<ConceptoArqueo>;
 export interface ResultadoPreparar {
   cuentasCreadas: string[];
   cajasCreadas: string[];
+  /** Las cajas de más, sin movimientos, que se desactivaron: se maneja una sola. */
+  cajasDesactivadas?: string[];
   /** Lo que no se pudo dejar listo, en palabras. */
   avisos?: string[];
 }

@@ -23,16 +23,17 @@ import type { DiaDeCaja } from "../types/caja-bancos.types";
 const SALDO_ALTO = 1_500_000;
 
 /**
- * Caja y bancos → Caja (lienzo «Caja»): la caja principal por defecto, con un
- * selector para la menor y las de otras sedes (PC7); lo que hay, con qué abrió
+ * Caja y bancos → Caja (lienzo «Caja»): la caja de la empresa —una sola, la
+ * principal—: lo que hay, con qué abrió
  * el día, lo que entró y salió, el último arqueo y lo que pasó hoy.
  */
 export function CajaHoy({ onVerMovimientos, onAgregar }: { onVerMovimientos: () => void; onAgregar?: () => void }) {
   const { caja: principal, cargando } = useCajaPrincipal();
   const { data: cajas = [] } = useQuery({ queryKey: ["cajas"], queryFn: () => cajasApi.listar(), meta: SILENCIOSO });
   const activas = cajas.filter((c) => c.activa);
-  const [elegida, setElegida] = useState<string | null>(null);
-  const cajaId = elegida ?? principal?.id ?? activas[0]?.id ?? null;
+
+  // Una empresa maneja una sola caja, la principal (decisión del dueño, 30-09).
+  const cajaId = principal?.id ?? activas[0]?.id ?? null;
   const dia = useQuery({
     queryKey: ["cajas", "dia", cajaId],
     queryFn: () => cajaBancosApi.dia(cajaId!),
@@ -55,25 +56,6 @@ export function CajaHoy({ onVerMovimientos, onAgregar }: { onVerMovimientos: () 
 
   return (
     <div className="flex flex-col gap-6">
-      {activas.length > 1 && (
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Caja">
-          {activas.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              aria-pressed={c.id === cajaId}
-              onClick={() => setElegida(c.id)}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                c.id === cajaId ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-accent",
-              )}
-            >
-              {c.nombre}
-              {c.id === principal?.id && " · principal"}
-            </button>
-          ))}
-        </div>
-      )}
       {dia.data === undefined ? (
         dia.isError ? (
           <ErrorCarga error={dia.error} titulo="No se pudo leer la caja" onReintentar={dia.refetch} />

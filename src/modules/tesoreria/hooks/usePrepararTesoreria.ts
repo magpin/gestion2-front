@@ -28,7 +28,11 @@ export function usePrepararTesoreria() {
         queryClient.invalidateQueries({ queryKey: ["cajas"] }),
         queryClient.invalidateQueries({ queryKey: ["tesoreria", "configuracion"] }),
       ]);
-      const creado = [...r.cuentasCreadas, ...r.cajasCreadas];
+      const creado = [
+        ...r.cuentasCreadas,
+        ...r.cajasCreadas,
+        ...(r.cajasDesactivadas ?? []).map((c) => `se desactivó la caja «${c}» (se maneja una sola)`),
+      ];
       if ((r.avisos ?? []).length > 0) {
         aviso.info("Tesorería casi lista", [...creado, ...(r.avisos ?? [])].join(". "));
       } else if (creado.length > 0) {
