@@ -140,10 +140,12 @@ function Contenido({ onCerrar }: { onCerrar: () => void }) {
           </Campo>
         </div>
 
-        <section className="overflow-hidden rounded-2xl border border-border">
-          <h3 className="border-b border-border px-4 py-3 text-sm font-semibold">Para qué es</h3>
+        {/* Como en la cotización: el editor sin marco, para que la lista de
+            productos tenga ancho y se abra hacia abajo. */}
+        <div className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold">Para qué productos es</h3>
           <EditorLineasVenta lineas={lineas} onCambiar={setLineas} />
-        </section>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Campo id="anticipo-valor" etiqueta="Cuánto paga ahora">
