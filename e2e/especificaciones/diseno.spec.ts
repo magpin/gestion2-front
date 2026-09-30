@@ -39,7 +39,7 @@ const PANTALLAS: Array<{
   { n: "15-configurar-impuestos", ruta: "/configuracion/impuestos" },
   { n: "17-cobros-recibos", ruta: "/dashboard/cobros", pestana: "Recibos de caja" },
   { n: "18-cobros-ingresos-sin-factura", ruta: "/dashboard/cobros", pestana: "Ingresos sin factura" },
-  { n: "19-cobros-anticipos", ruta: "/dashboard/cobros", pestana: "Anticipos" },
+  { n: "19-cobros-anticipos", ruta: "/dashboard/anticipos", pestana: "Anticipos" },
   { n: "20-cobros-saldos-a-favor", ruta: "/dashboard/cobros", pestana: "Saldos a favor" },
   { n: "58-pagos-por-pagar", ruta: "/dashboard/pagos", pestana: "Por pagar" },
   { n: "25-pagos-comprobantes", ruta: "/dashboard/pagos", pestana: "Comprobantes" },

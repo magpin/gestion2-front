@@ -13,6 +13,7 @@ import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { aviso } from "@/lib/avisos";
+import { funcionActiva } from "@/core/config/funciones";
 import { cn, formatCOP, hoyEnColombia } from "@/lib/utils";
 import { cobrosApi } from "@/modules/cobros/services/cobros.service";
 import { Campo } from "@/modules/configuracion/components/Campo";
@@ -73,8 +74,8 @@ interface Lado {
   accion: string;
   /** Proveedores (lienzo 28): columna Estado, la factura antes del anticipo y «Legalizar con FC-771». */
   conEstado?: boolean;
-  /** Qué se hace cuando todavía no hay factura. */
-  sinDocumento: { etiqueta: string; href: string } | null;
+  /** Facturarle al tercero lo que dejó: lleva a la factura nueva ya llena. */
+  sinDocumento: { etiqueta: string; href: (a: Anticipo) => string } | null;
   esperando: string;
   cuenta: { codigo: string; nombre: string };
   contra: { codigo: string; nombre: string };
@@ -84,12 +85,19 @@ interface Lado {
   queda: string;
   /** La plata sale (cliente) o entra (proveedor) al devolverlo. */
   devolucionSale: boolean;
+  /** Al devolver por banco, el 4×1000 sale de la plata del cliente (decisión del dueño, 30 sep). */
+  gmfLoAsumeElCliente?: boolean;
   listar: () => Promise<{ total: number; terceros: number; anticipos: Anticipo[]; devoluciones: DevolucionAnticipo[] }>;
   documentosDe: (terceroId: string) => Promise<Documento[]>;
   cruzar: (a: Anticipo, d: Documento, valor: number, fecha: string) => Promise<unknown>;
   devolver: (id: string, datos: DatosDevolucion) => Promise<unknown>;
   anularDevolucion: (id: string, motivo: string) => Promise<unknown>;
   invalidar: string[][];
+}
+
+/** La factura nueva, arrancando desde el anticipo o el cliente; sin la página, Ventas. */
+function facturaNueva(consulta: string): string {
+  return funcionActiva("facturaPagina") ? `/dashboard/ventas/nueva?${consulta}` : "/dashboard/ventas";
 }
 
 export const CLIENTES: Lado = {
@@ -100,7 +108,7 @@ export const CLIENTES: Lado = {
   explicacion: "Plata de clientes que todavía no es venta. Está en 280505 hasta que factures o la devuelvas.",
   vacio: {
     titulo: "No hay anticipos pendientes",
-    descripcion: "Cuando un cliente deje plata sin factura, registrala con un recibo de caja como anticipo y aparece acá.",
+    descripcion: "Cuando un cliente deje plata para un pedido, se registra con «Recibir anticipo» y aparece aquí.",
   },
   loQueSeLee: "los anticipos de clientes",
   pendiente: ["factura por cobrar", "facturas por cobrar"],
@@ -108,13 +116,14 @@ export const CLIENTES: Lado = {
   columnaTotal: "Recibido",
   columnaPendiente: "Por aplicar",
   accion: "Cruzar",
-  sinDocumento: { etiqueta: "Facturar", href: "/dashboard/ventas" },
+  sinDocumento: { etiqueta: "Facturar", href: (a) => facturaNueva(`anticipo=${a.movimientoId}`) },
   esperando: "sin factura aún",
   cuenta: { codigo: "280505", nombre: "Anticipos de clientes" },
   contra: { codigo: "130505", nombre: "Clientes" },
   anticipoAlDebito: true,
   queda: "Queda debiendo",
   devolucionSale: true,
+  gmfLoAsumeElCliente: true,
   listar: async () => {
     const r = await cobrosApi.anticipos();
     return {
@@ -196,7 +205,7 @@ export const PROVEEDORES: Lado = {
 };
 
 /**
- * Cobros → Saldos a favor (E1): lo que sobra de una nota crédito que cayó
+ * Anticipos → Saldos a favor (E1): lo que sobra de una nota crédito que cayó
  * sobre una factura ya pagada. No se vuelve a cruzar la nota con su factura
  * (ya la bajó al emitirse): el saldo se aplica a otra factura del cliente, o
  * se le devuelve.
@@ -220,7 +229,7 @@ export const SALDOS_A_FAVOR: Lado = {
   columnaTotal: "A favor",
   columnaPendiente: "Por aplicar",
   accion: "Cruzar",
-  sinDocumento: null,
+  sinDocumento: { etiqueta: "Facturar", href: (a) => facturaNueva(`cliente=${a.terceroId}`) },
   esperando: "sin otra factura por cobrar",
   cuenta: { codigo: "130505", nombre: "Clientes" },
   contra: { codigo: "130505", nombre: "Clientes" },
@@ -377,15 +386,23 @@ export function AnticiposGlobales({ lado, puedeMover }: { lado: Lado; puedeMover
                       {puedeMover && (
                         <td className="px-5 py-3">
                           <div className="flex justify-end gap-2">
-                            {a.documentosPendientes > 0 ? (
-                              <Button type="button" className="h-9 rounded-lg px-4" onClick={() => setPanel({ tipo: "CRUZAR", anticipo: a })}>
-                                {lado.accion}
-                              </Button>
-                            ) : lado.sinDocumento ? (
-                              <Button variant="outline" className="h-9 rounded-lg px-4" render={<Link href={lado.sinDocumento.href} />}>
+                            {/* Facturar siempre: el anticipo es para una venta nueva. Si
+                                el cliente ya debe facturas, también se puede cruzar. */}
+                            {lado.sinDocumento && (
+                              <Button className="h-9 rounded-lg px-4" render={<Link href={lado.sinDocumento.href(a)} />}>
                                 {lado.sinDocumento.etiqueta}
                               </Button>
-                            ) : (
+                            )}
+                            {a.documentosPendientes > 0 ? (
+                              <Button
+                                type="button"
+                                variant={lado.sinDocumento ? "outline" : "default"}
+                                className="h-9 rounded-lg px-4"
+                                onClick={() => setPanel({ tipo: "CRUZAR", anticipo: a })}
+                              >
+                                {lado.accion}
+                              </Button>
+                            ) : lado.sinDocumento ? null : (
                               a.comprobanteId && (
                                 <BotonImprimir
                                   ruta={`/documentos/comprobantes-egreso/${a.comprobanteId}/pdf`}
@@ -630,6 +647,11 @@ function PanelDevolucion({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: A
   });
 
   const medioNombre = medio === "CAJA" ? (caja?.nombre ?? "Caja") : (cuenta?.banco ?? "Banco");
+  // El 4×1000 va dentro del valor: al cliente le llega el resto.
+  const gmf =
+    lado.gmfLoAsumeElCliente && medio === "BANCO" && cuenta !== null && !cuenta.exenta_gmf && monto > 0
+      ? monto - Math.round((monto * 1000) / 1004)
+      : 0;
   return (
     <Marco titulo={`Devolver ${lado.nombreOrigen.toLowerCase()}`} subtitulo={anticipo.tercero} onCerrar={onCerrar}>
       <div className="flex flex-col gap-4">
@@ -664,7 +686,11 @@ function PanelDevolucion({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: A
         />
         <p className="rounded-2xl bg-muted px-4 py-3 text-xs text-muted-foreground">
           {lado.devolucionSale
-            ? "Sale la plata y el anticipo baja. Si sale de un banco, el 4×1000 va aparte."
+            ? gmf > 0
+              ? `El 4×1000 lo asume el cliente: le llegan ${formatCOP(monto - gmf)} y ${formatCOP(gmf)} se van en el impuesto. El anticipo baja ${formatCOP(monto)}.`
+              : lado.gmfLoAsumeElCliente
+                ? "Sale la plata y el anticipo baja. Si sale de un banco, el 4×1000 lo asume el cliente: sale de lo que se le devuelve."
+                : "Sale la plata y el anticipo baja."
             : "Entra lo que devuelve el proveedor. Si al anticipo se le retuvo, esa retención se reversa en proporción y entra el neto."}
         </p>
         <Button type="button" className="h-12 rounded-xl" disabled={problema !== null || devolver.isPending} onClick={() => devolver.mutate()}>

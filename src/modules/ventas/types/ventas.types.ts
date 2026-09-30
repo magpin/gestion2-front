@@ -170,6 +170,19 @@ export interface CrearFacturaInput {
   vence?: string;
   /** Lo que el cliente nos retiene: el concepto y la base. */
   retenciones?: Array<{ conceptoId: string; base: number }>;
+  /**
+   * Anticipos y saldos a favor del cliente que pagan parte de la factura sin
+   * mover caja. La forma de pago es sobre lo que falta; si la cubren, va de
+   * contado sin `pagos`.
+   */
+  aplicar?: AplicarAlFacturarInput[];
+}
+
+export interface AplicarAlFacturarInput {
+  tipo: "ANTICIPO" | "SALDO_A_FAVOR";
+  /** El movimiento del anticipo, o la factura con saldo a favor. */
+  origenId: string;
+  valor: number;
 }
 
 /** Cómo quedaría la factura, sin emitirla (`POST /facturas/previo`). */

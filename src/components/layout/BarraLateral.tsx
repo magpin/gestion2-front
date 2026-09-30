@@ -23,6 +23,7 @@ import {
   Sparkle,
   Tags,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -118,6 +119,13 @@ const GRUPOS: Grupo[] = [
         href: "/dashboard/cobros",
         etiqueta: "Cobros",
         icono: BanknoteArrowDown,
+        roles: ["DIRECTOR", "CONTADOR", "CAJA", "VENTAS", "CONSULTA"],
+        funcion: "cobros",
+      },
+      {
+        href: "/dashboard/anticipos",
+        etiqueta: "Anticipos",
+        icono: Wallet,
         roles: ["DIRECTOR", "CONTADOR", "CAJA", "VENTAS", "CONSULTA"],
         funcion: "cobros",
       },

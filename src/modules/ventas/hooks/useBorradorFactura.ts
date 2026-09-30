@@ -17,7 +17,7 @@ import {
   lineaVentaVacia,
   type LineaVentaBorrador,
 } from "../components/EditorLineasVenta";
-import type { CrearFacturaInput } from "../types/ventas.types";
+import type { AplicarAlFacturarInput, CrearFacturaInput } from "../types/ventas.types";
 import { useTotalesBorrador } from "./useTotalesBorrador";
 
 
@@ -29,27 +29,55 @@ export interface RetencionBorrador {
   base: string;
 }
 
+/** Un anticipo o saldo a favor del cliente que se aplica a la factura. */
+export interface AplicadoBorrador {
+  tipo: AplicarAlFacturarInput["tipo"];
+  origenId: string;
+  /** «Anticipo RC-000231», «Saldo a favor FEV-1180». */
+  etiqueta: string;
+  disponible: number;
+  valor: string;
+}
+
+/** Con qué arranca la factura cuando viene de un anticipo. */
+export interface InicioFactura {
+  cliente: TerceroResumen;
+  lineas: LineaVentaBorrador[];
+  aplicados: AplicadoBorrador[];
+}
+
 /**
  * Todo lo que se llena para emitir una factura desde la página (pantalla 13):
  * cliente, líneas de producto y de concepto, forma de pago con plazo, y lo
  * que el cliente nos retiene. Arma el envío y dice qué lo impide.
  */
-export function useBorradorFactura() {
+export function useBorradorFactura(inicio?: InicioFactura) {
   const fecha = hoyEnColombia();
   const conIva = useResponsableIva();
-  const [cliente, setClienteCrudo] = useState<TerceroResumen | null>(null);
-  const [lineas, setLineas] = useState<LineaVentaBorrador[]>([
-    lineaVentaVacia(),
-  ]);
+  const [cliente, setClienteCrudo] = useState<TerceroResumen | null>(inicio?.cliente ?? null);
+  const [lineas, setLineas] = useState<LineaVentaBorrador[]>(
+    inicio?.lineas.length ? inicio.lineas : [lineaVentaVacia()],
+  );
+  const [aplicados, setAplicados] = useState<AplicadoBorrador[]>(inicio?.aplicados ?? []);
   const [formaPago, setFormaPago] = useState(formaPagoVacia);
   // El plazo sale del cliente (PC25) y se puede cambiar. Texto: "" es sin elegir.
   const [plazo, setPlazo] = useState("30");
   const [retenciones, setRetenciones] = useState<RetencionBorrador[]>([]);
 
   const setCliente = (t: TerceroResumen) => {
+    // Los anticipos son del cliente: al cambiarlo, se sueltan.
+    if (t.id !== cliente?.id) setAplicados([]);
     setClienteCrudo(t);
     if (t.diasPlazoCliente != null) setPlazo(String(t.diasPlazoCliente));
   };
+
+  // Lo que el cliente paga neto: el del previo del servidor (con lo que nos
+  // retiene) o, mientras no llega, el total del navegador.
+  const [netoServidor, setNeto] = useState<number | null>(null);
+  const aplicar = aplicados
+    .filter((a) => Number(a.valor) > 0)
+    .map((a) => ({ tipo: a.tipo, origenId: a.origenId, valor: Number(a.valor) }));
+  const aplicado = aplicar.reduce((s, a) => s + a.valor, 0);
 
   const credito = formaPago.modo === "CREDITO";
   const vence = credito ? venceConPlazo(fecha, Number(plazo)) : null;
@@ -92,6 +120,11 @@ export function useBorradorFactura() {
         )
         .filter((n): n is number => n !== null);
 
+  const neto = netoServidor ?? (totales.porLinea.some((c) => c !== null) ? totales.totales.total : null);
+  // Los anticipos pagan la factura entera: no hay forma de pago que elegir.
+  const cubierta = aplicado > 0 && neto !== null && aplicado >= neto - 0.004;
+  const falta = neto === null ? null : Math.max(0, Math.round((neto - aplicado) * 100) / 100);
+
   const problema = ((): string | null => {
     if (cliente === null) return "Elegí el cliente.";
     if (lineas.length === 0) return "Agregá al menos una línea.";
@@ -108,6 +141,11 @@ export function useBorradorFactura() {
       return "Elegí el concepto de cada retención, o quitala.";
     if (retenciones.some((r) => !(Number(r.base) > 0)))
       return "La base de la retención tiene que ser mayor que cero.";
+    const pasado = aplicados.find((a) => Number(a.valor) > a.disponible + 0.004);
+    if (pasado !== undefined) return `Al ${pasado.etiqueta.toLowerCase()} solo le quedan ${pasado.disponible}.`;
+    if (neto !== null && aplicado > neto + 0.004)
+      return `Lo aplicado pasa del valor de la factura (${neto}).`;
+    if (cubierta) return null;
     if (credito && plazo === "") return "Elegí el plazo.";
     return problemaFormaPago(formaPago);
   })();
@@ -140,9 +178,10 @@ export function useBorradorFactura() {
               }),
             },
       ),
-      ...aFormaPago(formaPago),
-      ...(vence !== null && { vence }),
+      ...(cubierta ? { formaPago: "CONTADO" as const } : aFormaPago(formaPago)),
+      ...(vence !== null && !cubierta && { vence }),
       ...(retenidas.length > 0 && { retenciones: retenidas }),
+      ...(aplicar.length > 0 && { aplicar }),
     };
   };
 
@@ -159,6 +198,12 @@ export function useBorradorFactura() {
     plazoDelCliente,
     vence,
     retenciones,
+    aplicados,
+    setAplicados,
+    aplicado,
+    cubierta,
+    falta,
+    setNeto,
     totales,
     setRetenciones,
     problema,

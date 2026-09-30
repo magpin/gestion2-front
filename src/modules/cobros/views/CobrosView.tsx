@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, FileText, HandCoins, Loader2, PiggyBank, ReceiptText, Search, SearchX, Wallet } from "lucide-react";
+import { FileText, HandCoins, Loader2, PiggyBank, ReceiptText, Search, SearchX } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -31,20 +31,17 @@ import { fechaCorta } from "@/modules/impuestos/lib/impuestos";
 import { ResumenPorMedio } from "@/modules/tesoreria/components/ResumenPorMedio";
 import { ListaMovimientosConcepto } from "@/modules/tesoreria/components/ListaMovimientosConcepto";
 import { MovimientoConceptoDialog } from "@/modules/tesoreria/components/MovimientoConceptoDialog";
-import { AnticiposGlobales, CLIENTES, SALDOS_A_FAVOR } from "@/modules/tesoreria/components/AnticiposGlobales";
-import { ListaCruces } from "../components/AnticiposYCruces";
 import { ReciboCajaDialog, type ClienteInicial } from "../components/ReciboCajaDialog";
 import { cobrosApi } from "../services/cobros.service";
 import { EDADES, NOMBRE_EDAD, type ReciboCaja } from "../types/cobros.types";
 
-type Seccion = "Por cobrar" | "Recibos de caja" | "Ingresos sin factura" | "Anticipos" | "Saldos a favor";
+type Seccion = "Por cobrar" | "Recibos de caja" | "Ingresos sin factura";
 
+// Anticipos y Saldos a favor tienen su propia sección en el menú (30 sep).
 const SECCIONES: Array<[Seccion, typeof FileText]> = [
   ["Por cobrar", HandCoins],
   ["Recibos de caja", FileText],
   ["Ingresos sin factura", PiggyBank],
-  ["Anticipos", Wallet],
-  ["Saldos a favor", ArrowLeftRight],
 ];
 
 /**
@@ -53,8 +50,7 @@ const SECCIONES: Array<[Seccion, typeof FileText]> = [
  *
  * «Por cobrar» es la cartera por cliente, lo más vencido primero; «Recibos de
  * caja», lo que ya entró; «Ingresos sin factura», lo que entra por concepto
- * (intereses, reintegros, aportes); «Anticipos y cruces», la plata que el
- * cliente dejó adelantada o a favor, aplicada a lo que debe.
+ * (intereses, reintegros, aportes). Los anticipos viven en Ingresos → Anticipos.
  */
 export function CobrosView() {
   const puedeCobrar = useTieneRol("CAJA", "DIRECTOR");
@@ -77,17 +73,12 @@ export function CobrosView() {
             Lo que te deben los clientes y cada peso que entra, con su recibo de caja.
           </p>
         </div>
-        {/* El botón dice lo que se hace en cada pestaña. En Saldos a favor no
-            hay nada que crear: el saldo lo deja una nota crédito. */}
+        {/* El botón dice lo que se hace en cada pestaña. */}
         {puedeCobrar &&
-          seccion !== "Saldos a favor" &&
           (seccion === "Ingresos sin factura" ? (
             <BotonNuevo etiqueta="Nuevo ingreso sin factura" onClick={() => setIngreso(true)} />
           ) : (
-            <BotonNuevo
-              etiqueta={seccion === "Anticipos" ? "Recibir anticipo" : "Nuevo recibo de caja"}
-              onClick={() => setRecibo({ cliente: null })}
-            />
+            <BotonNuevo etiqueta="Nuevo recibo de caja" onClick={() => setRecibo({ cliente: null })} />
           ))}
       </header>
 
@@ -115,13 +106,6 @@ export function CobrosView() {
       {seccion === "Ingresos sin factura" && (
         <ListaMovimientosConcepto direccion="ENTRADA" puedeAnular={puedeCobrar} />
       )}
-      {seccion === "Anticipos" && (
-        <div className="flex flex-col gap-7">
-          <AnticiposGlobales lado={CLIENTES} puedeMover={puedeCobrar} />
-          <ListaCruces puedeAnular={puedeCobrar} />
-        </div>
-      )}
-      {seccion === "Saldos a favor" && <AnticiposGlobales lado={SALDOS_A_FAVOR} puedeMover={puedeCobrar} />}
 
       <MovimientoConceptoDialog abierto={ingreso} direccion="ENTRADA" onCerrar={() => setIngreso(false)} />
 

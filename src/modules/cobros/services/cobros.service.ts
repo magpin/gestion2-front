@@ -1,5 +1,6 @@
 import { api } from "@/core/api/api";
 import type {
+  DetalleAnticipo,
   AnticipoCliente,
   CrearCruceInput,
   CruceCartera,
@@ -45,6 +46,9 @@ export const cobrosApi = {
 
   /** Lo que les quedó a favor a los clientes (E1). */
   saldosAFavor: () => api.get<SaldosAFavor>("/cartera/saldos-a-favor").then((r) => r.data),
+
+  /** Un anticipo con sus productos, para facturarlo. */
+  anticipo: (id: string) => api.get<DetalleAnticipo>(`/cartera/anticipos/${id}`).then((r) => r.data),
 
   /** Los anticipos de todos los clientes con algo por aplicar (PC19). */
   anticipos: () => api.get<AnticiposDeClientes>("/cartera/anticipos").then((r) => r.data),

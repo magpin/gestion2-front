@@ -24,8 +24,9 @@ const PANTALLAS: Array<{ ruta: string; titulo: RegExp; pestanas?: string[] }> = 
   {
     ruta: "/dashboard/cobros",
     titulo: /^Cobros/,
-    pestanas: ["Por cobrar", "Recibos de caja", "Ingresos sin factura", "Anticipos", "Saldos a favor"],
+    pestanas: ["Por cobrar", "Recibos de caja", "Ingresos sin factura"],
   },
+  { ruta: "/dashboard/anticipos", titulo: /^Anticipos/, pestanas: ["Anticipos", "Saldos a favor"] },
   { ruta: "/dashboard/compras", titulo: /^Compras/, pestanas: ["Facturas", "Notas crédito", "Notas débito"] },
   { ruta: "/dashboard/compras/nueva", titulo: /Nueva compra/ },
   { ruta: "/dashboard/gastos", titulo: /^Gastos/, pestanas: ["Del mes", "Recurrentes"] },

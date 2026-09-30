@@ -109,7 +109,6 @@ function Contenido({
   // `null` mientras llegan las facturas del cliente: los renglones arrancan
   // de lo que la API diga, no de una lista vacía que después haya que pisar.
   const [abonos, setAbonos] = useState<AbonoBorrador[] | null>(null);
-  const [anticipo, setAnticipo] = useState("");
   const [comision, setComision] = useState("");
 
   const { data: facturas, isFetching } = useQuery({
@@ -123,7 +122,7 @@ function Contenido({
 
   const descuentos = totalDescuentos(renglones);
   const conComision = medio === "BANCO" ? comision : "";
-  const entra = totalRecibo(renglones) + Number(anticipo || 0) - Number(conComision || 0);
+  const entra = totalRecibo(renglones) - Number(conComision || 0);
   const destino = medio === "CAJA" ? caja : cuenta;
   const problema =
     cliente === null
@@ -134,7 +133,9 @@ function Contenido({
           ? medio === "CAJA"
             ? "No hay caja principal."
             : "Elegí la cuenta bancaria."
-          : problemaDelRecibo(renglones, anticipo, conComision);
+          : !renglones.some((a) => a.marcada)
+            ? "Marca al menos una factura. Un anticipo se recibe desde Anticipos."
+            : problemaDelRecibo(renglones, "", conComision);
 
   const guardar = useMutation({
     mutationFn: () =>
@@ -151,7 +152,6 @@ function Contenido({
             valor: Number(a.valor || 0),
             descuento: Number(a.descuento) > 0 ? Number(a.descuento) : undefined,
           })),
-        anticipo: Number(anticipo) > 0 ? Number(anticipo) : undefined,
         comision: Number(conComision) > 0 ? Number(conComision) : undefined,
       }),
     onSuccess: async (r) => {
@@ -296,15 +296,6 @@ function Contenido({
         </section>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Campo id="recibo-anticipo" etiqueta="Anticipo (plata de más, sin factura)">
-            <CampoPesos
-              id="recibo-anticipo"
-              value={anticipo}
-              onChange={setAnticipo}
-              placeholder="—"
-              className="h-11 rounded-xl px-4 text-right font-mono"
-            />
-          </Campo>
           {medio === "BANCO" && (
             <Campo id="recibo-comision" etiqueta="Comisión del datáfono o del banco">
               <CampoPesos
@@ -324,7 +315,6 @@ function Contenido({
             {medio === "CAJA" ? "la caja" : "la cuenta bancaria"} y crédito a Clientes (130505), con el
             número del recibo en el libro. La retención que el cliente practicó ya se descontó al facturar.
             {descuentos > 0 && " El descuento por pronto pago va al gasto y salda la factura sin plata."}
-            {Number(anticipo) > 0 && " El anticipo queda a nombre del cliente (280505) para cruzarlo después."}
           </div>
           <div className="rounded-2xl bg-muted p-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">

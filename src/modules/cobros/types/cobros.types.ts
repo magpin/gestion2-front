@@ -70,7 +70,21 @@ export interface CrearReciboCajaInput {
   cuentaBancariaId?: string;
   aplicaciones: Array<{ facturaId: string; valor: number; descuento?: number }>;
   anticipo?: number;
+  /** Para qué productos es el anticipo: sin ellos no hay anticipo. */
+  productosAnticipo?: Array<{ productoId: string; cantidad: number; precioUnitario: number }>;
   comision?: number;
+}
+
+/** Un anticipo con sus productos: con esto se llena la factura que lo aplica. */
+export interface DetalleAnticipo {
+  movimientoId: string;
+  terceroId: string;
+  tercero: string;
+  recibo: string | null;
+  fecha: string;
+  recibido: number;
+  porAplicar: number;
+  productos: Array<{ productoId: string; nombre: string; cantidad: number; precioUnitario: number }>;
 }
 
 /** Un anticipo del cliente con lo que le queda por aplicar. */
