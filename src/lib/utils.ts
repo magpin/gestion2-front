@@ -20,6 +20,20 @@ export function formatCOP(valor: number | null | undefined): string {
 // enteros como el resto del sistema (decisión del dueño, 30 sep).
 export const formatCOPExacto = formatCOP;
 
+// Para lo que hay que cuadrar al centavo (lo que falta o sobra al repartir un
+// pago): con centavos solo si los hay. Sin ellos, una diferencia de $ 0,25
+// se leía «Se pasó por $ 0» y no se entendía por qué no guardaba.
+export function formatCOPConCentavos(valor: number | null | undefined): string {
+  const v = valor ?? 0;
+  const conCentavos = Math.round(v * 100) % 100 !== 0;
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: conCentavos ? 2 : 0,
+    maximumFractionDigits: conCentavos ? 2 : 0,
+  }).format(v);
+}
+
 // Formatea una fecha del backend a "dd MMM yyyy" en locale es. Devuelve "—" si no hay fecha.
 //
 // Hay dos clases de fecha y cada una se lee distinto:
