@@ -57,8 +57,8 @@ export function explicarError(
       titulo: "No se pudo conectar con el servidor",
       queHacer:
         momento === "guardar"
-          ? "No se guardó nada. Revisá la conexión a internet y volvé a intentar; si sigue igual, el servidor puede estar caído y hay que avisarle a quien administra el sistema."
-          : "La pantalla puede estar vacía o incompleta. Revisá la conexión a internet y recargá; si sigue igual, avisale a quien administra el sistema.",
+          ? "No se guardó nada. Revise la conexión a internet e intente de nuevo; si sigue igual, el servidor puede estar caído y hay que avisar a quien administra el sistema."
+          : "La pantalla puede estar vacía o incompleta. Revise la conexión a internet y recargue la página; si sigue igual, avise a quien administra el sistema.",
       silencioso: false,
     };
   }
@@ -68,7 +68,7 @@ export function explicarError(
   if (estado === 401) {
     return {
       titulo: "La sesión se cerró",
-      queHacer: "Volvé a entrar con tu usuario.",
+      queHacer: "Vuelva a entrar con su usuario.",
       silencioso: true,
     };
   }
@@ -79,9 +79,9 @@ export function explicarError(
     // roles dice que no: no le dice nada a nadie, y en inglés menos.
     const propio = mensaje !== null && mensaje !== "Forbidden resource";
     return {
-      titulo: propio ? mensaje : "Tu usuario no tiene permiso para esto",
+      titulo: propio ? mensaje : "Su usuario no tiene permiso para esto",
       queHacer:
-        "Tu rol no alcanza para esta acción. Pedile a alguien con el rol adecuado —normalmente un Director— que la haga, o que te asigne el permiso.",
+        "Su rol no alcanza para esta acción. Solicite a alguien con el rol adecuado —normalmente un Director— que la haga o que le asigne el permiso.",
       silencioso: eligeEmpresa,
     };
   }
@@ -90,7 +90,7 @@ export function explicarError(
     return {
       titulo: mensaje ?? "No se encontró lo que se buscaba",
       queHacer:
-        "Puede que otra persona lo haya desactivado o cambiado mientras trabajabas. Recargá la pantalla y buscalo de nuevo.",
+        "Puede que otra persona lo haya desactivado o cambiado mientras usted trabajaba. Recargue la pantalla y búsquelo de nuevo.",
       silencioso: false,
     };
   }
@@ -99,7 +99,7 @@ export function explicarError(
     return {
       titulo: mensaje ?? "Eso ya existe o cambió al mismo tiempo",
       queHacer:
-        "No se guardó nada. Recargá la pantalla para ver cómo quedó y revisá antes de volver a intentar.",
+        "No se guardó nada. Recargue la pantalla para ver cómo quedó y revise antes de intentar de nuevo.",
       silencioso: false,
     };
   }
@@ -109,8 +109,8 @@ export function explicarError(
       titulo: "El servidor tuvo un problema",
       queHacer:
         momento === "guardar"
-          ? "No se guardó nada. Volvé a intentar en un momento; si se repite, avisale a soporte la hora y lo que estabas haciendo."
-          : "La pantalla puede estar vacía o incompleta. Recargá en un momento; si se repite, avisale a soporte la hora y qué pantalla abriste.",
+          ? "No se guardó nada. Intente de nuevo en un momento; si se repite, informe a soporte la hora y lo que estaba haciendo."
+          : "La pantalla puede estar vacía o incompleta. Recargue la página en un momento; si se repite, informe a soporte la hora y qué pantalla abrió.",
       silencioso: false,
     };
   }
@@ -121,8 +121,8 @@ export function explicarError(
     titulo: mensaje ?? "El servidor no aceptó los datos",
     queHacer:
       momento === "guardar"
-        ? "No se guardó nada. Corregí lo que dice arriba y volvé a intentar."
-        : "Recargá la pantalla; si vuelve a pasar, avisale a soporte qué pantalla abriste.",
+        ? "No se guardó nada. Corrija lo que se indica arriba e intente de nuevo."
+        : "Recargue la pantalla; si vuelve a pasar, informe a soporte qué pantalla abrió.",
     silencioso: false,
   };
 }

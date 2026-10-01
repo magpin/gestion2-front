@@ -28,7 +28,12 @@ export interface TableroConsumo {
     costoPorEmpresa: number | null;
     tokens: Tokens;
   };
-  porDia: { dia: string; chatUsd: number; lecturaUsd: number; respuestas: number }[];
+  porDia: {
+    dia: string;
+    chatUsd: number;
+    lecturaUsd: number;
+    respuestas: number;
+  }[];
   porEmpresa: {
     empresaId: string;
     empresa: string;
@@ -88,14 +93,20 @@ export async function pedirTablero(
   clave: string,
   filtro: { desde: string; hasta: string; empresaId: string | null },
 ): Promise<TableroConsumo> {
-  const params = new URLSearchParams({ desde: filtro.desde, hasta: filtro.hasta });
+  const params = new URLSearchParams({
+    desde: filtro.desde,
+    hasta: filtro.hasta,
+  });
   if (filtro.empresaId !== null) params.set("empresa", filtro.empresaId);
   const r = await fetch(`${env.apiUrl}/consumo-ia?${params.toString()}`, {
     headers: { "x-clave-consumo": clave },
   });
   if (!r.ok) {
     const cuerpo = (await r.json().catch(() => ({}))) as { message?: string };
-    throw new ErrorTablero(r.status, cuerpo.message ?? "No se pudo cargar el tablero.");
+    throw new ErrorTablero(
+      r.status,
+      cuerpo.message ?? "No se pudo cargar el tablero.",
+    );
   }
   return (await r.json()) as TableroConsumo;
 }
@@ -183,12 +194,18 @@ export async function pedirDetalle(
   });
   if (filtro.empresaId !== null) params.set("empresa", filtro.empresaId);
   if (filtro.categoria !== null) params.set("categoria", filtro.categoria);
-  const r = await fetch(`${env.apiUrl}/consumo-ia/detalle?${params.toString()}`, {
-    headers: { "x-clave-consumo": clave },
-  });
+  const r = await fetch(
+    `${env.apiUrl}/consumo-ia/detalle?${params.toString()}`,
+    {
+      headers: { "x-clave-consumo": clave },
+    },
+  );
   if (!r.ok) {
     const cuerpo = (await r.json().catch(() => ({}))) as { message?: string };
-    throw new ErrorTablero(r.status, cuerpo.message ?? "No se pudo cargar el detalle.");
+    throw new ErrorTablero(
+      r.status,
+      cuerpo.message ?? "No se pudo cargar el detalle.",
+    );
   }
   return (await r.json()) as DetalleConsumo;
 }
@@ -205,7 +222,10 @@ export const ETIQUETA_PERIODO: Record<Periodo, string> = {
 };
 
 /** El rango de un atajo, contra el día de hoy (`aaaa-mm-dd`). */
-export function rangoDe(periodo: Periodo, hoy: string): { desde: string; hasta: string } {
+export function rangoDe(
+  periodo: Periodo,
+  hoy: string,
+): { desde: string; hasta: string } {
   const [a, m] = hoy.split("-").map(Number);
   const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
   const base = Date.parse(`${hoy}T00:00:00Z`);
@@ -231,9 +251,11 @@ export function cop(n: number | null, tasa: number): string {
   return `$ ${Math.round(n * tasa).toLocaleString("es-CO")}`;
 }
 
-export const miles = (n: number): string => Math.round(n).toLocaleString("es-CO");
+export const miles = (n: number): string =>
+  Math.round(n).toLocaleString("es-CO");
 
-export const porcentaje = (n: number): string => `${(n * 100).toFixed(1).replace(".", ",")} %`;
+export const porcentaje = (n: number): string =>
+  `${(n * 100).toFixed(1).replace(".", ",")} %`;
 
 export const segundos = (ms: number | null): string =>
   ms === null ? "—" : `${(ms / 1000).toFixed(1).replace(".", ",")} s`;

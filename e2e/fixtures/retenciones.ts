@@ -4,12 +4,13 @@ import { API } from "./datos";
 import type { EmpresaLista } from "./empresa";
 
 /**
- * Lo que hace falta para poder retener: la UVT del año, un concepto con su
- * tarifa y —la parte que la gente olvida— estar inscrito como agente de
- * retención ante la DIAN.
+ * Lo que hace falta para poder retener: la cuenta donde va lo retenido y —la
+ * parte que la gente olvida— estar inscrito como agente de retención ante la
+ * DIAN.
  *
- * Las tarifas y las bases mínimas las fija la DIAN cada año: el sistema no las
- * inventa, las pide. Por eso una empresa nueva no tiene ninguna.
+ * La UVT, las tarifas y las bases mínimas son de la ley y ya vienen cargadas
+ * (0074). El concepto tampoco se crea: al existir la cuenta 236540 la base lo
+ * enlaza solo (0076).
  */
 export async function prepararRetenciones(
   api: APIRequestContext,
@@ -17,16 +18,12 @@ export async function prepararRetenciones(
   opciones: { agenteRetenedor: boolean },
 ): Promise<{ concepto: string; tarifa: number }> {
   const cabeceras = { Authorization: `Bearer ${e.token}` };
-  const anio = new Date().getFullYear();
 
   const pedir = async (ruta: string, datos: unknown) => {
     const r = await api.post(`${API}${ruta}`, { headers: cabeceras, data: datos });
     expect(r.ok(), `POST ${ruta}: ${await r.text()}`).toBeTruthy();
     return r.json() as unknown;
   };
-
-  // La UVT del año: las bases mínimas se expresan en UVT, no en pesos.
-  await pedir("/retenciones/uvt", { anio, valor: 49_799 });
 
   // La cuenta donde se acumula lo retenido, que es una deuda con la DIAN.
   const plan = (await api
@@ -35,30 +32,9 @@ export async function prepararRetenciones(
     | { id: string; codigo: string }[]
     | { datos: { id: string; codigo: string }[] };
   const cuentas = Array.isArray(plan) ? plan : plan.datos;
-  let cuenta = cuentas
-    .filter((c) => c.codigo.startsWith("2365"))
-    .sort((a, b) => b.codigo.length - a.codigo.length)[0];
-  if (cuenta === undefined || cuenta.codigo === "2365") {
-    cuenta = (await pedir("/plan-cuentas", {
-      codigo: "236540",
-      nombre: "Compras",
-    })) as { id: string; codigo: string };
+  if (!cuentas.some((c) => c.codigo === "236540")) {
+    await pedir("/plan-cuentas", { codigo: "236540", nombre: "Compras" });
   }
-
-  const tarifa = 2.5;
-  // El código tiene que ser uno de los seis que acepta la base al guardar la
-  // compra (HONORARIOS, COMISIONES, SERVICIOS, ARRENDAMIENTOS, COMPRAS,
-  // OTROS). El catálogo admite cualquiera, y la diferencia solo se ve al
-  // guardar, con un error que no lo dice.
-  await pedir("/retenciones/conceptos", {
-    anio,
-    tipo: "RENTA",
-    codigo: "COMPRAS",
-    nombre: "Compras generales",
-    tarifa,
-    cuentaId: cuenta.id,
-    baseMinimaUvt: 0,
-  });
 
   if (opciones.agenteRetenedor) {
     await pedir("/empresa-legal/regimenes", {
@@ -68,5 +44,6 @@ export async function prepararRetenciones(
     });
   }
 
-  return { concepto: "Compras generales", tarifa };
+  // Compras generales, declarante, desde el 1 jul 2026: 2,5 % desde 10 UVT.
+  return { concepto: "Compras generales", tarifa: 2.5 };
 }

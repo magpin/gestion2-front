@@ -22,6 +22,15 @@ import { rutApi } from "@/modules/catalogos/services/catalogos.service";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import type { TerceroDetalle } from "../types/terceros.types";
 
+/** El plazo habitual en días (PC25): vacío, o un entero de 0 a 365. */
+const diasDePlazo = z.union([
+  z.literal(""),
+  z
+    .string()
+    .regex(/^\d{1,3}$/, "Días enteros")
+    .refine((v) => Number(v) <= 365, "Máximo 365"),
+]);
+
 const esquema = z
   .object({
     tipoPersona: z.enum(["NATURAL", "JURIDICA"]),
@@ -43,6 +52,9 @@ const esquema = z
     municipioCodigo: z.string().optional(),
     esCliente: z.boolean(),
     esProveedor: z.boolean(),
+    esEmpleado: z.boolean(),
+    diasPlazoCliente: diasDePlazo,
+    diasPlazoProveedor: diasDePlazo,
     responsableIva: z.boolean(),
     esAgenteRetenedor: z.boolean(),
     esAutorretenedor: z.boolean(),
@@ -51,8 +63,8 @@ const esquema = z
   })
   // Las dos reglas que el backend también sostiene. Validarlas acá evita un
   // viaje al servidor para descubrir algo que el formulario ya sabe.
-  .refine((d) => d.esCliente || d.esProveedor, {
-    message: "Tiene que ser cliente, proveedor o ambos",
+  .refine((d) => d.esCliente || d.esProveedor || d.esEmpleado, {
+    message: "Tiene que ser cliente, proveedor o empleado (o varios)",
     path: ["esCliente"],
   })
   .refine(
@@ -81,6 +93,9 @@ const VACIO: DatosTercero = {
   municipioCodigo: "",
   esCliente: true,
   esProveedor: false,
+  esEmpleado: false,
+  diasPlazoCliente: "",
+  diasPlazoProveedor: "",
   responsableIva: false,
   esAgenteRetenedor: false,
   esAutorretenedor: false,
@@ -89,11 +104,11 @@ const VACIO: DatosTercero = {
 };
 
 const CALIDADES: Array<[keyof DatosTercero, string, string]> = [
-  ["responsableIva", "Responsable de IVA", "Le facturás con IVA discriminado"],
+  ["responsableIva", "Responsable de IVA", "Se le factura con IVA discriminado"],
   [
     "esAgenteRetenedor",
     "Agente retenedor",
-    "Practica retención sobre lo que le pagás",
+    "Practica retención sobre lo que se le paga",
   ],
   [
     "esAutorretenedor",
@@ -171,6 +186,9 @@ export function FormularioTercero({
       municipioCodigo: inicial.municipio_codigo ?? "",
       esCliente: inicial.es_cliente,
       esProveedor: inicial.es_proveedor,
+      esEmpleado: inicial.es_empleado,
+      diasPlazoCliente: inicial.dias_plazo_cliente?.toString() ?? "",
+      diasPlazoProveedor: inicial.dias_plazo_proveedor?.toString() ?? "",
       responsableIva: inicial.responsable_iva,
       esAgenteRetenedor: inicial.es_agente_retenedor,
       esAutorretenedor: inicial.es_autorretenedor,
@@ -428,14 +446,14 @@ export function FormularioTercero({
       </Seccion>
 
       <Seccion
-        titulo="Qué es para tu empresa"
-        descripcion="Decide en qué listas aparece al digitar. Puede ser las dos cosas: el mismo NIT suele comprar y vender."
+        titulo="Qué es para la empresa"
+        descripcion="Decide en qué listas aparece al digitar. Puede ser varias cosas: el mismo NIT suele comprar y vender."
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Tarjeta
             marcada={form.watch("esCliente")}
             titulo="Cliente"
-            detalle="Le vendés: aparece al hacer una factura"
+            detalle="Se le vende: aparece al hacer una factura"
             alAlternar={() =>
               form.setValue("esCliente", !form.watch("esCliente"))
             }
@@ -443,20 +461,66 @@ export function FormularioTercero({
           <Tarjeta
             marcada={form.watch("esProveedor")}
             titulo="Proveedor"
-            detalle="Le comprás: aparece al registrar una compra"
+            detalle="Se le compra: aparece al registrar una compra"
             alAlternar={() =>
               form.setValue("esProveedor", !form.watch("esProveedor"))
+            }
+          />
+          <Tarjeta
+            marcada={form.watch("esEmpleado")}
+            titulo="Empleado"
+            detalle="Trabaja para la empresa: puede responder por una caja"
+            alAlternar={() =>
+              form.setValue("esEmpleado", !form.watch("esEmpleado"))
             }
           />
         </div>
         {errores.esCliente && (
           <p className="text-[13px] text-danger">{errores.esCliente.message}</p>
         )}
+        {(form.watch("esCliente") || form.watch("esProveedor")) && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {form.watch("esCliente") && (
+              <Campo
+                id="diasPlazoCliente"
+                etiqueta="Plazo que se le da al cliente"
+                ayuda="Días. La factura a crédito propone el vencimiento con esto."
+                error={errores.diasPlazoCliente?.message}
+                escala="grande"
+              >
+                <Input
+                  id="diasPlazoCliente"
+                  inputMode="numeric"
+                  placeholder="30"
+                  className={`${CONTROL} font-mono`}
+                  {...form.register("diasPlazoCliente")}
+                />
+              </Campo>
+            )}
+            {form.watch("esProveedor") && (
+              <Campo
+                id="diasPlazoProveedor"
+                etiqueta="Plazo que da el proveedor"
+                ayuda="Días. La compra a crédito propone el vencimiento con esto."
+                error={errores.diasPlazoProveedor?.message}
+                escala="grande"
+              >
+                <Input
+                  id="diasPlazoProveedor"
+                  inputMode="numeric"
+                  placeholder="30"
+                  className={`${CONTROL} font-mono`}
+                  {...form.register("diasPlazoProveedor")}
+                />
+              </Campo>
+            )}
+          </div>
+        )}
       </Seccion>
 
       <Seccion
         titulo="Calidades tributarias"
-        descripcion="Deciden qué impuestos lleva cada documento que le emitas. Salen de su RUT."
+        descripcion="Deciden qué impuestos lleva cada documento que se le emita. Salen de su RUT."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           {CALIDADES.map(([campo, titulo, detalle]) => (
@@ -486,7 +550,7 @@ export function FormularioTercero({
           cargado, y el formulario no manda el campo, así que no lo pisa. */}
       <Seccion
         titulo="Responsabilidades en la factura electrónica"
-        descripcion="Se habilitan con el módulo DIAN. Son las que viajan en el XML del receptor; hasta que haya algo que transmitir, no hay nada que decidir acá."
+        descripcion="Se habilitan con el módulo DIAN. Son las que viajan en el XML del receptor; hasta que haya algo que transmitir, no hay nada que decidir aquí."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           {responsabilidades.map((r) => (

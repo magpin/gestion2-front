@@ -10,7 +10,7 @@ const turno = (e: Partial<TurnoConversacion>): TurnoConversacion => ({
   id: "t-1",
   orden: 2,
   autor: "ASISTENTE",
-  texto: "Almacenes Corona te debe **$ 27.316.050**.",
+  texto: "Almacenes Corona le debe **$ 27.316.050**.",
   estado: "COMPLETO",
   motivo: null,
   clase: null,
@@ -55,11 +55,11 @@ describe("TurnoRespondiendo — pensando, consultando, escribiendo", () => {
   it("cuando vuelve a llegar texto, escribe", () => {
     render(
       <TurnoRespondiendo
-        enVivo={{ pregunta: "¿Cuánto me debe?", texto: "Te debe $ 1.000.", consultando: null }}
+        enVivo={{ pregunta: "¿Cuánto me debe?", texto: "Le debe $ 1.000.", consultando: null }}
       />,
     );
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.getByText("Te debe $ 1.000.")).toBeInTheDocument();
+    expect(screen.getByText("Le debe $ 1.000.")).toBeInTheDocument();
   });
 });
 

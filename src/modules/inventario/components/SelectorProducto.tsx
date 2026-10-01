@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Loader2, Pencil, Plus } from "lucide-react";
 
@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ConNombreCompleto } from "@/components/shared/ConNombreCompleto";
 import { cn } from "@/lib/utils";
 import { DialogoProducto, type ProductoEnEdicion } from "./DialogoProducto";
 import { productosApi } from "../services/inventario.service";
@@ -34,6 +35,7 @@ export function SelectorProducto({
 }) {
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const campoBusqueda = useRef<HTMLInputElement>(null);
   // El diálogo se abre CERRANDO el popover: dentro del `PopoverContent` se
   // desmontaría con él en el mismo clic.
   const [editando, setEditando] = useState<ProductoEnEdicion>(null);
@@ -75,31 +77,48 @@ export function SelectorProducto({
         <PopoverTrigger
           render={<Button type="button" variant="outline" />}
           aria-invalid={invalido || undefined}
-          className="h-11 w-full justify-between rounded-xl px-4 font-normal aria-invalid:border-danger"
+          className="h-auto min-h-11 w-full justify-between rounded-xl px-4 py-2 text-left font-normal whitespace-normal aria-invalid:border-danger"
         >
-          <span
-            className={cn("truncate", valor ? "" : "text-muted-foreground")}
-          >
-            {valor ? (
-              <>
-                <span className="font-mono text-xs">{valor.codigo}</span>
-                <span className="mx-2 text-muted-foreground">·</span>
-                {valor.nombre}
-              </>
-            ) : (
-              "Seleccione un producto"
-            )}
-          </span>
+          {/* El nombre entero, en hasta dos líneas, y el código debajo: en la
+              tabla de líneas la celda es angosta y el nombre cortado no se lee. */}
+          {valor ? (
+            <span className="flex min-w-0 flex-col">
+              <span className="line-clamp-2 text-sm">{valor.nombre}</span>
+              <span className="font-mono text-xs text-muted-foreground">
+                {valor.codigo}
+              </span>
+            </span>
+          ) : (
+            <span className="truncate text-muted-foreground">
+              Seleccione un producto
+            </span>
+          )}
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
 
+        {/* La lista tiene alto propio y el buscador se voltea hacia arriba si
+            abajo no cabe: en la última línea de la factura, con el alto de lo
+            que quedaba bajo el campo, la lista se encogía a cero y no se veía
+            ningún producto. */}
         <PopoverContent
-          className="flex max-h-(--available-height) w-(--anchor-width) min-w-96 flex-col p-0"
+          className="flex w-(--anchor-width) min-w-96 flex-col p-0"
           align="start"
+          collisionAvoidance={{
+            side: "flip",
+            align: "shift",
+            fallbackAxisSide: "none",
+          }}
+          // El foco va al buscador sin mover la página: con `autoFocus` el
+          // navegador subía la pantalla antes de que el buscador quedara en
+          // su sitio.
+          initialFocus={() => {
+            campoBusqueda.current?.focus({ preventScroll: true });
+            return false;
+          }}
         >
           <div className="border-b border-border p-3">
             <Input
-              autoFocus
+              ref={campoBusqueda}
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               onKeyDown={(e) => {
@@ -114,7 +133,7 @@ export function SelectorProducto({
             />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-2">
+          <div className="max-h-[min(18rem,45vh)] overflow-y-auto p-2">
             {isFetching && (
               <div className="flex justify-center py-8 text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" />
@@ -123,8 +142,8 @@ export function SelectorProducto({
 
             {!isFetching &&
               productos.map((p) => (
+                <ConNombreCompleto key={p.id} texto={`${p.codigo} · ${p.nombre}`}>
                 <button
-                  key={p.id}
                   type="button"
                   onClick={() => {
                     onElegir(p);
@@ -144,12 +163,13 @@ export function SelectorProducto({
                       <span className="font-mono text-xs text-muted-foreground">
                         {p.codigo}
                       </span>
-                      <span className="truncate text-sm font-medium">
+                      <span data-recortable className="truncate text-sm font-medium">
                         {p.nombre}
                       </span>
                     </span>
                   </span>
                 </button>
+                </ConNombreCompleto>
               ))}
 
             {!isFetching && productos.length === 0 && (
@@ -160,7 +180,7 @@ export function SelectorProducto({
           </div>
 
           {/* Que el producto no esté en el catálogo no debería frenar una venta:
-            se da de alta acá mismo y la línea sigue armándose. */}
+            se da de alta aquí mismo y la línea sigue armándose. */}
           <div className="flex items-center gap-1 border-t border-border p-2">
             <Button
               type="button"

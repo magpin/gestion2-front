@@ -109,13 +109,13 @@ export function DialogoNotaBanco({
           <div className="rounded-2xl bg-muted p-4 text-sm">{resumen}</div>
 
           <Campo id="contraCuenta" etiqueta="Cuenta contable" ayuda={ayudaCuenta} escala="grande">
-            <SelectorCuenta valor={cuenta} onElegir={setCuenta} invalido={noSirve !== null} />
+            <SelectorCuenta valor={cuenta} onElegir={setCuenta} invalido={noSirve !== null} crear={{ madres: "cualquiera" }} />
           </Campo>
 
           {noSirve && (
             <p className="rounded-2xl bg-warning/10 p-4 text-sm text-warning">
               Esta cuenta exige {noSirve}, y registrar desde el extracto todavía no
-              lo pide. Elegí otra auxiliar.
+              lo pide. Elija otra auxiliar.
             </p>
           )}
 
@@ -127,7 +127,7 @@ export function DialogoNotaBanco({
                 onValueChange={(v) => setTerceroId(v ?? "")}
               >
                 <SelectTrigger id="tercero" className="h-11 w-full rounded-xl px-4">
-                  <SelectValue placeholder="Elegí el tercero" />
+                  <SelectValue placeholder="Elija el tercero" />
                 </SelectTrigger>
                 <SelectContent>
                   {(terceros?.datos ?? []).map((t) => (

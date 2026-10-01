@@ -8,7 +8,10 @@ import type {
   FiltroCompras,
   PagarInput,
   PaginaCompras,
+  CompraPrevia,
+  NumeracionSoporte,
 } from "../types/compras.types";
+import type { PropuestaRenta } from "@/modules/retenciones/types/retenciones.types";
 
 /**
  * Facturas de compra. Al crearse: asientan y aumentan el kardex, todo en el
@@ -30,8 +33,24 @@ export const comprasApi = {
   porId: (id: string) =>
     api.get<CompraDocumentoDetalle>(`/compras/${id}`).then((r) => r.data),
 
+  /** Cómo quedaría en el libro, sin guardar nada. */
+  previo: (datos: CrearCompraInput) => api.post<CompraPrevia>("/compras/previo", datos).then((r) => r.data),
+
+  /** El siguiente número del documento soporte; `null` si no hay resolución. */
+  // Sin resolución vigente el servidor responde vacío: llega "" y no null.
+  numeracionSoporte: () =>
+    api.get<NumeracionSoporte | "" | null>("/compras/soporte/numeracion").then((r) => r.data || null),
+
   crear: (datos: CrearCompraInput) =>
     api.post<CompraDocumentoDetalle>("/compras", datos).then((r) => r.data),
+
+  /** La retención de renta que llevaría la compra, sin registrar nada. */
+  simularRetencion: (
+    datos: Pick<CrearCompraInput, "terceroId" | "fecha" | "lineas" | "conceptosRenta" | "pagadaConTarjeta" | "municipioCodigo">,
+  ) =>
+    api
+      .post<PropuestaRenta>("/compras/simular-retencion", datos)
+      .then((r) => r.data),
 
   /** No borra: anula el asiento y marca el documento, junto. */
   anular: (id: string, motivo: string) =>

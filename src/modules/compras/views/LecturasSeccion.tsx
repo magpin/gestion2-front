@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Upload } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,9 +54,15 @@ export function LecturasSeccion() {
   const [abierta, setAbierta] = useState<LecturaFactura | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
 
-  const { data: lecturas = [], isLoading } = useQuery({
+  const {
+    data: lecturas,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: CLAVE,
     queryFn: lecturasApi.listar,
+    meta: SILENCIOSO,
     refetchInterval: (q) =>
       (q.state.data ?? []).some(
         (l) => l.estado === "EN_COLA" || l.estado === "LEYENDO",
@@ -73,7 +81,10 @@ export function LecturasSeccion() {
       void cliente.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Subida. María la está leyendo.");
     },
-    onError: (e: Error) => aviso.error(e.message),
+    // `falla` y no `e.message`: en un error HTTP, `message` es el genérico de
+    // axios («Request failed with status code 400») y esconde lo que dijo el
+    // servidor, que es lo que explica qué hacer.
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const elegir = (archivo: File | undefined) => {
@@ -92,7 +103,7 @@ export function LecturasSeccion() {
   const enPantalla =
     abierta === null
       ? null
-      : (lecturas.find((l) => l.id === abierta.id) ?? abierta);
+      : (lecturas?.find((l) => l.id === abierta.id) ?? abierta);
 
   return (
     <div className="flex flex-col gap-5">
@@ -100,10 +111,10 @@ export function LecturasSeccion() {
         <div className="flex items-center gap-3">
           <Maria estado={subir.isPending ? "leyendo" : "reposo"} tamano={32} />
           <div>
-            <p className="text-sm font-medium">Subí la factura y yo la leo</p>
+            <p className="text-sm font-medium">Suba la factura y yo la leo</p>
             <p className="text-xs text-muted-foreground">
-              En PDF o en foto. Te digo qué entendí y qué me falta; registrar lo
-              apretás vos.
+              En PDF o en foto. Le digo qué entendí y qué me falta; registrar lo
+              decide usted.
             </p>
           </div>
         </div>
@@ -139,16 +150,36 @@ export function LecturasSeccion() {
         )}
       </div>
 
-      {isLoading ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          Cargando…
-        </p>
-      ) : lecturas.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-14 text-center">
-          <p className="text-sm text-muted-foreground">
-            Todavía no le pasaste ninguna factura a María.
+      {lecturas === undefined ? (
+        isError ? (
+          <ErrorCarga
+            error={error}
+            titulo="No se pudieron leer las facturas que leyó María"
+            onReintentar={refetch}
+          />
+        ) : (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Cargando…
           </p>
-        </div>
+        )
+      ) : lecturas.length === 0 ? (
+        <EmptyState
+          icon={Upload}
+          titulo="Todavía no le ha pasado ninguna factura a María"
+          descripcion={
+            puedeSubir
+              ? "Suba la factura de un proveedor, en PDF o en foto. María la lee, le dice qué le falta y usted la registra después de revisarla."
+              : "Cuando alguien de compras suba la factura de un proveedor, la va a ver aquí con lo que leyó María."
+          }
+          accion={
+            puedeSubir && !subir.isPending
+              ? {
+                  label: "Subir una factura",
+                  onClick: () => entrada.current?.click(),
+                }
+              : undefined
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {lecturas.map((lectura) => (

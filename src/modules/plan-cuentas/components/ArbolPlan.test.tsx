@@ -45,7 +45,7 @@ describe("ArbolPlan", () => {
 
   it("sin cuentas invita a empezar por las sugerencias", () => {
     render(<ArbolPlan cuentas={[]} />);
-    expect(screen.getByText(/Empezá por las sugerencias/)).toBeInTheDocument();
+    expect(screen.getByText(/Empiece por las sugerencias/)).toBeInTheDocument();
   });
 
   it("de solo lectura no ofrece acciones", () => {
@@ -82,7 +82,7 @@ describe("ArbolPlan", () => {
     await userEvent.click(screen.getByRole("button", { name: /^Crear/ }));
 
     expect(onCrear).toHaveBeenCalledWith({
-      codigo: "11100501",
+      madre: "111005",
       nombre: "Bancolombia ahorros",
     });
   });

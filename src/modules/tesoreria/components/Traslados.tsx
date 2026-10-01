@@ -1,0 +1,530 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeftRight, ArrowRight, Loader2 } from "lucide-react";
+
+import { CampoPesos } from "@/components/shared/CampoNumero";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
+import { SkeletonTable } from "@/components/shared/SkeletonTable";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogCloseIcon,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useQuieto } from "@/hooks/useQuieto";
+import { aviso } from "@/lib/avisos";
+import { formatCOP } from "@/lib/utils";
+import { Campo } from "@/modules/configuracion/components/Campo";
+import { cuentasBancariasApi } from "../services/bancos.service";
+import { cajasApi } from "../services/tesoreria.service";
+import { trasladosApi } from "../services/traslados.service";
+import { NOMBRE_TIPO_CUENTA_BANCARIA, type CuentaBancariaResumen } from "../types/bancos.types";
+import type { CajaResumen } from "../types/tesoreria.types";
+import type { ExtremoTrasladoInput, PreviaTraslado, Traslado } from "../types/traslados.types";
+import { problemaDelMedio, SelectorMedio, type Medio } from "./SelectorMedio";
+
+const hoy = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+// Un traslado mueve los saldos y los dos libros: todo cuelga de estas claves.
+const INVALIDAR = [["traslados"], ["cajas"], ["cuentas-bancarias"], ["movimientos-concepto"]];
+
+/** Lo que el formulario sabe de un extremo: el medio y cuál, si ya se eligió. */
+interface Lado {
+  medio: Medio;
+  caja: CajaResumen | null;
+  cuenta: CuentaBancariaResumen | null;
+}
+
+const ladoVacio = (medio: Medio): Lado => ({ medio, caja: null, cuenta: null });
+
+const idDe = (l: Lado): string | null => (l.medio === "CAJA" ? l.caja?.id : l.cuenta?.id) ?? null;
+
+const aEnvio = (l: Lado): ExtremoTrasladoInput =>
+  l.medio === "CAJA" ? { medio: "CAJA", cajaId: l.caja!.id } : { medio: "BANCO", cuentaBancariaId: l.cuenta!.id };
+
+/**
+ * Traslados entre caja y bancos: consignar el efectivo, retirar para la caja,
+ * pasar de una cuenta a otra. No es ingreso ni gasto: la plata cambia de
+ * lugar, con un solo asiento y un movimiento en cada libro.
+ */
+export function ListaTraslados({ puedeAnular }: { puedeAnular: boolean }) {
+  const [anulando, setAnulando] = useState<Traslado | null>(null);
+  const [trasladando, setTrasladando] = useState(false);
+  const { data, isError, error, refetch } = useQuery({
+    queryKey: ["traslados"],
+    queryFn: trasladosApi.listar,
+    meta: SILENCIOSO,
+  });
+
+  if (data === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudieron leer los traslados" onReintentar={refetch} />
+    ) : (
+      <SkeletonTable />
+    );
+  }
+  if (data.length === 0) {
+    // Quien puede anular es quien puede trasladar: los dos son CAJA o DIRECTOR.
+    return (
+      <>
+        <EmptyState
+          titulo="Todavía no hay traslados"
+          descripcion="Cuando consigne el efectivo de la caja, retire del banco o pase dinero entre las cuentas de la empresa, regístrelo aquí: no es ingreso ni gasto, el dinero cambia de lugar."
+          accion={puedeAnular ? { label: "Nuevo traslado", onClick: () => setTrasladando(true) } : undefined}
+        />
+        <TrasladoDialog abierto={trasladando} onCerrar={() => setTrasladando(false)} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-sm">
+        <table className="w-full min-w-[820px] text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+              <th className="px-5 py-3">Traslado</th>
+              <th className="px-5 py-3">Fecha</th>
+              <th className="px-5 py-3">De → a</th>
+              <th className="px-5 py-3">Detalle</th>
+              <th className="px-5 py-3 text-right">Valor</th>
+              {puedeAnular && <th className="px-5 py-3" />}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((x) => (
+              <tr key={x.id} className={`border-t border-border ${x.estado === "ANULADO" ? "text-muted-foreground" : ""}`}>
+                <td className="px-5 py-3 font-mono font-semibold whitespace-nowrap">
+                  {x.numero}
+                  {x.estado === "ANULADO" && (
+                    <span
+                      title={x.motivoAnulacion ?? undefined}
+                      className="ml-2 rounded-full border border-border px-2 py-0.5 font-sans text-[11px] font-medium"
+                    >
+                      Anulado
+                    </span>
+                  )}
+                </td>
+                <td className="px-5 py-3 whitespace-nowrap">{x.fecha}</td>
+                <td className="px-5 py-3">
+                  <span className="inline-flex items-center gap-1.5">
+                    {x.origen.nombre}
+                    <ArrowRight className="size-3.5 text-muted-foreground" />
+                    {x.destino.nombre}
+                  </span>
+                </td>
+                <td className="px-5 py-3">{x.detalle}</td>
+                <td className="px-5 py-3 text-right font-mono font-semibold whitespace-nowrap tabular-nums">
+                  {formatCOP(x.valor)}
+                  {x.gmf > 0 && (
+                    <span className="block text-xs font-normal text-muted-foreground">4×1000 {formatCOP(x.gmf)}</span>
+                  )}
+                </td>
+                {puedeAnular && (
+                  <td className="px-5 py-3 text-right">
+                    {x.estado === "VIGENTE" && (
+                      <Button type="button" variant="outline" className="h-9 rounded-lg px-3" onClick={() => setAnulando(x)}>
+                        Anular
+                      </Button>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <DialogoAnularTraslado traslado={anulando} onCerrar={() => setAnulando(null)} />
+    </>
+  );
+}
+
+/**
+ * `desdeCaja`: «Llevar al banco» desde la caja. Sale de esa caja y entra a la
+ * primera cuenta bancaria activa; se puede cambiar.
+ */
+export function TrasladoDialog({
+  abierto,
+  onCerrar,
+  desdeCaja,
+}: {
+  abierto: boolean;
+  onCerrar: () => void;
+  desdeCaja?: string;
+}) {
+  return (
+    <Dialog open={abierto} onOpenChange={(a) => !a && onCerrar()}>
+      <DialogContent size="lg">{abierto && <Formulario onCerrar={onCerrar} desdeCaja={desdeCaja} />}</DialogContent>
+    </Dialog>
+  );
+}
+
+function Formulario({ onCerrar, desdeCaja }: { onCerrar: () => void; desdeCaja?: string }) {
+  const queryClient = useQueryClient();
+  const [fecha, setFecha] = useState(hoy());
+  // Lo más común: consignar el efectivo de la caja en el banco.
+  const [origenElegido, setOrigen] = useState<Lado>(ladoVacio("CAJA"));
+  const [destinoElegido, setDestino] = useState<Lado>(ladoVacio("BANCO"));
+  const [valor, setValor] = useState("");
+  const [detalle, setDetalle] = useState("");
+  const [sinGmf, setSinGmf] = useState(false);
+
+  // «Llevar al banco»: la caja de donde sale y la primera cuenta, ya puestas.
+  // Las mismas consultas que los selectores: vienen del caché.
+  const { data: cajas } = useQuery({
+    queryKey: ["cajas", "selector"],
+    queryFn: () => cajasApi.listar(),
+    staleTime: 60_000,
+    enabled: desdeCaja !== undefined,
+  });
+  const { data: cuentas } = useQuery({
+    queryKey: ["cuentas-bancarias", "selector"],
+    queryFn: () => cuentasBancariasApi.listar(),
+    staleTime: 60_000,
+    enabled: desdeCaja !== undefined,
+  });
+  // Mientras no se elija otra cosa, valen las puestas.
+  const origen: Lado =
+    desdeCaja !== undefined && origenElegido.medio === "CAJA" && origenElegido.caja === null
+      ? { ...origenElegido, caja: cajas?.find((c) => c.id === desdeCaja) ?? null }
+      : origenElegido;
+  const destino: Lado =
+    desdeCaja !== undefined && destinoElegido.medio === "BANCO" && destinoElegido.cuenta === null
+      ? { ...destinoElegido, cuenta: cuentas?.find((c) => c.activa) ?? null }
+      : destinoElegido;
+
+  const origenId = idDe(origen);
+  const destinoId = idDe(destino);
+  const valorQuieto = useQuieto(Number(valor) > 0 ? Number(valor) : 0);
+  const { data: previsto } = useQuery({
+    queryKey: ["traslados", "gmf", origen.medio, origenId, destino.medio, destinoId, valorQuieto],
+    queryFn: () =>
+      trasladosApi.gmfPrevisto({
+        origenMedio: origen.medio,
+        origenId: origenId!,
+        destinoMedio: destino.medio,
+        destinoId: destinoId!,
+        valor: valorQuieto,
+      }),
+    enabled: origenId !== null && destinoId !== null && valorQuieto > 0,
+  });
+  const gmf = origen.medio === "BANCO" && previsto?.causa && !sinGmf ? previsto.gmf : 0;
+
+  const problema =
+    problemaDelMedio(origen.medio, origen.caja, origen.cuenta) ??
+    problemaDelMedio(destino.medio, destino.caja, destino.cuenta) ??
+    (origen.medio === destino.medio && origenId === destinoId
+      ? "El origen y el destino son el mismo."
+      : !(Number(valor) > 0)
+        ? "Escriba el valor."
+        : fecha === ""
+          ? "Elija la fecha."
+          : null);
+
+  const crear = useMutation({
+    mutationFn: () =>
+      trasladosApi.crear({
+        fecha,
+        origen: aEnvio(origen),
+        destino: aEnvio(destino),
+        valor: Number(valor),
+        detalle: detalle.trim() || undefined,
+        sinGmf: sinGmf || undefined,
+      }),
+    onSuccess: async (x) => {
+      await Promise.all(INVALIDAR.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+      aviso.exito(
+        `Traslado ${x.numero} registrado`,
+        `${formatCOP(x.valor)} de ${x.origen.nombre} a ${x.destino.nombre}${x.gmf > 0 ? `; 4×1000 ${formatCOP(x.gmf)}` : ""}.`,
+      );
+      onCerrar();
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
+  return (
+    <>
+      <DialogHeader>
+        <div>
+          <DialogTitle>Nuevo traslado</DialogTitle>
+          <DialogDescription>Mover dinero entre la caja y los bancos. No es ingreso ni gasto.</DialogDescription>
+        </div>
+        <DialogCloseIcon />
+      </DialogHeader>
+      <DialogBody className="flex flex-col gap-5">
+        <div className="grid items-end gap-4 md:grid-cols-[1fr_auto_1fr]">
+          <Campo id="traslado-origen" etiqueta="Sale de">
+            <SelectorMedio
+              medio={origen.medio}
+              onMedio={(m) => setOrigen(ladoVacio(m))}
+              caja={origen.caja}
+              onCaja={(caja) => setOrigen({ ...origen, caja })}
+              cuenta={origen.cuenta}
+              onCuenta={(cuenta) => setOrigen({ ...origen, cuenta })}
+            />
+            <Hay lado={origen} />
+          </Campo>
+          <Button
+            type="button"
+            variant="outline"
+            className="mb-0.5 size-11 self-end rounded-full p-0"
+            aria-label="Invertir: que salga del destino y llegue al origen"
+            onClick={() => {
+              setOrigen(destino);
+              setDestino(origen);
+            }}
+          >
+            <ArrowLeftRight className="size-4" />
+          </Button>
+          <Campo id="traslado-destino" etiqueta="Entra a">
+            <SelectorMedio
+              medio={destino.medio}
+              onMedio={(m) => setDestino(ladoVacio(m))}
+              caja={destino.caja}
+              onCaja={(caja) => setDestino({ ...destino, caja })}
+              cuenta={destino.cuenta}
+              onCuenta={(cuenta) => setDestino({ ...destino, cuenta })}
+            />
+            <Hay lado={destino} />
+          </Campo>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Campo id="traslado-valor" etiqueta="Valor">
+            <CampoPesos
+              id="traslado-valor"
+              value={valor}
+              onChange={setValor}
+              className="h-11 rounded-xl px-4 text-right font-mono"
+            />
+          </Campo>
+          <Campo id="traslado-fecha" etiqueta="Fecha">
+            <Input
+              id="traslado-fecha"
+              type="date"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+              className="h-11 rounded-xl px-4"
+            />
+          </Campo>
+        </div>
+        <Campo id="traslado-detalle" etiqueta="Para qué">
+          <Input
+            id="traslado-detalle"
+            value={detalle}
+            onChange={(e) => setDetalle(e.target.value)}
+            placeholder={nombrePorDefecto(origen.medio, destino.medio)}
+            maxLength={200}
+            className="h-11 rounded-xl px-4"
+          />
+        </Campo>
+        {origen.medio === "BANCO" && previsto?.causa && (
+          <div className="rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm">
+            <p>
+              Este {destino.medio === "CAJA" ? "retiro" : "traslado"} paga 4×1000:{" "}
+              <span className="font-mono font-semibold">{formatCOP(previsto.gmf)}</span>. De {nombreDe(origen)} salen{" "}
+              <span className="font-mono font-semibold">{formatCOP(Number(valor) + previsto.gmf)}</span>. Si la cuenta
+              estuviera marcada como exenta ante el banco, no pagaría.
+            </p>
+            <label className="mt-2 flex w-fit items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={sinGmf}
+                onChange={(e) => setSinGmf(e.target.checked)}
+                className="size-4 accent-primary"
+              />
+              El banco no lo cobró en este traslado
+            </label>
+          </div>
+        )}
+        {problema === null && (
+          <QuedaEn origen={origen} destino={destino} valor={Number(valor)} gmf={gmf} previa={previsto} />
+        )}
+      </DialogBody>
+      <DialogFooter className="sm:justify-between">
+        <p className="self-center text-sm text-muted-foreground">
+          {problema ??
+            "Aparece en Movimientos de las dos cuentas."}
+        </p>
+        <div className="flex gap-3">
+          <Button type="button" variant="outline" className="h-12 rounded-xl px-6" onClick={onCerrar}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            className="h-12 rounded-xl px-6"
+            disabled={problema !== null || crear.isPending}
+            onClick={() => crear.mutate()}
+          >
+            {crear.isPending && <Loader2 className="size-4 animate-spin" />}
+            Hacer traslado
+          </Button>
+        </div>
+      </DialogFooter>
+    </>
+  );
+}
+
+/** El mismo nombre que pone el backend si el detalle va vacío. */
+export function nombrePorDefecto(origen: Medio, destino: Medio): string {
+  if (origen === "CAJA") return destino === "BANCO" ? "Consignación del efectivo" : "Traslado entre cajas";
+  return destino === "CAJA" ? "Retiro para la caja" : "Transferencia entre cuentas propias";
+}
+
+function DialogoAnularTraslado({ traslado, onCerrar }: { traslado: Traslado | null; onCerrar: () => void }) {
+  const queryClient = useQueryClient();
+  const [motivo, setMotivo] = useState("");
+  const anular = useMutation({
+    mutationFn: () => trasladosApi.anular(traslado!.id, motivo.trim()),
+    onSuccess: async (x) => {
+      await Promise.all(INVALIDAR.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+      aviso.exito(`Traslado ${x.numero} anulado`);
+      setMotivo("");
+      onCerrar();
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
+  return (
+    <Dialog open={traslado !== null} onOpenChange={(a) => !a && onCerrar()}>
+      <DialogContent>
+        <DialogHeader>
+          <div>
+            <DialogTitle>Anular {traslado?.numero}</DialogTitle>
+            <DialogDescription>
+              Los {formatCOP(traslado?.valor ?? 0)} salen de {traslado?.destino.nombre} y vuelven a{" "}
+              {traslado?.origen.nombre}
+              {traslado && traslado.gmf > 0 ? ", y se anula el 4×1000" : ""}. El traslado queda en el historial.
+            </DialogDescription>
+          </div>
+          <DialogCloseIcon />
+        </DialogHeader>
+        <DialogBody>
+          <Textarea
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            placeholder="Por qué se anula"
+            aria-label="Motivo de la anulación"
+            maxLength={300}
+          />
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="outline" className="h-12 rounded-xl px-6" onClick={onCerrar}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            className="h-12 rounded-xl px-6"
+            disabled={motivo.trim().length < 3 || anular.isPending}
+            onClick={() => anular.mutate()}
+          >
+            {anular.isPending && <Loader2 className="size-4 animate-spin" />}
+            Anular traslado
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const nombreDe = (l: Lado) => (l.medio === "CAJA" ? (l.caja?.nombre ?? "Caja") : (l.cuenta?.banco ?? "Banco"));
+const saldoDe = (l: Lado) => Number((l.medio === "CAJA" ? l.caja?.saldo : l.cuenta?.saldo) ?? 0);
+
+/**
+ * Cómo quedan las dos cuentas y el asiento que se va a hacer (PC9): sale el
+ * valor más el 4×1000 del origen, llega el valor al destino, y el 4×1000 va
+ * a gasto en su propio movimiento.
+ */
+function QuedaEn({
+  origen,
+  destino,
+  valor,
+  gmf,
+  previa,
+}: {
+  origen: Lado;
+  destino: Lado;
+  valor: number;
+  gmf: number;
+  previa: PreviaTraslado | undefined;
+}) {
+  const c = previa?.cuentas;
+  const lineas = [
+    { codigo: c?.destino?.codigo, nombre: c?.destino?.nombre ?? nombreDe(destino), lado: "D", valor },
+    ...(gmf > 0
+      ? [
+          {
+            codigo: c?.gmf?.codigo,
+            nombre: c?.gmf?.nombre ?? "Gravamen a los movimientos financieros",
+            lado: "D",
+            valor: gmf,
+          },
+        ]
+      : []),
+    { codigo: c?.origen?.codigo, nombre: c?.origen?.nombre ?? nombreDe(origen), lado: "C", valor: valor + gmf },
+  ];
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[
+          { l: origen, queda: saldoDe(origen) - valor - gmf },
+          { l: destino, queda: saldoDe(destino) + valor },
+        ].map(({ l, queda }) => (
+          <div key={`${l.medio}-${nombreDe(l)}`} className="rounded-2xl border border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground">{nombreDe(l)} queda en</p>
+            <p className="font-mono whitespace-nowrap tabular-nums">
+              <span className="mr-2 text-xs text-muted-foreground line-through">{formatCOP(saldoDe(l))}</span>
+              <span className={queda < 0 ? "font-semibold text-danger" : "font-semibold"}>{formatCOP(queda)}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-2xl bg-muted px-4 py-3">
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          En el libro{previa ? ` · ${previa.numero}` : ""}
+        </p>
+        <ul className="flex flex-col gap-0.5 text-xs">
+          {lineas.map((x) => (
+            <li key={`${x.nombre}-${x.lado}`} className="flex justify-between gap-3">
+              <span>
+                {x.codigo && <span className="mr-2 font-mono text-muted-foreground">{x.codigo}</span>}
+                {x.nombre}
+              </span>
+              <span className="font-mono whitespace-nowrap tabular-nums">
+                {x.lado} {formatCOP(x.valor)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/** Debajo de cada selector: qué es y cuánto hay (lienzo 36). */
+function Hay({ lado }: { lado: Lado }) {
+  if (lado.medio === "CAJA" && lado.caja) {
+    return <p className="mt-1 text-xs text-muted-foreground">Efectivo · hay {formatCOP(saldoDe(lado))}</p>;
+  }
+  if (lado.medio === "BANCO" && lado.cuenta) {
+    return (
+      <p className="mt-1 text-xs text-muted-foreground">
+        {NOMBRE_TIPO_CUENTA_BANCARIA[lado.cuenta.tipo_cuenta]} ···{lado.cuenta.numero_cuenta.slice(-4)} · hay{" "}
+        {formatCOP(saldoDe(lado))}
+      </p>
+    );
+  }
+  return null;
+}

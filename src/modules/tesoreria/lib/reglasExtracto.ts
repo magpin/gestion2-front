@@ -64,7 +64,7 @@ export function problemaRegla(b: BorradorRegla): string | null {
   const nombre = b.nombre.trim();
   if (nombre.length < 2 || nombre.length > 80) return "El nombre va de 2 a 80 caracteres.";
   const palabras = leerPalabras(b.palabras);
-  if (palabras.length === 0) return "Escribí al menos una palabra.";
+  if (palabras.length === 0) return "Escriba al menos una palabra.";
   if (palabras.length > 10) return "Hasta 10 palabras por regla.";
   const mala = palabras.find((p) => p.length < 2 || p.length > 40);
   if (mala) return `«${mala}»: cada palabra va de 2 a 40 caracteres.`;

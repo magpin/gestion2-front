@@ -17,12 +17,14 @@ import { CONTROL, EstadoVacio, Pildora } from "../components/Comunes";
 import { SelectorMunicipio } from "@/modules/catalogos/components/SelectorMunicipio";
 import { useGuardar } from "../hooks/useGuardar";
 import { empresaApi } from "../services/nucleo.service";
+import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
+import { configuracionCajaApi } from "@/modules/tesoreria/services/tesoreria.service";
 
 const esquema = z.object({
   codigo: z.string().min(1, "Requerido").max(20),
   nombre: z.string().min(2, "Requerido").max(120),
   direccion: z.string().min(3, "Requerido").max(200),
-  municipioCodigo: z.string().regex(/^[0-9]{5}$/, "Elige un municipio"),
+  municipioCodigo: z.string().regex(/^[0-9]{5}$/, "Elija un municipio"),
   telefono: z.string().max(40).optional(),
   esPrincipal: z.boolean(),
 });
@@ -53,9 +55,21 @@ export function PasoSedes() {
   });
 
   const guardar = useGuardar<Datos>({
-    fn: (d) => empresaApi.crearSede({ ...d, telefono: d.telefono || undefined }),
+    fn: async (d) => {
+      const sede = await empresaApi.crearSede({ ...d, telefono: d.telefono || undefined });
+      // Una sede agregada con el plan ya armado necesita su caja y su cuenta
+      // «Caja - {sede}»: tesorería las crea al preparar. Antes del plan, las
+      // crea el paso de Plan de cuentas. Si falla, tesorería lo reintenta al
+      // abrirse.
+      try {
+        if ((await planCuentasApi.listar({ q: "110505" })).length > 0) await configuracionCajaApi.preparar();
+      } catch {
+        // Sin permiso o sin plan: no frena el registro de la sede.
+      }
+      return sede;
+    },
     exito: "Sede registrada",
-    invalidar: [["sedes"], ["estado-configuracion"]],
+    invalidar: [["sedes"], ["estado-configuracion"], ["cajas"], ["plan-cuentas"]],
     alTerminar: () => {
       form.reset({
         codigo: String(activas.length + 2).padStart(3, "0"),
@@ -91,7 +105,7 @@ export function PasoSedes() {
           {activas.length === 0 ? (
             <EstadoVacio
               titulo="Aún no hay sedes"
-              ayuda="La primera que registres será la principal."
+              ayuda="La primera que registre será la principal."
             />
           ) : (
             <Registradas>

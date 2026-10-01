@@ -1,30 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { FileMinus, FilePlus, ReceiptText, ScanLine } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FileMinus, FilePlus, ReceiptText } from "lucide-react";
 
 import { BotonNuevo } from "@/components/shared/BotonNuevo";
+import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
+import { AtajoLeidos } from "@/modules/asistente/components/AtajoLeidos";
 import { FacturasCompraSeccion } from "./FacturasCompraSeccion";
-import { LecturasSeccion } from "./LecturasSeccion";
 import { NotasCompraSeccion } from "./NotasCompraSeccion";
 
-type Seccion = "Facturas" | "Notas crédito" | "Notas débito" | "Leídas";
+type Seccion = "Facturas" | "Notas crédito" | "Notas débito";
 
 const SECCIONES: Array<[Seccion, typeof ReceiptText]> = [
   ["Facturas", ReceiptText],
   ["Notas crédito", FileMinus],
   ["Notas débito", FilePlus],
-  ["Leídas", ScanLine],
 ];
 
-/**
- * Qué crea el botón de la cabecera en cada pestaña.
- *
- * `Leídas` no está: ahí no se crea nada. Lo que hay son propuestas —lo que
- * María entendió de una factura— y se registran una por una, después de
- * mirarlas. Un «nuevo» en esa pestaña prometería otra cosa.
- */
+/** Qué crea el botón de la cabecera en cada pestaña. */
 const ETIQUETA_NUEVO: Partial<Record<Seccion, string>> = {
   Facturas: "Nueva compra",
   "Notas crédito": "Nueva nota crédito",
@@ -49,9 +44,16 @@ export function ComprasView() {
   const [creando, setCreando] = useState(false);
   const puedeCrear = useTieneRol("COMPRAS", "DIRECTOR");
   const cerrarCreacion = () => setCreando(false);
+  const router = useRouter();
+  // Con la página prendida, la factura nueva se registra allá, con su resumen
+  // y el asiento previo. Las notas siguen en su diálogo.
+  const nuevo = () =>
+    seccion === "Facturas" && funcionActiva("compraPagina")
+      ? router.push("/dashboard/compras/nueva")
+      : setCreando(true);
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div className="w-full">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
           <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
@@ -62,17 +64,20 @@ export function ComprasView() {
             Compras<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Registra la factura del proveedor — asienta y aumenta el kardex al
+            Aquí se registra la factura del proveedor — se asienta y aumenta el kardex al
             guardar — y sus notas, que no tocan el kardex.
           </p>
         </div>
 
-        {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
-          <BotonNuevo
-            etiqueta={ETIQUETA_NUEVO[seccion]}
-            onClick={() => setCreando(true)}
-          />
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <AtajoLeidos tipo="facturas" />
+          {puedeCrear && ETIQUETA_NUEVO[seccion] !== undefined && (
+            <BotonNuevo
+              etiqueta={ETIQUETA_NUEVO[seccion]}
+              onClick={nuevo}
+            />
+          )}
+        </div>
       </header>
 
       <nav className="mb-7 flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
@@ -85,7 +90,7 @@ export function ComprasView() {
               setSeccion(nombre);
               setCreando(false);
             }}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+            className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
               seccion === nombre
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent"
@@ -117,7 +122,6 @@ export function ComprasView() {
           onCerrarCreacion={cerrarCreacion}
         />
       )}
-      {seccion === "Leídas" && <LecturasSeccion />}
     </div>
   );
 }

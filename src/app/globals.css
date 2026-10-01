@@ -68,6 +68,8 @@
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
+  /* Texto sobre un fondo de alerta suave (`bg-warning/15`): legible en los dos modos. */
+  --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
 
   --radius-sm: calc(var(--radius) * 0.6);
@@ -172,6 +174,7 @@
   --danger: var(--danger-base);
   --warning: var(--warning-base);
   --info: var(--info-base);
+  --warning-foreground: var(--warning-base);
 
   /* Gráficas: acento primero, después la escala neutra. La jerarquía en una
      gráfica se hace con luminosidad, no metiendo cinco colores distintos. */
@@ -238,6 +241,7 @@
   --danger: var(--danger-base);
   --warning: var(--warning-base);
   --info: var(--info-base);
+  --warning-foreground: #f0b35a;
 
   --chart-1: var(--accent-base);
   --chart-2: var(--neutral-300);

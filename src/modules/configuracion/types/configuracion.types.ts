@@ -5,7 +5,12 @@
 // garantiza que las dos copias se separen.
 
 export type ClavePaso =
-  "EMPRESA" | "SEDES" | "SITUACION_LEGAL" | "PLAN_CUENTAS" | "RESOLUCIONES";
+  | "EMPRESA"
+  | "SEDES"
+  | "SITUACION_LEGAL"
+  | "IMPUESTOS"
+  | "PLAN_CUENTAS"
+  | "RESOLUCIONES";
 
 /**
  * `PENDIENTE` es que nunca se tocó; `FALTA` es que se empezó y quedaron datos.
@@ -41,4 +46,48 @@ export interface EstadoConfiguracion {
   siguiente: ClavePaso | null;
   /** Con qué modo se configura (0068). IA se mantiene hasta terminar. */
   modo: "IA" | "MANUAL" | null;
+  /** Si ya se mostró la bienvenida de María al terminar (0072). Una vez por empresa. */
+  bienvenidaVista: boolean;
+}
+
+// Espejo de `GET /empresa-impuestos` (paso «Impuestos», plan motor de
+// retenciones, Fase 0, §0.7).
+
+export type ClavePreguntaImpuesto =
+  | "IVA"
+  | "SIMPLE"
+  | "GRAN_CONTRIBUYENTE"
+  | "AGENTE_RETENCION"
+  | "AUTORRETENEDOR";
+
+export interface RespuestaImpuesto {
+  clave: ClavePreguntaImpuesto;
+  pregunta: string;
+  ayuda: string;
+  /** `null`: nadie contestó todavía. */
+  respuesta: boolean | null;
+  /** El código del RUT vigente que la sostiene, y desde cuándo. */
+  fuente: { codigo: number; desde: string } | null;
+}
+
+export interface MunicipioIca {
+  codigo: string;
+  nombre: string;
+  esPrincipal: boolean;
+  respuesta: {
+    esAgenteRetenedor: boolean;
+    esAutorretenedor: boolean;
+    /** Por mil. Provisional hasta que esté la ley de ICA del municipio. */
+    tarifaProvisionalPorMil: number | null;
+    fuente: "MANUAL" | "IA" | "MIGRACION";
+    desde: string;
+  } | null;
+}
+
+export interface EstadoImpuestos {
+  preguntas: RespuestaImpuesto[];
+  agenteIva: { es: boolean; porque: string | null };
+  municipios: MunicipioIca[];
+  resumen: { vasARetener: string[]; teVanARetener: string[] };
+  confirmadoEn: string | null;
 }

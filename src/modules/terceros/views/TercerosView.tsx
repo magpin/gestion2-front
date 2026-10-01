@@ -45,7 +45,7 @@ import type { TerceroResumen } from "../types/terceros.types";
 
 const CLAVE = ["terceros"];
 
-type Tipo = "Todos" | "Cliente" | "Proveedor";
+type Tipo = "Todos" | "Cliente" | "Proveedor" | "Empleado";
 type Estado = "Todos" | "Activo" | "Inactivo";
 
 /**
@@ -104,6 +104,7 @@ export function TercerosView() {
         q: busqueda.trim() || undefined,
         esCliente: tipo === "Cliente",
         esProveedor: tipo === "Proveedor",
+        esEmpleado: tipo === "Empleado",
         incluirInactivos: estado === "Todos",
         soloInactivos: estado === "Inactivo",
         pagina,
@@ -136,7 +137,7 @@ export function TercerosView() {
     estado === "Inactivo" ? datos.filter((t) => !t.activo) : datos;
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-5 py-7 sm:px-10 lg:px-16">
+    <div className="w-full">
       {/* El botón de crear vive en el encabezado, lejos de los filtros: es la
           acción de la pantalla, no una forma más de acotar la lista. */}
       <header className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
@@ -187,7 +188,7 @@ export function TercerosView() {
         <FiltroSelect
           etiqueta="Tipo"
           valor={tipo}
-          opciones={["Todos", "Cliente", "Proveedor"]}
+          opciones={["Todos", "Cliente", "Proveedor", "Empleado"]}
           alCambiar={filtrar(setTipo)}
         />
         <FiltroSelect
@@ -291,7 +292,7 @@ export function TercerosView() {
             <AlertDialogDescription className="text-[15px] leading-6">
               {porDesactivar?.nombre} deja de aparecer al digitar facturas y
               compras. No se borra: su historia y los documentos que ya tiene
-              emitidos quedan intactos, y podés volver a verlo con “Ver
+              emitidos quedan intactos, y puede volver a verlo con “Ver
               inactivos”.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -480,6 +481,11 @@ function Fila({
               Proveedor
             </Badge>
           )}
+          {tercero.esEmpleado && (
+            <Badge variant="outline" className="h-7 px-3">
+              Empleado
+            </Badge>
+          )}
         </div>
       </td>
 
@@ -554,8 +560,8 @@ function Vacio({
       </p>
       <p className="max-w-md text-sm leading-6 text-muted-foreground">
         {hayFiltro
-          ? "Probá con otro texto, o quitá los filtros."
-          : "Acá van los clientes a quienes les facturás y los proveedores a quienes les comprás."}
+          ? "Intente con otro texto, o quite los filtros."
+          : "Aquí van los clientes a quienes la empresa les factura y los proveedores a quienes les compra."}
       </p>
       {!hayFiltro && (
         <Button className="mt-2 h-12 rounded-xl px-6" onClick={onCrear}>

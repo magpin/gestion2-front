@@ -8,6 +8,9 @@ import { Check, Loader2, TriangleAlert } from "lucide-react";
 
 import { ArbolPlan } from "@/modules/plan-cuentas/components/ArbolPlan";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
+
+import { prepararTodoApi } from "@/modules/tesoreria/services/tesoreria.service";
+import { aviso } from "@/lib/avisos";
 import type {
   Bloque as ClaveBloque,
   CuentaSugerida,
@@ -18,6 +21,7 @@ import { AsistenteShell, RUTA_PASO } from "../components/AsistenteShell";
 import { Bloque } from "../components/Bloque";
 import { AvisoFaltante, EstadoVacio, NotaInformativa } from "../components/Comunes";
 import { HechosOperativos } from "../components/HechosOperativos";
+import { TusBancos } from "../components/TusBancos";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
 import { useGuardar } from "../hooks/useGuardar";
 import styles from "../asistente.module.css";
@@ -35,8 +39,8 @@ const NOMBRE_BLOQUE: Record<ClaveBloque, string> = {
   BASE: "Lo que usa toda contabilidad",
   PATRIMONIO: "Patrimonio",
   IMPUESTOS: "Impuestos",
-  GIRO: "Tu giro",
-  OPERACION: "Tu operación",
+  GIRO: "Su giro",
+  OPERACION: "Su operación",
 };
 
 const MOTIVO_BLOQUE: Record<ClaveBloque, string> = {
@@ -44,10 +48,10 @@ const MOTIVO_BLOQUE: Record<ClaveBloque, string> = {
   PATRIMONIO:
     "Sale de la forma jurídica: una persona natural no emite acciones ni constituye reserva legal.",
   IMPUESTOS:
-    "Sale de la casilla 53 del RUT. Si no sos responsable de IVA, acá no hay cuentas de IVA.",
-  GIRO: "Sale del sector marcado y de la actividad CIIU: qué vendés y con qué lo producís.",
+    "Sale de la casilla 53 del RUT. Si la empresa no es responsable de IVA, aquí no hay cuentas de IVA.",
+  GIRO: "Sale del sector marcado y de la actividad CIIU: qué vende y con qué lo produce.",
   OPERACION:
-    "Sale de lo que declaraste sobre tu operación: empleados, activos, crédito, caja menor.",
+    "Sale de lo que declaró sobre su operación: empleados, activos, crédito, caja menor.",
 };
 
 /**
@@ -113,9 +117,32 @@ export function PasoPlanCuentas() {
   );
 
   const guardar = useGuardar<string[]>({
-    fn: (codigos) => planCuentasApi.aplicar(codigos),
+    fn: async (codigos) => {
+      const creadas = await planCuentasApi.aplicar(codigos);
+      // Con el plan creado, la empresa queda lista para operar: la caja de
+      // cada sede, la caja menor si se declaró, las cuentas de inventario de
+      // su actividad, los conceptos con su cuenta y el patrimonio. Si falla
+      // —por ejemplo, un rol sin permiso—, el plan ya quedó y cada módulo lo
+      // vuelve a intentar al abrirse.
+      const listo = await prepararTodoApi.preparar().catch(() => null);
+      const pendiente = (listo?.pasos ?? []).flatMap((p) => [
+        ...(p.error ? [`${p.paso}: ${p.error}`] : []),
+        ...p.hecho.filter((h) => h.startsWith("Sin cuenta:") || h.includes("no se creó")),
+      ]);
+      if (pendiente.length > 0) {
+        aviso.info("Quedó algo por decidir", `${pendiente.join(". ")}. Se resuelve en Plan de cuentas → Cuentas automáticas.`);
+      }
+      return creadas;
+    },
     exito: "Cuentas agregadas al plan",
-    invalidar: [CLAVE_PLAN, CLAVE_SUGERENCIA, ["estado-configuracion"]],
+    invalidar: [
+      CLAVE_PLAN,
+      CLAVE_SUGERENCIA,
+      ["estado-configuracion"],
+      ["cajas"],
+      ["tesoreria", "configuracion"],
+      ["inventario", "configuracion"],
+    ],
     // Dentro del chat de IA no se navega: eso sacaba del modo.
     alTerminar: () => {
       if (!embebido) router.push(RUTA_PASO.RESOLUCIONES);
@@ -141,11 +168,18 @@ export function PasoPlanCuentas() {
   // Llegar acá con el paso bloqueado solo pasa por URL: el recorrido no lo
   // enlaza. Decir por qué y a dónde ir es más útil que un 404.
   if (paso?.estado === "BLOQUEADO") {
+    const impuestos = paso.bloqueadoPor === "IMPUESTOS";
     return (
       <AsistenteShell clave="PLAN_CUENTAS" titulo="Plan de cuentas">
-        <AvisoFaltante accion={{ texto: "Ir a situación legal", href: RUTA_PASO.SITUACION_LEGAL }}>
-          Todavía no se puede proponer un plan: las cuentas se desprenden de lo que diga el RUT,
-          y la situación legal está sin completar.
+        <AvisoFaltante
+          accion={{
+            texto: impuestos ? "Ir a impuestos" : "Ir a situación legal",
+            href: impuestos ? RUTA_PASO.IMPUESTOS : RUTA_PASO.SITUACION_LEGAL,
+          }}
+        >
+          {impuestos
+            ? "Todavía no se puede proponer un plan: las cuentas de IVA y de retención se desprenden de lo que conteste en Impuestos."
+            : "Todavía no se puede proponer un plan: las cuentas se desprenden de lo que diga el RUT, y la situación legal está sin completar."}
         </AvisoFaltante>
       </AsistenteShell>
     );
@@ -182,7 +216,13 @@ export function PasoPlanCuentas() {
             <AvisoFaltante
               key={f.hecho}
               accion={{
-                texto: `Ir a ${f.paso === "SITUACION_LEGAL" ? "situación legal" : "resolverlo"}`,
+                texto: `Ir a ${
+                  f.paso === "SITUACION_LEGAL"
+                    ? "situación legal"
+                    : f.paso === "IMPUESTOS"
+                      ? "impuestos"
+                      : "resolverlo"
+                }`,
                 href: RUTA_PASO[f.paso as ClavePaso],
               }}
             >
@@ -193,7 +233,7 @@ export function PasoPlanCuentas() {
           {propuestas.length > 0 && (
             <>
               <NotaInformativa>
-                No se crea ninguna cuenta hasta que confirmes. En contabilidad, borrar una cuenta
+                No se crea ninguna cuenta hasta que usted confirme. En contabilidad, borrar una cuenta
                 con movimiento no es una opción.
               </NotaInformativa>
 
@@ -261,23 +301,25 @@ export function PasoPlanCuentas() {
           {propuestas.length === 0 && (sugerencia?.faltantes.length ?? 0) === 0 && (
             <EstadoVacio
               titulo="No queda nada por proponer"
-              ayuda="Tu plan ya cubre lo que se desprende de los datos de la empresa."
+              ayuda="Su plan ya cubre lo que se desprende de los datos de la empresa."
             />
           )}
 
           {/* La sugerencia cubre lo que se desprende de los datos de la empresa.
               Lo que falte se agrega del catálogo, y eso vive en su propia
-              pantalla: acá el foco es confirmar lo propuesto. */}
+              pantalla: aquí el foco es confirmar lo propuesto. */}
           <p className="m-0 text-xs text-muted-foreground">
-            ¿Te falta alguna?{" "}
+            ¿Le falta alguna?{" "}
             <Link
               href="/dashboard/plan-cuentas"
               className="text-brand-text underline underline-offset-2 hover:text-brand-hover"
             >
-              Buscala en el catálogo del Decreto 2650
+              Búsquela en el catálogo del Decreto 2650
             </Link>
             .
           </p>
+
+          <TusBancos />
 
           <Bloque
             titulo="Plan actual"
@@ -286,7 +328,7 @@ export function PasoPlanCuentas() {
             {plan.length === 0 ? (
               <EstadoVacio
                 titulo="El plan todavía está vacío"
-                ayuda="Las cuentas que confirmes arriba aparecerán acá."
+                ayuda="Las cuentas que confirme arriba aparecerán aquí."
               />
             ) : (
               /* El mismo árbol de /dashboard/plan-cuentas, de solo lectura: dos
@@ -350,7 +392,7 @@ function FilaSugerida({
         </span>
 
         <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-          {cuenta.requiereEleccion && <Etiqueta tono="aviso">elegí la subcuenta</Etiqueta>}
+          {cuenta.requiereEleccion && <Etiqueta tono="aviso">elija la subcuenta</Etiqueta>}
           {cuenta.exigeTercero && <Etiqueta>tercero</Etiqueta>}
           {/* El decreto deja libre este tramo: el número es propuesta, no norma. */}
           {cuenta.sugerido && <Etiqueta>{cuenta.rango ?? "numeración libre"}</Etiqueta>}

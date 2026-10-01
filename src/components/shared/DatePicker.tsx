@@ -39,7 +39,7 @@ interface DatePickerProps {
 export function DatePicker({
   value,
   onChange,
-  placeholder = "Selecciona una fecha",
+  placeholder = "Seleccione una fecha",
   invalido = false,
 }: DatePickerProps) {
   const [abierto, setAbierto] = useState(false);

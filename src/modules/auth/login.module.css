@@ -5,8 +5,9 @@
  * react-hook-form, pero su entrada tampoco necesita una librería para escalonar
  * seis elementos.
  *
- * La secuencia del panel cuenta lo mismo que la landing en pequeño: el asiento
- * se arma, se sella cuadrado, y el asistente reporta lo que hizo.
+ * La secuencia del panel: entra María y escribe, y mientras tanto los gráficos
+ * se arman —las barras crecen, el aro se cierra—. Al final ella reporta lo que
+ * los gráficos ya mostraron.
  */
 
 /* En `:root`, no en una clase del módulo: una clase de CSS Modules solo existe
@@ -57,21 +58,6 @@
   to {
     opacity: 1;
     transform: none;
-  }
-}
-
-@keyframes fxPop {
-  0% {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.04);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -134,43 +120,49 @@
 }
 
 .cardA {
-  animation: fxCardA 800ms var(--ease-login) 200ms both;
+  animation: fxCardA 800ms var(--ease-login) 150ms both;
 }
 
 .cardB {
   animation: fxCardB 800ms var(--ease-login) 500ms both;
 }
 
-.cardC {
-  animation: fxCardB 800ms var(--ease-login) 1100ms both;
+.cardD {
+  animation: fxCardB 800ms var(--ease-login) 620ms both;
 }
 
-.row {
-  animation: fxFade 500ms ease-out both;
+/* Las barras crecen desde la base, una tras otra: el retardo va en línea. */
+@keyframes fxBarra {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
 }
 
-.r1 {
-  animation-delay: 600ms;
-}
-.r2 {
-  animation-delay: 720ms;
-}
-.r3 {
-  animation-delay: 840ms;
-}
-.r4 {
-  animation-delay: 960ms;
-}
-.r5 {
-  animation-delay: 1080ms;
+.barra {
+  transform-origin: bottom;
+  animation: fxBarra 700ms var(--ease-login) both;
 }
 
-.pop {
-  animation: fxPop 500ms var(--ease-login) 1300ms both;
+/* El aro se cierra hasta 24 de 26. `--aro-desde` es el largo del trazo: con
+   ese desfase no se ve nada, y en cero se ve entero. */
+@keyframes fxAro {
+  from {
+    stroke-dashoffset: var(--aro-desde);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.aro {
+  animation: fxAro 1200ms var(--ease-login) 900ms both;
 }
 
 .typing {
-  animation: fxTyping 1400ms ease-out 1700ms both;
+  animation: fxTyping 1400ms ease-out 900ms both;
 }
 
 .dot {
@@ -186,11 +178,11 @@
 }
 
 .msg {
-  animation: fxUp 500ms var(--ease-login) 3000ms both;
+  animation: fxUp 500ms var(--ease-login) 2200ms both;
 }
 
 .msg2 {
-  animation: fxUp 500ms var(--ease-login) 3200ms both;
+  animation: fxUp 500ms var(--ease-login) 2400ms both;
 }
 
 /* La trama de puntos del panel. Misma textura que el riel de la landing. */
@@ -219,9 +211,9 @@
   .fade,
   .cardA,
   .cardB,
-  .cardC,
-  .row,
-  .pop,
+  .cardD,
+  .barra,
+  .aro,
   .dot,
   .msg,
   .msg2 {

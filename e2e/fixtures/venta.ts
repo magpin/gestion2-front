@@ -29,7 +29,8 @@ export async function facturar(
 
   await page.getByRole("radio", { name: "Crédito" }).click();
   await page.getByRole("button", { name: "Emitir factura" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  // Emitida: el diálogo se cierra, o la página vuelve a la lista (Fase 8).
+  await expect(page.getByRole("button", { name: "Emitir factura" })).toBeHidden();
 }
 
 /** El aviso de error que sale cuando el sistema frena algo. */

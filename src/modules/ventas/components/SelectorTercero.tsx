@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ConNombreCompleto } from "@/components/shared/ConNombreCompleto";
 import { cn } from "@/lib/utils";
 import { tercerosApi } from "@/modules/terceros/services/terceros.service";
 import {
@@ -19,19 +20,38 @@ import {
 } from "@/modules/terceros/components/DialogoTercero";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 
+const TEXTOS = {
+  cliente: {
+    vacio: "Seleccione un cliente",
+    buscar: "Buscar cliente",
+    ninguno: "Ningún cliente coincide.",
+    nuevo: "Registrar un cliente nuevo",
+  },
+  empleado: {
+    vacio: "Seleccione un empleado",
+    buscar: "Buscar empleado",
+    ninguno: "Ningún empleado coincide.",
+    nuevo: "Registrar un empleado nuevo",
+  },
+} as const;
+
 /**
- * Buscador de cliente: por nombre o documento, solo entre los que están
- * marcados como cliente. Mismo patrón que `SelectorCuenta`/`SelectorProducto`.
+ * Buscador de tercero por nombre o documento, solo entre los que tienen el
+ * rol pedido: clientes al vender, empleados al elegir quién responde por una
+ * caja. Mismo patrón que `SelectorCuenta`/`SelectorProducto`.
  */
 export function SelectorTercero({
   valor,
   onElegir,
   invalido,
+  rol = "cliente",
 }: {
   valor: TerceroResumen | null;
   onElegir: (tercero: TerceroResumen) => void;
   invalido?: boolean;
+  rol?: "cliente" | "empleado";
 }) {
+  const textos = TEXTOS[rol];
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   // El diálogo se abre CERRANDO el popover: si viviera dentro del
@@ -44,9 +64,13 @@ export function SelectorTercero({
   };
 
   const { data: pagina, isFetching } = useQuery({
-    queryKey: ["terceros", "selector-cliente", busqueda],
+    queryKey: ["terceros", `selector-${rol}`, busqueda],
     queryFn: () =>
-      tercerosApi.listar({ q: busqueda.trim() || undefined, esCliente: true }),
+      tercerosApi.listar({
+        q: busqueda.trim() || undefined,
+        esCliente: rol === "cliente",
+        esEmpleado: rol === "empleado",
+      }),
     enabled: abierto,
     staleTime: 60_000,
   });
@@ -58,15 +82,20 @@ export function SelectorTercero({
         <PopoverTrigger
           render={<Button type="button" variant="outline" />}
           aria-invalid={invalido || undefined}
-          className="h-11 w-full justify-between rounded-xl px-4 font-normal aria-invalid:border-danger"
+          className="h-[52px] w-full justify-between rounded-xl px-4 font-normal aria-invalid:border-danger"
         >
-          <span
-            className={cn("truncate", valor ? "" : "text-muted-foreground")}
-          >
-            {valor
-              ? `${valor.nombre} · ${valor.tipoDocumento} ${valor.numeroDocumento}`
-              : "Seleccione un cliente"}
-          </span>
+          {valor ? (
+            // Como en el diseño: el nombre, y debajo el documento.
+            <span className="flex min-w-0 flex-col items-start text-left">
+              <span className="w-full truncate text-sm font-semibold">{valor.nombre}</span>
+              <span className="w-full truncate font-mono text-[11px] text-muted-foreground">
+                {valor.tipoDocumento} {valor.numeroDocumento}
+                {valor.dv ? `-${valor.dv}` : ""}
+              </span>
+            </span>
+          ) : (
+            <span className={cn("truncate", "text-muted-foreground")}>{textos.vacio}</span>
+          )}
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
 
@@ -81,7 +110,7 @@ export function SelectorTercero({
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Nombre o documento"
               className="h-11 rounded-xl px-4"
-              aria-label="Buscar cliente"
+              aria-label={textos.buscar}
             />
           </div>
 
@@ -94,8 +123,8 @@ export function SelectorTercero({
 
             {!isFetching &&
               terceros.map((t) => (
+                <ConNombreCompleto key={t.id} texto={t.nombre}>
                 <button
-                  key={t.id}
                   type="button"
                   onClick={() => {
                     onElegir(t);
@@ -111,7 +140,7 @@ export function SelectorTercero({
                     )}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">
+                    <span data-recortable className="block truncate text-sm font-medium">
                       {t.nombre}
                     </span>
                     <span className="block font-mono text-xs text-muted-foreground">
@@ -119,16 +148,17 @@ export function SelectorTercero({
                     </span>
                   </span>
                 </button>
+                </ConNombreCompleto>
               ))}
 
             {!isFetching && terceros.length === 0 && (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                Ningún cliente coincide.
+                {textos.ninguno}
               </p>
             )}
           </div>
 
-          {/* Con 4.282 terceros, el que falta se descubre justo acá. Salir a
+          {/* Con 4.282 terceros, el que falta se descubre justo aquí. Salir a
             registrarlo al directorio obliga a abandonar el documento a medio
             digitar, así que se registra sin moverse. */}
           <div className="flex items-center gap-1 border-t border-border p-2">
@@ -139,7 +169,7 @@ export function SelectorTercero({
               onClick={() => abrirFicha("nuevo")}
             >
               <Plus className="size-4" />
-              Registrar un cliente nuevo
+              {textos.nuevo}
             </Button>
             {valor && (
               <Button
@@ -159,7 +189,7 @@ export function SelectorTercero({
       <DialogoTercero
         editando={editando}
         onCerrar={() => setEditando(null)}
-        rol="cliente"
+        rol={rol}
         nombreSugerido={busqueda.trim() || undefined}
         alGuardar={(tercero) => {
           onElegir(tercero);

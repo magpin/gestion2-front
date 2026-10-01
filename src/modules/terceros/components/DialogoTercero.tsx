@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { aviso } from "@/lib/avisos";
 import { FormularioTercero, type DatosTercero } from "./FormularioTercero";
+import { DatosTributarios } from "@/modules/retenciones/components/DatosTributarios";
 import { tercerosApi } from "../services/terceros.service";
 import type { TerceroResumen } from "../types/terceros.types";
 
@@ -49,7 +50,7 @@ export function DialogoTercero({
   /** El tercero recién guardado. Opcional: el directorio no necesita nada. */
   alGuardar?: (tercero: TerceroResumen) => void;
   /** Con qué rol nace un tercero creado desde ventas o desde compras. */
-  rol?: "cliente" | "proveedor";
+  rol?: "cliente" | "proveedor" | "empleado";
   /** Lo que se venía buscando cuando no apareció: se precarga como nombre. */
   nombreSugerido?: string;
 }) {
@@ -81,6 +82,8 @@ export function DialogoTercero({
         telefono: d.telefono || undefined,
         direccion: d.direccion || undefined,
         municipioCodigo: d.municipioCodigo || undefined,
+        diasPlazoCliente: d.diasPlazoCliente === "" ? undefined : Number(d.diasPlazoCliente),
+        diasPlazoProveedor: d.diasPlazoProveedor === "" ? undefined : Number(d.diasPlazoProveedor),
       };
 
       if (creando) return tercerosApi.crear(datos);
@@ -141,8 +144,9 @@ export function DialogoTercero({
               valoresIniciales={
                 creando
                   ? {
-                      esCliente: rol !== "proveedor",
+                      esCliente: rol === undefined || rol === "cliente",
                       esProveedor: rol === "proveedor",
+                      esEmpleado: rol === "empleado",
                       razonSocial: nombreSugerido,
                       primerNombre: nombreSugerido,
                     }
@@ -151,6 +155,9 @@ export function DialogoTercero({
               alGuardar={(d) => guardar.mutate(d)}
             />
           )}
+          {/* Con historia y fecha: lo que el motor de retenciones mira a la
+              fecha de cada factura. Solo al editar: al crear no hay historia. */}
+          {!creando && editando !== null && <DatosTributarios terceroId={editando} />}
         </DialogBody>
 
         <DialogFooter>

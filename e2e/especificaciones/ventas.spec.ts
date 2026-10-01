@@ -1,3 +1,4 @@
+import { API } from "../fixtures/datos";
 import { agregarProductos, prepararEmpresa, type EmpresaLista } from "../fixtures/empresa";
 import { entrarAlProducto, existencia } from "../fixtures/producto";
 import { esperarFreno, facturar } from "../fixtures/venta";
@@ -80,15 +81,77 @@ test.describe("Ventas", () => {
     await page.getByRole("radio", { name: "Crédito" }).click();
     await page.getByRole("button", { name: "Emitir factura" }).click();
 
-    // No lo prohíbe: avisa y deja decidir, porque a veces se factura lo que
-    // está por llegar. Lo que falte queda en la lista de compras pendientes.
+    // Esta empresa no vende sin existencia: se frena, dice qué producto y
+    // cuánto hay, y no ofrece un «Emitir igual» que el kardex rechazaría.
     const aviso = page.locator(".swal2-popup");
     await expect(aviso).toContainText("Solo hay 10 en existencia; no se puede sacar 99.");
-    await expect(aviso).toContainText(/queda en negativo/);
+    await expect(aviso).toContainText(e.producto.codigo);
+    await expect(page.getByRole("button", { name: "Emitir igual" })).toBeHidden();
 
-    await page.getByRole("button", { name: "Cancelar" }).click();
-    // Al cancelar no se emitió nada: el kardex sigue igual.
+    await page.getByRole("button", { name: "Entendido" }).click();
     expect(await existencia(page, e)).toBe(10);
+  });
+
+  test("la cotización lleva otro precio y la factura sale a ese precio", async ({ page, request }) => {
+    await page.goto("/dashboard/ventas");
+    await page.getByRole("button", { name: "Nueva cotización" }).click();
+    await page.getByRole("button", { name: /Seleccione un cliente/ }).click();
+    await page.getByLabel("Buscar cliente").fill("José");
+    await page.getByRole("button", { name: /José Vargas/ }).first().click();
+    await page.getByRole("button", { name: /Seleccione un producto/ }).click();
+    await page.getByLabel("Buscar producto").fill(e.producto.codigo);
+    await page.getByRole("button", { name: new RegExp(e.producto.nombre) }).first().click();
+    await page.getByLabel("Cantidad de la línea 1").fill("1");
+
+    // Arranca en el de lista; se cambia y dice cuál era.
+    await page.getByLabel("Precio de la línea 1").fill("120000");
+    await expect(page.getByText(/de lista \$\s?150\.000/)).toBeVisible();
+    await page.getByRole("button", { name: "Crear cotización" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+
+    await page.getByRole("button", { name: "Más acciones" }).first().click();
+    await page.getByRole("menuitem", { name: "Convertir a factura" }).click();
+    // El modal muestra el precio cotizado, no el de lista.
+    await expect(page.getByRole("dialog")).toContainText(/120\.000/);
+    await page.getByRole("radio", { name: "Crédito" }).click();
+    await page.getByRole("button", { name: "Emitir factura" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+
+    const facturas = (await request
+      .get(`${API}/facturas`, { headers: { Authorization: `Bearer ${e.token}` } })
+      .then((r) => r.json())) as { datos: Array<{ subtotal: string }> };
+    expect(Number(facturas.datos[0].subtotal)).toBe(120000);
+  });
+
+  test("convertir: el modal avisa antes lo que no alcanza y no se desborda", async ({ page }) => {
+    await page.goto("/dashboard/ventas");
+    await page.getByRole("button", { name: "Nueva cotización" }).click();
+    await page.getByRole("button", { name: /Seleccione un cliente/ }).click();
+    await page.getByLabel("Buscar cliente").fill("José");
+    await page.getByRole("button", { name: /José Vargas/ }).first().click();
+    await page.getByRole("button", { name: /Seleccione un producto/ }).click();
+    await page.getByLabel("Buscar producto").fill(e.producto.codigo);
+    await page.getByRole("button", { name: new RegExp(e.producto.nombre) }).first().click();
+    await page.getByLabel("Cantidad de la línea 1").fill("99");
+    await page.getByRole("button", { name: "Crear cotización" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+
+    await page.getByRole("button", { name: "Más acciones" }).first().click();
+    await page.getByRole("menuitem", { name: "Convertir a factura" }).click();
+
+    // Hay 10 y se piden 99: se dice antes de emitir, y emitir queda cerrado.
+    await expect(page.getByText("Pide 99, hay 10")).toBeVisible();
+    await page.getByRole("radio", { name: "Crédito" }).click();
+    await expect(page.getByRole("button", { name: "Emitir factura" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Emitir igual" })).toBeHidden();
+
+    // Con el repartido abierto, nada se sale de lado: ni en escritorio ni en móvil.
+    await page.getByRole("radio", { name: "Repartido" }).click();
+    const cuerpo = page.locator("[data-slot=dialog-body]");
+    const seSale = () => cuerpo.evaluate((el) => el.scrollWidth - el.clientWidth);
+    expect(await seSale()).toBeLessThanOrEqual(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await seSale()).toBeLessThanOrEqual(0);
   });
 
   test("una nota crédito devuelve la venta", async ({ page }) => {
@@ -112,7 +175,11 @@ test.describe("Ventas", () => {
     expect(await existencia(page, e)).toBe(8);
   });
 
-  test("no deja facturar en un período cerrado", async ({ page, request }) => {
+  // El mes en curso ya no se cierra a mano: el calendario lo tiene siempre
+  // abierto y lo cierra el último día (96fc183, «Períodos automáticos»). Sin
+  // cómo cerrarlo, esta prueba no tiene escenario. La regla sigue probada en
+  // `factura.service.spec` (periodoAbiertoEn).
+  test.skip("no deja facturar en un período cerrado", async ({ page, request }) => {
     const cabeceras = { Authorization: `Bearer ${e.token}` };
     const api = process.env.E2E_API ?? "http://localhost:3001/api/v1";
     const actual = (await request

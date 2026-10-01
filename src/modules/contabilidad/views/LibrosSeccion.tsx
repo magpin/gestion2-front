@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Loader2, Printer } from "lucide-react";
+import { BookOpen, CalendarRange, Loader2, Printer } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -57,7 +59,7 @@ export function LibrosSeccion() {
             Libros contables
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Consulta información financiera sin modificarla.
+            Consulte la información financiera sin modificarla.
           </p>
         </div>
         {/* Un contador imprime los libros. Se usa la impresión del navegador:
@@ -75,7 +77,7 @@ export function LibrosSeccion() {
       <div className="grid gap-4 md:grid-cols-3 print:hidden">
         {(
           [
-            ["diario", "Diario", "Movimientos en orden cronológico"],
+            ["diario", "Diario", "Movimientos, lo más reciente arriba"],
             ["mayor", "Mayor", "Saldos corridos por cuenta"],
             ["balance", "Balance de prueba", "Saldos del período"],
           ] as const
@@ -104,7 +106,7 @@ export function LibrosSeccion() {
             Período
             <Select items={periodos.map((p) => ({ value: p.id, label: `${p.anio}-${String(p.mes).padStart(2, "0")}` }))} value={periodoId} onValueChange={(v) => setPeriodoId(v ?? "")}>
               <SelectTrigger className="h-11 w-full rounded-xl px-4">
-                <SelectValue placeholder="Elegí un período" />
+                <SelectValue placeholder="Elija un período" />
               </SelectTrigger>
               <SelectContent>
                 {periodos.map((p) => (
@@ -121,7 +123,7 @@ export function LibrosSeccion() {
             {libro === "mayor" && (
               <label className="flex min-w-72 flex-1 flex-col gap-2 text-sm font-medium">
                 Cuenta
-                <SelectorCuenta valor={cuenta} onElegir={setCuenta} />
+                <SelectorCuenta valor={cuenta} onElegir={setCuenta} crear={false} />
               </label>
             )}
             <label className="flex flex-col gap-2 text-sm font-medium">
@@ -171,23 +173,30 @@ function Cargando() {
   );
 }
 
-function SinDatos({ texto }: { texto: string }) {
-  return (
-    <p className="rounded-3xl border border-border bg-card px-6 py-20 text-center text-sm text-muted-foreground">
-      {texto}
-    </p>
-  );
+function SinDatos({ titulo, texto }: { titulo: string; texto: string }) {
+  return <EmptyState icon={CalendarRange} titulo={titulo} descripcion={texto} />;
 }
 
 function Diario({ desde, hasta }: { desde: string; hasta: string }) {
-  const { data = [], isLoading } = useQuery({
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["libros", "diario", desde, hasta],
     queryFn: () => librosApi.diario(desde, hasta),
+    meta: SILENCIOSO,
   });
 
-  if (isLoading) return <Cargando />;
+  if (data === undefined)
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudo leer el libro diario" onReintentar={refetch} />
+    ) : (
+      <Cargando />
+    );
   if (data.length === 0)
-    return <SinDatos texto="No hay asientos en ese rango de fechas." />;
+    return (
+      <SinDatos
+        titulo="Sin asientos en estas fechas"
+        texto="Entre esas fechas no se registró nada. Amplíe el rango con Desde y Hasta."
+      />
+    );
 
   return (
     <div className="flex flex-col gap-4">
@@ -242,17 +251,33 @@ function Mayor({
   desde: string;
   hasta: string;
 }) {
-  const { data, isLoading } = useQuery({
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["libros", "mayor", cuenta?.id, desde, hasta],
     queryFn: () => librosApi.mayor(cuenta!.id, desde, hasta),
     enabled: cuenta !== null,
+    meta: SILENCIOSO,
   });
 
   if (cuenta === null)
-    return <SinDatos texto="Elegí una cuenta para ver su mayor." />;
-  if (isLoading) return <Cargando />;
-  if (!data || data.movimientos.length === 0)
-    return <SinDatos texto="Esa cuenta no tuvo movimientos en el rango." />;
+    return (
+      <SinDatos
+        titulo="Falta la cuenta"
+        texto="El mayor se lee cuenta por cuenta. Elija una arriba para ver sus movimientos y su saldo."
+      />
+    );
+  if (data === undefined)
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudo leer el mayor" onReintentar={refetch} />
+    ) : (
+      <Cargando />
+    );
+  if (data.movimientos.length === 0)
+    return (
+      <SinDatos
+        titulo="Sin movimientos en estas fechas"
+        texto="Esa cuenta no se movió entre esas fechas. Amplíe el rango o elija otra cuenta."
+      />
+    );
 
   return (
     <Marco>
@@ -305,17 +330,33 @@ function Mayor({
 }
 
 function Balance({ periodoId }: { periodoId: string }) {
-  const { data, isLoading } = useQuery({
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ["balance-prueba", periodoId],
     queryFn: () => librosApi.balancePrueba(periodoId),
     enabled: periodoId !== "",
+    meta: SILENCIOSO,
   });
 
   if (periodoId === "")
-    return <SinDatos texto="Elegí un período para ver el balance." />;
-  if (isLoading) return <Cargando />;
-  if (!data || data.filas.length === 0)
-    return <SinDatos texto="Ese período no tiene movimientos ni saldos." />;
+    return (
+      <SinDatos
+        titulo="Falta el período"
+        texto="El balance de prueba se arma por mes. Elija un período arriba para verlo."
+      />
+    );
+  if (data === undefined)
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudo leer el balance de prueba" onReintentar={refetch} />
+    ) : (
+      <Cargando />
+    );
+  if (data.filas.length === 0)
+    return (
+      <SinDatos
+        titulo="Sin saldos en este período"
+        texto="Ese mes no tiene movimientos ni saldos que vengan de antes. Elija otro período."
+      />
+    );
 
   const suma = (campo: "debitos" | "creditos") =>
     data.filas.reduce((s, f) => s + Number(f[campo]), 0);
@@ -377,7 +418,7 @@ function Balance({ periodoId }: { periodoId: string }) {
               Totales
               {!cuadra && (
                 <span className="ml-3 font-normal text-danger">
-                  no cuadran — revisá el libro
+                  no cuadran — revise el libro
                 </span>
               )}
             </td>

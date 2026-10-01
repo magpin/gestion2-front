@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Destello, Flecha, Marca, NOMBRE_SISTEMA } from "./Marca";
+import { Flecha, Marca, NOMBRE_SISTEMA } from "./Marca";
+import { MariaClara } from "./MariaClara";
 import styles from "../landing.module.css";
 
 /**
@@ -17,6 +18,7 @@ export function Cierre() {
   return (
     <>
       <section
+        data-cierre
         className={`${styles.papelCierre} relative flex flex-col items-center justify-center gap-7 overflow-hidden bg-rail px-6 py-28 text-center text-rail-foreground lg:py-35`}
       >
         <div
@@ -32,19 +34,20 @@ export function Cierre() {
           className={`${styles.margenCierre} absolute inset-y-0 left-[30px] w-px lg:left-[102px]`}
         />
 
-        <Destello size={32} className={`${styles.rv} relative text-brand`} />
+        {/* María, contenta: terminó y no queda nada. Reemplaza al destello. */}
+        <MariaClara estado="lista" tamano={64} intensidad="calma" className={`${styles.rv} relative`} />
 
         <h2
           className={`${styles.rv} relative m-0 max-w-[980px] font-serif text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.98] tracking-[-2px]`}
         >
           La contabilidad que se hace sola,{" "}
-          <span className="italic text-brand">y se revisa sola.</span>
+          <span className="italic text-brand">con su firma.</span>
         </h2>
 
         <p
           className={`${styles.rv} relative m-0 max-w-[520px] text-lg leading-relaxed text-rail-muted`}
         >
-          Tú decides. La IA hace el resto.
+          María propone. Usted decide.
         </p>
 
         <Link
@@ -56,7 +59,16 @@ export function Cierre() {
         </Link>
       </section>
 
-      <footer className="flex flex-col items-center justify-between gap-4 border-t border-rail-line bg-rail px-6 py-9 text-[13px] text-rail-muted sm:flex-row lg:px-36">
+      <footer className="flex flex-col gap-6 border-t border-rail-line bg-rail px-6 pt-9 pb-28 text-[13px] text-rail-muted sm:pb-9 lg:px-36">
+        {/* La línea de María: lo que es y lo que no. */}
+        <div className="flex items-start justify-center gap-2.5 text-center sm:justify-start sm:text-left">
+          <MariaClara estado="reposo" tamano={20} className="mt-px shrink-0" />
+          <span>
+            María es una asistente de IA: propone asientos, no los firma. El criterio y la firma
+            son del contador.
+          </span>
+        </div>
+        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
         <div className="flex items-center gap-2.5">
           <Marca tamano={24} invertido conNombre={false} />
           <span>
@@ -64,16 +76,20 @@ export function Cierre() {
           </span>
         </div>
         <nav className="flex gap-6" aria-label="Legal">
-          <a href="#" className="text-rail-muted no-underline hover:text-rail-foreground">
+          <Link href="/terminos" className="text-rail-muted no-underline hover:text-rail-foreground">
             Términos
-          </a>
-          <a href="#" className="text-rail-muted no-underline hover:text-rail-foreground">
+          </Link>
+          <Link
+            href="/tratamiento-de-datos"
+            className="text-rail-muted no-underline hover:text-rail-foreground"
+          >
             Tratamiento de datos
-          </a>
-          <a href="#" className="text-rail-muted no-underline hover:text-rail-foreground">
+          </Link>
+          <Link href="/contacto" className="text-rail-muted no-underline hover:text-rail-foreground">
             Contacto
-          </a>
+          </Link>
         </nav>
+        </div>
       </footer>
     </>
   );

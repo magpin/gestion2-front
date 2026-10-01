@@ -58,13 +58,21 @@ export function SelectorProveedor({
       <Popover open={abierto} onOpenChange={setAbierto}>
         <PopoverTrigger
           render={<Button type="button" variant="outline" />}
-          className="h-11 w-full justify-between rounded-xl px-4 font-normal"
+          className="h-[52px] w-full justify-between rounded-xl px-4 font-normal"
         >
-          <span
-            className={cn("truncate", valor ? "" : "text-muted-foreground")}
-          >
-            {valor ? valor.nombre : "Seleccione un proveedor"}
-          </span>
+          {valor ? (
+            // Como en el diseño: el nombre, y debajo el documento y si cobra IVA.
+            <span className="flex min-w-0 flex-col items-start text-left">
+              <span className="w-full truncate text-sm font-semibold">{valor.nombre}</span>
+              <span className="w-full truncate font-mono text-[11px] text-muted-foreground">
+                {valor.tipoDocumento} {valor.numeroDocumento}
+                {valor.dv ? `-${valor.dv}` : ""} ·{" "}
+                <span className="font-sans">{valor.responsableIva ? "responsable de IVA" : "no responsable de IVA"}</span>
+              </span>
+            </span>
+          ) : (
+            <span className="truncate text-muted-foreground">Seleccione un proveedor</span>
+          )}
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
 
@@ -126,7 +134,7 @@ export function SelectorProveedor({
             )}
           </div>
 
-          {/* Con 4.282 terceros, el que falta se descubre justo acá. Salir a
+          {/* Con 4.282 terceros, el que falta se descubre justo aquí. Salir a
             registrarlo al directorio obliga a abandonar el documento a medio
             digitar, así que se registra sin moverse. */}
           <div className="flex items-center gap-1 border-t border-border p-2">

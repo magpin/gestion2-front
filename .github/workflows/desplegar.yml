@@ -97,6 +97,16 @@ jobs:
           url="$([[ '${{ needs.preparar.outputs.entorno }}' == prod ]] && echo "$PROD" || echo "$QA")"
           [[ "$url" == https://* ]] || { echo "Falta la variable API_URL_QA o API_URL_PROD"; exit 1; }
           echo "url=$url" >> "$GITHUB_OUTPUT"
+      # Las piezas nuevas del menú (`core/config/funciones.ts`) se prenden por
+      # ambiente: QA primero. Sin variable, QA las lleva todas y PROD ninguna.
+      - name: Funciones encendidas
+        id: funciones
+        env:
+          QA: ${{ vars.FUNCIONES_QA }}
+          PROD: ${{ vars.FUNCIONES_PROD }}
+        run: |
+          if [[ '${{ needs.preparar.outputs.entorno }}' == prod ]]; then f="$PROD"; else f="${QA:-todas}"; fi
+          echo "funciones=$f" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -108,7 +118,9 @@ jobs:
           context: .
           target: produccion
           push: true
-          build-args: NEXT_PUBLIC_API_URL=${{ steps.url.outputs.url }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ steps.url.outputs.url }}
+            NEXT_PUBLIC_FUNCIONES=${{ steps.funciones.outputs.funciones }}
           tags: ${{ env.IMAGEN }}:${{ needs.preparar.outputs.tag }}
           cache-from: type=gha,scope=front-${{ needs.preparar.outputs.entorno }}
           cache-to: type=gha,scope=front-${{ needs.preparar.outputs.entorno }},mode=max

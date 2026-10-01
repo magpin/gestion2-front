@@ -15,6 +15,7 @@ import {
   Loader2,
   Lock,
   Package,
+  Percent,
   Receipt,
   ReceiptText,
   ShoppingCart,
@@ -23,7 +24,10 @@ import type { LucideIcon } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
 
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
+import { AvisoImpuestosInicio } from "@/modules/impuestos/components/AvisoImpuestosInicio";
 import { buttonVariants } from "@/components/ui/button";
+import { funcionActiva } from "@/core/config/funciones";
 import { useAuthStore } from "@/core/store/authStore";
 import { MariaEstaSemana } from "@/modules/asistente/components/MariaEstaSemana";
 import { ROLES_MARIA } from "@/modules/asistente/hooks/usePendientes";
@@ -39,11 +43,14 @@ import type {
   EstadoPaso,
   Paso,
 } from "@/modules/configuracion/types/configuracion.types";
+import { AlertasMaria, TableroPlata } from "../components/TableroPlata";
+import { tableroApi } from "../services/tablero.service";
 
 const ICONO: Record<ClavePaso, LucideIcon> = {
   EMPRESA: Building2,
   SEDES: Building2,
   SITUACION_LEGAL: FileText,
+  IMPUESTOS: Percent,
   PLAN_CUENTAS: BookOpen,
   RESOLUCIONES: Receipt,
 };
@@ -76,24 +83,73 @@ const TONO: Record<
   },
 };
 
+/** Quien ve la plata de la empresa: los mismos roles de `GET /tablero/plata`. */
+const ROLES_PLATA = ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"] as const; // voseo-ok: identificador
+
 export function InicioView() {
-  const { data, isLoading, isError } = useEstadoConfiguracion();
+  const { data, isError, error, refetch } = useEstadoConfiguracion();
   const roles = useAuthStore((s) => s.roles);
   const veMaria = ROLES_MARIA.some((r) => roles.includes(r));
+  // D3: con la configuración completa, Inicio es el tablero de la plata.
+  // Mientras falte algo, siguen los pasos.
+  const conTablero =
+    data !== undefined &&
+    data.completados >= data.totalObligatorios &&
+    funcionActiva("tableroPlata") &&
+    ROLES_PLATA.some((r) => roles.includes(r)); // voseo-ok: identificador
+  const tablero = useQuery({
+    queryKey: ["tablero", "plata"], // voseo-ok: ruta del API
+    queryFn: tableroApi.plata, // voseo-ok: identificador
+    enabled: conTablero,
+    meta: SILENCIOSO,
+  });
 
-  if (isLoading) {
-    return (
+  if (data === undefined) {
+    return isError ? (
+      <ErrorCarga error={error} titulo="No se pudo leer el estado de la empresa" onReintentar={refetch} />
+    ) : (
       <div className="flex items-center justify-center py-24 text-muted-foreground">
         <Loader2 className="size-5 animate-spin" />
       </div>
     );
   }
 
-  if (isError || !data) {
+  if (conTablero) {
     return (
-      <p className="py-24 text-center text-sm text-muted-foreground">
-        No se pudo leer el estado de la empresa.
-      </p>
+      <div className="flex flex-col gap-6">
+        <header>
+          <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-text">
+            <span className="size-2 rounded-full bg-brand" />
+            Tablero · {fechaDeHoy()}
+          </div>
+          <h1 className="text-4xl font-semibold tracking-[-0.04em]">
+            Inicio<span className="text-brand">.</span>
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Cuánto dinero hay, cuánto le deben, cuánto debe y cómo va el mes.
+          </p>
+        </header>
+
+        {funcionActiva("impuestos") && <AvisoImpuestosInicio />}
+
+        {tablero.data === undefined && tablero.isError ? (
+          <ErrorCarga
+            error={tablero.error}
+            titulo="No se pudo leer el dinero de la empresa"
+            onReintentar={tablero.refetch}
+          />
+        ) : (
+          <TableroPlata datos={tablero.data} />
+        )}
+
+        {veMaria && (
+          <MariaEstaSemana>
+            <AlertasMaria alertas={tablero.data?.alertas ?? []} />
+          </MariaEstaSemana>
+        )}
+
+        <Atajos />
+      </div>
     );
   }
 
@@ -145,6 +201,13 @@ export function InicioView() {
       <Atajos />
     </div>
   );
+}
+
+/** «Lunes 28 sep». */
+function fechaDeHoy(hoy = new Date()): string {
+  const dia = hoy.toLocaleDateString("es-CO", { weekday: "long" });
+  const mes = hoy.toLocaleDateString("es-CO", { month: "long" }).slice(0, 3);
+  return `${dia} ${hoy.getDate()} ${mes}`;
 }
 
 /**
@@ -229,9 +292,9 @@ function Atajos() {
         }
       />
       <Atajo
-        href="/dashboard/tesoreria"
+        href="/dashboard/caja-bancos"
         icono={Landmark}
-        titulo="Tesorería"
+        titulo="Caja y bancos"
         detalle={
           cajas === undefined || cuentasBancarias === undefined
             ? "…"
@@ -239,13 +302,13 @@ function Atajos() {
         }
       />
       <Atajo
-        href="/dashboard/catalogos/puc"
+        href="/dashboard/referencia"
         icono={Library}
         titulo="PUC"
         detalle="Decreto 2650 · 2 492 cuentas"
       />
       <Atajo
-        href="/dashboard/catalogos/ciiu"
+        href="/dashboard/referencia?catalogo=ciiu"
         icono={Briefcase}
         titulo="Actividades CIIU"
         detalle="Rev. 4 A.C. · 504 clases"

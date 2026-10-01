@@ -68,7 +68,7 @@ interface Identidad {
 const TIPOS_RUT = "application/pdf,image/jpeg,image/png,image/webp";
 
 /**
- * Los cinco pasos sin empezar, para el riel. La empresa todavía no existe, así
+ * Los seis pasos sin empezar, para el riel. La empresa todavía no existe, así
  * que no hay estado que pedirle al backend: es el recorrido en blanco.
  */
 const PASOS_EN_BLANCO: Paso[] = (
@@ -76,6 +76,7 @@ const PASOS_EN_BLANCO: Paso[] = (
     ["EMPRESA", "Empresa"],
     ["SEDES", "Sedes"],
     ["SITUACION_LEGAL", "Situación legal"],
+    ["IMPUESTOS", "Impuestos"],
     ["PLAN_CUENTAS", "Plan de cuentas"],
     ["RESOLUCIONES", "Resoluciones"],
   ] as Array<[ClavePaso, string]>
@@ -155,7 +156,7 @@ export function CrearEmpresaView() {
   const leerRut = async (archivo: File | undefined) => {
     if (archivo === undefined) return;
     if (!TIPOS_RUT.split(",").includes(archivo.type)) {
-      aviso.error("Subí el RUT en PDF o en foto (JPG, PNG o WEBP).");
+      aviso.error("Suba el RUT en PDF o en foto (JPG, PNG o WEBP).");
       return;
     }
     setLeyendo(true);
@@ -243,7 +244,7 @@ export function CrearEmpresaView() {
           actual="EMPRESA"
           completados={0}
           porcentaje={0}
-          razonSocial={form.watch("razonSocial").trim() || "Tu empresa"}
+          razonSocial={form.watch("razonSocial").trim() || "Su empresa"}
           modoIA={modo === "IA"}
           sinSalida
         />
@@ -256,11 +257,11 @@ export function CrearEmpresaView() {
                   Bienvenido · Configuración inicial
                 </span>
                 <h1 className="m-0 font-serif text-[clamp(2.25rem,4.5vw,3.375rem)] leading-[1.02] tracking-[-1.2px]">
-                  ¿Cómo querés configurar <span className="italic">tu empresa?</span>
+                  ¿Cómo quiere configurar <span className="italic">su empresa?</span>
                 </h1>
                 <p className="m-0 max-w-[640px] text-[15px] leading-relaxed text-muted-foreground">
-                  Son cinco pasos. Podés llenarlos vos o dejar que la IA los complete a partir de
-                  tus documentos. En los dos casos, nada se guarda sin que lo confirmes.
+                  Son seis pasos. Puede llenarlos usted o dejar que la IA los complete a partir de
+                  sus documentos. En los dos casos, nada se guarda sin que usted lo confirme.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -271,7 +272,7 @@ export function CrearEmpresaView() {
                   insignia="Recomendado"
                   titulo="Con "
                   tituloCursiva="IA"
-                  texto="Subí el RUT y la IA arma la empresa. Después sigue con la Cámara de Comercio y la resolución, y te pregunta solo lo que los papeles no dicen."
+                  texto="Suba el RUT y la IA arma la empresa. Después sigue con la Cámara de Comercio y la resolución, y le pregunta solo lo que los papeles no dicen."
                   puntos={PUNTOS_IA}
                   accion="Empezar con IA"
                   alElegir={() => setModo("IA")}
@@ -281,7 +282,7 @@ export function CrearEmpresaView() {
                   icono={<Pencil className="size-[22px] text-foreground" strokeWidth={1.6} />}
                   titulo="A "
                   tituloCursiva="mano"
-                  texto="Llená cada paso vos mismo, con los formularios de siempre. Ideal si ya tenés los datos a mano."
+                  texto="Llene cada paso usted mismo, con los formularios de siempre. Ideal si ya tiene los datos a mano."
                   puntos={PUNTOS_MANUAL}
                   accion="Configurar a mano"
                   alElegir={() => setModo("MANUAL")}
@@ -303,7 +304,7 @@ export function CrearEmpresaView() {
                 </h1>
                 <p className="m-0 max-w-[640px] text-[15px] leading-relaxed text-muted-foreground">
                   De ahí saco el nombre, el NIT y el tipo de persona para crear la empresa. Antes de
-                  crearla te lo muestro para que lo revises.
+                  crearla se lo muestro para que lo revise.
                 </p>
               </div>
 
@@ -340,7 +341,7 @@ export function CrearEmpresaView() {
                   <>
                     <FileUp className="size-7 text-muted-foreground" strokeWidth={1.6} />
                     <span className="text-sm font-medium">
-                      Arrastrá el RUT acá, o hacé clic para elegirlo
+                      Arrastre el RUT aquí, o haga clic para elegirlo
                     </span>
                     <span className="text-xs text-muted-foreground">PDF o foto</span>
                   </>
@@ -369,12 +370,12 @@ export function CrearEmpresaView() {
                 </span>
                 <h1 className="m-0 font-serif text-[clamp(2.25rem,4.5vw,3.375rem)] leading-[1.02] tracking-[-1.2px]">
                   {modo === "IA" ? "Esto dice el RUT. " : "Primero, "}
-                  <span className="italic">{modo === "IA" ? "¿Está bien?" : "tu empresa."}</span>
+                  <span className="italic">{modo === "IA" ? "¿Está bien?" : "su empresa."}</span>
                 </h1>
                 <p className="m-0 max-w-[640px] text-[15px] leading-relaxed text-muted-foreground">
                   {modo === "IA"
-                    ? "Revisá el nombre, el NIT y el tipo de persona, y elegí lo que el RUT no dice. Al crearla sigo con el resto del RUT en el chat."
-                    : "Con estos datos la creamos, y seguís con el paso 2."}
+                    ? "Revise el nombre, el NIT y el tipo de persona, y elija lo que el RUT no dice. Al crearla sigo con el resto del RUT en el chat."
+                    : "Con estos datos la creamos, y sigue con el paso 2."}
                 </p>
               </div>
 
@@ -388,7 +389,13 @@ export function CrearEmpresaView() {
                     etiqueta="Tipo de persona"
                     ayuda={modo === "IA" && identidad?.tipoPersona ? "Del RUT" : undefined}
                   >
+                    {/* `items`: sin él, el cuadro cerrado muestra el código
+                        («JURIDICA») y no la palabra. */}
                     <Select
+                      items={[
+                        { value: "JURIDICA", label: "Jurídica" },
+                        { value: "NATURAL", label: "Natural" },
+                      ]}
                       value={form.watch("tipoPersona")}
                       onValueChange={(v) =>
                         form.setValue("tipoPersona", v as Datos["tipoPersona"])
@@ -443,7 +450,7 @@ export function CrearEmpresaView() {
                 </div>
                 {dvNoCoincide && (
                   <p className="m-0 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
-                    El RUT dice dígito de verificación {identidad?.dv} y con este NIT da {dv}. Revisá
+                    El RUT dice dígito de verificación {identidad?.dv} y con este NIT da {dv}. Revise
                     el NIT: puede que lo haya leído mal.
                   </p>
                 )}
@@ -451,7 +458,7 @@ export function CrearEmpresaView() {
                 <Campo
                   id="sectores"
                   etiqueta="¿A qué se dedica?"
-                  ayuda="Marcá los que apliquen. Se puede dejar en blanco y completarlo después."
+                  ayuda="Marque los que apliquen. Se puede dejar en blanco y completarlo después."
                 >
                   <SelectorSectores
                     valor={form.watch("sectores")}
@@ -478,6 +485,11 @@ export function CrearEmpresaView() {
                 <div className="grid gap-3 sm:grid-cols-[1fr_152px]">
                   <Campo id="grupoNiif" etiqueta="Grupo NIIF" ayuda="Grupo 2 es lo habitual">
                     <Select
+                      items={[
+                        { value: "GRUPO_1", label: "Grupo 1 · NIIF plenas" },
+                        { value: "GRUPO_2", label: "Grupo 2 · NIIF para pymes" },
+                        { value: "GRUPO_3", label: "Grupo 3 · Microempresas" },
+                      ]}
                       value={form.watch("grupoNiif")}
                       onValueChange={(v) => form.setValue("grupoNiif", v as Datos["grupoNiif"])}
                     >

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, FileText, Loader2, Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { ErrorCarga } from "@/components/shared/ErrorCarga";
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
 import { RUTA_MODO_IA } from "../components/AsistenteShell";
@@ -29,15 +30,15 @@ import styles from "../asistente.module.css";
  */
 
 export const PUNTOS_IA = [
-  "Solo subís el RUT, la Cámara de Comercio y la resolución DIAN",
-  "Cada dato te dice de qué documento salió",
-  "Revisás y confirmás antes de guardar",
+  "Usted solo sube el RUT, la Cámara de Comercio y la resolución DIAN",
+  "Cada dato le dice de qué documento salió",
+  "Usted revisa y confirma antes de guardar",
 ];
 
 export const PUNTOS_MANUAL = [
   "Cinco formularios, en orden",
-  "Pausá y volvé cuando quieras",
-  "Entrá directo a cualquier paso",
+  "Pause y vuelva cuando quiera",
+  "Entre directo a cualquier paso",
 ];
 
 const DOCUMENTOS = [
@@ -47,12 +48,21 @@ const DOCUMENTOS = [
 ];
 
 export function BienvenidaView() {
-  const { data, isLoading } = useEstadoConfiguracion();
+  const { data, isLoading, isError, error, refetch } = useEstadoConfiguracion();
   const { data: modoIa } = useDisponible();
   const router = useRouter();
   const empresas = useAuthStore((s) => s.empresas);
   const empresaId = useAuthStore((s) => s.empresaId);
   const empresa = empresas.find((e) => e.id === empresaId);
+
+  // Si la consulta falla no se queda cargando para siempre: lo dice y deja reintentar.
+  if (isError && !data) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center px-6">
+        <ErrorCarga error={error} titulo="No se pudo leer cómo va la configuración" onReintentar={refetch} />
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return (
@@ -76,7 +86,7 @@ export function BienvenidaView() {
       <div
         className={`${styles.sombraTarjeta} mx-auto flex h-full max-h-[calc(100dvh-64px)] w-full max-w-[1240px] overflow-hidden rounded-[1.05rem] border border-border bg-card`}
       >
-        {/* El riel va completo desde el primer momento: los cinco pasos en
+        {/* El riel va completo desde el primer momento: los seis pasos en
             pendiente y 0 %. Enseñar el recorrido antes de empezar es la mitad
             de lo que esta pantalla hace. */}
         <Recorrido
@@ -84,7 +94,7 @@ export function BienvenidaView() {
           actual={null}
           completados={data.completados}
           porcentaje={data.porcentaje}
-          razonSocial={empresa?.razonSocial ?? "Tu empresa"}
+          razonSocial={empresa?.razonSocial ?? "Su empresa"}
         />
 
         <section className="flex min-w-0 grow flex-col gap-9 overflow-y-auto px-6 pt-14 pb-10 sm:px-16">
@@ -93,11 +103,11 @@ export function BienvenidaView() {
               Bienvenido · Configuración inicial
             </span>
             <h1 className="m-0 font-serif text-[clamp(2.25rem,4.5vw,3.375rem)] leading-[1.02] tracking-[-1.2px]">
-              Antes de facturar, dejemos lista <span className="italic">tu empresa.</span>
+              Antes de facturar, dejemos lista <span className="italic">su empresa.</span>
             </h1>
             <p className="m-0 max-w-[640px] text-[15px] leading-relaxed text-muted-foreground">
-              Son cinco pasos. Podés llenarlos vos o dejar que la IA los complete a partir de
-              tus documentos. En los dos casos, nada se guarda sin que lo confirmes.
+              Son seis pasos. Puede llenarlos usted o dejar que la IA los complete a partir de
+              sus documentos. En los dos casos, nada se guarda sin que usted lo confirme.
             </p>
           </div>
 
@@ -109,7 +119,7 @@ export function BienvenidaView() {
               insignia="Recomendado"
               titulo="Con "
               tituloCursiva="IA"
-              texto="Subí tus documentos. La IA lee, llena los pasos y te pregunta solo lo que los papeles no dicen."
+              texto="Suba sus documentos. La IA lee, llena los pasos y le pregunta solo lo que los papeles no dicen."
               puntos={PUNTOS_IA}
               accion="Empezar con IA"
               alElegir={() => elegir("IA", RUTA_MODO_IA)}
@@ -126,7 +136,7 @@ export function BienvenidaView() {
               icono={<Pencil className="size-[22px] text-foreground" strokeWidth={1.6} />}
               titulo="A "
               tituloCursiva="mano"
-              texto="Llená cada paso vos mismo, con los formularios de siempre. Ideal si ya tenés los datos a mano."
+              texto="Llene cada paso usted mismo, con los formularios de siempre. Ideal si ya tiene los datos a mano."
               puntos={PUNTOS_MANUAL}
               accion="Configurar a mano"
               alElegir={() => elegir("MANUAL", rutaManual)}
@@ -147,8 +157,8 @@ export function BienvenidaView() {
               ))}
             </div>
             <p className="m-0 text-[13px] text-muted-foreground">
-              Con IA se termina en IA; a mano, podés pasarte a la IA cuando quieras. Lo que ya
-              guardaste se conserva.
+              Con IA se termina en IA; a mano, puede pasarse a la IA cuando quiera. Lo que ya
+              guardó se conserva.
             </p>
           </div>
         </section>

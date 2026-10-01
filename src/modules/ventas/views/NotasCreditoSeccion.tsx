@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2 } from "lucide-react";
+import { FileMinus, Loader2, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -16,6 +16,8 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
@@ -56,9 +58,18 @@ export function NotasCreditoSeccion({
   );
   const [motivo, setMotivo] = useState("");
 
-  const { data: resultado, isLoading } = useQuery({
+  const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
+
+  const {
+    data: resultado,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: [...CLAVE, pagina],
     queryFn: () => notasCreditoApi.listar({ pagina }),
+    meta: SILENCIOSO,
   });
 
   const { data: detalle } = useQuery({
@@ -98,13 +109,18 @@ export function NotasCreditoSeccion({
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      ) : isError && resultado === undefined ? (
+        <ErrorCarga
+          error={error}
+          titulo="No se pudieron leer las notas crédito"
+          onReintentar={refetch}
+        />
       ) : notas.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <p className="text-lg font-semibold">Todavía no hay notas crédito</p>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Acá van las correcciones a facturas ya emitidas.
-          </p>
-        </div>
+        <EmptyState
+          icon={FileMinus}
+          titulo="Todavía no hay notas crédito"
+          descripcion={`Una nota crédito baja o reversa una factura ya emitida: una devolución, un descuento, un error de precio.${puedeCrear ? " Emítala con «Nueva nota crédito», arriba, o desde la factura en la pestaña Facturas." : ""}`}
+        />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">

@@ -35,6 +35,11 @@ export const CONCEPTOS_RETENCION: Array<{
 export interface CompraDocumentoResumen {
   id: string;
   tipo: TipoCompraDocumento;
+  /** Quién la emitió: el proveedor, o la empresa si es documento soporte. */
+  clase_documento?: "FACTURA_ELECTRONICA" | "DOCUMENTO_SOPORTE";
+  /** El soporte nace sin transmitir: no hay módulo DIAN (PC2). `null` en una factura. */
+  transmision?: "SIN_TRANSMITIR" | "TRANSMITIDO" | "ACEPTADO" | null;
+  cufe?: string | null;
   /** La factura del proveedor que esta nota corrige. `null` en una factura. */
   documento_origen_id: string | null;
   tercero_id: string;
@@ -53,6 +58,14 @@ export interface CompraDocumentoResumen {
   neto_a_pagar: string;
   /** Cuánto se le ha pagado al proveedor. */
   monto_pagado: string;
+  /**
+   * Qué decidió el motor de renta (0079): CALCULADA, BAJO_BASE, NO_SUJETO,
+   * DECIDIDO_SIN (una persona, con motivo). `null` en las anteriores.
+   */
+  retencion_decision?:
+    "CALCULADA" | "BAJO_BASE" | "NO_SUJETO" | "DECIDIDO_SIN" | "MANUAL" | null;
+  /** El porqué, en una frase. */
+  retencion_motivo?: string | null;
   /** Lo que las notas del proveedor le restaron (NC) o sumaron (ND). */
   ajuste_notas: string;
   /** `neto_a_pagar + ajuste_notas`: lo que hoy se le debe. Lo calcula la API. */
@@ -76,6 +89,8 @@ export interface CompraDocumentoLineaResumen {
   cuenta_id: string;
   cuenta_codigo: string;
   cuenta_nombre: string;
+  /** El concepto de una línea de gasto elegida por concepto. */
+  concepto_nombre?: string | null;
   /** Qué se compró, cuando no es un producto. */
   detalle: string | null;
   cantidad: string;
@@ -90,10 +105,12 @@ export interface CompraDocumentoLineaResumen {
 export interface CompraRetencionResumen {
   id: string;
   compra_documento_id: string;
-  concepto: ConceptoRetencion;
+  concepto: ConceptoRetencion | string;
   cuenta_id: string;
   base: string;
   valor: string;
+  /** El nombre del concepto de la ley (motor); las viejas no lo traen. */
+  concepto_nombre?: string | null;
 }
 
 export interface CompraDocumentoDetalle extends CompraDocumentoResumen {
@@ -103,6 +120,8 @@ export interface CompraDocumentoDetalle extends CompraDocumentoResumen {
   documento_origen?: CompraDocumentoResumen | null;
   /** En una factura: las notas del proveedor que le apuntan. */
   notas?: CompraDocumentoResumen[];
+  /** Ajustes de retención por cambio de norma que se anulan con la compra. */
+  ajustes_retencion?: Array<{ asiento: string; diferencia: number }>;
 }
 
 export interface PaginaCompras {
@@ -122,6 +141,8 @@ export interface LineaCompraInput {
   productoId?: string;
   /** Contra qué cuenta se debita el gasto. Excluyente con `productoId`. */
   cuentaId?: string;
+  /** Lo normal en una línea de gasto: el concepto, y la cuenta la pone él. */
+  conceptoId?: string;
   /** Qué se compró, cuando no es un producto. Obligatorio en las de gasto. */
   detalle?: string;
   /** La tarifa del gasto: no hay producto que la diga. */
@@ -152,14 +173,31 @@ export interface CrearCompraInput {
   terceroId: string;
   fecha: string;
   numeroFacturaProveedor: string;
+  /** Factura electrónica del proveedor, o documento soporte que numera la empresa. */
+  claseDocumento?: "FACTURA_ELECTRONICA" | "DOCUMENTO_SOPORTE";
+  /** El CUFE, como dato: no se valida en la DIAN (PC2). */
+  cufe?: string;
   lineas: LineaCompraInput[];
   retenciones?: RetencionCompraInput[];
+  /** El concepto de renta de los renglones que lo necesitaban (motor, Fase 1). */
+  conceptosRenta?: Array<{ orden: number; conceptoCodigo: string }>;
+  /** «Sin retención», con el porqué. */
+  sinRetencionMotivo?: string;
+  /** Pagada con tarjeta: la retención la practica la entidad de la tarjeta. */
+  pagadaConTarjeta?: boolean;
+  /** El municipio donde se recibe; sin dato, el de la sede principal (ReteICA). */
+  municipioCodigo?: string;
   /**
    * Crédito, o contado con sus medios. Contado exige rol CAJA o DIRECTOR: el
    * backend lo rechaza de cualquier otro.
    */
   formaPago: "CREDITO" | "CONTADO";
   pagos?: MedioAlEmitirInput[];
+  /** A crédito: cuándo vence. Sin ella, «Por pagar» cuenta 30 días. */
+  vence?: string;
+  /** La condición de pronto pago de la factura: van juntos o ninguno. */
+  descuentoProntoPagoPct?: number;
+  descuentoProntoPagoHasta?: string;
 }
 
 /**
@@ -192,11 +230,15 @@ export interface CrearNotaCreditoCompraInput {
 }
 
 /** Lo que el proveedor cobra de más: un concepto nuevo, con su costo. */
-export interface LineaNotaDebitoCompraInput {
-  productoId: string;
-  cantidad: number;
-  costoUnitario: number;
-}
+/** Una línea de nota débito: un producto, o un gasto (un flete, un interés). */
+export type LineaNotaDebitoCompraInput =
+  | { productoId: string; cantidad: number; costoUnitario: number }
+  | ({ cuentaId: string } | { conceptoId: string }) & {
+      detalle: string;
+      ivaTarifa: number;
+      cantidad: number;
+      costoUnitario: number;
+    };
 
 /** Nota débito del proveedor: sube lo que se le debe. Siempre lleva líneas. */
 export interface CrearNotaDebitoCompraInput {
@@ -205,4 +247,30 @@ export interface CrearNotaDebitoCompraInput {
   numeroNotaProveedor: string;
   motivo: string;
   lineas: LineaNotaDebitoCompraInput[];
+  /** Los conceptos de renta contestados, como en la compra (Fase 8, §8.7). */
+  conceptosRenta?: Array<{ orden: number; conceptoCodigo: string }>;
+  sinRetencionMotivo?: string;
+}
+
+/** Cómo quedaría la compra en el libro, sin guardarla (`POST /compras/previo`). */
+export interface CompraPrevia {
+  numero: string;
+  subtotal: number;
+  iva: number;
+  total: number;
+  retenciones: number;
+  /** Cada retención del motor, con la cuenta a la que va. */
+  detalleRetenciones: Array<{ tipo: string | null; nombre: string; tarifa: number | null; base: number; valor: number }>;
+  neto: number;
+  vence: string | null;
+  asiento: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
+}
+
+/** La numeración del documento soporte (`GET /compras/soporte/numeracion`). */
+export interface NumeracionSoporte {
+  siguiente: string;
+  resolucion: string;
+  desde: number;
+  hasta: number;
+  quedan: number;
 }

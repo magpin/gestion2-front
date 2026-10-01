@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Check, Lock } from "lucide-react";
 
+import { useTieneRol } from "@/core/store/authStore";
 import { Marca } from "@/modules/landing/components/Marca";
 import type { ClavePaso, EstadoPaso, Paso } from "../types/configuracion.types";
 import { RUTA_PASO } from "./rutas";
@@ -25,7 +26,8 @@ import styles from "../asistente.module.css";
 const RESUMEN_CORTO: Record<ClavePaso, string> = {
   EMPRESA: "Identificación y políticas contables",
   SEDES: "Dónde opera la empresa",
-  SITUACION_LEGAL: "Lo que dice el RUT",
+  SITUACION_LEGAL: "Representante y actividad",
+  IMPUESTOS: "Qué retiene y qué le retienen",
   PLAN_CUENTAS: "Cuentas para registrar",
   RESOLUCIONES: "Numeración autorizada por la DIAN",
 };
@@ -51,6 +53,7 @@ export function Recorrido({
   modoIA = false,
   sinSalida = false,
 }: RecorridoProps) {
+  const puedeCargarAnteriores = useTieneRol("DIRECTOR", "CONTADOR");
   return (
     <aside
       className={`${styles.trama} hidden min-h-0 w-full shrink-0 flex-col gap-7 overflow-y-auto p-7 text-rail-foreground lg:flex lg:w-100`}
@@ -96,8 +99,18 @@ export function Recorrido({
         {modoIA && (
           <p className="m-0 rounded-lg border border-rail-line bg-rail-foreground/6 p-3.5 text-xs leading-relaxed text-rail-muted">
             <span className="font-medium text-rail-foreground">Modo IA.</span> Los pasos se
-            llenan a medida que la IA lee tus documentos. Vos confirmás cada uno.
+            llenan a medida que la IA lee sus documentos. Usted confirma cada uno.
           </p>
+        )}
+        {/* Se hace una vez, al empezar: por eso vive en la configuración y
+            no en Ventas. Solo con la empresa ya creada. */}
+        {!sinSalida && puedeCargarAnteriores && (
+          <Link
+            href="/dashboard/datos-anteriores"
+            className="text-[13px] text-rail-muted no-underline hover:text-rail-foreground"
+          >
+            Cargar ventas del sistema anterior
+          </Link>
         )}
         {!sinSalida && (
           <Link
@@ -158,7 +171,13 @@ function FilaRecorrido({
   // Qué falta, no cuántos faltan. "Faltan 2" no le dice a nadie qué hacer; el
   // dato concreto ya viaja en la respuesta del backend.
   const resumen = bloqueado
-    ? `Requiere ${paso.bloqueadoPor === "SITUACION_LEGAL" ? "la situación legal" : "un paso anterior"}`
+    ? `Requiere ${
+        paso.bloqueadoPor === "SITUACION_LEGAL"
+          ? "la situación legal"
+          : paso.bloqueadoPor === "IMPUESTOS"
+            ? "los impuestos"
+            : "un paso anterior"
+      }`
     : paso.faltantes.length > 0
       ? paso.faltantes.map((f) => f.etiqueta).join(" · ")
       : paso.estado === "LISTO"

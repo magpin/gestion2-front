@@ -10,7 +10,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
+import { mostrarCantidad } from "@/lib/numeros";
 import { formatCOP, formatFecha } from "@/lib/utils";
+import { PorQueRetencion } from "@/modules/retenciones/components/PorQueRetencion";
 import { CONCEPTOS_RETENCION } from "../types/compras.types";
 import type {
   CompraDocumentoDetalle,
@@ -47,7 +49,13 @@ export function DetalleCompra({
             <DialogHeader>
               <div>
                 <DialogTitle>
-                  Factura de compra {documento.numero_factura_proveedor}
+                  {documento.clase_documento === "DOCUMENTO_SOPORTE" ? "Documento soporte" : "Factura de compra"}{" "}
+                  {documento.numero_factura_proveedor}
+                  {documento.transmision === "SIN_TRANSMITIR" && (
+                        <span className="ml-2 rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 font-sans text-[11px] font-medium">
+                          Sin transmitir
+                        </span>
+                      )}
                 </DialogTitle>
                 <DialogDescription>
                   {documento.tercero_nombre}
@@ -94,12 +102,13 @@ export function DetalleCompra({
                           {l.producto_nombre ?? l.detalle}
                           {l.producto_nombre === null && (
                             <span className="mt-0.5 block font-mono text-xs font-normal text-muted-foreground">
+                              {l.concepto_nombre ? `${l.concepto_nombre} · ` : ""}
                               {l.cuenta_codigo} · {l.cuenta_nombre}
                             </span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
-                          {l.cantidad}
+                          {mostrarCantidad(l.cantidad)}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {formatCOP(Number(l.costo_unitario))}
@@ -143,7 +152,7 @@ export function DetalleCompra({
                       {documento.retenciones.map((r) => (
                         <tr key={r.id}>
                           <td className="px-4 py-3 text-sm font-medium">
-                            {etiquetaConcepto(r.concepto)}
+                            {r.concepto_nombre ?? etiquetaConcepto(r.concepto)}
                           </td>
                           <td className="px-4 py-3 text-right font-mono text-sm">
                             {formatCOP(Number(r.base))}
@@ -157,6 +166,15 @@ export function DetalleCompra({
                   </table>
                 </div>
               )}
+
+              {/* El porqué de la retención —o de que no la haya—, con la
+                  norma y la base: lo que quedó guardado al registrar. */}
+              <PorQueRetencion
+                tipo={documento.tipo === "NOTA_CREDITO" ? "NOTA_CREDITO_COMPRA" : "COMPRA"}
+                documentoId={documento.id}
+                decision={documento.retencion_decision ?? null}
+                motivo={documento.retencion_motivo ?? null}
+              />
 
               <div className="ml-auto flex w-full max-w-xs flex-col gap-2 text-sm sm:w-64">
                 <div className="flex justify-between text-muted-foreground">

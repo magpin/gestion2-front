@@ -80,7 +80,7 @@ export function SeccionAMedida({ hoy }: { hoy: string | undefined }) {
           A medida
         </h2>
         <p className="m-0 text-sm text-muted-foreground">
-          Parte de un reporte que ya existe, ajusta columnas, filtros y agrupación, y guárdalo con tu nombre.
+          Parta de un reporte que ya existe, ajuste columnas, filtros y agrupación, y guárdelo con su nombre.
         </p>
       </div>
 
@@ -127,7 +127,7 @@ export function SeccionAMedida({ hoy }: { hoy: string | undefined }) {
           <p className="m-0 px-5 py-6 text-sm text-muted-foreground">No se pudo traer la lista de guardados.</p>
         ) : guardados.data?.length === 0 ? (
           <p className="m-0 px-5 py-6 text-sm text-muted-foreground">
-            Todavía nadie ha guardado uno. Parte de uno de arriba, ajústalo y guárdalo: queda aquí para toda la empresa.
+            Todavía nadie ha guardado uno. Parta de uno de arriba, ajústelo y guárdelo: queda aquí para toda la empresa.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -188,7 +188,7 @@ export function SeccionAMedida({ hoy }: { hoy: string | undefined }) {
                           </div>
                         ) : (
                           <span className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
-                            <Lock className="size-3.5" aria-hidden /> No es para tu rol
+                            <Lock className="size-3.5" aria-hidden /> No es para su rol
                           </span>
                         )}
                       </td>

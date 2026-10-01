@@ -37,7 +37,7 @@ export function ReportesView() {
         <div className="flex flex-col gap-1.5">
           <h1 className="m-0 text-[26px] font-semibold tracking-[-0.4px]">Reportes</h1>
           <p className="m-0 text-sm text-muted-foreground">
-            Elige el reporte y el período. Lo ves en pantalla tal como se imprime.
+            Elija el reporte y el período. Lo verá en pantalla tal como se imprime.
           </p>
         </div>
         {areas && (
@@ -51,7 +51,7 @@ export function ReportesView() {
         <div className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-6">
           <span className="text-base font-semibold">No se pudo traer la lista de reportes</span>
           <span className="text-sm text-muted-foreground">
-            Revisa la conexión y vuelve a intentar. Si sigue igual, el servidor puede estar caído.
+            Revise la conexión e intente de nuevo. Si sigue igual, el servidor puede estar caído.
           </span>
           <Button variant="outline" onClick={() => refetch()}>
             Reintentar
@@ -74,8 +74,8 @@ export function ReportesView() {
         <>
           {conReportes.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
-              Tu rol no incluye ninguno de los reportes que hay por ahora. Si necesitas alguno,
-              pídele acceso a quien administra la empresa.
+              Su rol no incluye ninguno de los reportes que hay por ahora. Si necesita alguno,
+              solicite acceso a quien administra la empresa.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

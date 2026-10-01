@@ -26,7 +26,7 @@ import { HojaIframe } from "../components/HojaIframe";
 import { ModalPeriodo } from "../components/ModalPeriodo";
 import { llavesReportes, useAtajos, useHoja, useListaReportes } from "../hooks/useReportes";
 import { ICONO_AREA } from "../lib/areas";
-import { leerVisor, rutaDelVisor } from "../lib/eleccion";
+import { leerVisor, queMuestra, rutaDelVisor } from "../lib/eleccion";
 import { fechaLarga, rangoLargo } from "../lib/fechas";
 import styles from "../reportes.module.css";
 import { reportesService } from "../services/reportes.service";
@@ -46,19 +46,49 @@ import type {
  */
 const CONOCIDOS: Record<
   ClaveReporte,
-  { etiqueta: string; area: Area; etiquetaArea: string; parametro: Parametro }
+  {
+    etiqueta: string;
+    area: Area;
+    etiquetaArea: string;
+    parametro: Parametro;
+    /** Si la hoja sale apaisada: el esqueleto de carga la imita. */
+    horizontal: boolean;
+  }
 > = {
   VENTAS_POR_CLIENTE: {
     etiqueta: "Ventas del mes por cliente",
     area: "VENTAS",
     etiquetaArea: "Ventas",
     parametro: "RANGO",
+    horizontal: false,
   },
   ANTIGUEDAD_CARTERA: {
     etiqueta: "Antigüedad de saldos de cartera",
     area: "CARTERA",
     etiquetaArea: "Cartera",
     parametro: "CORTE",
+    horizontal: true,
+  },
+  RETENCIONES_350: {
+    etiqueta: "Formulario 350 — retenciones del mes",
+    area: "CONTABILIDAD",
+    etiquetaArea: "Contabilidad",
+    parametro: "RANGO",
+    horizontal: true,
+  },
+  RETEICA: {
+    etiqueta: "ReteICA por municipio",
+    area: "CONTABILIDAD",
+    etiquetaArea: "Contabilidad",
+    parametro: "RANGO",
+    horizontal: false,
+  },
+  CERTIFICADOS_RETENCION: {
+    etiqueta: "Certificados de retención",
+    area: "CONTABILIDAD",
+    etiquetaArea: "Contabilidad",
+    parametro: "RANGO",
+    horizontal: false,
   },
 };
 
@@ -192,16 +222,17 @@ function Visor({ reporte, eleccion }: { reporte: ClaveReporte; eleccion: Eleccio
         {sinPermiso ? (
           <SinPermiso area={conocido.etiquetaArea} />
         ) : corriendo ? (
-          <Corriendo onCancelar={cancelar} horizontal={conocido.parametro === "CORTE"} />
+          <Corriendo onCancelar={cancelar} horizontal={conocido.horizontal} />
         ) : hoja.isError ? (
           <Aviso
             icono={<AlertTriangle className="size-5" aria-hidden />}
             titulo="No se pudo armar el reporte"
-            texto="No es un problema de tus datos. Vuelve a intentar; si sigue igual, avísale a quien administra el sistema."
+            texto="No es un problema de sus datos. Intente de nuevo; si sigue igual, avise a quien administra el sistema."
             acciones={<Button onClick={() => hoja.refetch()}>Reintentar</Button>}
           />
         ) : vacia && hoja.data ? (
           <SinDatos
+            reporte={reporte}
             parametro={conocido.parametro}
             hoja={hoja.data}
             onCambiar={() => setCambiando(true)}
@@ -221,7 +252,7 @@ function Visor({ reporte, eleccion }: { reporte: ClaveReporte; eleccion: Eleccio
       {cambiando && (
         <ModalPeriodo
           abierto
-          reporte={conocido}
+          reporte={{ ...conocido, clave: reporte }}
           inicial={eleccion}
           onCerrar={() => setCambiando(false)}
           onVer={(e) => {
@@ -242,7 +273,7 @@ function Visor({ reporte, eleccion }: { reporte: ClaveReporte; eleccion: Eleccio
  * podría decir «algo falló».
  */
 async function mensajeDeBlob(datos: unknown): Promise<string> {
-  const generico = "No se pudo descargar el archivo. Vuelve a intentar.";
+  const generico = "No se pudo descargar el archivo. Intente de nuevo.";
   if (!(datos instanceof Blob)) return generico;
   try {
     const cuerpo = JSON.parse(await datos.text()) as { message?: string | string[] };
@@ -472,7 +503,7 @@ function Hoja({
                   Ahora no se puede armar {caido === "PDF" ? "el PDF" : "el Excel"}
                 </span>
                 <span className="text-xs leading-normal">
-                  La hoja de abajo está completa y es la misma que se descargaría. Puedes
+                  La hoja de abajo está completa y es la misma que se descargaría. Puede
                   imprimirla desde aquí; la descarga vuelve cuando el servicio responda.
                 </span>
               </span>
@@ -552,23 +583,26 @@ function Corriendo({ onCancelar, horizontal }: { onCancelar: () => void; horizon
 }
 
 function SinDatos({
+  reporte,
   parametro,
   hoja,
   onCambiar,
 }: {
+  reporte: ClaveReporte;
   parametro: Parametro;
   hoja: HojaEnPantalla;
   onCambiar: () => void;
 }) {
   const esRango = parametro === "RANGO";
   const cuando = rangoLargo(hoja.desde, hoja.hasta).replace(/^del /, "");
+  const que = queMuestra(reporte).vacio;
   const titulo = esRango
     ? hoja.desde === hoja.hasta
-      ? `No hay ventas el ${cuando}`
-      : `No hay ventas entre el ${cuando.replace(" al ", " y el ")}`
+      ? `No hay ${que} el ${cuando}`
+      : `No hay ${que} entre el ${cuando.replace(" al ", " y el ")}`
     : `Nadie tiene saldo por cobrar al ${fechaLarga(hoja.desde)}`;
   const texto = esRango
-    ? `El reporte corrió bien: en ese rango no hay facturas.${
+    ? `El reporte corrió bien: en ese rango no hay ${reporte === "VENTAS_POR_CLIENTE" ? "facturas" : que}.${
         hoja.relativo ? "" : " Las fechas están escritas a mano."
       }`
     : "El reporte corrió bien: a esa fecha no hay facturas con saldo pendiente.";
@@ -597,8 +631,8 @@ function SinPermiso({ area }: { area: string }) {
   return (
     <Aviso
       icono={<Lock className="size-5" aria-hidden />}
-      titulo={`Este reporte es de ${area.toLowerCase()} y tu rol no la incluye`}
-      texto={`Tu rol${empresa ? ` en ${empresa}` : ""} es ${suyos || "otro"}. Si necesitas verlo, pídele acceso a quien administra la empresa.`}
+      titulo={`Este reporte es de ${area.toLowerCase()} y su rol no la incluye`}
+      texto={`Su rol${empresa ? ` en ${empresa}` : ""} es ${suyos || "otro"}. Si necesita verlo, solicite acceso a quien administra la empresa.`}
       acciones={
         <Link href="/dashboard/reportes" className={buttonVariants({ variant: "outline" })}>
           <ArrowLeft aria-hidden />

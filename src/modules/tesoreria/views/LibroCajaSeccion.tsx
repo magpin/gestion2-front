@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { History, Loader2, Undo2 } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -65,10 +67,11 @@ export function LibroCajaSeccion() {
   const [abierto, setAbierto] = useState(false);
 
   const clave = ["cajas", "movimientos", caja?.id];
-  const { data: movimientos, isLoading } = useQuery({
+  const { data: movimientos, isError, error, refetch } = useQuery({
     queryKey: clave,
     queryFn: () => movimientosCajaApi.listar(caja!.id),
     enabled: caja !== null,
+    meta: SILENCIOSO,
   });
 
   // Cuánto entró y cuánto salió en el libro ENTERO. No se suma la página: el
@@ -158,7 +161,8 @@ export function LibroCajaSeccion() {
 
         <Button
           type="button"
-          disabled={!caja || !puedeOperar}
+          // Sin el libro leído no se sabe si toca saldo inicial o movimiento.
+          disabled={!caja || !puedeOperar || movimientos === undefined}
           onClick={() => setAbierto(true)}
           className="h-auto min-h-12 rounded-2xl px-5 text-sm font-semibold"
         >
@@ -175,15 +179,21 @@ export function LibroCajaSeccion() {
         </div>
 
         {!caja ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <History className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Elegí una caja para ver su libro</p>
-          </div>
-        ) : isLoading ? (
-          <div className="flex justify-center py-24 text-muted-foreground">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
-        ) : movimientos && movimientos.datos.length > 0 ? (
+          <EmptyState
+            sinMarco
+            icon={History}
+            titulo="Elija una caja para ver su libro"
+            descripcion="Arriba, en «Caja»: aquí aparece cada peso que entró y salió de ella, con su saldo."
+          />
+        ) : movimientos === undefined ? (
+          isError ? (
+            <ErrorCarga sinMarco error={error} titulo="No se pudo leer el libro de esta caja" onReintentar={refetch} />
+          ) : (
+            <div className="flex justify-center py-24 text-muted-foreground">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          )
+        ) : movimientos.datos.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -226,7 +236,7 @@ export function LibroCajaSeccion() {
                       )}
                     </td>
                     {/* El saldo inicial no va en ninguna de las dos columnas:
-                        no es plata que entró, es de dónde arrancó la caja. Si
+                        no es dinero que entró, es de dónde arrancó la caja. Si
                         fuera a "Entrada", la columna dejaría de sumar lo mismo
                         que el total del pie. */}
                     <td className="px-5 py-5 text-right font-mono font-semibold text-success">
@@ -277,11 +287,13 @@ export function LibroCajaSeccion() {
             </table>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <History className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Esta caja todavía no tiene movimientos</p>
-            <p className="max-w-md text-sm text-muted-foreground">Empezá con su saldo inicial.</p>
-          </div>
+          <EmptyState
+            sinMarco
+            icon={History}
+            titulo="Esta caja todavía no tiene movimientos"
+            descripcion="Cargue el dinero que tiene hoy como saldo inicial: desde ahí se suma cada entrada y se resta cada salida."
+            accion={puedeOperar ? { label: "Cargar saldo inicial", onClick: () => setAbierto(true) } : undefined}
+          />
         )}
       </section>
 

@@ -68,7 +68,7 @@ export function DialogoGuardar({
           <div className="flex flex-col gap-1">
             <DialogTitle className="text-[19px]">Guardar el reporte</DialogTitle>
             <DialogDescription className="mt-0 text-[13px]">
-              Se guarda la pregunta, no las filas: cada vez que lo abras corre sobre los datos de ese día.
+              Se guarda la pregunta, no las filas: cada vez que lo abra corre sobre los datos de ese día.
             </DialogDescription>
           </div>
           <DialogCloseIcon />
@@ -97,7 +97,7 @@ export function DialogoGuardar({
                       <RefreshCw className="size-3.5" aria-hidden /> Se actualiza sola
                     </span>
                     <span className="text-xs leading-normal text-[#4d4d4d] dark:text-[#b8b8b8]">
-                      Siempre {rango?.etiqueta ?? "el mismo atajo"}: la próxima vez mostrará las fechas del día en que lo abras.
+                      Siempre {rango?.etiqueta ?? "el mismo atajo"}: la próxima vez mostrará las fechas del día en que lo abra.
                     </span>
                   </span>
                 </label>
@@ -109,8 +109,8 @@ export function DialogoGuardar({
                     </span>
                     <span className="text-xs leading-normal text-[#4d4d4d] dark:text-[#b8b8b8]">
                       {rango
-                        ? `Siempre ${rangoLargo(rango.desde, rango.hasta)}, aunque lo abras dentro de un año.`
-                        : "Corre el reporte una vez para saber qué fechas quedarían."}
+                        ? `Siempre ${rangoLargo(rango.desde, rango.hasta)}, aunque lo abra dentro de un año.`
+                        : "Corra el reporte una vez para saber qué fechas quedarían."}
                     </span>
                   </span>
                 </label>
@@ -120,8 +120,8 @@ export function DialogoGuardar({
                 <MapPin className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                 <span className="text-xs leading-normal text-[#4d4d4d] dark:text-[#b8b8b8]">
                   <strong className="font-semibold text-foreground">Fija.</strong> Las fechas están escritas a mano:{" "}
-                  {"desde" in def.fechas ? rangoLargo(def.fechas.desde, def.fechas.hasta) : ""}, siempre. Si quieres que se
-                  mueva con el calendario, elige un atajo antes de guardar.
+                  {"desde" in def.fechas ? rangoLargo(def.fechas.desde, def.fechas.hasta) : ""}, siempre. Si quiere que se
+                  mueva con el calendario, elija un atajo antes de guardar.
                 </span>
               </div>
             )}

@@ -47,7 +47,7 @@ export function Seccion({
 
 /** Las columnas de plata se ven distintas: son las únicas que suman. */
 export function MarcaTipo({ c }: { c: Pick<ColumnaArmador, "tipo" | "suma"> }) {
-  const texto = { TEXTO: "texto", FECHA: "fecha", DINERO: "plata", CANTIDAD: "cantidad" }[c.tipo];
+  const texto = { TEXTO: "texto", FECHA: "fecha", DINERO: "dinero", CANTIDAD: "cantidad" }[c.tipo];
   return (
     <span
       className={`rounded px-1.5 py-px font-mono text-[10px] ${

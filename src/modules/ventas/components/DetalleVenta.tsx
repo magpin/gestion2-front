@@ -12,7 +12,8 @@ import {
 import { useState } from "react";
 
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
-import { formatCOP, formatFecha } from "@/lib/utils";
+import { mostrarCantidad } from "@/lib/numeros";
+import { formatCOP, formatCOPExacto, formatFecha } from "@/lib/utils";
 import { DetalleAsiento } from "@/modules/contabilidad/components/DetalleAsiento";
 import { PanelMaria } from "./PanelMaria";
 import type {
@@ -29,7 +30,9 @@ const TITULOS = {
 
 /** `SETP-991`, y solo el consecutivo cuando el documento no lleva prefijo. */
 function numeroDe(d: { prefijo: string | null; consecutivo: number }) {
-  return d.prefijo === null ? String(d.consecutivo) : `${d.prefijo}-${d.consecutivo}`;
+  return d.prefijo === null
+    ? String(d.consecutivo)
+    : `${d.prefijo}-${d.consecutivo}`;
 }
 
 /** El detalle de cualquiera de los tres documentos: cabecera y líneas. */
@@ -47,7 +50,10 @@ export function DetalleVenta({
   const [asiento, setAsiento] = useState<string | null>(null);
   // Una empresa que no liquida IVA no tiene que ver una columna de ceros: el
   // dato es siempre `0` y ocupa lugar sin decir nada.
-  const conIva = useResponsableIva();
+  const responsable = useResponsableIva();
+  // Si el documento trae IVA se muestra aunque hoy la empresa ya no sea
+  // responsable: lo que se emitió no cambia con el régimen de hoy.
+  const conIva = responsable || Number(documento?.total_iva ?? 0) > 0;
 
   return (
     <Dialog open={documento !== null} onOpenChange={(a) => !a && onCerrar()}>
@@ -88,7 +94,7 @@ export function DetalleVenta({
                         Cantidad
                       </th>
                       <th scope="col" className="px-4 py-3 text-right">
-                        Precio
+                        Precio sin IVA
                       </th>
                       {conIva && (
                         <th scope="col" className="px-4 py-3 text-right">
@@ -104,21 +110,40 @@ export function DetalleVenta({
                     {documento.lineas.map((l) => (
                       <tr key={l.id}>
                         <td className="px-4 py-3 text-sm font-medium">
-                          {l.producto_nombre}
+                          {l.producto_nombre ?? (
+                            <>
+                              {l.detalle}
+                              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                                {l.concepto_operacional === false
+                                  ? "Otro ingreso"
+                                  : "Servicio"}{" "}
+                                · {l.concepto_nombre}
+                                {l.cuenta_codigo && (
+                                  <>
+                                    {" "}
+                                    ·{" "}
+                                    <span className="font-mono">
+                                      {l.cuenta_codigo}
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            </>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
-                          {l.cantidad}
+                          {mostrarCantidad(l.cantidad)}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
-                          {formatCOP(Number(l.precio_unitario))}
+                          {formatCOPExacto(Number(l.precio_unitario))}
                         </td>
                         {conIva && (
                           <td className="px-4 py-3 text-right font-mono text-sm text-muted-foreground">
-                            {formatCOP(Number(l.iva_valor))}
+                            {formatCOPExacto(Number(l.iva_valor))}
                           </td>
                         )}
                         <td className="px-4 py-3 text-right font-mono text-sm font-semibold">
-                          {formatCOP(Number(l.total))}
+                          {formatCOPExacto(Number(l.total))}
                         </td>
                       </tr>
                     ))}
@@ -130,21 +155,21 @@ export function DetalleVenta({
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
                   <span className="font-mono">
-                    {formatCOP(Number(documento.subtotal))}
+                    {formatCOPExacto(Number(documento.subtotal))}
                   </span>
                 </div>
                 {conIva && (
                   <div className="flex justify-between text-muted-foreground">
                     <span>IVA</span>
                     <span className="font-mono">
-                      {formatCOP(Number(documento.total_iva))}
+                      {formatCOPExacto(Number(documento.total_iva))}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
                   <span>Total</span>
                   <span className="font-mono">
-                    {formatCOP(Number(documento.total))}
+                    {formatCOPExacto(Number(documento.total))}
                   </span>
                 </div>
 
@@ -194,6 +219,13 @@ export function DetalleVenta({
                   </div>
                 )}
               </div>
+
+              {documento.retencion_aviso && (
+                <p className="rounded-xl bg-warning/10 px-4 py-3 text-sm">
+                  <span className="font-medium">Retenciones · </span>
+                  {documento.retencion_aviso}
+                </p>
+              )}
 
               {/* Las dos direcciones del enlace: desde la nota, su factura;
                   desde la factura, las notas que le colgaron encima. */}
@@ -250,7 +282,10 @@ export function DetalleVenta({
               )}
             </DialogBody>
             {/* Anidado: al cerrarlo se vuelve a la factura, no a la lista. */}
-            <DetalleAsiento asientoId={asiento} onCerrar={() => setAsiento(null)} />
+            <DetalleAsiento
+              asientoId={asiento}
+              onCerrar={() => setAsiento(null)}
+            />
           </>
         )}
       </DialogContent>

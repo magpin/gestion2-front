@@ -99,7 +99,7 @@ function Nodo({ cuenta, profundidad }: { cuenta: CuentaPuc; profundidad: number 
             >
               <PenLine className="mt-0.5 size-3 shrink-0" />
               <span>
-                El decreto no numera este nivel: las cuentas de acá para abajo las define cada
+                El decreto no numera este nivel: las cuentas de aquí para abajo las define cada
                 empresa, en su plan de cuentas.
               </span>
             </p>

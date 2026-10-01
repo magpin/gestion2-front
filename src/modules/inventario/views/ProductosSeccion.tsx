@@ -717,8 +717,8 @@ function Vacio({ hayFiltro }: { hayFiltro: boolean }) {
       </p>
       <p className="max-w-md text-sm leading-6 text-muted-foreground">
         {hayFiltro
-          ? "Probá con otro texto, o quitá los filtros."
-          : "Creá el primero con el botón «Nuevo producto» de arriba."}
+          ? "Intente con otro texto, o quite los filtros."
+          : "Cree el primero con el botón «Nuevo producto» de arriba."}
       </p>
     </div>
   );

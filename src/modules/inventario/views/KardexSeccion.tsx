@@ -30,7 +30,7 @@ import {
   type DatosMovimiento,
 } from "../components/FormularioMovimiento";
 import { SelectorProducto } from "../components/SelectorProducto";
-import { configuracionApi, kardexApi } from "../services/inventario.service";
+import { kardexApi } from "../services/inventario.service";
 import { NOMBRE_MOVIMIENTO } from "../types/inventario.types";
 import type {
   ProductoResumen,
@@ -61,12 +61,6 @@ export function KardexSeccion() {
   const [tipo, setTipo] = useState<TipoMovimiento>("ENTRADA_INICIAL");
   const [abierto, setAbierto] = useState(false);
 
-  const { data: configuracion } = useQuery({
-    queryKey: ["inventario", "configuracion"],
-    queryFn: configuracionApi.obtener,
-  });
-  const configurado = configuracion?.cuenta_ajuste_id != null;
-
   const { data: movimientos, isLoading } = useQuery({
     queryKey: ["productos", "movimientos", producto?.id],
     queryFn: () => kardexApi.listar(producto!.id),
@@ -78,9 +72,14 @@ export function KardexSeccion() {
       const id = producto!.id;
       if (tipo === "ENTRADA_INICIAL") return kardexApi.cargaInicial(id, d);
       if (tipo === "ENTRADA_AJUSTE") return kardexApi.entradaAjuste(id, d);
-      // La salida no lleva costo: se valora al promedio vigente.
-      const { costoUnitario: _costoUnitario, ...sinCosto } = d;
-      return kardexApi.salidaAjuste(id, sinCosto);
+      // La salida no lleva costo: se valora al promedio vigente. Lleva quién
+      // asume el faltante, que el formulario ya exigió.
+      const { costoUnitario: _costoUnitario, tratamientoFaltante, responsableTerceroId, ...sinCosto } = d;
+      return kardexApi.salidaAjuste(id, {
+        ...sinCosto,
+        tratamientoFaltante: tratamientoFaltante ?? "EMPRESA",
+        responsableTerceroId: responsableTerceroId || undefined,
+      });
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -93,7 +92,6 @@ export function KardexSeccion() {
   });
 
   const existencia = movimientos?.datos[0]?.saldo_cantidad ?? null;
-  const bloqueado = tipo !== "ENTRADA_INICIAL" && !configurado;
 
   return (
     <>
@@ -128,7 +126,7 @@ export function KardexSeccion() {
 
         <Button
           type="button"
-          disabled={!producto || !puedeOperar || bloqueado}
+          disabled={!producto || !puedeOperar}
           onClick={() => setAbierto(true)}
           className="h-auto min-h-12 rounded-2xl px-5 text-sm font-semibold"
         >
@@ -136,12 +134,6 @@ export function KardexSeccion() {
         </Button>
       </section>
 
-      {!configurado && (
-        <div className="mb-5 rounded-2xl bg-warning/10 p-4 text-sm text-warning">
-          Configura la cuenta contable para ajustes antes de registrar entradas
-          o salidas.
-        </div>
-      )}
 
       <section className="overflow-hidden rounded-3xl border border-border bg-card">
         <div className="border-b border-border p-6">
@@ -156,7 +148,7 @@ export function KardexSeccion() {
           <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
             <History className="size-8 text-muted-foreground" />
             <p className="font-semibold">
-              Elegí un producto para ver su kardex
+              Elija un producto para ver su kardex
             </p>
           </div>
         ) : isLoading ? (
@@ -219,7 +211,7 @@ export function KardexSeccion() {
               Este producto todavía no tiene movimientos
             </p>
             <p className="max-w-md text-sm text-muted-foreground">
-              Empezá con su carga inicial.
+              Empiece con su carga inicial.
             </p>
           </div>
         )}
@@ -246,7 +238,6 @@ export function KardexSeccion() {
               tipo={tipo}
               producto={producto}
               existencia={existencia}
-              configurado={configurado}
               alGuardar={(d) => registrar.mutate(d)}
             />
           </DialogBody>
@@ -263,7 +254,7 @@ export function KardexSeccion() {
               type="submit"
               form={ID_FORMULARIO}
               className="h-12 rounded-xl px-6"
-              disabled={registrar.isPending || bloqueado}
+              disabled={registrar.isPending}
             >
               {registrar.isPending && (
                 <Loader2 className="size-4 animate-spin" />

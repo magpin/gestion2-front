@@ -16,6 +16,7 @@ export type ClavePaso =
   | "EMPRESA"
   | "SEDES"
   | "SITUACION_LEGAL"
+  | "IMPUESTOS"
   | "PLAN_CUENTAS"
   | "RESOLUCIONES";
 

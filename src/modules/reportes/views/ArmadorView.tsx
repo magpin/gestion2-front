@@ -76,7 +76,7 @@ export function ArmadorView() {
           titulo={idGuardado ? "Ese reporte guardado no existe o ya se borró" : "No se pudo abrir el armador"}
           texto={
             mensajeDelServidor(guardado.error ?? origenes.error) ??
-            "Revisa la conexión y vuelve a intentar."
+            "Revise la conexión e intente de nuevo."
           }
           acciones={<VolverAReportes />}
         />
@@ -148,7 +148,7 @@ function Armador({
       setCorrida({
         tipo: "error",
         status,
-        mensaje: mensajeDelServidor(e) ?? "No se pudo correr el reporte. Vuelve a intentar.",
+        mensaje: mensajeDelServidor(e) ?? "No se pudo correr el reporte. Intente de nuevo.",
       });
     }
   };
@@ -178,7 +178,7 @@ function Armador({
         setCorrida({
           tipo: "error",
           status: (e as AxiosError).response?.status,
-          mensaje: mensajeDelServidor(e) ?? "No se pudo correr el reporte. Vuelve a intentar.",
+          mensaje: mensajeDelServidor(e) ?? "No se pudo correr el reporte. Intente de nuevo.",
         });
       });
     return () => control.abort();
@@ -214,7 +214,7 @@ function Armador({
         router.replace(`/dashboard/reportes/armar?guardado=${id}`);
       }
     } catch (e) {
-      setErrorGuardar(mensajeDelServidor(e) ?? "No se pudo guardar. Vuelve a intentar.");
+      setErrorGuardar(mensajeDelServidor(e) ?? "No se pudo guardar. Intente de nuevo.");
     } finally {
       setGuardando(false);
     }
@@ -276,7 +276,7 @@ function Armador({
             <Seccion numero={1} titulo="Fechas" ayuda="Todo reporte tiene su rango.">
               <PanelFechas def={def} cambiar={cambiar} />
             </Seccion>
-            <Seccion numero={2} titulo="Columnas" ayuda="En el orden en que van a salir. Las de plata son las únicas que suman.">
+            <Seccion numero={2} titulo="Columnas" ayuda="En el orden en que van a salir. Las de dinero son las únicas que suman.">
               <PanelColumnas def={def} origen={origen} cambiar={cambiar} />
             </Seccion>
             <Seccion numero={3} titulo="Filtros" ayuda="Se muestran las filas que cumplen todos los filtros a la vez.">
@@ -313,7 +313,7 @@ function Armador({
             ) : muestra.data && muestra.data.filas.length === 0 ? (
               <div className="m-auto max-w-sm p-6 text-center text-sm text-muted-foreground">
                 Con estos filtros no hay filas {rangoConocido ? resumenFechas(rangoConocido) : ""}.
-                Afloja un filtro o amplía las fechas.
+                Afloje un filtro o amplíe las fechas.
               </div>
             ) : muestra.data ? (
               <div className={`flex min-h-0 grow flex-col ${muestra.isFetching ? "opacity-60" : ""}`}>
@@ -434,7 +434,7 @@ function ResultadoCompleto({
       <Aviso
         icono={<SlidersHorizontal className="size-5" aria-hidden />}
         titulo="Corrió bien, y no hay filas"
-        texto={`${resumen}. Afloja un filtro o amplía las fechas.`}
+        texto={`${resumen}. Afloje un filtro o amplíe las fechas.`}
         acciones={
           <div className="flex flex-col items-center gap-3">
             {def.filtros.length > 0 && (
@@ -487,7 +487,7 @@ function ResultadoCompleto({
           <span>
             Son <strong className="font-mono">{r.totalFilas.toLocaleString("es-CO")}</strong> filas y aquí se ven las
             primeras {r.limite.toLocaleString("es-CO")}. Los subtotales y el total sí cuentan todas. Para verlas
-            todas, baja el Excel o acota las fechas.
+            todas, descargue el Excel o acote las fechas.
           </span>
         </div>
       )}
@@ -546,11 +546,11 @@ function SinPermiso({ origen, mensaje }: { origen: ClaveOrigen | null; mensaje?:
     <Aviso
       icono={<Lock className="size-5" aria-hidden />}
       titulo={
-        origen ? `Este reporte es de ${NOMBRE_ORIGEN[origen]} y tu rol no la incluye` : "Ese reporte no existe"
+        origen ? `Este reporte es de ${NOMBRE_ORIGEN[origen]} y su rol no la incluye` : "Ese reporte no existe"
       }
       texto={
         mensaje ??
-        "El reporte está bien; lo que falta es el permiso. Si necesitas verlo, pídele acceso a quien administra la empresa."
+        "El reporte está bien; lo que falta es el permiso. Si necesita verlo, solicite acceso a quien administra la empresa."
       }
       acciones={<VolverAReportes />}
     />

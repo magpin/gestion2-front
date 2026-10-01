@@ -25,6 +25,7 @@ import {
   rangoCorto,
   rangoLargo,
 } from "../lib/fechas";
+import { queMuestra } from "../lib/eleccion";
 import type {
   Atajos,
   AtajoCorte,
@@ -68,7 +69,7 @@ export function ModalPeriodo({
   onCerrar,
   onVer,
 }: {
-  reporte: Pick<Reporte, "etiqueta" | "parametro">;
+  reporte: Pick<Reporte, "clave" | "etiqueta" | "parametro">;
   inicial?: Eleccion;
   abierto: boolean;
   onCerrar: () => void;
@@ -91,7 +92,7 @@ function Contenido({
   onCerrar,
   onVer,
 }: {
-  reporte: Pick<Reporte, "etiqueta" | "parametro">;
+  reporte: Pick<Reporte, "clave" | "etiqueta" | "parametro">;
   inicial?: Eleccion;
   onCerrar: () => void;
   onVer: (eleccion: Eleccion) => void;
@@ -126,12 +127,12 @@ function Contenido({
       ? { tipo: "ATAJO_RANGO", atajo: marca as AtajoRango }
       : { tipo: "ATAJO_CORTE", atajo: marca as AtajoCorte };
   } else if (esRango) {
-    if (desdeTxt && !desde) problema = "La fecha «desde» no existe. Escríbela como dd/mm/aaaa.";
-    else if (hastaTxt && !hasta) problema = "La fecha «hasta» no existe. Escríbela como dd/mm/aaaa.";
+    if (desdeTxt && !desde) problema = "La fecha «desde» no existe. Escríbala como dd/mm/aaaa.";
+    else if (hastaTxt && !hasta) problema = "La fecha «hasta» no existe. Escríbala como dd/mm/aaaa.";
     else if (desde && hasta && desde > hasta) problema = "«Desde» tiene que ser antes que «hasta».";
     else if (desde && hasta) eleccion = { tipo: "RANGO", desde, hasta };
   } else if (corteTxt && !corte) {
-    problema = "Esa fecha no existe. Escríbela como dd/mm/aaaa.";
+    problema = "Esa fecha no existe. Escríbala como dd/mm/aaaa.";
   } else if (corte && atajos && corte > atajos.hoy) {
     problema = "El corte no puede ser una fecha que todavía no llega.";
   } else if (corte) {
@@ -225,10 +226,10 @@ function Contenido({
                 esRango
                   ? desde && hasta && desde <= hasta
                     ? rangoCorto(desde, hasta)
-                    : "Las eliges tú"
+                    : "Las elige usted"
                   : corte
                     ? fechaCorta(corte)
-                    : "La eliges tú"
+                    : "La elige usted"
               }
               marcada={marca === "A_MANO"}
               onMarcar={() => setMarca("A_MANO")}
@@ -256,7 +257,7 @@ function Contenido({
                       />
                       <span className="text-xs leading-normal text-[#4d4d4d] dark:text-[#b8b8b8]">
                         Escrita a mano: el reporte siempre mostrará la cartera a esta fecha,
-                        aunque lo abras dentro de un año.
+                        aunque lo abra dentro de un año.
                       </span>
                     </div>
                     <CalendarioMes
@@ -277,7 +278,7 @@ function Contenido({
           </p>
         )}
 
-        {atajos && eleccion && <VasAVer eleccion={eleccion} atajos={atajos} />}
+        {atajos && eleccion && <VasAVer eleccion={eleccion} atajos={atajos} sujeto={queMuestra(reporte.clave).titulo} />}
       </DialogBody>
 
       <DialogFooter className="gap-2 bg-transparent px-7 py-4 sm:px-7">
@@ -381,7 +382,16 @@ const mesSiguiente = (hoy: string) => {
 const mesDeHoy = (hoy: string) => nombreMes(Number(hoy.slice(5, 7)));
 
 /** «Vas a ver…»: la elección en una frase, y qué pasa si se vuelve a abrir otro día. */
-function VasAVer({ eleccion, atajos }: { eleccion: Eleccion; atajos: Atajos }) {
+function VasAVer({
+  eleccion,
+  atajos,
+  sujeto,
+}: {
+  eleccion: Eleccion;
+  atajos: Atajos;
+  /** De qué habla el reporte: «Ventas», «Retenciones»… */
+  sujeto: string;
+}) {
   let titulo = "";
   let despues = "";
   const siguiente = mesSiguiente(atajos.hoy);
@@ -390,25 +400,25 @@ function VasAVer({ eleccion, atajos }: { eleccion: Eleccion; atajos: Atajos }) {
   switch (eleccion.tipo) {
     case "ATAJO_RANGO": {
       const o = atajos.rango.find((r) => r.atajo === eleccion.atajo);
-      titulo = o ? `Ventas ${rangoLargo(o.desde, o.hasta)}` : "";
+      titulo = o ? `${sujeto} ${rangoLargo(o.desde, o.hasta)}` : "";
       despues = {
-        ESTE_MES: `Si lo vuelves a abrir en ${siguiente}, mostrará ${siguiente}.`,
-        MES_PASADO: `Si lo vuelves a abrir en ${siguiente}, mostrará ${actual}.`,
-        ESTE_ANIO: "Siempre va del 1 de enero al día en que lo abras.",
+        ESTE_MES: `Si lo vuelve a abrir en ${siguiente}, mostrará ${siguiente}.`,
+        MES_PASADO: `Si lo vuelve a abrir en ${siguiente}, mostrará ${actual}.`,
+        ESTE_ANIO: "Siempre va del 1 de enero al día en que lo abra.",
         PERIODO: "Siempre muestra el período contable que esté en curso.",
       }[eleccion.atajo];
       break;
     }
     case "RANGO":
-      titulo = `Ventas ${rangoLargo(eleccion.desde, eleccion.hasta)}`;
+      titulo = `${sujeto} ${rangoLargo(eleccion.desde, eleccion.hasta)}`;
       despues = "Fechas fijas: siempre mostrará este mismo rango.";
       break;
     case "ATAJO_CORTE": {
       const o = atajos.corte.find((c) => c.atajo === eleccion.atajo);
       titulo = o ? `Cartera al ${fechaLarga(o.corte)}` : "";
       despues = {
-        HOY: "Si lo vuelves a abrir otro día, mostrará la cartera de ese día.",
-        CIERRE_MES_PASADO: `Si lo vuelves a abrir en ${siguiente}, mostrará el cierre de ${actual}.`,
+        HOY: "Si lo vuelve a abrir otro día, mostrará la cartera de ese día.",
+        CIERRE_MES_PASADO: `Si lo vuelve a abrir en ${siguiente}, mostrará el cierre de ${actual}.`,
         CIERRE_PERIODO_ANTERIOR: "Sigue al último período que se cierre.",
       }[eleccion.atajo];
       break;
@@ -425,7 +435,7 @@ function VasAVer({ eleccion, atajos }: { eleccion: Eleccion; atajos: Atajos }) {
         <ChartColumn className="size-4" aria-hidden />
       </span>
       <span className="flex flex-col gap-0.5">
-        <span className="text-xs text-muted-foreground">Vas a ver</span>
+        <span className="text-xs text-muted-foreground">Verá</span>
         <span className="text-sm font-semibold">{titulo}</span>
         <span className="text-xs text-[#4d4d4d] dark:text-[#b8b8b8]">{despues}</span>
       </span>

@@ -7,8 +7,16 @@ import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
-function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+// Un clic afuera no cierra: se perdía lo escrito en un formulario por rozar el
+// fondo. Se cierra con la ✕, con un botón o con Esc.
+function Dialog({ disablePointerDismissal = true, ...props }: DialogPrimitive.Root.Props) {
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      disablePointerDismissal={disablePointerDismissal}
+      {...props}
+    />
+  )
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
@@ -46,7 +54,8 @@ function DialogContent({
   size = "default",
   ...props
 }: DialogPrimitive.Popup.Props & {
-  size?: "default" | "lg" | "xl"
+  /** `pantalla`: a pantalla completa en el móvil y como `lg` desde `sm` (pantalla 68). */
+  size?: "default" | "lg" | "xl" | "pantalla"
 }) {
   return (
     <DialogPortal>
@@ -55,7 +64,7 @@ function DialogContent({
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          "group/dialog-content fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl bg-popover text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-3xl data-[size=xl]:sm:max-w-5xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "group/dialog-content fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl bg-popover text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:sm:max-w-lg data-[size=lg]:sm:max-w-3xl data-[size=xl]:sm:max-w-5xl data-[size=pantalla]:sm:max-w-3xl data-[size=pantalla]:max-sm:inset-0 data-[size=pantalla]:max-sm:h-dvh data-[size=pantalla]:max-sm:max-h-dvh data-[size=pantalla]:max-sm:w-full data-[size=pantalla]:max-sm:translate-x-0 data-[size=pantalla]:max-sm:translate-y-0 data-[size=pantalla]:max-sm:rounded-none data-[size=pantalla]:max-sm:ring-0 data-[size=pantalla]:max-sm:bg-background data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -82,7 +91,10 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-body"
-      className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8", className)}
+      // `*:shrink-0`: el cuerpo hace scroll; sus hijos no se encogen. Un
+      // recuadro con overflow-hidden en una columna flexible se aplastaba y
+      // cortaba su contenido (el de las compras por pagar del egreso).
+      className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8 *:shrink-0", className)}
       {...props}
     />
   )

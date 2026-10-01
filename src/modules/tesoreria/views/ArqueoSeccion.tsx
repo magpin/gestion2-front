@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardCheck, Loader2 } from "lucide-react";
 
 import { Aviso } from "@/components/shared/Aviso";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,17 +47,20 @@ export function ArqueoSeccion() {
   const [modal, setModal] = useState<"abrir" | "cerrar" | null>(null);
 
   const clave = ["cajas", "arqueos", caja?.id];
-  const { data: arqueos, isLoading } = useQuery({
+  const { data: arqueos, isError, error, refetch } = useQuery({
     queryKey: clave,
     queryFn: () => arqueosApi.listar(caja!.id),
     enabled: caja !== null,
+    meta: SILENCIOSO,
   });
 
   const { data: configuracion } = useQuery({
     queryKey: ["tesoreria", "configuracion"],
     queryFn: configuracionCajaApi.obtener,
   });
-  const configurado = configuracion?.cuenta_diferencia_id != null;
+  // Sin configuración cargada no se avisa nada: el aviso es para cuando de
+  // verdad falta una cuenta, no para el instante en que carga.
+  const configurado = configuracion === undefined || configuracion.completa;
 
   const abierto = arqueos?.datos.find((a) => a.estado === "ABIERTO") ?? null;
   // El último cerrado es el que contesta "¿quedé cuadrado?", que es la pregunta
@@ -97,7 +102,8 @@ export function ArqueoSeccion() {
 
         <Button
           type="button"
-          disabled={!caja || !puedeOperar}
+          // Sin el historial leído no se sabe si hay uno abierto.
+          disabled={!caja || !puedeOperar || arqueos === undefined}
           onClick={() => setModal(abierto ? "cerrar" : "abrir")}
           className="h-auto min-h-12 rounded-2xl px-5 text-sm font-semibold"
         >
@@ -106,8 +112,8 @@ export function ArqueoSeccion() {
       </section>
 
       {/* El resultado del último cuadre, en grande y en la cara: cuadrado en
-          verde, faltante en rojo, sobrante en ámbar. Un faltante es plata que
-          no está y un sobrante es plata sin explicar — se parecen poco y no
+          verde, faltante en rojo, sobrante en ámbar. Un faltante es dinero que
+          no está y un sobrante es dinero sin explicar — se parecen poco y no
           pueden verse igual. */}
       {diferenciaUltimo !== null && abierto === null && (
         <Aviso
@@ -149,7 +155,7 @@ export function ArqueoSeccion() {
               <b className="font-mono">
                 {formatCOP(Number(ultimoCerrado!.saldo_sistema))}
               </b>
-              . Falta plata: revisá si hay un cobro sin registrar, un egreso
+              . Falta dinero: revise si hay un cobro sin registrar, un egreso
               cargado de más o un error al contar. El arqueo ya quedó cerrado
               con su asiento de ajuste; corregirlo es abrir uno nuevo.
             </>
@@ -163,7 +169,7 @@ export function ArqueoSeccion() {
               <b className="font-mono">
                 {formatCOP(Number(ultimoCerrado!.saldo_sistema))}
               </b>
-              . Hay plata de más: casi siempre es un ingreso que no se registró.
+              . Hay dinero de más: casi siempre es un ingreso que no se registró.
             </>
           )}
         </Aviso>
@@ -172,16 +178,15 @@ export function ArqueoSeccion() {
       {abierto && !configurado && (
         <Aviso
           tono="alarma"
-          titulo="Falta la cuenta de diferencia"
+          titulo="Falta configurar una cuenta de arqueo"
           accion={
             <span className="text-sm font-semibold">
-              Tesorería → Configuración
+              Plan de cuentas → Cuentas automáticas
             </span>
           }
         >
-          Sin ella, un cierre con faltante o sobrante no puede asentar el
-          ajuste. El cierre funciona igual, pero la diferencia no queda en el
-          libro.
+          Si el arqueo cierra con una diferencia de ese tipo, no se va a poder
+          asentar el ajuste. Un cierre que cuadra funciona igual.
         </Aviso>
       )}
 
@@ -191,8 +196,8 @@ export function ArqueoSeccion() {
           titulo={`Arqueo abierto desde el ${formatFecha(abierto.fecha)}`}
           cifra={formatCOP(Number(abierto.saldo_sistema))}
         >
-          Es lo que el sistema dice que debería haber en la caja. Contá el
-          efectivo y cerralo con lo que realmente encontraste.
+          Es lo que el sistema dice que debería haber en la caja. Cuente el
+          efectivo y ciérrelo con lo que realmente encontró.
         </Aviso>
       )}
 
@@ -205,15 +210,21 @@ export function ArqueoSeccion() {
         </div>
 
         {!caja ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <ClipboardCheck className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Elegí una caja para ver sus arqueos</p>
-          </div>
-        ) : isLoading ? (
-          <div className="flex justify-center py-24 text-muted-foreground">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
-        ) : arqueos && arqueos.datos.length > 0 ? (
+          <EmptyState
+            sinMarco
+            icon={ClipboardCheck}
+            titulo="Elija una caja para ver sus arqueos"
+            descripcion="Arriba, en «Caja»: aquí queda cada conteo del efectivo, con lo que sobró o faltó."
+          />
+        ) : arqueos === undefined ? (
+          isError ? (
+            <ErrorCarga sinMarco error={error} titulo="No se pudieron leer los arqueos de esta caja" onReintentar={refetch} />
+          ) : (
+            <div className="flex justify-center py-24 text-muted-foreground">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          )
+        ) : arqueos.datos.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -277,11 +288,13 @@ export function ArqueoSeccion() {
             </table>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <ClipboardCheck className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Esta caja todavía no tiene arqueos</p>
-            <p className="max-w-md text-sm text-muted-foreground">Abrí el primero con el botón de arriba.</p>
-          </div>
+          <EmptyState
+            sinMarco
+            icon={ClipboardCheck}
+            titulo="Esta caja todavía no tiene arqueos"
+            descripcion="Abra un arqueo, cuente el efectivo y ciérrelo con lo que encontró: así sabe si la caja cuadra."
+            accion={puedeOperar ? { label: "Abrir arqueo", onClick: () => setModal("abrir") } : undefined}
+          />
         )}
       </section>
 
@@ -293,7 +306,7 @@ export function ArqueoSeccion() {
               <DialogDescription>
                 {modal === "abrir"
                   ? "Congela el saldo del sistema al momento de abrir."
-                  : "Contá la caja y registrá lo que hay — la diferencia se calcula sola."}
+                  : "Cuente la caja y registre lo que hay — la diferencia se calcula sola."}
               </DialogDescription>
             </div>
             <DialogCloseIcon />
@@ -302,8 +315,13 @@ export function ArqueoSeccion() {
             {modal === "abrir" && (
               <FormularioAbrirArqueo id={ID_FORMULARIO} alGuardar={(d) => abrir.mutate(d)} />
             )}
-            {modal === "cerrar" && abierto && (
-              <FormularioCerrarArqueo id={ID_FORMULARIO} arqueo={abierto} alGuardar={(d) => cerrar.mutate(d)} />
+            {modal === "cerrar" && abierto && caja && (
+              <FormularioCerrarArqueo
+                id={ID_FORMULARIO}
+                arqueo={abierto}
+                caja={caja}
+                alGuardar={(d) => cerrar.mutate(d)}
+              />
             )}
           </DialogBody>
           <DialogFooter>

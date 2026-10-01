@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2 } from "lucide-react";
+import { FilePlus, Loader2, Trash2 } from "lucide-react";
 
 import {
   AlertDialog,
@@ -16,6 +16,8 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
@@ -58,9 +60,18 @@ export function NotasDebitoSeccion({
   );
   const [motivo, setMotivo] = useState("");
 
-  const { data: resultado, isLoading } = useQuery({
+  const puedeCrear = useTieneRol("VENTAS", "DIRECTOR");
+
+  const {
+    data: resultado,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: [...CLAVE, pagina],
     queryFn: () => notasDebitoApi.listar({ pagina }),
+    meta: SILENCIOSO,
   });
 
   const { data: detalle } = useQuery({
@@ -100,14 +111,18 @@ export function NotasDebitoSeccion({
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      ) : isError && resultado === undefined ? (
+        <ErrorCarga
+          error={error}
+          titulo="No se pudieron leer las notas débito"
+          onReintentar={refetch}
+        />
       ) : notas.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <p className="text-lg font-semibold">Todavía no hay notas débito</p>
-          <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Acá va lo que se le cobra de más sobre una factura ya emitida:
-            un flete, un interés de mora, un mayor valor.
-          </p>
-        </div>
+        <EmptyState
+          icon={FilePlus}
+          titulo="Todavía no hay notas débito"
+          descripcion={`Una nota débito le cobra de más al cliente sobre una factura ya emitida: un flete, un interés de mora, un mayor valor.${puedeCrear ? " Emítala con «Nueva nota débito», arriba, o desde la factura en la pestaña Facturas." : ""}`}
+        />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">

@@ -10,6 +10,9 @@ import type {
   PaginaVentas,
   VentaDocumentoDetalle,
   VentaDocumentoResumen,
+  FacturaPrevia,
+  NumeracionFactura,
+  ExistenciaVenta,
 } from "../types/ventas.types";
 
 const parametros = (f: FiltroVentas) => ({
@@ -19,9 +22,9 @@ const parametros = (f: FiltroVentas) => ({
 });
 
 /**
- * Cotizaciones. No asientan ni mueven inventario — el precio de cada línea
- * es siempre el de lista vigente del producto, nunca uno negociado en el
- * documento.
+ * Cotizaciones. No asientan ni mueven inventario. El precio de cada línea
+ * arranca en el de lista y se puede cambiar: la factura que salga de la
+ * cotización se emite a ese precio.
  */
 export const cotizacionesApi = {
   listar: (f: FiltroVentas = {}) =>
@@ -67,7 +70,25 @@ export const facturasApi = {
   crear: (datos: CrearFacturaInput) =>
     api.post<VentaDocumentoDetalle>("/facturas", datos).then((r) => r.data),
 
-  /** El cliente y las líneas salen de la cotización; acá solo va la fecha. */
+  /** Cómo quedaría, sin emitirla: totales, retenciones, vence y asiento. */
+  previo: (datos: CrearFacturaInput) =>
+    api.post<FacturaPrevia>("/facturas/previo", datos).then((r) => r.data),
+
+  /** Qué productos no alcanzan, antes de emitir. Solo lee. */
+  existencia: (lineas: Array<{ productoId: string; cantidad: number }>) =>
+    api.post<ExistenciaVenta>("/facturas/existencia", { lineas }).then((r) => r.data),
+
+  /** Cómo quedaría la factura de una cotización, sin emitirla. */
+  previoConversion: (cotizacionId: string, datos: ConvertirCotizacionInput) =>
+    api
+      .post<FacturaPrevia>(`/facturas/desde-cotizacion/${cotizacionId}/previo`, datos)
+      .then((r) => r.data),
+
+  /** El número que sale si se emite ahora; `null` si no hay resolución. */
+  numeracion: () =>
+    api.get<NumeracionFactura | "" | null>("/facturas/numeracion").then((r) => r.data || null),
+
+  /** El cliente, las líneas y el precio salen de la cotización; acá va la fecha y el pago. */
   convertirCotizacion: (cotizacionId: string, datos: ConvertirCotizacionInput) =>
     api
       .post<VentaDocumentoDetalle>(

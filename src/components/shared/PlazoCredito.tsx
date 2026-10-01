@@ -79,7 +79,7 @@ export function PlazoCredito({
         </p>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Agrega líneas para ver el plan de pagos.
+          Agregue líneas para ver el plan de pagos.
         </p>
       )}
 

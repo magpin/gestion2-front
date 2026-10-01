@@ -12,6 +12,9 @@ import type {
 const RUTA: Record<ClaveReporte, string> = {
   VENTAS_POR_CLIENTE: "/reportes/ventas-por-cliente",
   ANTIGUEDAD_CARTERA: "/reportes/antiguedad-cartera",
+  RETENCIONES_350: "/reportes/retenciones-350",
+  RETEICA: "/reportes/reteica",
+  CERTIFICADOS_RETENCION: "/reportes/certificados-retencion",
 };
 
 /** La elección, como la entiende el endpoint. */
@@ -88,9 +91,11 @@ export const reportesService = {
     reporte: ClaveReporte,
     eleccion: Eleccion,
     formato: Formato,
+    /** Lo que un reporte pide además del rango: el tercero de un certificado. */
+    extra: Record<string, string> = {},
   ): Promise<void> => {
     const r = await api.get<Blob>(RUTA[reporte], {
-      params: { ...parametrosDe(eleccion), formato },
+      params: { ...parametrosDe(eleccion), formato, ...extra },
       responseType: "blob",
     });
     const nombre = nombreDeArchivo(

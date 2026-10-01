@@ -25,13 +25,8 @@ import {
 } from "@/components/ui/select";
 import { aviso } from "@/lib/avisos";
 import { Campo } from "@/modules/configuracion/components/Campo";
-import {
-  calcularCuadre,
-  nombrarRenglones,
-  renglonesSinUnaPata,
-} from "../lib/cuadre";
+import { aLineasNuevas, problemaDelAsiento } from "../lib/asiento-nuevo";
 import { asientosApi, comprobantesApi } from "../services/contabilidad.service";
-import type { LineaNueva } from "../types/contabilidad.types";
 import { EditorLineas, lineaVacia, type LineaBorrador } from "./EditorLineas";
 
 /** Los que produce el sistema al abrir y cerrar el ejercicio, no una persona. */
@@ -108,77 +103,15 @@ export function FormularioAsiento({
     onError: (e: unknown) => aviso.falla(e),
   });
 
-  const cuadre = calcularCuadre(lineas);
-  const sinPata = renglonesSinUnaPata(lineas);
-  const sinCuenta = lineas
-    .map((l, i) => (l.cuenta === null ? i + 1 : null))
-    .filter((n): n is number => n !== null);
-
-  /**
-   * Qué impide guardar, en palabras.
-   *
-   * Un botón apagado sin explicación deja a la persona buscando qué le falta.
-   * Se resuelve en orden de bulto: primero lo estructural, después el cuadre.
-   */
-  const impedimento = (): string | null => {
-    if (comprobanteTipoId === "") return "Elegí el tipo de comprobante.";
-    if (glosa.trim().length < 3)
-      return "La glosa explica por qué existe el asiento. Es obligatoria.";
-    if (lineas.length < 2)
-      return "Un asiento lleva al menos dos líneas: algo se debita contra algo que se acredita.";
-    if (sinCuenta.length > 0)
-      return `Falta la cuenta en ${nombrarRenglones(sinCuenta)}.`;
-    if (sinPata.length > 0)
-      return `Cada línea lleva débito o crédito, nunca los dos ni ninguno. Revisá ${nombrarRenglones(sinPata)}.`;
-    if (!cuadre.cuadra) return "El asiento no cuadra todavía.";
-
-    const faltaTercero = lineas
-      .map((l, i) => (l.cuenta?.exige_tercero && !l.terceroId ? i + 1 : null))
-      .filter((n): n is number => n !== null);
-    if (faltaTercero.length > 0)
-      return `Falta el tercero en ${nombrarRenglones(faltaTercero)}.`;
-
-    const faltaCentro = lineas
-      .map((l, i) =>
-        l.cuenta?.exige_centro_costo && !l.centroCostoId ? i + 1 : null,
-      )
-      .filter((n): n is number => n !== null);
-    if (faltaCentro.length > 0)
-      return `Falta el centro de costo en ${nombrarRenglones(faltaCentro)}.`;
-
-    const faltaBase = lineas
-      .map((l, i) =>
-        l.cuenta?.exige_base_gravable && l.baseGravable === "" ? i + 1 : null,
-      )
-      .filter((n): n is number => n !== null);
-    if (faltaBase.length > 0)
-      return `Falta la base gravable en ${nombrarRenglones(faltaBase)}.`;
-
-    return null;
-  };
-
-  const problema = impedimento();
+  const problema = problemaDelAsiento({ comprobanteTipoId, glosa, lineas });
 
   const enviar = () => {
     if (problema !== null) return;
-
-    // Los vacíos viajan como ausentes: una cadena vacía no es un uuid ni un
-    // monto, y el backend la rechazaría por formato.
-    const payload: LineaNueva[] = lineas.map((l) => ({
-      cuentaId: l.cuenta!.id,
-      terceroId: l.terceroId || undefined,
-      centroCostoId: l.centroCostoId || undefined,
-      baseGravable: l.baseGravable === "" ? undefined : Number(l.baseGravable),
-      detalle: l.detalle.trim() || undefined,
-      debito: Number(l.debito || 0),
-      credito: Number(l.credito || 0),
-    }));
-
     crear.mutate({
       comprobanteTipoId,
       fecha,
       glosa: glosa.trim(),
-      lineas: payload,
+      lineas: aLineasNuevas(lineas),
     });
   };
 
@@ -205,7 +138,10 @@ export function FormularioAsiento({
           <div className="grid gap-4 sm:grid-cols-[200px_200px_1fr]">
             <Campo id="comprobante" etiqueta="Comprobante" escala="grande">
               <Select
-                items={digitables.map((c) => ({ value: c.id, label: `${c.codigo} · ${c.nombre}` }))}
+                items={digitables.map((c) => ({
+                  value: c.id,
+                  label: `${c.codigo} · ${c.nombre}`,
+                }))}
                 value={comprobanteTipoId}
                 onValueChange={(v) => setElegido(v ?? "")}
               >
@@ -213,7 +149,7 @@ export function FormularioAsiento({
                   id="comprobante"
                   className="h-11 w-full rounded-xl px-4"
                 >
-                  <SelectValue placeholder="Elegí uno" />
+                  <SelectValue placeholder="Elija uno" />
                 </SelectTrigger>
                 <SelectContent>
                   {digitables.map((c) => (

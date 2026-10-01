@@ -14,15 +14,11 @@ import { AsistenteShell } from "../components/AsistenteShell";
 import { Bloque, Registrada, Registradas } from "../components/Bloque";
 import {
   CONTROL,
-  FilaVigencia,
-  ListaVigencia,
   NotaInformativa,
   Pildora,
-  SegmentadoSiNo,
 } from "../components/Comunes";
 import { Campo } from "../components/Campo";
 import { SelectorCiiu } from "@/modules/catalogos/components/SelectorCiiu";
-import { SelectorResponsabilidadRut } from "@/modules/catalogos/components/SelectorResponsabilidadRut";
 import { SelectorTipoDocumento } from "@/modules/catalogos/components/SelectorTipoDocumento";
 import { SelectorMunicipio } from "@/modules/catalogos/components/SelectorMunicipio";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
@@ -31,14 +27,6 @@ import { empresaApi, legalApi } from "../services/nucleo.service";
 
 const HOY = new Date().toISOString().slice(0, 10);
 const FECHA = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato AAAA-MM-DD");
-
-const esquemaResponsabilidad = z.object({
-  codigo: z
-    .number({ message: "Elegí una responsabilidad del RUT" })
-    .int()
-    .min(1),
-  fechaInicio: FECHA,
-});
 
 const esquemaRepresentante = z.object({
   nombreCompleto: z.string().min(3, "Requerido").max(200),
@@ -54,12 +42,11 @@ const esquemaRepresentante = z.object({
 const esquemaActividad = z.object({
   codigoCiiu: z
     .string()
-    .regex(/^[0-9]{4}$/, "Elegí una actividad del catálogo"),
+    .regex(/^[0-9]{4}$/, "Elija una actividad del catálogo"),
   // La descripción ya no se escribe: la pone el selector con el nombre oficial
   // del DANE, y el backend la congela junto a la actividad.
-  descripcion: z.string().min(3, "Elegí una actividad del catálogo").max(300),
-  tarifaIcaPorMil: z.number().min(0, "No puede ser negativa"),
-  municipioCodigo: z.string().regex(/^[0-9]{5}$/, "Elige un municipio"),
+  descripcion: z.string().min(3, "Elija una actividad del catálogo").max(300),
+  municipioCodigo: z.string().regex(/^[0-9]{5}$/, "Elija un municipio"),
   fechaInicio: FECHA,
 });
 
@@ -101,34 +88,19 @@ export function PasoSituacionLegal() {
           <span className="font-medium text-foreground">cierran</span> con fecha.
         </NotaInformativa>
 
-        <BloqueResponsabilidades pendiente={falta("tipoRegimen")} />
-        <BloqueAgenteIca />
         {/* Una persona natural no tiene representante legal: el bloque no se
             deshabilita, no se renderiza. Un formulario gris que no se puede
             llenar es una pregunta sin respuesta posible. */}
         {empresa?.tipoPersona === "JURIDICA" && (
           <BloqueRepresentante pendiente={falta("representante")} />
         )}
-        <BloqueActividad pendiente={falta("codigoCiiu") || falta("tarifaIcaPorMil")} />
+        <BloqueActividad pendiente={falta("codigoCiiu")} />
         <BloqueMatricula />
       </div>
     </AsistenteShell>
   );
 }
 
-/**
- * La casilla 53 del RUT, tal como la imprime la DIAN.
- *
- * Es lo único que se captura de la situación tributaria. Antes había además una
- * sección "Condición tributaria" con su propia lista: la misma verdad pedida dos
- * veces, en dos vocabularios, y sin nada que impidiera contradecirse. Ahora se
- * carga el RUT y el backend deriva la condición que el motor de impuestos
- * necesita —el código 48 abre RESPONSABLE_IVA y con eso enciende las cuentas de
- * IVA en el plan—.
- *
- * Ninguno de los cuarenta y ocho códigos está escrito acá: salen de
- * `responsabilidad_tributaria` y se buscan por número o por descripción.
- */
 /**
  * Las actividades vigentes, cada una con el papel que cumple.
  *
@@ -140,72 +112,6 @@ export function PasoSituacionLegal() {
  * El nombre sale de la posición, no de una columna: la base solo distingue
  * `es_principal`, y agregar un "orden" sería guardar algo que ya se sabe.
  */
-/**
- * La tarifa de ICA que le falta a la actividad principal. Sin ella el paso no
- * queda listo y el plan de cuentas no se desbloquea, así que va resaltada en
- * ámbar —fondo y borde, texto neutro— justo debajo de la actividad.
- */
-function CompletarTarifaIca({
-  actividadId,
-  actual,
-}: {
-  actividadId: string;
-  /** La que quedó guardada, si es imposible: más de 30 por mil. */
-  actual: number | null;
-}) {
-  const [tarifa, setTarifa] = useState("");
-  const guardar = useGuardar<number>({
-    fn: (valor) => legalApi.completarTarifaIca(actividadId, valor),
-    exito: "Tarifa de ICA guardada",
-    invalidar: [["actividades"], ["plan-cuentas", "sugerencia"]],
-  });
-  const valor = Number(tarifa.replace(",", "."));
-  // Por mil: ninguna tarifa municipal se acerca a 30. Un 8000 es alguien que
-  // escribió «8.000» queriendo decir 8.
-  const valida = tarifa.trim() !== "" && Number.isFinite(valor) && valor >= 0 && valor <= 30;
-
-  return (
-    <span className="mt-2 flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3">
-      <span className="text-xs leading-normal">
-        {actual === null ? (
-          <>
-            <span className="font-semibold">Falta la tarifa de ICA.</span> El RUT no la trae: la
-            fija el acuerdo del municipio, por mil. Sin ella no se puede seguir al plan de cuentas.
-          </>
-        ) : (
-          <>
-            <span className="font-semibold">
-              La tarifa de ICA quedó en {actual} por mil, y eso no puede ser.
-            </span>{" "}
-            Va por mil y ninguna pasa de 30: si es 8 por mil, escribí 8.
-          </>
-        )}
-        {tarifa.trim() !== "" && !valida && (
-          <span className="mt-1 block font-medium">Tiene que ser un número entre 0 y 30.</span>
-        )}
-      </span>
-      <span className="flex flex-wrap items-center gap-2">
-        <Input
-          aria-label="Tarifa de ICA por mil"
-          inputMode="decimal"
-          placeholder="Ej. 9.66"
-          value={tarifa}
-          onChange={(e) => setTarifa(e.target.value)}
-          className="h-9 w-32 font-mono"
-        />
-        <span className="text-xs text-muted-foreground">por mil</span>
-        <Button
-          size="sm"
-          disabled={!valida || guardar.isPending}
-          onClick={() => guardar.mutate(valor)}
-        >
-          Guardar tarifa
-        </Button>
-      </span>
-    </span>
-  );
-}
-
 function ActividadesVigentes({
   filas,
   onQuitar,
@@ -267,213 +173,9 @@ function ActividadesVigentes({
             </span>{" "}
             {String(f.descripcion)}
           </span>
-          {/* La tarifa solo tiene sentido en la principal: es la que liquida el
-              ICA. En las demás se registra, pero no se cobra por ella. */}
-          {f.es_principal === true &&
-            f.tarifa_ica_por_mil !== null &&
-            Number(f.tarifa_ica_por_mil) <= 30 && (
-            <span className="mt-1 block font-mono text-[11px] text-muted-foreground">
-              ICA {String(f.tarifa_ica_por_mil)} por mil ·{" "}
-              {String(f.municipio_nombre ?? "")}
-            </span>
-          )}
-          {/* Registrada sin tarifa —la lectura del RUT no la trae— y es lo que
-              deja el paso a medias. Se completa acá mismo: antes no había dónde,
-              y el paso se veía lleno sin estarlo. */}
-          {f.es_principal === true &&
-            (f.tarifa_ica_por_mil === null || Number(f.tarifa_ica_por_mil) > 30) && (
-              <CompletarTarifaIca
-                actividadId={String(f.id)}
-                actual={f.tarifa_ica_por_mil === null ? null : Number(f.tarifa_ica_por_mil)}
-              />
-            )}
         </Registrada>
       ))}
     </Registradas>
-  );
-}
-
-/**
- * Las responsabilidades vigentes, y qué significa cada una hoy.
- *
- * Un código suprimido se veía igual que cualquier otro —"11 · Ventas régimen
- * común"— pero el motor lo trata como el vigente que lo reemplazó, porque eso
- * es lo que dice la DIAN. Resultado: el plan de cuentas proponía IVA a quien
- * miraba su lista y no veía IVA por ningún lado.
- *
- * Ahora el reemplazo va escrito. La regla no cambió; lo que cambió es que se ve.
- */
-function ResponsabilidadesVigentes({
-  filas,
-}: {
-  filas: Array<Record<string, unknown>>;
-}) {
-  if (filas.length === 0) return null;
-
-  return (
-    <ListaVigencia>
-      {filas.map((f) => {
-        const suprimido = f.codigo_vigente === false;
-        const reemplazo = f.codigo_reemplazo as number | null;
-        const fe = f.codigo_dian_fe as string | null;
-
-        return (
-          <FilaVigencia
-            key={String(f.id)}
-            codigo={String(f.codigo)}
-            nombre={String(f.descripcion ?? "")}
-            /* El tachado y el "usa el código X" los pone `FilaVigencia`: el
-               código sigue ahí porque el RUT lo dice, pero el motor trata el
-               reemplazo, y verlo tachado es lo que evita buscar IVA en una
-               lista donde el IVA está bajo otro número. */
-            suprimida={suprimido && reemplazo !== null ? String(reemplazo) : undefined}
-            etiquetas={
-              /* Solo seis de las 48 viajan en el XML de la factura. Verlo acá
-                 ahorra ir a buscarlo al anexo técnico. */
-              fe ? <Pildora>Va en la factura · {fe}</Pildora> : undefined
-            }
-          />
-        );
-      })}
-    </ListaVigencia>
-  );
-}
-
-function BloqueResponsabilidades({ pendiente }: { pendiente: boolean }) {
-  const { data: filas = [] } = useQuery({
-    queryKey: ["responsabilidades-empresa"],
-    queryFn: legalApi.responsabilidadesRut,
-  });
-  const vigentes = filas.filter((f) => f.fecha_fin === null);
-
-  const form = useForm<z.infer<typeof esquemaResponsabilidad>>({
-    resolver: zodResolver(esquemaResponsabilidad),
-    defaultValues: { fechaInicio: HOY },
-  });
-
-  const guardar = useGuardar<z.infer<typeof esquemaResponsabilidad>>({
-    fn: (d) => legalApi.abrirResponsabilidadRut(d),
-    exito: "Responsabilidad registrada",
-    invalidar: [["responsabilidades-empresa"], ["plan-cuentas", "sugerencia"]],
-    // El código se limpia y la fecha queda: un RUT trae varias responsabilidades
-    // y todas empiezan a regir el mismo día.
-    alTerminar: () =>
-      form.reset({ fechaInicio: form.getValues("fechaInicio") }),
-  });
-
-  const errores = form.formState.errors;
-  const codigo = form.watch("codigo");
-
-  return (
-    <Bloque
-      titulo="Responsabilidades del RUT"
-      descripcion="La casilla 53, tal como la imprime la DIAN. De acá sale si la empresa cobra IVA, si retiene y bajo qué régimen declara."
-      pendiente={pendiente}
-    >
-      <ResponsabilidadesVigentes filas={vigentes} />
-
-      <div className="grid items-end gap-3 sm:grid-cols-[1fr_152px_auto]">
-        <Campo
-          id="responsabilidad"
-          etiqueta="Responsabilidad, calidad o atributo"
-          error={errores.codigo?.message}
-        >
-          <SelectorResponsabilidadRut
-            className={CONTROL}
-            id="responsabilidad"
-            valor={codigo ?? null}
-            invalido={Boolean(errores.codigo)}
-            yaRegistrados={vigentes.map((f) => Number(f.codigo))}
-            onCambio={(c) =>
-              form.setValue("codigo", c, { shouldValidate: true })
-            }
-          />
-        </Campo>
-
-        <Campo
-          id="respDesde"
-          etiqueta="Vigente desde"
-          error={errores.fechaInicio?.message}
-        >
-          <Input
-            id="respDesde"
-            className="font-mono"
-            {...form.register("fechaInicio")}
-          />
-        </Campo>
-
-        <Button
-          variant="outline"
-          onClick={form.handleSubmit((d) => guardar.mutate(d))}
-          disabled={guardar.isPending}
-        >
-          <Plus className="size-4" />
-          Agregar
-        </Button>
-      </div>
-    </Bloque>
-  );
-}
-
-/**
- * La calidad de agente retenedor de ICA.
- *
- * Va acá y no con las responsabilidades del RUT porque no sale del RUT: el ICA
- * es municipal y quién retiene lo define el acuerdo del municipio. Es la única
- * condición tributaria que se sigue declarando a mano, y sin ella la cuenta de
- * ICA retenido no se propone nunca.
- */
-function BloqueAgenteIca() {
-  const { data: filas = [] } = useQuery({
-    queryKey: ["regimenes"],
-    queryFn: legalApi.regimenes,
-  });
-  const vigente = filas.find(
-    (f) => f.tipo_regimen === "AGENTE_RETENEDOR_ICA" && f.fecha_fin === null,
-  );
-
-  const abrir = useGuardar<void>({
-    fn: () =>
-      legalApi.abrirRegimen({
-        tipoRegimen: "AGENTE_RETENEDOR_ICA",
-        fechaInicio: HOY,
-      }),
-    exito: "Registrado como agente retenedor de ICA",
-    invalidar: [["regimenes"], ["plan-cuentas", "sugerencia"]],
-  });
-
-  const cerrar = useGuardar<string>({
-    fn: (id) => legalApi.cerrarRegimen(id, HOY),
-    exito: "Ya no figura como agente retenedor de ICA",
-    invalidar: [["regimenes"], ["plan-cuentas", "sugerencia"]],
-  });
-
-  const marcado = vigente !== undefined;
-  const trabajando = abrir.isPending || cerrar.isPending;
-
-  return (
-    <Bloque
-      titulo="Agente retenedor de ICA"
-      descripcion="No sale del RUT: lo define el acuerdo del municipio de la sede principal."
-    >
-      {/* Segmentado y no un interruptor: acá "no marcado" y "dijo que no" son
-          cosas distintas —la primera es que nadie contestó— y un interruptor
-          las representa igual. Con Sí y No a la vista, la respuesta existe. */}
-      <div className="flex flex-col gap-2">
-        <SegmentadoSiNo
-          etiquetaGrupo="¿El municipio la designó agente retenedor de ICA?"
-          valor={marcado}
-          deshabilitado={trabajando}
-          onCambio={(v) =>
-            v ? abrir.mutate(undefined) : vigente && cerrar.mutate(String(vigente.id))
-          }
-        />
-        <span className="text-xs text-muted-foreground">
-          Marcarlo agrega la cuenta de ICA retenido al plan. La tarifa por mil se carga con
-          cada actividad económica, porque depende del municipio donde se ejerce.
-        </span>
-      </div>
-    </Bloque>
   );
 }
 
@@ -779,7 +481,6 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
     defaultValues: {
       codigoCiiu: "",
       descripcion: "",
-      tarifaIcaPorMil: 0,
       municipioCodigo: "",
       fechaInicio: HOY,
     },
@@ -793,14 +494,13 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
       legalApi.abrirActividad({ ...d, esPrincipal: vigentes.length === 0 }),
     exito: "Actividad registrada",
     invalidar: [["actividades"], ["plan-cuentas", "sugerencia"]],
-    // El CIIU y la tarifa se limpian; el municipio y la fecha quedan, que es lo
+    // El CIIU se limpia; el municipio y la fecha quedan, que es lo
     // que se repite cuando se cargan varias actividades del mismo RUT.
     alTerminar: () => {
       form.reset({
         ...form.getValues(),
         codigoCiiu: "",
         descripcion: "",
-        tarifaIcaPorMil: 0,
       });
       setAgregando(false);
     },
@@ -826,7 +526,7 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
       titulo={
         vigentes.length > 1 ? "Actividades económicas" : "Actividad económica"
       }
-      descripcion="La principal decide la cuenta de ingresos y la tarifa de ICA que se liquida. El RUT admite varias."
+      descripcion="La principal decide la cuenta de ingresos y, con el municipio, el ICA. El RUT admite varias."
       pendiente={pendiente}
     >
       <ActividadesVigentes
@@ -862,8 +562,8 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
             error={errores.codigoCiiu?.message ?? errores.descripcion?.message}
             ayuda={
               vigentes.length === 0
-                ? "Buscá por código o por nombre. La descripción la pone el catálogo del DANE."
-                : "El RUT admite varias. La principal es la que ya cargaste y decide la cuenta de ingresos."
+                ? "Busque por código o por nombre. La descripción la pone el catálogo del DANE."
+                : "El RUT admite varias. La principal es la que ya cargó y decide la cuenta de ingresos."
             }
           >
             <SelectorCiiu
@@ -894,22 +594,6 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
                     shouldValidate: true,
                   })
                 }
-              />
-            </Campo>
-
-            <Campo
-              id="tarifaIca"
-              etiqueta="Tarifa de ICA"
-              ayuda="Por mil"
-              error={errores.tarifaIcaPorMil?.message}
-            >
-              <Input
-                id="tarifaIca"
-                type="number"
-                step="0.001"
-                min="0"
-                className="font-mono"
-                {...form.register("tarifaIcaPorMil", { valueAsNumber: true })}
               />
             </Campo>
 

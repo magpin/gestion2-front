@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -189,7 +190,7 @@ export function DialogoImportarExtracto({
                 ) : (
                   <FileUp className="size-8 text-muted-foreground" />
                 )}
-                <span className="font-semibold">Elegí el archivo del extracto</span>
+                <span className="font-semibold">Elija el archivo del extracto</span>
                 <span className="text-xs text-muted-foreground">
                   Se lee en este navegador; al servidor solo llegan las líneas.
                 </span>
@@ -229,10 +230,10 @@ export function DialogoImportarExtracto({
                   <Input id="fechaHasta" type="date" className={CONTROL} value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} />
                 </Campo>
                 <Campo id="saldoInicial" etiqueta="Saldo inicial del banco" ayuda="El que dice el extracto al empezar el período." escala="grande">
-                  <Input id="saldoInicial" type="number" step="0.01" className={CONTROL} value={saldoInicial} onChange={(e) => setSaldoInicial(e.target.value)} />
+                  <CampoPesos id="saldoInicial" negativo className={CONTROL} value={saldoInicial} onChange={setSaldoInicial} />
                 </Campo>
                 <Campo id="saldoFinal" etiqueta="Saldo final del banco" ayuda="El que dice el extracto al cerrar el período." escala="grande">
-                  <Input id="saldoFinal" type="number" step="0.01" className={CONTROL} value={saldoFinal} onChange={(e) => setSaldoFinal(e.target.value)} />
+                  <CampoPesos id="saldoFinal" negativo className={CONTROL} value={saldoFinal} onChange={setSaldoFinal} />
                 </Campo>
               </div>
 
@@ -241,7 +242,7 @@ export function DialogoImportarExtracto({
                   {fueraDeRango.length} línea{fueraDeRango.length === 1 ? "" : "s"} quedan fuera del
                   rango (fila{fueraDeRango.length === 1 ? "" : "s"}{" "}
                   {fueraDeRango.slice(0, 5).map((l) => l.fila).join(", ")}
-                  {fueraDeRango.length > 5 ? "…" : ""}). Ampliá el rango: el extracto tiene que contenerlas.
+                  {fueraDeRango.length > 5 ? "…" : ""}). Amplíe el rango: el extracto tiene que contenerlas.
                 </p>
               )}
 
@@ -274,14 +275,14 @@ export function DialogoImportarExtracto({
                     {!c.cuadra && (
                       <p className="mt-1">
                         Casi siempre es el débito y el crédito cruzados en el mapeo, un separador decimal
-                        equivocado, o una fila con plata entre las que no se pudieron leer.
+                        equivocado, o una fila con valores entre las que no se pudieron leer.
                       </p>
                     )}
                   </div>
                 </div>
               ) : (
                 <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
-                  Digitá los dos saldos del extracto para ver si cuadra.
+                  Digite los dos saldos del extracto para ver si cuadra.
                 </p>
               )}
 
@@ -432,7 +433,7 @@ function Mapeo({
         <span className="font-medium text-foreground">{archivo.nombre}</span> ·{" "}
         {recordado
           ? "el mapeo es el de la última vez que esta cuenta subió un extracto."
-          : "el mapeo se adivinó de los encabezados: revisalo."}
+          : "el mapeo se adivinó de los encabezados: revíselo."}
       </p>
 
       <div className="overflow-x-auto rounded-2xl border border-border">
@@ -555,7 +556,7 @@ function Mapeo({
       {f.ordenFecha !== "AMD" && ordenFechaDudoso(archivo.filas, f) && (
         <p className="rounded-2xl bg-warning/10 p-4 text-sm text-warning">
           Ninguna fecha del archivo tiene un número mayor a 12, así que no se puede saber si
-          viene día/mes o mes/día. Revisá el orden con una fecha que conozcas: si está al
+          viene día/mes o mes/día. Revise el orden con una fecha que conozca: si está al
           revés, el extracto cuadra igual y las fechas quedan cambiadas.
         </p>
       )}

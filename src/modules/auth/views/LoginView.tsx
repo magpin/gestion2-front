@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,7 +70,7 @@ export function LoginView() {
       <div
         className={`${styles.fade} flex justify-end gap-1.5 text-sm text-muted-foreground`}
       >
-        <span>¿Necesitas ayuda?</span>
+        <span>¿Necesita ayuda?</span>
         <a
           href="mailto:soporte@erpgestion.co"
           className="font-medium text-brand-text no-underline hover:text-brand-hover"
@@ -85,11 +86,15 @@ export function LoginView() {
               Bienvenido de nuevo
             </h1>
             <p className="m-0 text-sm leading-normal text-muted-foreground">
-              Ingresa con tu cuenta para continuar.
+              Ingrese con su cuenta para continuar.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4.5" noValidate>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4.5"
+            noValidate
+          >
             <div className={`${styles.up} ${styles.d2} flex flex-col gap-1.5`}>
               <label htmlFor="email" className="text-[13px] font-medium">
                 Correo electrónico
@@ -105,7 +110,11 @@ export function LoginView() {
                 {...register("email")}
               />
               {errors.email && (
-                <p id="email-error" role="alert" className="text-xs text-destructive">
+                <p
+                  id="email-error"
+                  role="alert"
+                  className="text-xs text-destructive"
+                >
                   {errors.email.message}
                 </p>
               )}
@@ -121,11 +130,17 @@ export function LoginView() {
                 placeholder="••••••••"
                 className="h-11 rounded-[0.6rem]"
                 aria-invalid={errors.password ? true : undefined}
-                aria-describedby={errors.password ? "password-error" : undefined}
+                aria-describedby={
+                  errors.password ? "password-error" : undefined
+                }
                 {...register("password")}
               />
               {errors.password && (
-                <p id="password-error" role="alert" className="text-xs text-destructive">
+                <p
+                  id="password-error"
+                  role="alert"
+                  className="text-xs text-destructive"
+                >
                   {errors.password.message}
                 </p>
               )}
@@ -137,7 +152,11 @@ export function LoginView() {
               disabled={login.isPending || !listo}
               className={`${styles.up} ${styles.d5} mt-3.5 h-11 w-full rounded-[0.6rem]`}
             >
-              {login.isPending ? <Loader2 className="size-4 animate-spin" /> : "Ingresar"}
+              {login.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                "Ingresar"
+              )}
             </Button>
           </form>
 
@@ -146,7 +165,8 @@ export function LoginView() {
           >
             <Lock size={14} strokeWidth={1.8} className="shrink-0" />
             <span>
-              Conexión cifrada · la sesión se cierra a las {HORAS_DE_SESION} horas
+              Conexión cifrada · la sesión se cierra a las {HORAS_DE_SESION}{" "}
+              horas
             </span>
           </div>
         </div>
@@ -159,12 +179,18 @@ export function LoginView() {
           © {new Date().getFullYear()} {NOMBRE_SISTEMA}
         </span>
         <div className="flex gap-5">
-          <a href="#" className="text-muted-foreground no-underline hover:text-foreground">
+          <Link
+            href="/terminos"
+            className="text-muted-foreground no-underline hover:text-foreground"
+          >
             Términos
-          </a>
-          <a href="#" className="text-muted-foreground no-underline hover:text-foreground">
+          </Link>
+          <Link
+            href="/tratamiento-de-datos"
+            className="text-muted-foreground no-underline hover:text-foreground"
+          >
             Tratamiento de datos
-          </a>
+          </Link>
         </div>
       </footer>
     </>

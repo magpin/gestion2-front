@@ -29,14 +29,14 @@ function mostrar(conversacion: Partial<ConversacionDelPie> | null = {}) {
   return { alEnviar, alNueva };
 }
 
-const campo = () => screen.getByRole("textbox", { name: "Tu pregunta" });
+const campo = () => screen.getByRole("textbox", { name: "Su pregunta" });
 const mandar = () => screen.getByRole("button", { name: "Mandar la pregunta" });
 
 describe("Compositor", () => {
   it("sin conversación no hay campo de texto: solo la zona para soltar", () => {
     mostrar(null);
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.getByText(/Arrastrá documentos acá/)).toBeInTheDocument();
+    expect(screen.getByText(/Arrastre documentos aquí/)).toBeInTheDocument();
   });
 
   it("Enter manda la pregunta sin espacios de más y vacía el campo", async () => {

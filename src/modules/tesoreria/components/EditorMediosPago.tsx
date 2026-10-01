@@ -3,8 +3,9 @@
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { cn, formatCOP } from "@/lib/utils";
+import { CajaPrincipal } from "./CajaPrincipal";
 import { SelectorCaja } from "./SelectorCaja";
 import { SelectorCuentaBancaria } from "./SelectorCuentaBancaria";
 import type { CajaResumen, MedioPagoInput } from "../types/tesoreria.types";
@@ -52,17 +53,17 @@ export function problemaDe(
 ): string | null {
   for (const r of renglones) {
     if (r.medio === "CAJA" && r.caja === null)
-      return `Elegí la caja de cada renglón.`;
+      return `Elija la caja de cada renglón.`;
     if (r.medio === "BANCO" && r.cuenta === null)
-      return `Elegí la cuenta de cada renglón.`;
+      return `Elija la cuenta de cada renglón.`;
     if (!(Number(r.valor) > 0))
       return `Cada renglón necesita un valor mayor a cero.`;
   }
   const suma = sumaDe(renglones);
   if (suma > tope)
     return verbo === "devolver"
-      ? `Estás devolviendo ${formatCOP(suma - tope)} de más: no se puede devolver más de lo que entró.`
-      : `Estás repartiendo ${formatCOP(suma - tope)} de más: no se puede ${verbo} más de lo que falta.`;
+      ? `Está devolviendo ${formatCOP(suma - tope)} de más: no se puede devolver más de lo que entró.`
+      : `Está repartiendo ${formatCOP(suma - tope)} de más: no se puede ${verbo} más de lo que falta.`;
   return null;
 }
 
@@ -98,6 +99,7 @@ export function EditorMediosPago({
   onCambiar,
   tope,
   soloExceso = false,
+  cajaFija = false,
 }: {
   renglones: RenglonPagoBorrador[];
   onCambiar: (renglones: RenglonPagoBorrador[]) => void;
@@ -108,6 +110,12 @@ export function EditorMediosPago({
    * lo cobrado y no hay que devolverlo todo: «falta repartir» sería falso.
    */
   soloExceso?: boolean;
+  /**
+   * La caja no se elige: es la principal de la empresa (`CajaPrincipal`).
+   * Ventas lo usa —el efectivo de una venta entra siempre ahí—; compras no,
+   * porque pagar con la caja menor sí tiene sentido.
+   */
+  cajaFija?: boolean;
 }) {
   const actualizar = (clave: number, cambio: Partial<RenglonPagoBorrador>) =>
     onCambiar(
@@ -161,10 +169,17 @@ export function EditorMediosPago({
 
           <div className="grid gap-4 sm:grid-cols-[1fr_200px]">
             {r.medio === "CAJA" ? (
-              <SelectorCaja
-                valor={r.caja}
-                onElegir={(caja) => actualizar(r.clave, { caja })}
-              />
+              cajaFija ? (
+                <CajaPrincipal
+                  valor={r.caja}
+                  onElegir={(caja) => actualizar(r.clave, { caja })}
+                />
+              ) : (
+                <SelectorCaja
+                  valor={r.caja}
+                  onElegir={(caja) => actualizar(r.clave, { caja })}
+                />
+              )
             ) : (
               <SelectorCuentaBancaria
                 valor={r.cuenta}
@@ -172,12 +187,9 @@ export function EditorMediosPago({
               />
             )}
 
-            <Input
-              type="number"
-              min="0.01"
-              step="0.01"
+            <CampoPesos
               value={r.valor}
-              onChange={(e) => actualizar(r.clave, { valor: e.target.value })}
+              onChange={(valor) => actualizar(r.clave, { valor })}
               placeholder="0"
               className="h-11 rounded-xl px-4 text-right font-mono"
               aria-label={`Valor del renglón ${i + 1}`}
@@ -208,7 +220,7 @@ export function EditorMediosPago({
           >
             {falta > 0
               ? `Falta repartir ${formatCOP(falta)}`
-              : `Te pasaste por ${formatCOP(-falta)}`}
+              : `Se pasó por ${formatCOP(-falta)}`}
           </p>
         )}
       </div>

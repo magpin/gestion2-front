@@ -149,7 +149,7 @@ export function RangoSelector({
             <div className="p-3">
               <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">
                 {borrador?.from && !borrador.to
-                  ? "Elige la fecha final"
+                  ? "Elija la fecha final"
                   : etiquetaDeRango(rango)}
               </p>
 

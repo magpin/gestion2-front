@@ -23,7 +23,12 @@ const campo =
  * qué cuenta y cuándo. No se edita ni se borra, y la pantalla no lo ofrece.
  */
 export function BitacoraView() {
-  const [filtro, setFiltro] = useState({ admin: "", accion: "", desde: "", hasta: "" });
+  const [filtro, setFiltro] = useState({
+    admin: "",
+    accion: "",
+    desde: "",
+    hasta: "",
+  });
   const [pagina, setPagina] = useState(1);
 
   const consulta = useQuery({
@@ -42,14 +47,20 @@ export function BitacoraView() {
     <>
       <Encabezado
         titulo="Bitácora"
-        subtitulo={d ? `${plural(d.total, "cambio")}. No se edita ni se borra.` : " "}
+        subtitulo={
+          d ? `${plural(d.total, "cambio")}. No se edita ni se borra.` : " "
+        }
         acciones={<BotonBuscar />}
       />
 
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4">
         <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
           Administrador
-          <select className={campo} value={filtro.admin} onChange={(e) => cambiar({ admin: e.target.value })}>
+          <select
+            className={campo}
+            value={filtro.admin}
+            onChange={(e) => cambiar({ admin: e.target.value })}
+          >
             <option value="">Todos</option>
             {d?.admins.map((a) => (
               <option key={a.id} value={a.id}>
@@ -60,7 +71,11 @@ export function BitacoraView() {
         </label>
         <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
           Acción
-          <select className={campo} value={filtro.accion} onChange={(e) => cambiar({ accion: e.target.value })}>
+          <select
+            className={campo}
+            value={filtro.accion}
+            onChange={(e) => cambiar({ accion: e.target.value })}
+          >
             <option value="">Todas</option>
             {Object.entries(NOMBRE_ACCION).map(([k, v]) => (
               <option key={k} value={k}>
@@ -71,16 +86,29 @@ export function BitacoraView() {
         </label>
         <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
           Desde
-          <Input type="date" className="h-9 w-40 text-[13px]" value={filtro.desde} onChange={(e) => cambiar({ desde: e.target.value })} />
+          <Input
+            type="date"
+            className="h-9 w-40 text-[13px]"
+            value={filtro.desde}
+            onChange={(e) => cambiar({ desde: e.target.value })}
+          />
         </label>
         <label className="flex flex-col gap-1.5 text-xs text-muted-foreground">
           Hasta
-          <Input type="date" className="h-9 w-40 text-[13px]" value={filtro.hasta} onChange={(e) => cambiar({ hasta: e.target.value })} />
+          <Input
+            type="date"
+            className="h-9 w-40 text-[13px]"
+            value={filtro.hasta}
+            onChange={(e) => cambiar({ hasta: e.target.value })}
+          />
         </label>
       </div>
 
       {consulta.isError ? (
-        <ErrorCarga que="la bitácora" alReintentar={() => void consulta.refetch()} />
+        <ErrorCarga
+          que="la bitácora"
+          alReintentar={() => void consulta.refetch()}
+        />
       ) : (
         <div
           className={cn(
@@ -119,11 +147,16 @@ export function BitacoraView() {
                         </td>
                         <td className="border-b border-border px-3 py-2.5 text-[13px] group-last/fila:border-b-0">
                           {e.cuentaId ? (
-                            <Link href={`/plataforma/cuentas/${e.cuentaId}`} className="hover:underline">
+                            <Link
+                              href={`/plataforma/cuentas/${e.cuentaId}`}
+                              className="hover:underline"
+                            >
                               {e.cuenta}
                             </Link>
                           ) : (
-                            <span className="text-muted-foreground">Plataforma</span>
+                            <span className="text-muted-foreground">
+                              Plataforma
+                            </span>
                           )}
                         </td>
                         <td className="border-b border-border px-3 py-2.5 text-[13px] text-muted-foreground group-last/fila:border-b-0">
@@ -136,11 +169,16 @@ export function BitacoraView() {
               </div>
               <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3 text-[13px] text-muted-foreground">
                 <span>
-                  Mostrando {(d.pagina - 1) * d.porPagina + 1} a {Math.min(d.pagina * d.porPagina, d.total)} de{" "}
-                  {d.total}
+                  Mostrando {(d.pagina - 1) * d.porPagina + 1} a{" "}
+                  {Math.min(d.pagina * d.porPagina, d.total)} de {d.total}
                 </span>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={pagina <= 1} onClick={() => setPagina(pagina - 1)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagina <= 1}
+                    onClick={() => setPagina(pagina - 1)}
+                  >
                     Anterior
                   </Button>
                   <Button

@@ -126,21 +126,11 @@ export const useElegirEmpresa = (
       // Sin datos de la empresa anterior en caché: son contabilidades distintas.
       queryClient.clear();
 
-      // Al asistente va solo la empresa recién entregada, a la que le falta todo:
-      // mandarla al tablero mostraría seis tarjetas en ámbar sin decirle por
-      // dónde empezar. La que ya configuró algo entra a operar: el tablero le
-      // muestra lo que falta —una resolución, típicamente— con su "Continuar",
-      // y no se puede obligar a quien lleva meses trabajando a pasar por el
-      // asistente cada vez que entra.
-      //
-      // Y con nada hecho no entra al primer paso sino a la **bienvenida**, que
-      // es donde se elige entre llenarlo a mano o dejárselo a la IA. Esa
-      // decisión se toma una sola vez y solo tiene sentido al principio:
-      // ofrecérsela a alguien que ya llenó dos pasos sería hacerle repetir algo
-      // que ya resolvió. Por eso la condición es "no tocó nada" y no "está
-      // incompleta" —el enlace de la barra lateral y el «Continuar» del tablero
-      // siguen entrando directo al paso—. Qué es "nada" lo decide
-      // `destinoAlEntrar`: el paso «Empresa» nace listo y no cuenta.
+      // Mientras la configuración no esté completa, se entra a terminarla
+      // (`destinoAlEntrar`): con nada hecho, a la **bienvenida**, donde se elige
+      // entre llenarla a mano o con la IA; con algo hecho, al paso que sigue; y
+      // quien eligió IA, a la IA. Completa, al tablero. Además, el área de
+      // trabajo tiene su guardia (`GuardiaConfiguracion`).
       if (opciones.despues !== undefined) {
         await opciones.despues().catch(() => undefined);
       }

@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, FileText, Loader2, TriangleAlert, Upload } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,8 +39,9 @@ const REFRESCO_MS = 2500;
 /**
  * Los pedidos que los clientes mandan, leídos por María.
  *
- * Hermana de «Leídas» en Compras, con una diferencia que viene de ventas: **una
- * factura de venta no tiene borrador** —nace emitida, con su consecutivo—. Así
+ * Hermana de las facturas leídas —las dos viven en María → Documentos
+ * leídos—, con una diferencia que viene de ventas: **una factura de venta no
+ * tiene borrador** —nace emitida, con su consecutivo—. Así
  * que lo que María arma no se registra desde acá: se abre en el formulario de
  * factura de siempre, ya lleno, y la persona revisa, corrige y emite.
  *
@@ -52,9 +55,15 @@ export function PedidosSeccion() {
   const [facturando, setFacturando] = useState<LecturaPedido | null>(null);
   const entrada = useRef<HTMLInputElement>(null);
 
-  const { data: pedidos = [], isLoading } = useQuery({
+  const {
+    data: pedidos,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: CLAVE,
     queryFn: pedidosApi.listar,
+    meta: SILENCIOSO,
     refetchInterval: (q) =>
       (q.state.data ?? []).some(
         (l) => l.estado === "EN_COLA" || l.estado === "LEYENDO",
@@ -73,14 +82,17 @@ export function PedidosSeccion() {
       void cliente.invalidateQueries({ queryKey: CLAVE });
       aviso.exito("Subido. María lo está leyendo.");
     },
-    onError: (e: Error) => aviso.error(e.message),
+    // `falla` y no `e.message`: en un error HTTP, `message` es el genérico de
+    // axios («Request failed with status code 400») y esconde lo que dijo el
+    // servidor, que es lo que explica qué hacer.
+    onError: (e: unknown) => aviso.falla(e),
   });
 
   const elegir = (archivo: File | undefined) => {
     if (archivo === undefined) return;
     if (!TIPOS.split(",").includes(archivo.type)) {
       aviso.error(
-        "Solo puedo leer pedidos en PDF o en foto. Si es otro formato, armá la factura a mano.",
+        "Solo puedo leer pedidos en PDF o en foto. Si es otro formato, arme la factura a mano.",
       );
       return;
     }
@@ -90,7 +102,7 @@ export function PedidosSeccion() {
   const enPantalla =
     abierto === null
       ? null
-      : (pedidos.find((p) => p.id === abierto.id) ?? abierto);
+      : (pedidos?.find((p) => p.id === abierto.id) ?? abierto);
 
   return (
     <div className="flex flex-col gap-5">
@@ -99,11 +111,11 @@ export function PedidosSeccion() {
           <Maria estado={subir.isPending ? "leyendo" : "reposo"} tamano={32} />
           <div>
             <p className="text-sm font-medium">
-              Subí el pedido del cliente y yo armo la factura
+              Suba el pedido del cliente y yo armo la factura
             </p>
             <p className="text-xs text-muted-foreground">
               Una orden de compra, un pedido o una cotización aceptada, en PDF o
-              en foto. Te la dejo lista para revisar; emitirla lo apretás vos.
+              en foto. Se la dejo lista para revisar; emitirla lo decide usted.
             </p>
           </div>
         </div>
@@ -138,16 +150,36 @@ export function PedidosSeccion() {
         )}
       </div>
 
-      {isLoading ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          Cargando…
-        </p>
-      ) : pedidos.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-14 text-center">
-          <p className="text-sm text-muted-foreground">
-            Todavía no le pasaste ningún pedido a María.
+      {pedidos === undefined ? (
+        isError ? (
+          <ErrorCarga
+            error={error}
+            titulo="No se pudieron leer los pedidos"
+            onReintentar={refetch}
+          />
+        ) : (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Cargando…
           </p>
-        </div>
+        )
+      ) : pedidos.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          titulo="Todavía no le ha pasado ningún pedido a María"
+          descripcion={
+            puedeFacturar
+              ? "Suba la orden de compra o el pedido de un cliente, en PDF o en foto, y María le arma la factura para que la revise y la emita."
+              : "Cuando alguien de ventas suba un pedido de un cliente, lo va a ver aquí con la factura que armó María."
+          }
+          accion={
+            puedeFacturar && !subir.isPending
+              ? {
+                  label: "Subir un pedido",
+                  onClick: () => entrada.current?.click(),
+                }
+              : undefined
+          }
+        />
       ) : (
         <ul className="flex flex-col gap-2">
           {pedidos.map((p) => (
@@ -194,7 +226,7 @@ export function PedidosSeccion() {
                     Armar la factura
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    Se abre el formulario de factura ya lleno. Revisalo y emitila
+                    Se abre el formulario de factura ya lleno. Revíselo y emítala
                     desde ahí.
                   </p>
                 </div>
@@ -271,7 +303,7 @@ function FacturaDesdePedido({
       }
       guardando={emitir.isPending}
       titulo="Factura desde el pedido"
-      descripcion={`Armada con el pedido${cruzado.pedido.numero === null ? "" : ` ${cruzado.pedido.numero}`} de ${cruzado.pedido.cliente.nombre}. Los precios son los de la lista. Revisá y emití.`}
+      descripcion={`Armada con el pedido${cruzado.pedido.numero === null ? "" : ` ${cruzado.pedido.numero}`} de ${cruzado.pedido.cliente.nombre}. Los precios son los de la lista. Revísela y emítala.`}
       etiquetaBoton="Emitir factura"
       fechaDeHoy
       conFormaPago
@@ -321,7 +353,7 @@ function DetallePedido({ cruzado }: { cruzado: PedidoCruzado }) {
       {cruzado.comprobaciones.length === 0 ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <TriangleAlert className="size-4 shrink-0 text-warning-foreground" />
-          El pedido no trae un subtotal con qué sumar los renglones: revisá las
+          El pedido no trae un subtotal con qué sumar los renglones: revise las
           cantidades contra el papel.
         </p>
       ) : fallan.length === 0 ? (

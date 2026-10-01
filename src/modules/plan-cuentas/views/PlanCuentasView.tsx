@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +15,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { ArbolPlan } from "../components/ArbolPlan";
+import { CuentasAutomaticas } from "../components/CuentasAutomaticas";
 import { SelectorCuentaPuc } from "../components/SelectorCuentaPuc";
 import { planCuentasApi } from "../services/plan-cuentas.service";
 
@@ -42,8 +44,11 @@ const esquemaCentro = z.object({
  */
 export function PlanCuentasView() {
   const queryClient = useQueryClient();
-  const [busqueda, setBusqueda] = useState("");
-  const [inactivas, setInactivas] = useState(false);
+  // Se puede llegar filtrado desde un aviso («Ir al plan de cuentas»):
+  // `?q=130505&inactivas=1`.
+  const parametros = useSearchParams();
+  const [busqueda, setBusqueda] = useState(parametros.get("q") ?? "");
+  const [inactivas, setInactivas] = useState(parametros.get("inactivas") === "1");
 
   const { data: cuentas = [], isLoading } = useQuery({
     queryKey: [...CLAVE, busqueda, inactivas],
@@ -59,7 +64,14 @@ export function PlanCuentasView() {
     queryFn: planCuentasApi.centros,
   });
 
-  const refrescar = () => queryClient.invalidateQueries({ queryKey: CLAVE });
+  // Un auxiliar nuevo puede volver elegible una cuenta automática (o dejar
+  // de serlo): las dos listas se refrescan juntas.
+  const refrescar = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: CLAVE }),
+      queryClient.invalidateQueries({ queryKey: ["tesoreria", "configuracion"] }),
+      queryClient.invalidateQueries({ queryKey: ["inventario", "configuracion"] }),
+    ]);
 
   // El conteo se saca de lo que ya está en pantalla y no de otra consulta: con el
   // buscador vacío es el plan entero, y con texto es cuántas encontró — que es
@@ -79,6 +91,26 @@ export function PlanCuentasView() {
       await refrescar();
       formCuenta.reset();
       aviso.exito("Cuenta agregada");
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
+  // El auxiliar se numera en el servidor: cuenta también los desactivados,
+  // que acá pueden no estar a la vista.
+  const crearAuxiliar = useMutation({
+    mutationFn: (d: { madre: string; nombre: string }) => planCuentasApi.crearAuxiliar(d),
+    onSuccess: async (c) => {
+      await refrescar();
+      aviso.exito(`Auxiliar ${c.codigo} creado`);
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
+  const activar = useMutation({
+    mutationFn: (id: string) => planCuentasApi.activar(id),
+    onSuccess: async () => {
+      await refrescar();
+      aviso.exito("Cuenta activada");
     },
     onError: (e: unknown) => aviso.falla(e),
   });
@@ -116,7 +148,7 @@ export function PlanCuentasView() {
             Plan de cuentas
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Lo que tu empresa usa del Decreto 2650, más tus auxiliares.
+            Lo que la empresa usa del Decreto 2650, más sus auxiliares.
           </p>
           {/* Cuántas quedaron y cuántas sirven para asentar. La segunda cifra no
               es un adorno: un plan lleno de cuentas de agrupación no deja
@@ -155,6 +187,8 @@ export function PlanCuentasView() {
         </Link>
       </header>
 
+      <CuentasAutomaticas />
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-56 flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -184,8 +218,9 @@ export function PlanCuentasView() {
       ) : (
         <ArbolPlan
           cuentas={cuentas}
-          creando={crearCuenta.isPending}
-          onCrearAuxiliar={(d) => crearCuenta.mutate(d)}
+          creando={crearAuxiliar.isPending}
+          onCrearAuxiliar={(d) => crearAuxiliar.mutate(d)}
+          onActivar={(id) => activar.mutate(id)}
           onDesactivar={(id) => desactivar.mutate(id)}
         />
       )}
@@ -193,12 +228,12 @@ export function PlanCuentasView() {
       <section className="flex flex-col gap-3 rounded-lg border border-border p-4">
         <h2 className="text-sm font-semibold">Agregar una cuenta</h2>
         <p className="text-xs text-muted-foreground">
-          Buscala en el catálogo del Decreto 2650 y el código y el nombre se
-          llenan solos. Después los podés ajustar: donde el decreto deja la
-          numeración libre, el código es tuyo.
+          Búsquela en el catálogo del Decreto 2650 y el código y el nombre se
+          llenan solos. Después los puede ajustar: donde el decreto deja la
+          numeración libre, el código lo decide usted.
         </p>
 
-        {/* Antes acá había un campo de código a secas: había que saberse los seis
+        {/* Antes aquí había un campo de código a secas: había que saberse los seis
             dígitos de memoria, y uno equivocado solo se descubría al enviarlo. */}
         <SelectorCuentaPuc
           onElegir={(c) => {

@@ -6,7 +6,15 @@ import type {
   Parametro,
 } from "../types/reportes.types";
 
-const REPORTES: readonly ClaveReporte[] = ["VENTAS_POR_CLIENTE", "ANTIGUEDAD_CARTERA"];
+/** Con qué se corre cada reporte: un rango de fechas o una fecha de corte. */
+const PARAMETRO: Record<ClaveReporte, Parametro> = {
+  VENTAS_POR_CLIENTE: "RANGO",
+  ANTIGUEDAD_CARTERA: "CORTE",
+  RETENCIONES_350: "RANGO",
+  RETEICA: "RANGO",
+  CERTIFICADOS_RETENCION: "RANGO",
+};
+const REPORTES = Object.keys(PARAMETRO) as ClaveReporte[];
 const ATAJOS_RANGO: readonly AtajoRango[] = ["ESTE_MES", "MES_PASADO", "ESTE_ANIO", "PERIODO"];
 const ATAJOS_CORTE: readonly AtajoCorte[] = ["HOY", "CIERRE_MES_PASADO", "CIERRE_PERIODO_ANTERIOR"];
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -51,7 +59,7 @@ export function leerVisor(
   const hasta = q.get("hasta");
   const corte = q.get("corte");
 
-  if (reporte === "VENTAS_POR_CLIENTE") {
+  if (PARAMETRO[reporte] === "RANGO") {
     if (atajo && ATAJOS_RANGO.includes(atajo as AtajoRango)) {
       return { reporte, eleccion: { tipo: "ATAJO_RANGO", atajo: atajo as AtajoRango } };
     }
@@ -76,3 +84,22 @@ export const llaveDe = (e: Eleccion): string =>
     : e.tipo === "CORTE"
       ? e.corte
       : e.atajo;
+
+/**
+ * De qué habla cada reporte de rango, para decirlo en la ventana de período
+ * («Vas a ver: Retenciones del 1 al 30 de septiembre») y cuando sale vacío
+ * («No hay retenciones entre…»). Cada reporte nombra lo suyo: el 350 no es un
+ * reporte de ventas.
+ */
+const QUE_MUESTRA: Record<ClaveReporte, { titulo: string; vacio: string }> = {
+  VENTAS_POR_CLIENTE: { titulo: "Ventas", vacio: "ventas" },
+  ANTIGUEDAD_CARTERA: { titulo: "Cartera", vacio: "cartera" },
+  RETENCIONES_350: { titulo: "Retenciones", vacio: "retenciones" },
+  RETEICA: { titulo: "ReteICA", vacio: "retenciones de ICA" },
+  CERTIFICADOS_RETENCION: {
+    titulo: "Certificados de retención",
+    vacio: "retenciones para certificar",
+  },
+};
+
+export const queMuestra = (reporte: ClaveReporte) => QUE_MUESTRA[reporte];

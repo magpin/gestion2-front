@@ -160,7 +160,7 @@ export function PasoEmpresa() {
             </Campo>
           </div>
 
-          {/* Píldoras y no las tarjetas de `SelectorSectores`: acá la empresa ya
+          {/* Píldoras y no las tarjetas de `SelectorSectores`: aquí la empresa ya
               existe y quien llega sabe a qué se dedica; lo que importa es ver
               de un golpe cuáles quedaron marcados. En `empresa-nueva`, donde
               alguien elige esto por primera vez, siguen las tarjetas con su
@@ -198,7 +198,13 @@ export function PasoEmpresa() {
               error={errores.grupoNiif?.message}
               className="w-44"
             >
+              {/* `items`: sin él, el cuadro cerrado muestra «GRUPO_2». */}
               <Select
+                items={[
+                  { value: "GRUPO_1", label: "Grupo 1 · NIIF plenas" },
+                  { value: "GRUPO_2", label: "Grupo 2 · NIIF para pymes" },
+                  { value: "GRUPO_3", label: "Grupo 3 · Microempresas" },
+                ]}
                 value={form.watch("grupoNiif")}
                 onValueChange={(v) => form.setValue("grupoNiif", v as Datos["grupoNiif"])}
               >
@@ -235,6 +241,10 @@ export function PasoEmpresa() {
               className="w-44"
             >
               <Select
+                items={[
+                  { value: "PROMEDIO_PONDERADO", label: "Promedio ponderado" },
+                  { value: "PEPS", label: "PEPS" },
+                ]}
                 value={form.watch("metodoValoracionInventario")}
                 onValueChange={(v) =>
                   form.setValue(

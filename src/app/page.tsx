@@ -9,9 +9,9 @@ import { LandingView } from "@/modules/landing/views/LandingView";
 // según le corresponda: la decisión de a dónde va alguien con sesión vive en un
 // solo sitio, y no se duplica acá.
 export const metadata: Metadata = {
-  title: "ERP Gestión — Contabilidad auditada por IA",
+  title: "ERP Gestión — Contabilidad con María, su asistente de IA",
   description:
-    "Registra compras y ventas, aplica el PUC y genera cada asiento de forma automática. Una IA revisa todo antes de que llegue a tus libros.",
+    "María lee sus facturas de compra y los pedidos de sus clientes y le deja cada asiento listo para aprobar. Nada se asienta sin su aprobación.",
 };
 
 export default function Home() {

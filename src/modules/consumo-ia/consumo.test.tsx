@@ -6,14 +6,29 @@ import { TableroConsumoVista } from "./TableroConsumoVista";
 
 describe("rangoDe", () => {
   it("los días hacia atrás incluyen hoy", () => {
-    expect(rangoDe("7", "2026-09-21")).toEqual({ desde: "2026-09-15", hasta: "2026-09-21" });
-    expect(rangoDe("30", "2026-09-21")).toEqual({ desde: "2026-08-23", hasta: "2026-09-21" });
+    expect(rangoDe("7", "2026-09-21")).toEqual({
+      desde: "2026-09-15",
+      hasta: "2026-09-21",
+    });
+    expect(rangoDe("30", "2026-09-21")).toEqual({
+      desde: "2026-08-23",
+      hasta: "2026-09-21",
+    });
   });
 
   it("este mes y el mes pasado, también en enero", () => {
-    expect(rangoDe("MES", "2026-09-21")).toEqual({ desde: "2026-09-01", hasta: "2026-09-21" });
-    expect(rangoDe("MES_PASADO", "2026-09-21")).toEqual({ desde: "2026-08-01", hasta: "2026-08-31" });
-    expect(rangoDe("MES_PASADO", "2026-01-10")).toEqual({ desde: "2025-12-01", hasta: "2025-12-31" });
+    expect(rangoDe("MES", "2026-09-21")).toEqual({
+      desde: "2026-09-01",
+      hasta: "2026-09-21",
+    });
+    expect(rangoDe("MES_PASADO", "2026-09-21")).toEqual({
+      desde: "2026-08-01",
+      hasta: "2026-08-31",
+    });
+    expect(rangoDe("MES_PASADO", "2026-01-10")).toEqual({
+      desde: "2025-12-01",
+      hasta: "2025-12-31",
+    });
   });
 });
 
@@ -40,7 +55,12 @@ const DATOS: TableroConsumo = {
     empresas: 1,
     costoPorRespuesta: 0.0347,
     costoPorEmpresa: 1.25,
-    tokens: { entrada: 132, salida: 9337, cacheLeido: 313163, cacheEscrito: 137504 },
+    tokens: {
+      entrada: 132,
+      salida: 9337,
+      cacheLeido: 313163,
+      cacheEscrito: 137504,
+    },
   },
   porDia: [{ dia: "2026-09-21", chatUsd: 1.25, lecturaUsd: 0, respuestas: 36 }],
   porEmpresa: [
@@ -79,7 +99,16 @@ const DATOS: TableroConsumo = {
       duracionMs: null,
     },
   ],
-  lectura: [{ tipo: "RUT", cantidad: 4, fallidas: 1, medidas: 0, costoPromedio: null, duracionPromedio: null }],
+  lectura: [
+    {
+      tipo: "RUT",
+      cantidad: 4,
+      fallidas: 1,
+      medidas: 0,
+      costoPromedio: null,
+      duracionPromedio: null,
+    },
+  ],
   empresas: [{ id: "e-1", nombre: "Empresa Demo S.A.S." }],
   empresaId: null,
   truncado: false,
@@ -96,17 +125,23 @@ describe("TableroConsumoVista", () => {
   it("dice cuánto del costo es escritura del caché", () => {
     render(<TableroConsumoVista datos={DATOS} tasa={4000} />);
     // 137.504 × 6,25 / 1e6 = 0,8594.
-    expect(screen.getByText(/fueron US\$ 0,86 de US\$ 1,25/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/fueron US\$ 0,86 de US\$ 1,25/),
+    ).toBeInTheDocument();
   });
 
   it("avisa lo que no tiene medición en vez de mostrar ceros", () => {
     render(<TableroConsumoVista datos={DATOS} tasa={4000} />);
     expect(screen.getByText(/36 respuestas son de antes/)).toBeInTheDocument();
-    expect(screen.getByText(/lecturas de antes de que se midiera/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/lecturas de antes de que se midiera/),
+    ).toBeInTheDocument();
   });
 
   it("con el período cortado por el tope, lo dice", () => {
-    render(<TableroConsumoVista datos={{ ...DATOS, truncado: true }} tasa={4000} />);
+    render(
+      <TableroConsumoVista datos={{ ...DATOS, truncado: true }} tasa={4000} />,
+    );
     expect(screen.getByRole("alert")).toHaveTextContent(/incompletas/);
   });
 });

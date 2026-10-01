@@ -40,30 +40,19 @@ test.describe("Inventario", () => {
     await page.getByLabel("Cantidad *").fill(String(cantidad));
     if (costo !== undefined) await page.getByLabel("Costo unitario *").fill(String(costo));
     await page.getByLabel("Motivo *").fill(motivo);
+    // Una salida pregunta quién responde por lo que falta (arqueo por
+    // concepto): en la prueba lo asume la empresa, como merma.
+    const asume = page.getByRole("dialog").getByText("Lo asume la empresa");
+    if (await asume.count()) await asume.click();
     await page.getByRole("dialog").getByRole("button", { name: "Registrar movimiento" }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
   }
 
-  test("una empresa nueva no puede ajustar hasta decir contra qué cuenta", async ({ page }) => {
-    await abrirKardex(page, "Entrada de ajuste");
-
-    // No es un error escondido: lo dice en pantalla y el botón no se puede usar.
-    await expect(
-      page.getByText(/Configura la cuenta contable para ajustes/),
-    ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Registrar movimiento" })).toBeDisabled();
-  });
-
-  test("con la cuenta configurada, entra, sale y el saldo cuadra", async ({ page }) => {
+  // La cuenta de los ajustes ya no se elige en una pestaña de Configuración:
+  // la pone el sistema con las cuentas automáticas del Plan de cuentas
+  // (28f9db6). Una empresa nueva ajusta desde el primer día.
+  test("entra, sale y el saldo cuadra", async ({ page }) => {
     expect(await existencia(page, e)).toBe(10);
-
-    // ── Primero la decisión contable: contra qué cuenta van los ajustes ──
-    await page.goto("/dashboard/inventario");
-    await page.getByRole("button", { name: "Configuración", exact: true }).click();
-    await page.getByRole("button", { name: /Seleccione una cuenta auxiliar/ }).click();
-    await page.getByLabel("Buscar cuenta").fill("6135");
-    await page.getByRole("button", { name: /Costo de mercancías vendidas/ }).first().click();
-    await page.getByRole("button", { name: "Guardar configuración" }).click();
 
     // ── La entrada: aparecieron tres más en el conteo físico ──
     await abrirKardex(page, "Entrada de ajuste");

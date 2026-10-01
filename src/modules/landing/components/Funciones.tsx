@@ -5,7 +5,7 @@ import styles from "../landing.module.css";
 /**
  * Seis funciones en rejilla, y la quinta va en oscuro.
  *
- * Esa quinta —Auditoría continua— es el diferencial del producto, y romper la
+ * Esa quinta —la revisión de los libros— es el diferencial del producto, y romper la
  * rejilla es más barato que explicarlo: el ojo se detiene ahí antes de leer
  * nada. Es la única licencia que se toma la sección.
  *
@@ -91,31 +91,32 @@ const FUNCIONES: Funcion[] = [
   {
     titulo: "Compras",
     texto:
-      "Proveedores, IVA descontable y retenciones registrados sin que tengas que tocar la factura.",
+      "La factura leída llega con el proveedor cruzado por NIT y el IVA descontable. Usted la revisa y la aprueba.",
     icono: <IconoCompras />,
   },
   {
     titulo: "Ventas",
     texto:
-      "Ingresos, IVA generado y cuentas por cobrar asentados apenas se emite la factura.",
+      "Ingresos, IVA generado y cuentas por cobrar asentados al facturar. Y si su cliente le envía un pedido, María le arma la factura.",
     icono: <IconoVentas />,
   },
   {
-    titulo: "PUC aplicado",
+    titulo: "Recuerda sus cuentas",
     texto:
-      "La IA elige la cuenta del Plan Único de Cuentas según el proveedor, el concepto y tu historial.",
+      "La primera vez le pregunta a qué cuenta va un gasto. Después lo recuerda para ese proveedor, con quién lo decidió y cuándo.",
     icono: <IconoPuc />,
   },
   {
-    titulo: "Auditoría continua",
+    titulo: "Revisión de sus libros",
     texto:
-      "Cada asiento pasa por una revisión automática antes de contabilizarse. Nada entra sin verificar.",
+      "María revisa sus libros y le muestra lo que no cuadra, lo repetido y lo que parece mal clasificado, con el porqué.",
     icono: <IconoAuditoria />,
     oscura: true,
   },
   {
     titulo: "Trazabilidad total",
-    texto: "Cada movimiento guarda su soporte y la explicación de por qué se registró así.",
+    texto:
+      "Cada movimiento guarda su soporte, quién lo propuso, quién lo aprobó y por qué se registró así.",
     icono: <IconoTrazabilidad />,
   },
 ];
@@ -126,25 +127,35 @@ const ESCALONES = [styles.e1, styles.e2, styles.e3, styles.e4, styles.e5, styles
 
 export function Funciones() {
   return (
-    <section id="funciones" className={`${styles.ancla} ${styles.papelFunciones} relative py-24 lg:py-32`}>
+    <section
+      id="funciones"
+      className={`${styles.ancla} ${styles.papelFunciones} relative py-18 sm:py-24 lg:py-32`}
+    >
       <div className="mx-auto flex max-w-[1152px] flex-col gap-10 px-6 lg:gap-16">
         <div
           className={`${styles.rv} flex flex-col justify-between gap-6 lg:flex-row lg:items-end lg:gap-12`}
         >
           <div className="flex max-w-[640px] flex-col gap-4.5">
-            <Rotulo>02 — Funciones</Rotulo>
+            <Rotulo>03 — Funciones</Rotulo>
             <TituloSeccion className="font-serif text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.02] tracking-[-1.4px]">
               Todo lo que antes era <span className="italic">digitación.</span>
             </TituloSeccion>
           </div>
           <p className="m-0 max-w-[360px] text-base leading-relaxed text-muted-foreground">
-            El trabajo repetitivo lo hace la IA. El criterio contable sigue siendo tuyo.
+            El trabajo repetitivo lo hace María. El criterio contable sigue siendo suyo.
           </p>
         </div>
 
-        <ul className="grid list-none grid-cols-1 gap-5 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        {/* En el celular es un carrusel: seis tarjetas en columna son una pared
+            de texto. Scroll-snap en CSS, sin JavaScript. */}
+        <ul
+          className={`${styles.carrusel} -mx-6 flex list-none gap-4 overflow-x-auto px-6 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-3`}
+        >
           {FUNCIONES.map(({ titulo, texto, icono, oscura }, i) => (
-            <li key={titulo} className={`${styles.rv} ${ESCALONES[i]}`}>
+            <li
+              key={titulo}
+              className={`${styles.rv} ${ESCALONES[i]} w-[80%] shrink-0 snap-center sm:w-auto`}
+            >
               <article
                 className={`${styles.tarjeta} flex h-full flex-col gap-3.5 rounded-lg border p-8 ${
                   oscura

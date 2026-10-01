@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Loader2, TriangleAlert } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
+import { ErrorCarga } from "@/components/shared/ErrorCarga";
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
@@ -33,9 +34,10 @@ export const RUTA_MODO_IA = "/configuracion/ia";
  */
 const DESCRIPCION: Record<ClavePaso, string> = {
   EMPRESA: "Cómo se identifica y con qué políticas lleva su contabilidad.",
-  SEDES: "Dónde opera. El municipio de la principal define la tarifa de ICA.",
-  SITUACION_LEGAL: "Lo que dice el RUT: responsabilidades, representante y actividad.",
-  PLAN_CUENTAS: "Las cuentas que se desprenden de lo que ya declaraste.",
+  SEDES: "Dónde opera. De cada municipio sale su ICA.",
+  SITUACION_LEGAL: "Quién es la empresa: representante, actividad y matrícula.",
+  IMPUESTOS: "Qué impuestos cobra, qué retiene y qué le retienen, en palabras simples.",
+  PLAN_CUENTAS: "Las cuentas que se desprenden de lo que ya declaró.",
   RESOLUCIONES: "La numeración que la DIAN autorizó para facturar.",
 };
 
@@ -81,7 +83,7 @@ export function AsistenteShell({
   etiquetaContinuar,
 }: Props) {
   const router = useRouter();
-  const { data, isLoading } = useEstadoConfiguracion();
+  const { data, isLoading, isError, error, refetch } = useEstadoConfiguracion();
   const empresas = useAuthStore((s) => s.empresas);
   const empresaId = useAuthStore((s) => s.empresaId);
   const empresa = empresas.find((e) => e.id === empresaId);
@@ -113,6 +115,15 @@ export function AsistenteShell({
     );
   }
 
+  // Si la consulta falla no se queda cargando para siempre: lo dice y deja reintentar.
+  if (isError && !data) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center px-6">
+        <ErrorCarga error={error} titulo="No se pudo leer cómo va la configuración" onReintentar={refetch} />
+      </div>
+    );
+  }
+
   if (isLoading || !data || enIa) {
     return (
       <div className="flex min-h-dvh items-center justify-center text-muted-foreground">
@@ -132,11 +143,9 @@ export function AsistenteShell({
   const completo = paso?.estado === "LISTO";
 
   const avanzar = () =>
-    // Sin pasos por delante: si quedó completa, al Inicio; si no, la lista
-    // manda al que falta.
-    router.push(
-      siguiente ? RUTA_PASO[siguiente.clave] : data.completa ? "/dashboard" : "/configuracion/lista",
-    );
+    // Sin pasos por delante, a la lista: si quedó completa es la bienvenida de
+    // María —o el tablero, si ya se vio—; si no, manda al paso que falta.
+    router.push(siguiente ? RUTA_PASO[siguiente.clave] : "/configuracion/lista");
 
   // «Omitir» cuando el paso no está completo y «Continuar» cuando sí. Es el
   // mismo botón: ofrecer los dos obligaría a elegir entre dos cosas que llevan
@@ -154,7 +163,7 @@ export function AsistenteShell({
           actual={clave}
           completados={data.completados}
           porcentaje={data.porcentaje}
-          razonSocial={empresa?.razonSocial ?? "Tu empresa"}
+          razonSocial={empresa?.razonSocial ?? "Su empresa"}
         />
 
         <section className="flex min-w-0 grow flex-col">
@@ -248,9 +257,9 @@ function BarraSuperior({ indice, total }: { indice: number; total: number }) {
         <span className="hidden sm:inline">Modo manual</span>
         {modoIa === true && (
           // Sin `?volver=`: lo llevaba y nadie lo leía nunca del otro lado. Un
-          // parámetro que no hace nada promete un regreso que no existe. Del
-          // modo IA se vuelve por «Pasar a manual», que está en su pantalla.
-          // Pasar a IA queda elegido: desde ahí se termina en IA.
+          // parámetro que no hace nada promete un regreso que no existe.
+          // Pasar a IA queda elegido: desde ahí se termina en IA —el backend
+          // no deja volver a manual hasta terminar—.
           <button
             type="button"
             onClick={() => {

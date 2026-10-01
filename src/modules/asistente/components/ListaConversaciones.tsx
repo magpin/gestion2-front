@@ -8,7 +8,7 @@ import type { ConversacionEnLista } from "../types/conversacion.types";
 
 /**
  * La columna de la izquierda: todas las conversaciones de quien pregunta.
- * Del prototipo `docs/asistente-ia-diseno/Main.dc.html`: 250 px, «Nueva
+ * Del prototipo `docs/mocks/asistente-ia-diseno/Main.dc.html`: 250 px, «Nueva
  * conversación» arriba y la lista agrupada por fecha.
  *
  * Solo se escribe en la vigente —la marcada «Actual»—; las demás se abren para
@@ -56,7 +56,7 @@ export function ListaConversaciones({
 
       {grupos.length === 0 && (
         <p className="m-0 px-3 text-xs leading-normal text-muted-foreground">
-          Todavía no conversaste. Lo que preguntes queda acá, para volver a
+          Todavía no hay conversaciones. Lo que pregunte queda aquí, para volver a
           leerlo.
         </p>
       )}

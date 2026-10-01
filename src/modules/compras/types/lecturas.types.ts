@@ -135,6 +135,10 @@ export interface RegistrarLecturaInput {
     cuentaId?: string;
   }>;
   formaPago?: "CREDITO" | "CONTADO";
+  /** El concepto de renta de los renglones que lo necesitaban, por su orden en el papel. */
+  conceptosRenta?: Array<{ orden: number; conceptoCodigo: string }>;
+  /** «Sin retención», con el porqué. */
+  sinRetencionMotivo?: string;
 }
 
 /** Lo que devuelve firmar la subida: la llave la decide el servidor. */

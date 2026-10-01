@@ -28,15 +28,17 @@ export async function prepararCaja(
 
   // La cuenta: el plan sugerido trae el grupo 1105, no una auxiliar.
   const plan = (await pedir("get", "/plan-cuentas")) as
-    | { id: string; codigo: string }[]
-    | { datos: { id: string; codigo: string }[] };
+    | { id: string; codigo: string; es_auxiliar?: boolean }[]
+    | { datos: { id: string; codigo: string; es_auxiliar?: boolean }[] };
   const cuentas = Array.isArray(plan) ? plan : plan.datos;
   let cuenta = cuentas
-    .filter((c) => c.codigo.startsWith("1105") && c.codigo.length > 4)
+    // Una que reciba asientos: la caja se valida contra eso (1105, auxiliar).
+    .filter((c) => c.codigo.startsWith("1105") && c.codigo.length > 4 && c.es_auxiliar !== false)
     .sort((a, b) => a.codigo.length - b.codigo.length)[0];
   if (cuenta === undefined) {
-    cuenta = (await pedir("post", "/plan-cuentas", {
-      codigo: "110505",
+    // Ninguna recibe asientos: se crea el auxiliar bajo 110505.
+    cuenta = (await pedir("post", "/plan-cuentas/auxiliar", {
+      madre: "110505",
       nombre: "Caja general",
     })) as { id: string; codigo: string };
   }

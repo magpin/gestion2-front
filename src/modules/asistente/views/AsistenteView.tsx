@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessagesSquare, X } from "lucide-react";
+import { MessagesSquare, ScanLine, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -28,12 +28,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { aviso } from "@/lib/avisos";
 import { DetalleFacturaLeida } from "@/modules/compras/components/DetalleFacturaLeida";
 import { lecturasApi } from "@/modules/compras/services/lecturas.service";
-import { BurbujaLectura } from "../components/BurbujaLectura";
+import { BurbujaLectura, caraDeLectura } from "../components/BurbujaLectura";
 import { Compositor } from "../components/Compositor";
 import { ListaConversaciones } from "../components/ListaConversaciones";
 import { Turno } from "../components/Mensajes";
-import { Maria, type EstadoMaria } from "../components/Maria";
-import { Pildora } from "../components/Piezas";
+import { Maria } from "../components/Maria";
 import { TurnosDelLote } from "../components/TarjetaLote";
 import {
   TarjetaConfirmado,
@@ -88,13 +87,6 @@ import type { ArchivoDelLote } from "../types/lote.types";
  * Para arrancar, si no se sabe qué preguntar. Son preguntas que el asistente
  * contesta con el mapa de la aplicación que lleva en sus instrucciones.
  */
-/**
- * Cuánto se mira hacia atrás para saber qué documentos se subieron juntos.
- * Dos minutos: lo que tarda alguien en soltar el RUT, la Cámara y la
- * resolución, sin llegar a mezclar dos intentos distintos.
- */
-const VENTANA_TANDA_MS = 120_000;
-
 const PREGUNTAS_SUGERIDAS = [
   "¿Cómo registro una compra a un proveedor?",
   "¿Cómo le cobro una factura a un cliente?",
@@ -186,7 +178,6 @@ export function AsistenteView({
    * Mirar hacia donde pasa algo es la diferencia entre una cara puesta ahí y
    * una que acompaña. Y es barato: son tres píxeles de desplazamiento.
    */
-  const [mirando, setMirando] = useState<"arrastrando" | "escribiendo" | null>(null);
 
   /**
    * Los documentos que ya se confirmaron en esta sesión.
@@ -205,40 +196,10 @@ export function AsistenteView({
   const enCurso = documentos
     .filter((d) => (d.estado === "EN_COLA" || d.estado === "LEYENDO") && !deLotes.has(d.id))
     .sort((a, b) => a.creadoEn.localeCompare(b.creadoEn));
+  // Solo para el reloj de las burbujas. La cabecera ya no cambia al leer: lo
+  // que está leyendo lo dice la cara del turno, al lado de su tarjeta —la
+  // cuenta de un lote va en la tarjeta misma—.
   const leyendo = enCurso.length > 0 || loteEnMarcha !== undefined || crearLote.isPending;
-
-  /**
-   * La tanda: los documentos que se subieron cerca del que se está leyendo.
-   *
-   * **No hay lotes en el backend** —un archivo es un POST y una fila suelta,
-   * sin llave que agrupe—, así que la tanda se deduce del único dato que hay:
-   * cuándo entró cada documento. Los subidos dentro de los dos minutos
-   * anteriores al último que está en curso se cuentan juntos.
-   *
-   * Es una aproximación, y por eso se calcula acá y no en la base: lo que se
-   * muestra son documentos reales contados por su estado, no una estimación
-   * de cuánto falta. Si algún día se sueltan veinte facturas de una, esto hay
-   * que agruparlo de verdad, con su `lote_id`.
-   */
-  const ultimoEnCurso = enCurso.at(-1)?.creadoEn;
-  const tanda =
-    ultimoEnCurso === undefined
-      ? []
-      : documentos.filter(
-          (d) => Date.parse(ultimoEnCurso) - Date.parse(d.creadoEn) <= VENTANA_TANDA_MS,
-        );
-
-  /**
-   * Cuánto lleva la tanda, solo cuando hay más de un documento: con uno solo,
-   * «0 de 1» no le dice nada a nadie y el anillo de ondas dice más.
-   */
-  // Con un lote en marcha, la cuenta es la suya: esa sí es de verdad, con
-  // `lote_id`. La tanda deducida queda para los documentos de configuración
-  // que se suben sueltos desde su tarjeta.
-  const hechos = loteEnMarcha?.hechos ?? tanda.length - enCurso.length;
-  const total = loteEnMarcha?.total ?? tanda.length;
-  const avance = total > 1 ? hechos / total : undefined;
-  const cuenta = avance === undefined ? undefined : `${hechos} de ${total}`;
 
   useEffect(() => {
     if (!leyendo) return;
@@ -288,7 +249,7 @@ export function AsistenteView({
    */
   const alSubir = (tipo: TipoDocumento, archivo: File) => {
     if (!(TIPOS_ACEPTADOS as readonly string[]).includes(archivo.type)) {
-      aviso.error("Ese archivo no se puede leer", "Subí un PDF o una foto (JPG, PNG o WEBP).");
+      aviso.error("Ese archivo no se puede leer", "Suba un PDF o una foto (JPG, PNG o WEBP).");
       return;
     }
     subir.mutate(
@@ -393,8 +354,8 @@ export function AsistenteView({
             </p>
             <p className="m-0 text-[13px] leading-normal text-muted-foreground">
               {enPausa
-                ? "La pausó quien administra la plataforma, y se levanta desde ahí. Podés configurar la empresa a mano mientras tanto."
-                : "Falta configurarla en el servidor. Podés configurar la empresa a mano mientras tanto: es el mismo resultado, con más tecleo."}
+                ? "La pausó quien administra la plataforma, y se levanta desde ahí. Puede configurar la empresa a mano mientras tanto."
+                : "Falta configurarla en el servidor. Puede configurar la empresa a mano mientras tanto: es el mismo resultado, con más tecleo."}
             </p>
             <Link
               href="/configuracion/empresa"
@@ -416,7 +377,7 @@ export function AsistenteView({
             id: `subida-${documento.id}`,
             autor: "PERSONA",
             archivo: subidos[documento.id],
-            texto: `Leé esto como ${NOMBRE_DOCUMENTO[documento.tipo]}.`,
+            texto: `Lea esto como ${NOMBRE_DOCUMENTO[documento.tipo]}.`,
           }}
         />
       )}
@@ -449,7 +410,7 @@ export function AsistenteView({
             <TarjetaFalla
               titulo={`No pude leer ${NOMBRE_DOCUMENTO[documento.tipo]}`}
               detalle={
-                documento.error ?? "La lectura terminó sin resultado. Probá con otro archivo."
+                documento.error ?? "La lectura terminó sin resultado. Intente con otro archivo."
               }
             />
           }
@@ -466,7 +427,7 @@ export function AsistenteView({
               autor: "ASISTENTE",
               texto:
                 resultado.sinAplicar.length === 0
-                  ? "Guardado. Podés seguir con el paso que sigue."
+                  ? "Guardado. Puede seguir con el paso que sigue."
                   : "Guardé lo que se podía aplicar. Esto quedó pendiente:",
             }}
             tarjeta={<TarjetaConfirmado resultado={resultado} />}
@@ -543,19 +504,9 @@ export function AsistenteView({
   ) : null;
 
   const marco = {
-    pensando: leyendo || respondiendo,
-    // Mientras lee, el avance va en el arco de la cara. La cuenta también va
-    // escrita: la cara acompaña, el texto informa.
-    leyendo,
-    avance,
-    mirando,
-    subtitulo: respondiendo
-      ? "Escribiendo…"
-      : leyendo
-        ? cuenta === undefined
-          ? "Leyendo tus documentos…"
-          : `Leyendo tus documentos… ${cuenta}`
-        : SUBTITULO,
+    // Leer no cuenta: eso lo hace la cara del turno (pulido del 25 sep).
+    pensando: respondiendo,
+    subtitulo: respondiendo ? "Escribiendo…" : SUBTITULO,
     momento,
     pendientes,
     lista,
@@ -610,8 +561,8 @@ export function AsistenteView({
             id: "saludo",
             autor: "ASISTENTE",
             texto: conversa
-              ? "Soltá acá facturas de proveedores, pedidos de clientes, el RUT, la Cámara de Comercio o la resolución de la DIAN —uno o varios de una— y te muestro lo que leí antes de registrar nada. O preguntame cómo hacer algo en el sistema."
-              : "Soltá acá facturas de proveedores, pedidos de clientes, el RUT, la Cámara de Comercio o la resolución de la DIAN. Leo lo que diga y te lo muestro antes de registrar nada.",
+              ? "Suelte aquí facturas de proveedores, pedidos de clientes, el RUT, la Cámara de Comercio o la resolución de la DIAN —uno o varios a la vez— y le muestro lo que leí antes de registrar nada. O pregúnteme cómo hacer algo en el sistema."
+              : "Suelte aquí facturas de proveedores, pedidos de clientes, el RUT, la Cámara de Comercio o la resolución de la DIAN. Leo lo que diga y se lo muestro antes de registrar nada.",
           }}
           tarjeta={
             <TarjetaDocumentos
@@ -642,8 +593,8 @@ export function AsistenteView({
                     : `${crearLote.variables[0].name} y ${crearLote.variables.length - 1} más`,
                 texto:
                   crearLote.variables.length === 1
-                    ? "Leé este documento."
-                    : `Leé estos ${crearLote.variables.length} documentos.`,
+                    ? "Lea este documento."
+                    : `Lea estos ${crearLote.variables.length} documentos.`,
               }}
             />
             <Turno
@@ -665,13 +616,13 @@ export function AsistenteView({
               texto: undefined,
             }}
             pensando
+            cara={caraDeLectura(documento, lecturas[documento.id])}
             tarjeta={
               <BurbujaLectura
                 documento={documento}
                 lectura={lecturas[documento.id]}
                 enVivo={conectado}
                 ahora={ahora}
-                progreso={avance}
                 deteniendo={detener.isPending && detener.variables === documento.id}
                 alDetener={alDetener}
               />
@@ -725,7 +676,6 @@ export function AsistenteView({
       <Compositor
         subiendo={subir.isPending || crearLote.isPending}
         alSubir={alSoltar}
-        alMirar={setMirando}
         textoInicial={preguntaInicial}
         conversacion={
           conversa
@@ -758,9 +708,6 @@ export function AsistenteView({
 function Pantalla({
   children,
   pensando = false,
-  leyendo = false,
-  avance,
-  mirando = null,
   subtitulo = SUBTITULO,
   momento = null,
   pendientes,
@@ -775,44 +722,22 @@ function Pantalla({
    * registra, `aprobado` un momento después. Manda sobre los pendientes.
    */
   momento?: "trabajando" | "aprobado" | null;
-  /** Lo que espera una decisión: la píldora de la derecha y la cara de espera. */
+  /** Lo que espera una decisión: la píldora de la derecha. */
   pendientes?: Pendientes;
-  /** Si lo que está pasando es una lectura de documentos y no una respuesta. */
-  leyendo?: boolean;
-  /** Cuánto lleva la tanda, si son varios documentos. */
-  avance?: number;
-  /** Qué está haciendo la persona en el pie: la cara mira hacia allá. */
-  mirando?: "arrastrando" | "escribiendo" | null;
   subtitulo?: string;
   lista?: React.ReactNode;
   listaAbierta?: boolean;
   alAlternarLista?: (abierta: boolean) => void;
 }) {
   const hayPendientes = (pendientes?.total ?? 0) > 0;
-  /**
-   * La cara la decide lo que está pasando, de lo más urgente a lo más quieto:
-   * leer y contestar son trabajo en curso; registrar lo aprobado también;
-   * terminar bien es un momento; y si nada de eso pasa pero algo espera una
-   * decisión, la cara lo dice con los ojos atentos y el distintivo ámbar.
-   */
-  const estado: EstadoMaria = leyendo
-    ? "leyendo"
-    : pensando
-      ? "pensando"
-      : momento === "trabajando"
-        ? "trabajando"
-        : momento === "aprobado"
-          ? "lista"
-          : hayPendientes
-            ? "espera"
-            : "reposo";
-  // El texto sigue el mismo orden que la cara: mientras lee o contesta, dice
-  // eso, aunque en otra tarjeta se esté registrando algo.
+  // Sin cara en el encabezado (pulido del 25 sep): la que cambia de estado es
+  // la de cada turno, al lado de lo que está haciendo. Acá queda el texto:
+  // mientras contesta dice eso, aunque en otra tarjeta se registre algo.
   const texto =
-    leyendo || pensando
+    pensando
       ? subtitulo
       : momento === "trabajando"
-        ? "Registrando lo que aprobaste…"
+        ? "Registrando lo que aprobó…"
         : momento === "aprobado"
           ? "Listo: quedó registrado."
           : subtitulo;
@@ -836,9 +761,7 @@ function Pantalla({
       )}
 
       <section aria-label="María, la asistente" className="flex min-w-0 flex-grow flex-col bg-card">
-        {/* 80 px de alto y no 60: el aura de la cara mide 1,9 veces su
-            diámetro, y con el encabezado justo se cortaba arriba y abajo. */}
-        <div className="flex h-20 shrink-0 items-center justify-between gap-3 border-b border-muted px-4 md:px-7">
+        <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-muted px-4 md:px-7">
           <div className="flex min-w-0 items-center gap-3">
             {lista !== null && (
               <button
@@ -850,44 +773,27 @@ function Pantalla({
                 <MessagesSquare className="size-4" aria-hidden="true" />
               </button>
             )}
-            {/* 34 px, como en la lámina `Aplicada`. El aura se dibuja desde
-                24 px, así que a 34 se ve, y la franja de 80 la contiene
-                entera: mide 1,9 veces la cara.
-
-                En reposo va en «suave» y no en «calma»: quieta del todo, el
-                aura es tan tenue que no se distingue del borde, y acá la idea
-                es justamente que se vea que hay alguien. */}
-            <Maria
-              estado={estado}
-              tamano={34}
-              intensidad={estado === "reposo" ? "suave" : undefined}
-              progreso={leyendo ? avance : undefined}
-              // El pie está abajo a la izquierda del encabezado, así que mirar
-              // lo que pasa ahí es mirar a la izquierda.
-              mirada={mirando === null ? undefined : "izquierda"}
-            />
             <div className="flex min-w-0 flex-col">
               <span className="text-[13px] font-semibold tracking-[-0.2px]">María</span>
-              {/* Lo que dice cambia con lo que pasa —leyendo, registrando,
-                  listo—, y quien no ve la cara tiene que enterarse igual. */}
+              {/* Lo que dice cambia con lo que pasa —contestando,
+                  registrando, listo—. */}
               <span aria-live="polite" className="truncate text-[11px] text-muted-foreground">
                 {texto}
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {hayPendientes && pendientes !== undefined ? (
+          <div className="flex shrink-0 items-center gap-2">
+            {hayPendientes && pendientes !== undefined && (
               <PildoraPendientes pendientes={pendientes} />
-            ) : (
-              <span className="hidden sm:inline-flex">
-                <Pildora tono="HECHO">Lee y propone</Pildora>
-              </span>
             )}
+            {/* Lo que María leyó y espera aprobación tiene su pantalla: se
+                llega desde aquí y desde los atajos de Compras y Ventas. */}
             <Link
-              href="/configuracion/empresa"
-              className="inline-flex h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap"
+              href="/dashboard/asistente/leidos"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-card px-3 text-xs font-medium whitespace-nowrap transition-colors hover:bg-accent"
             >
-              Pasar a manual
+              <ScanLine className="size-3.5" aria-hidden="true" />
+              Documentos leídos
             </Link>
           </div>
         </div>
@@ -898,17 +804,20 @@ function Pantalla({
 }
 
 /** Lo que dice el encabezado cuando no está pasando nada. La lámina `Aplicada`. */
-const SUBTITULO = "Nada se asienta sin tu aprobación";
+const SUBTITULO = "Nada se asienta sin su aprobación";
 
 /** «2 facturas leídas sin registrar · 1 pedido sin facturar», para el título. */
 function detalleDePendientes(p: Pendientes): string {
+  // Las facturas y los pedidos leídos están en el mismo lugar: se dice una
+  // vez, al final del último de los dos.
+  const dondeLeidos = " (María → Documentos leídos)";
   return [
     p.propuestas > 0 &&
       `${p.propuestas} ${p.propuestas === 1 ? "propuesta mía sin confirmar" : "propuestas mías sin confirmar"}`,
     p.facturas > 0 &&
-      `${p.facturas} ${p.facturas === 1 ? "factura leída sin registrar" : "facturas leídas sin registrar"} (Compras → Leídas)`,
+      `${p.facturas} ${p.facturas === 1 ? "factura leída sin registrar" : "facturas leídas sin registrar"}${p.pedidos > 0 ? "" : dondeLeidos}`,
     p.pedidos > 0 &&
-      `${p.pedidos} ${p.pedidos === 1 ? "pedido leído sin facturar" : "pedidos leídos sin facturar"} (Ventas → Pedidos leídos)`,
+      `${p.pedidos} ${p.pedidos === 1 ? "pedido leído sin facturar" : "pedidos leídos sin facturar"}${dondeLeidos}`,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -965,8 +874,8 @@ export function Bienvenida({
         </p>
         <p className="m-0 text-[13px] leading-normal text-muted-foreground">
           {total > 0
-            ? `Te espera${total === 1 ? "" : "n"} ${total} ${total === 1 ? "cosa" : "cosas"}: ${detalleDePendientes(pendientes!)}.`
-            : "Subime documentos y yo los leo; te pregunto solo lo que los papeles no dicen. Nada se asienta sin tu aprobación."}
+            ? `Tiene ${total} ${total === 1 ? "cosa pendiente" : "cosas pendientes"}: ${detalleDePendientes(pendientes!)}.`
+            : "Súbame documentos y yo los leo; le pregunto solo lo que los papeles no dicen. Nada se asienta sin su aprobación."}
         </p>
       </div>
     </div>
@@ -975,7 +884,7 @@ export function Bienvenida({
 
 /**
  * Revisar y aprobar una factura del lote, sin salir del chat: el mismo diálogo
- * de Compras → Leídas, con sus renglones y lo que falta contestar. Aprobar es
+ * de María → Documentos leídos, con sus renglones y lo que falta contestar. Aprobar es
  * registrar la compra ahí, como siempre; el lote se entera y la marca.
  */
 function RevisarLectura({
@@ -1000,7 +909,7 @@ function RevisarLectura({
           <div>
             <DialogTitle>{archivo?.titulo}</DialogTitle>
             <DialogDescription>
-              Lo que leí de {archivo?.nombre}. Revisalo: se registra cuando lo apruebes.
+              Lo que leí de {archivo?.nombre}. Revíselo: se registra cuando lo apruebe.
             </DialogDescription>
           </div>
           <DialogCloseIcon />

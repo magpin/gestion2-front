@@ -24,7 +24,8 @@ export function definicionInicial(origen: OrigenArmador): Definicion {
 
 /**
  * Cómo se escribe una celda. Punto de miles y coma decimal, como se escribe
- * acá: `$ 1.284.500,00`. Los centavos aparecen solo si los hay.
+ * acá: `$ 1.284.500`. El dinero va en pesos enteros; las cantidades muestran
+ * decimales solo si los hay.
  */
 export function celda(valor: string | null, tipo: TipoColumna): string {
   if (valor === null || valor === "") return "—";
@@ -32,10 +33,10 @@ export function celda(valor: string | null, tipo: TipoColumna): string {
   if (tipo === "DINERO" || tipo === "CANTIDAD") {
     const n = Number(valor);
     if (!Number.isFinite(n)) return valor;
-    const conCentavos = !Number.isInteger(n);
+    const conDecimales = tipo === "CANTIDAD" && !Number.isInteger(n);
     const texto = new Intl.NumberFormat("es-CO", {
-      minimumFractionDigits: conCentavos ? 2 : 0,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: conDecimales ? 2 : 0,
+      maximumFractionDigits: tipo === "DINERO" ? 0 : 2,
     }).format(n);
     return tipo === "DINERO" ? `$ ${texto}` : texto;
   }

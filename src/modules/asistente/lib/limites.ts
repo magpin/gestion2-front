@@ -24,22 +24,22 @@ export const LIMITES = {
   noPude: {
     cara: "noPude",
     titulo: "No pude",
-    salida: "Probá de nuevo en un rato y seguimos.",
+    salida: "Intente de nuevo en un rato y seguimos.",
   },
   sinPermiso: {
     cara: "sinPermiso",
     titulo: "Eso no lo puedo ver",
-    salida: "Pedile acceso a quien administra la empresa.",
+    salida: "Solicite acceso a quien administra la empresa.",
   },
   periodoCerrado: {
     cara: "periodoCerrado",
     titulo: "Ese período está cerrado",
-    salida: "Lo dejo esperando o lo mando al período abierto: vos decidís.",
+    salida: "Lo dejo esperando o lo mando al período abierto: usted decide.",
   },
   noEntendi: {
     cara: "noEntendi",
-    titulo: "No te entendí",
-    salida: "Contámelo de otra manera y lo intento.",
+    titulo: "No le entendí",
+    salida: "Cuéntemelo de otra manera y lo intento.",
   },
   dormida: {
     cara: "dormida",

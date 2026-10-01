@@ -10,8 +10,13 @@ import type {
   Mayor,
   MovimientoAuxiliar,
   PaginaAsientos,
+  Agrupacion,
   Periodo,
+  ResumenPeriodo,
   Trazabilidad,
+  DatosPlantilla,
+  Plantilla,
+  PropuestaManual,
 } from "../types/contabilidad.types";
 
 /**
@@ -26,17 +31,16 @@ export const periodosApi = {
       .get<Periodo[]>("/periodos", { params: anio ? { anio } : undefined })
       .then((r) => r.data),
 
-  /** El período de hoy, o `null` si nadie lo abrió. */
-  actual: () => api.get<Periodo | null>("/periodos/actual").then((r) => r.data),
+  /** El período en curso. Siempre existe: el calendario se pone al día solo. */
+  actual: () => api.get<Periodo | "" | null>("/periodos/actual").then((r) => r.data || null),
 
-  abrir: (anio: number, mes: number) =>
-    api.post<Periodo>("/periodos", { anio, mes }).then((r) => r.data),
-
-  cerrar: (id: string) =>
-    api.post(`/periodos/${id}/cerrar`).then(() => undefined),
-
-  reabrir: (id: string) =>
-    api.post(`/periodos/${id}/reabrir`).then(() => undefined),
+  /** El calendario por mes, trimestre, semestre o año, con sus cifras. */
+  resumen: (agrupacion: Agrupacion, anio?: number) =>
+    api
+      .get<ResumenPeriodo[]>("/periodos/resumen", {
+        params: { agrupacion, anio },
+      })
+      .then((r) => r.data),
 };
 
 /** Las series de numeración: CD-000145, CI-000032. Una por tipo. */
@@ -57,7 +61,9 @@ export const comprobantesApi = {
 
   /** Solo el nombre: el prefijo y la naturaleza ya numeraron asientos. */
   editar: (id: string, datos: { nombre: string }) =>
-    api.patch<ComprobanteTipo>(`/comprobantes/${id}`, datos).then((r) => r.data),
+    api
+      .patch<ComprobanteTipo>(`/comprobantes/${id}`, datos)
+      .then((r) => r.data),
 
   desactivar: (id: string) =>
     api.post(`/comprobantes/${id}/desactivar`).then(() => undefined),
@@ -102,6 +108,44 @@ export const asientosApi = {
   crear: (datos: AsientoNuevo) =>
     api
       .post<{ id: string; numero: string }>("/asientos", datos)
+      .then((r) => r.data),
+
+  /** Lo que María propone para el comprobante manual. No guarda nada. */
+  propuesta: (datos: {
+    plantilla?: Plantilla;
+    texto?: string;
+    fecha: string;
+    datos?: DatosPlantilla;
+  }) =>
+    api.post<PropuestaManual>("/asientos/propuesta", datos).then((r) => r.data),
+
+  /** Sube el soporte al almacenamiento y devuelve la llave para contabilizar con él. */
+  subirSoporte: async (archivo: File) => {
+    const tipoMime = archivo.type;
+    const { url, clave } = await api
+      .post<{ url: string; clave: string }>("/asientos/soporte/firmar", {
+        tipoMime,
+      })
+      .then((r) => r.data);
+    const respuesta = await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": tipoMime },
+      body: archivo,
+    });
+    if (!respuesta.ok) {
+      throw new Error(
+        `El soporte no se pudo subir (${respuesta.status}). Revise que el almacenamiento esté disponible.`,
+      );
+    }
+    return { clave, nombre: archivo.name };
+  },
+
+  /** Los soportes del asiento, con su enlace de lectura. */
+  soportes: (id: string) =>
+    api
+      .get<Array<{ nombre: string; url: string | null }>>(
+        `/asientos/${id}/soportes`,
+      )
       .then((r) => r.data),
 
   /** No borra: marca ANULADO y guarda quién, cuándo y por qué. */

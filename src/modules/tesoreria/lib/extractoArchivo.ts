@@ -88,7 +88,7 @@ export async function leerArchivo(archivo: File): Promise<ArchivoLeido> {
     ({ filas, fechas1904 } = await leerXlsx(contenido));
   } else if (bytes[0] === 0xd0 && bytes[1] === 0xcf) {
     throw new Error(
-      "Es un Excel viejo (.xls). Abrilo en Excel y guardalo como .xlsx o como CSV.",
+      "Es un Excel viejo (.xls). Ábralo en Excel y guárdelo como .xlsx o como CSV.",
     );
   } else if (bytes[0] === 0x25 && bytes[1] === 0x50) {
     throw new Error("Es un PDF. Por ahora el extracto se sube en Excel o CSV.");

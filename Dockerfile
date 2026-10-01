@@ -24,6 +24,9 @@ COPY . .
 # real, y no alcanza con pasarla como variable del contenedor.
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Qué piezas nuevas del menú van encendidas (`core/config/funciones.ts`).
+ARG NEXT_PUBLIC_FUNCIONES=""
+ENV NEXT_PUBLIC_FUNCIONES=$NEXT_PUBLIC_FUNCIONES
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 

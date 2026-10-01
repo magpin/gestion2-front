@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -14,149 +13,40 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Campo } from "@/modules/configuracion/components/Campo";
-import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
-import { SelectorProveedor } from "./SelectorProveedor";
-import {
-  EditorLineasCompra,
-  lineaCompleta,
-  lineaCompraVacia,
-  type LineaCompraBorrador,
-} from "./EditorLineasCompra";
-import {
-  EditorRetenciones,
-  type RetencionBorrador,
-} from "./EditorRetenciones";
-import { useTieneRol } from "@/core/store/authStore";
-import { SelectorFormaPago } from "@/modules/tesoreria/components/SelectorFormaPago";
-import {
-  aFormaPago,
-  formaPagoVacia,
-  problemaFormaPago,
-} from "@/modules/tesoreria/lib/formaPago";
+import { useBorradorCompra, type InicioCompra } from "../hooks/useBorradorCompra";
 import type { CrearCompraInput } from "../types/compras.types";
-
-const hoy = (): string => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+import { CamposCompra } from "./CamposCompra";
 
 /**
- * Registrar una factura de compra: proveedor, el número que el proveedor
- * le puso a SU factura (dato externo, no lo numeramos nosotros), fecha,
- * líneas de producto/cantidad/costo, y retenciones opcionales.
+ * Registrar una factura de compra en un diálogo: proveedor, el número que el
+ * proveedor le puso a SU factura (dato externo, no lo numeramos nosotros),
+ * fecha, líneas de producto/cantidad/costo, y retenciones opcionales.
+ *
+ * Sigue para «Registrar gasto» y la lectura de facturas; la compra nueva desde
+ * Compras es la página (`/dashboard/compras/nueva`), con el mismo cuerpo.
  */
 export function FormularioCompra({
   abierto,
   onCerrar,
   onGuardar,
   guardando,
+  inicial,
 }: {
   abierto: boolean;
   onCerrar: () => void;
   onGuardar: (datos: CrearCompraInput) => void;
   guardando: boolean;
+  /**
+   * Con qué arranca: «Registrar gasto» en Gastos abre la compra con el
+   * proveedor y la línea de gasto ya puestos. Se lee al montar.
+   */
+  inicial?: InicioCompra;
 }) {
-  const [proveedor, setProveedor] = useState<TerceroResumen | null>(null);
-  const [fecha, setFecha] = useState(hoy());
-  const [numeroFactura, setNumeroFactura] = useState("");
-  const [lineas, setLineas] = useState<LineaCompraBorrador[]>([
-    lineaCompraVacia(),
-  ]);
-  const [retenciones, setRetenciones] = useState<RetencionBorrador[]>([]);
-  const [formaPago, setFormaPago] = useState(formaPagoVacia);
-  // Pagar de contado saca plata de una caja o un banco: el backend lo rechaza
-  // de quien no tenga CAJA o DIRECTOR, así que acá ni se ofrece.
-  const puedePagar = useTieneRol("CAJA", "DIRECTOR");
-
-  const limpiar = () => {
-    setProveedor(null);
-    setFecha(hoy());
-    setNumeroFactura("");
-    setLineas([lineaCompraVacia()]);
-    setRetenciones([]);
-    setFormaPago(formaPagoVacia());
-  };
-
-  // Una línea está incompleta por razones distintas según lo que sea: a la
-  // de producto le falta el producto; a la de gasto, la cuenta o el detalle.
-  const incompletas = lineas
-    .map((l, i) => (lineaCompleta(l) ? null : i + 1))
-    .filter((n): n is number => n !== null);
-  const sinCantidad = lineas
-    .map((l, i) =>
-      l.cantidad.trim() === "" || Number(l.cantidad) <= 0 ? i + 1 : null,
-    )
-    .filter((n): n is number => n !== null);
-  const sinCosto = lineas
-    .map((l, i) =>
-      l.costoUnitario.trim() === "" || Number(l.costoUnitario) < 0
-        ? i + 1
-        : null,
-    )
-    .filter((n): n is number => n !== null);
-  // El valor ya no se digita —lo calcula el servidor contra el catálogo—, así
-  // que lo único que puede faltar es el concepto o la base.
-  const retencionesIncompletas = retenciones.some(
-    (r) => r.conceptoId === "" || r.base.trim() === "" || Number(r.base) <= 0,
-  );
-
-  const nombrar = (renglones: number[]) =>
-    renglones.length === 1
-      ? `el renglón ${renglones[0]}`
-      : `los renglones ${renglones.join(", ")}`;
-
-  const impedimento = (): string | null => {
-    if (proveedor === null) return "Elegí el proveedor.";
-    if (fecha === "") return "Elegí la fecha.";
-    if (numeroFactura.trim() === "")
-      return "Escribí el número de la factura del proveedor.";
-    if (lineas.length === 0) return "Agregá al menos una línea.";
-    if (incompletas.length > 0)
-      return `Falta decir qué se compró en ${nombrar(incompletas)}: el producto, o la cuenta y el detalle del gasto.`;
-    if (sinCantidad.length > 0)
-      return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;
-    if (sinCosto.length > 0)
-      return `El costo unitario tiene que ser válido en ${nombrar(sinCosto)}.`;
-    if (retencionesIncompletas)
-      return "Completá la base y el valor de cada retención, o quitala.";
-    return problemaFormaPago(formaPago);
-  };
-
-  const problema = impedimento();
+  const b = useBorradorCompra(inicial, abierto);
 
   const enviar = () => {
-    if (problema !== null || proveedor === null) return;
-    onGuardar({
-      terceroId: proveedor.id,
-      fecha,
-      numeroFacturaProveedor: numeroFactura.trim(),
-      lineas: lineas.map((l) =>
-        l.tipo === "PRODUCTO"
-          ? {
-              productoId: l.producto!.id,
-              cantidad: Number(l.cantidad),
-              costoUnitario: Number(l.costoUnitario),
-              sinIva: l.sinIva || undefined,
-            }
-          : {
-              cuentaId: l.cuenta!.id,
-              detalle: l.detalle.trim(),
-              ivaTarifa: Number(l.ivaTarifa),
-              cantidad: Number(l.cantidad),
-              costoUnitario: Number(l.costoUnitario),
-            },
-      ),
-      retenciones:
-        retenciones.length === 0
-          ? undefined
-          : retenciones.map((r) => ({
-              conceptoId: r.conceptoId,
-              base: Number(r.base),
-            })),
-      ...aFormaPago(formaPago),
-    });
+    const datos = b.datos();
+    if (datos !== null) onGuardar(datos);
   };
 
   return (
@@ -165,7 +55,7 @@ export function FormularioCompra({
       onOpenChange={(a) => {
         if (!a) {
           onCerrar();
-          limpiar();
+          b.limpiar();
         }
       }}
     >
@@ -181,57 +71,13 @@ export function FormularioCompra({
           <DialogCloseIcon />
         </DialogHeader>
 
-        <DialogBody className="flex flex-col gap-8">
-          <div className="grid gap-4 sm:grid-cols-[1fr_180px_160px]">
-            <Campo id="proveedor" etiqueta="Proveedor" escala="grande">
-              <SelectorProveedor valor={proveedor} onElegir={setProveedor} />
-            </Campo>
-
-            <Campo id="fecha" etiqueta="Fecha" escala="grande">
-              <Input
-                id="fecha"
-                type="date"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                className="h-11 rounded-xl px-4"
-              />
-            </Campo>
-
-            <Campo
-              id="numeroFactura"
-              etiqueta="N.° factura proveedor"
-              escala="grande"
-            >
-              <Input
-                id="numeroFactura"
-                value={numeroFactura}
-                onChange={(e) => setNumeroFactura(e.target.value)}
-                placeholder="FE-12345"
-                className="h-11 rounded-xl px-4"
-              />
-            </Campo>
-          </div>
-
-          <EditorLineasCompra lineas={lineas} onCambiar={setLineas} />
-
-          <EditorRetenciones
-            retenciones={retenciones}
-            onCambiar={setRetenciones}
-            fecha={fecha}
-            declaranteRenta={proveedor?.declaranteRenta ?? true}
-          />
-
-          <SelectorFormaPago
-            valor={formaPago}
-            onCambiar={setFormaPago}
-            soloCredito={!puedePagar}
-            motivoSoloCredito="Pagar de contado lo hace alguien con rol Caja o Director. Registrala a crédito y que caja la pague."
-          />
+        <DialogBody>
+          <CamposCompra b={b} />
         </DialogBody>
 
         <DialogFooter className="sm:justify-between">
           <p className="self-center text-sm text-muted-foreground">
-            {problema ?? "Listo para guardar."}
+            {b.problema ?? "Listo para guardar."}
           </p>
 
           <div className="flex gap-3">
@@ -246,7 +92,7 @@ export function FormularioCompra({
             <Button
               type="button"
               className="h-12 rounded-xl px-6"
-              disabled={problema !== null || guardando}
+              disabled={b.problema !== null || guardando}
               onClick={enviar}
             >
               {guardando && <Loader2 className="size-4 animate-spin" />}

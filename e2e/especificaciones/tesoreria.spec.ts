@@ -43,7 +43,7 @@ test.describe("Tesorería", () => {
     await page.getByLabel("Valor del renglón 1").fill(String(valor));
   }
 
-  test("cobrar una factura mete la plata en la caja y la deja sin saldo", async ({
+  test("cobrar una factura mete el dinero en la caja y la deja sin saldo", async ({
     page,
     request,
   }) => {
@@ -67,7 +67,7 @@ test.describe("Tesorería", () => {
     await page.keyboard.press("Escape");
   });
 
-  test("pagarle al proveedor saca la plata de la misma caja", async ({ page, request }) => {
+  test("pagarle al proveedor saca el dinero de la misma caja", async ({ page, request }) => {
     // Primero entra la plata: una caja no puede quedar en negativo.
     await facturar(page, e);
     await page.getByRole("button", { name: "Más acciones" }).first().click();
@@ -82,7 +82,7 @@ test.describe("Tesorería", () => {
     await page.getByRole("button", { name: /Seleccione un proveedor/ }).click();
     await page.getByLabel("Buscar proveedor").fill("Distribuidora");
     await page.getByRole("button", { name: /Distribuidora del Valle/ }).first().click();
-    await page.getByLabel("N.° factura proveedor").fill(`FP-${Date.now().toString().slice(-6)}`);
+    await page.getByLabel("Número de factura").fill(`FP-${Date.now().toString().slice(-6)}`);
     await page.getByRole("button", { name: /Seleccione un producto/ }).click();
     await page.getByLabel("Buscar producto").fill(e.producto.codigo);
     await page.getByRole("button", { name: new RegExp(e.producto.nombre) }).first().click();
@@ -90,7 +90,8 @@ test.describe("Tesorería", () => {
     await page.getByLabel("Costo unitario de la línea 1").fill("90000");
     await page.getByRole("radio", { name: "Crédito" }).click();
     await page.getByRole("button", { name: "Registrar compra" }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    // Guardada: el diálogo se cierra, o la página vuelve a la lista (Fase 7).
+    await expect(page.getByRole("button", { name: "Registrar compra" })).toBeHidden();
 
     // ── Y el pago ──
     await page.getByRole("button", { name: "Más acciones" }).first().click();
@@ -110,8 +111,8 @@ test.describe("Tesorería", () => {
     await page.getByRole("dialog").getByRole("button", { name: "Cobrar" }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
 
-    await page.goto("/dashboard/tesoreria");
-    await page.getByRole("button", { name: "Libro", exact: true }).click();
+    await page.goto("/dashboard/caja-bancos");
+    await page.getByRole("button", { name: "Movimientos", exact: true }).click();
 
     // El cobro no se digita en tesorería: llega solo desde la factura.
     await expect(page.getByText("357.000").first()).toBeVisible();

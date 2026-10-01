@@ -12,7 +12,12 @@ export interface AdminPlataforma {
 export type EstadoCuenta = "ACTIVO" | "SUSPENDIDO" | "MOROSO" | "CANCELADO";
 export type Plan = "BASICO" | "PROFESIONAL" | "CONTADOR" | "EMPRESARIAL";
 
-export const PLANES: Plan[] = ["BASICO", "PROFESIONAL", "CONTADOR", "EMPRESARIAL"];
+export const PLANES: Plan[] = [
+  "BASICO",
+  "PROFESIONAL",
+  "CONTADOR",
+  "EMPRESARIAL",
+];
 
 export const NOMBRE_PLAN: Record<Plan, string> = {
   BASICO: "Básico",
@@ -270,7 +275,12 @@ export interface Inicio {
   accesosDesde: string | null;
   pendientes: {
     morosas: { id: string; nombre: string; dias: number; vencido: number }[];
-    pagosVencidos: { id: string; nombre: string; dias: number; vencido: number }[];
+    pagosVencidos: {
+      id: string;
+      nombre: string;
+      dias: number;
+      vencido: number;
+    }[];
     cercaCupo: {
       id: string;
       nombre: string;
@@ -287,7 +297,12 @@ export interface Inicio {
       sinEmpresa: boolean;
       empresas: (AvanceConfiguracion & { id: string; razonSocial: string })[];
     }[];
-    sinEntrar: { id: string; nombre: string; dias: number; nuncaEntro: boolean }[];
+    sinEntrar: {
+      id: string;
+      nombre: string;
+      dias: number;
+      nuncaEntro: boolean;
+    }[];
   };
   cifras: {
     activas: number;
@@ -378,7 +393,50 @@ export const NOMBRE_ACCION: Record<string, string> = {
   DESACTIVAR_ADMIN: "Desactivó un administrador",
   REACTIVAR_ADMIN: "Reactivó un administrador",
   RESTABLECER_ADMIN: "Restableció un administrador",
+  CARGAR_TARIFA_RETENCION: "Cargó una tarifa de retención",
+  CARGAR_UVT: "Cargó la UVT de un año",
+  CARGAR_PARAMETRO_ICA: "Cargó la ley de ICA de un municipio",
+  CARGAR_AUTORRETENCION: "Cargó una tarifa de autorretención",
 };
+
+// --- Ley de retenciones (plan motor de retenciones, Fase 0, §0.8) ----------
+
+export interface TarifaLeyPlataforma {
+  tipoPersona: "NATURAL" | "JURIDICA" | null;
+  declarante: boolean | null;
+  baseUvt: number;
+  /** Fracción: 0.025 es 2,5 %. */
+  tarifa: number;
+  vigenciaDesde: string;
+  vigenciaHasta: string | null;
+  norma: string;
+  validadoPor: string;
+  validadoEn: string;
+}
+
+export interface ConceptoLeyPlataforma {
+  codigo: string;
+  nombre: string;
+  impuesto: "RENTA" | "IVA" | "ICA";
+  tarifas: TarifaLeyPlataforma[];
+}
+
+export interface LeyRetenciones {
+  conceptos: ConceptoLeyPlataforma[];
+  uvt: Array<{
+    anio: number;
+    valor: string;
+    norma: string | null;
+    validadoPor: string | null;
+    validadoEn: string | null;
+  }>;
+  migracion: Array<{
+    migracion: string;
+    que: string;
+    detalle: Record<string, unknown>;
+    creadoEn: string;
+  }>;
+}
 
 export const NOMBRE_ROL: Record<string, string> = {
   ADMIN_TENANT: "Administrador de la cuenta",
@@ -396,3 +454,117 @@ export const NOMBRE_DOCUMENTO: Record<string, string> = {
   CAMARA_COMERCIO: "Cámara de Comercio",
   RESOLUCION_DIAN: "Resolución de la DIAN",
 };
+
+/** Una vigencia de la autorretención especial de un CIIU (`GET /plataforma/retenciones/autorretencion`). */
+export interface AutorretencionPlataforma {
+  ciiu: string;
+  /** Fracción: 0.008 es 0,8 %. */
+  tarifa: string;
+  vigenciaDesde: string;
+  vigenciaHasta: string | null;
+  norma: string;
+  validadoPor: string;
+  validadoEn: string;
+}
+
+export interface NuevaAutorretencionInput {
+  ciiu: string;
+  tarifaPorcentaje: number;
+  vigenciaDesde: string;
+  vigenciaHasta?: string;
+  norma: string;
+  validadoPor: string;
+  validadoEn: string;
+}
+
+/** La ley de ICA de un municipio para un año (`GET /plataforma/retenciones/ica`). */
+export interface IcaMunicipioPlataforma {
+  municipio_codigo: string;
+  municipio: string;
+  anio: number;
+  base_minima_uvt_compras: string | null;
+  base_minima_uvt_servicios: string | null;
+  tarifa_general_por_mil: string | null;
+  usa_tarifa_por_actividad: boolean;
+  acumula_en_periodo: boolean;
+  periodicidad: string;
+  acuerdo: string;
+  validadoPor: string;
+  validadoEn: string;
+  tarifas: number;
+  matriz: number;
+}
+
+export interface NuevoIcaMunicipioInput {
+  municipioCodigo: string;
+  anio: number;
+  baseMinimaUvtCompras?: number;
+  baseMinimaUvtServicios?: number;
+  tarifaGeneralPorMil?: number;
+  usaTarifaPorActividad: boolean;
+  acumulaEnPeriodo: boolean;
+  periodicidad: "MENSUAL" | "BIMESTRAL" | "TRIMESTRAL" | "ANUAL";
+  acuerdo: string;
+  validadoPor: string;
+  validadoEn: string;
+  tarifas?: Array<{
+    codigoActividad: string;
+    ciiu?: string;
+    descripcion?: string;
+    tipo: "INDUSTRIAL" | "COMERCIAL" | "SERVICIOS" | "FINANCIERA";
+    tarifaPorMil: number;
+  }>;
+}
+
+/** Las cifras de un recálculo de retenciones (Fase 6, §6.3). */
+export interface ResumenRecalculo {
+  empresas: number;
+  documentos: number;
+  diferencias: number;
+  sinEntrada: number;
+  conError: number;
+  porEmpresa?: Array<{
+    empresaId: string;
+    empresa: string;
+    documentos?: number;
+    diferencias?: number;
+    sinEntrada?: number;
+    sinCalcular?: string[];
+    error?: string;
+  }>;
+}
+
+export interface RecalculoPlataforma {
+  id: string;
+  desde: string;
+  hasta: string;
+  motivo: string;
+  creadoEn: string;
+  /** NULL = todas las empresas. */
+  empresa: string | null;
+  resumen: ResumenRecalculo;
+}
+
+export interface DetalleRecalculo {
+  id: string;
+  desde: string;
+  hasta: string;
+  motivo: string;
+  creadoEn: string;
+  resumen: ResumenRecalculo;
+  diferencias: Array<{
+    id: string;
+    empresa: string;
+    fecha: string;
+    documento: string | null;
+    impuesto: string;
+    concepto: string;
+    municipio: string | null;
+    valorAntes: string;
+    valorNuevo: string;
+    diferencia: string;
+    estado: "PENDIENTE" | "AJUSTADA" | "DESCARTADA";
+    motivo: string | null;
+    texto: string | null;
+  }>;
+}

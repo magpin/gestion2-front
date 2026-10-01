@@ -27,9 +27,10 @@ describe("el armador en la pantalla", () => {
     });
   });
 
-  it("la plata se escribe como acá, y los centavos solo si los hay", () => {
+  it("el dinero va en pesos enteros; las cantidades, con decimales si los hay", () => {
     expect(celda("1284500", "DINERO")).toBe("$ 1.284.500");
-    expect(celda("1284500.5", "DINERO")).toBe("$ 1.284.500,50");
+    expect(celda("1284500.5", "DINERO")).toBe("$ 1.284.501");
+    expect(celda("2.5", "CANTIDAD")).toBe("2,50");
     expect(celda("12", "CANTIDAD")).toBe("12");
     expect(celda(null, "DINERO")).toBe("—");
     expect(celda("2026-08-04", "FECHA")).toBe("4 ago 2026");

@@ -1,10 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import {
+  CampoPesos,
+  comoNumero,
+  comoTexto,
+} from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -33,7 +38,8 @@ const esquema = z.object({
   nombre: z.string().min(2, "Requerido").max(200),
   unidadMedida: z.enum(UNIDADES_MEDIDA),
   ivaTarifa: z.union([z.literal(0), z.literal(5), z.literal(19)]),
-  cuentaInventarioId: z.string().min(1, "Elegí una cuenta de inventario"),
+  // Opcional: sin ella, el producto toma la cuenta de inventario de la empresa.
+  cuentaInventarioId: z.string().optional(),
   precioVenta: z.number().min(0, "No puede ser negativo"),
   categoriaId: z.string().optional(),
   codigoBarras: z
@@ -207,14 +213,14 @@ export function FormularioProducto({
           />
         </Campo>
 
-        {/* El lector escribe acá y manda Enter: el campo acepta lo que venga
+        {/* El lector escribe aquí y manda Enter: el campo acepta lo que venga
             del empaque tal cual, sin normalizar, porque normalizarlo rompería
             el cruce con lo que el lector lee. */}
         <Campo
           id="codigoBarras"
           etiqueta="Código de barras"
           error={errores.codigoBarras?.message}
-          ayuda="Pasá el lector o escribilo. Opcional."
+          ayuda="Pase el lector o escríbalo. Opcional."
           escala="grande"
         >
           <Input
@@ -289,42 +295,44 @@ export function FormularioProducto({
           </Select>
         </Campo>
 
-        {!edicion && (
-          <Campo
-            id="cuentaInventarioId"
-            etiqueta="Cuenta de inventario *"
-            error={errores.cuentaInventarioId?.message}
-            ayuda="No se puede cambiar después de creado"
-            escala="grande"
-            className="sm:col-span-2"
-          >
-            <SelectorCuenta
-              valor={cuenta}
-              onElegir={elegirCuenta}
-              invalido={Boolean(errores.cuentaInventarioId)}
-            />
-          </Campo>
-        )}
+        {/* Las cuentas del producto son opcionales: sin elegir nada, toma las
+            de la empresa (Plan de cuentas → Cuentas automáticas). Quedan a la
+            mano para quien necesite otra, sin estorbar a quien no. */}
+        <details className="rounded-2xl border border-border p-4 sm:col-span-2">
+          <summary className="cursor-pointer select-none text-sm font-semibold">
+            Cuentas contables <span className="font-normal text-muted-foreground">(opcional)</span>
+          </summary>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Si no elige ninguna, el producto usa las cuentas de la empresa para inventario, costo de venta e
+            ingreso.
+          </p>
+          <div className="mt-4 grid gap-5">
+            {!edicion && (
+              <Campo
+                id="cuentaInventarioId"
+                etiqueta="Cuenta de inventario"
+                error={errores.cuentaInventarioId?.message}
+                ayuda="No se puede cambiar después de creado"
+                escala="grande"
+              >
+                <SelectorCuenta
+                  crear={{ madres: ["1435"] }}
+                  valor={cuenta}
+                  onElegir={elegirCuenta}
+                  invalido={Boolean(errores.cuentaInventarioId)}
+                />
+              </Campo>
+            )}
 
-        <Campo
-          id="cuentaCostoVentaId"
-          etiqueta="Cuenta de costo de venta"
-          ayuda="Opcional acá — hace falta recién cuando se venda este producto"
-          escala="grande"
-          className="sm:col-span-2"
-        >
-          <SelectorCuenta valor={cuentaCosto} onElegir={onCuentaCosto} />
-        </Campo>
+            <Campo id="cuentaCostoVentaId" etiqueta="Cuenta de costo de venta" escala="grande">
+              <SelectorCuenta valor={cuentaCosto} onElegir={onCuentaCosto} crear={{ madres: ["61"] }} />
+            </Campo>
 
-        <Campo
-          id="cuentaIngresoId"
-          etiqueta="Cuenta de ingreso"
-          ayuda="Opcional acá — hace falta recién cuando se venda este producto"
-          escala="grande"
-          className="sm:col-span-2"
-        >
-          <SelectorCuenta valor={cuentaIngreso} onElegir={onCuentaIngreso} />
-        </Campo>
+            <Campo id="cuentaIngresoId" etiqueta="Cuenta de ingreso" escala="grande">
+              <SelectorCuenta valor={cuentaIngreso} onElegir={onCuentaIngreso} crear={{ madres: ["41"] }} />
+            </Campo>
+          </div>
+        </details>
 
         {!edicion && (
           <Campo
@@ -333,13 +341,18 @@ export function FormularioProducto({
             error={errores.precioVenta?.message}
             escala="grande"
           >
-            <Input
-              id="precioVenta"
-              type="number"
-              min="0"
-              step="0.01"
-              className={CONTROL}
-              {...form.register("precioVenta", { valueAsNumber: true })}
+            <Controller
+              control={form.control}
+              name="precioVenta"
+              render={({ field }) => (
+                <CampoPesos
+                  id="precioVenta"
+                  className={CONTROL}
+                  value={comoTexto(field.value)}
+                  onChange={(v) => field.onChange(comoNumero(v))}
+                  onBlur={field.onBlur}
+                />
+              )}
             />
           </Campo>
         )}

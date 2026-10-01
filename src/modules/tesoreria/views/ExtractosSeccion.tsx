@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText, FileUp, Loader2 } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,10 +51,11 @@ export function ExtractosSeccion() {
   const [detalleId, setDetalleId] = useState<string | null>(null);
 
   const claveExtractos = ["extractos", cuenta?.id];
-  const { data: extractos, isLoading } = useQuery({
+  const { data: extractos, isError, error, refetch } = useQuery({
     queryKey: claveExtractos,
     queryFn: () => extractosApi.listar(cuenta!.id),
     enabled: cuenta !== null,
+    meta: SILENCIOSO,
   });
 
   const { data: detalle } = useQuery({
@@ -123,15 +126,21 @@ export function ExtractosSeccion() {
         </div>
 
         {!cuenta ? (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <FileText className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Elegí una cuenta bancaria para ver sus extractos</p>
-          </div>
-        ) : isLoading ? (
-          <div className="flex justify-center py-24 text-muted-foreground">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
-        ) : extractos && extractos.datos.length > 0 ? (
+          <EmptyState
+            sinMarco
+            icon={FileText}
+            titulo="Elija una cuenta bancaria para ver sus extractos"
+            descripcion="Arriba, en «Cuenta bancaria»: aquí quedan los extractos del banco con los que después se concilia."
+          />
+        ) : extractos === undefined ? (
+          isError ? (
+            <ErrorCarga sinMarco error={error} titulo="No se pudieron leer los extractos de esta cuenta" onReintentar={refetch} />
+          ) : (
+            <div className="flex justify-center py-24 text-muted-foreground">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          )
+        ) : extractos.datos.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -172,11 +181,14 @@ export function ExtractosSeccion() {
             </table>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-            <FileText className="size-8 text-muted-foreground" />
-            <p className="font-semibold">Esta cuenta todavía no tiene extractos</p>
-            <p className="max-w-md text-sm text-muted-foreground">Subí el archivo del banco o digitalo, con los botones de arriba.</p>
-          </div>
+          <EmptyState
+            sinMarco
+            icon={FileText}
+            titulo="Esta cuenta todavía no tiene extractos"
+            descripcion="Suba el archivo que le da el banco, o digite el extracto a mano: sin él no hay contra qué conciliar el libro."
+            accion={puedeOperar ? { label: "Subir extracto", onClick: () => setImportando(true) } : undefined}
+            accionSecundaria={puedeOperar ? { label: "Digitar extracto", onClick: () => setCreando(true) } : undefined}
+          />
         )}
       </section>
 

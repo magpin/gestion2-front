@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, Loader2, Search, Trash2 } from "lucide-react";
 
@@ -15,8 +16,11 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -36,10 +40,7 @@ import { aviso } from "@/lib/avisos";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { DetalleAsiento } from "../components/DetalleAsiento";
 import { FormularioAsiento } from "../components/FormularioAsiento";
-import {
-  asientosApi,
-  comprobantesApi,
-} from "../services/contabilidad.service";
+import { asientosApi, comprobantesApi } from "../services/contabilidad.service";
 import type { AsientoResumen } from "../types/contabilidad.types";
 
 const CLAVE = ["asientos"];
@@ -62,6 +63,8 @@ export function AsientosSeccion() {
   const [pagina, setPagina] = useState(1);
 
   const [creando, setCreando] = useState(false);
+  // Con la página prendida, el asiento nuevo es el comprobante manual asistido.
+  const router = useRouter();
   const [porAnular, setPorAnular] = useState<AsientoResumen | null>(null);
   const [motivo, setMotivo] = useState("");
   const [detalleId, setDetalleId] = useState<string | null>(null);
@@ -81,7 +84,13 @@ export function AsientosSeccion() {
     staleTime: 60 * 60_000,
   });
 
-  const { data: resultado, isLoading } = useQuery({
+  const {
+    data: resultado,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    meta: SILENCIOSO,
     queryKey: [...CLAVE, busqueda, tipo, verAnulados, pagina],
     queryFn: () =>
       asientosApi.listar({
@@ -185,12 +194,28 @@ export function AsientosSeccion() {
         {resultado?.total === 1 ? "" : "s"}
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-24 text-muted-foreground">
-          <Loader2 className="size-6 animate-spin" />
-        </div>
+      {resultado === undefined ? (
+        isError ? (
+          <ErrorCarga
+            error={error}
+            titulo="No se pudieron leer los asientos"
+            onReintentar={refetch}
+          />
+        ) : (
+          <div className="flex justify-center py-24 text-muted-foreground">
+            <Loader2 className="size-6 animate-spin" />
+          </div>
+        )
       ) : asientos.length === 0 ? (
-        <Vacio hayFiltro={hayFiltro} onCrear={() => setCreando(true)} />
+        <Vacio
+          hayFiltro={hayFiltro}
+          onCrear={() =>
+            funcionActiva("comprobanteAsistido")
+              ? router.push("/dashboard/contabilidad/comprobante")
+              : setCreando(true)
+          }
+          onLimpiar={limpiar}
+        />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
@@ -290,7 +315,10 @@ export function AsientosSeccion() {
         </section>
       )}
 
-      <DetalleAsiento asientoId={detalleId} onCerrar={() => setDetalleId(null)} />
+      <DetalleAsiento
+        asientoId={detalleId}
+        onCerrar={() => setDetalleId(null)}
+      />
 
       <FormularioAsiento
         abierto={creando}
@@ -374,7 +402,8 @@ function Paginador({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
       <p className="text-sm text-muted-foreground">
-        {(pagina - 1) * tamano + 1}–{Math.min(pagina * tamano, total)} de {total}
+        {(pagina - 1) * tamano + 1}–{Math.min(pagina * tamano, total)} de{" "}
+        {total}
       </p>
       <div className="flex items-center gap-3">
         <Button
@@ -404,27 +433,35 @@ function Paginador({
 function Vacio({
   hayFiltro,
   onCrear,
+  onLimpiar,
 }: {
   hayFiltro: boolean;
   onCrear: () => void;
+  onLimpiar: () => void;
 }) {
   // Mismo criterio que el botón del encabezado: asentar es del contador.
   const puedeAsentar = useTieneRol("CONTADOR");
+  if (hayFiltro) {
+    return (
+      <EmptyState
+        icon={Search}
+        titulo="Ningún asiento coincide"
+        descripcion="Con estos filtros no aparece nada. Intente con otro número o glosa, o quite los filtros."
+        accion={{ label: "Quitar filtros", onClick: onLimpiar }}
+      />
+    );
+  }
   return (
-    <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-      <p className="text-lg font-semibold">
-        {hayFiltro ? "Ningún asiento coincide" : "Todavía no hay asientos"}
-      </p>
-      <p className="max-w-md text-sm leading-6 text-muted-foreground">
-        {hayFiltro
-          ? "Probá con otro texto, o quitá los filtros."
-          : "Acá va la historia contable de la empresa: cada hecho, con su fecha, su número y su explicación."}
-      </p>
-      {!hayFiltro && puedeAsentar && (
-        <Button className="mt-2 h-12 rounded-xl px-6" onClick={onCrear}>
-          Nuevo asiento
-        </Button>
-      )}
-    </div>
+    <EmptyState
+      titulo="Todavía no hay asientos"
+      descripcion={
+        puedeAsentar
+          ? "Cada factura, compra, pago o cobro que registre se asienta solo y aparece aquí. Si necesita un ajuste, haga un asiento a mano."
+          : "Cada factura, compra, pago o cobro que se registre se asienta solo y aparece aquí."
+      }
+      accion={
+        puedeAsentar ? { label: "Nuevo asiento", onClick: onCrear } : undefined
+      }
+    />
   );
 }

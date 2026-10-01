@@ -15,8 +15,11 @@ interface Props {
    * ahí el foco es confirmar la sugerencia, y mantener las cuentas se hace en
    * su propia pantalla.
    */
-  onCrearAuxiliar?: (datos: { codigo: string; nombre: string }) => void;
+  /** La madre y el nombre: el código definitivo lo pone el servidor. */
+  onCrearAuxiliar?: (datos: { madre: string; nombre: string }) => void;
   onDesactivar?: (id: string) => void;
+  /** Volver a ofrecer una cuenta desactivada. */
+  onActivar?: (id: string) => void;
   creando?: boolean;
 }
 
@@ -32,14 +35,14 @@ interface Props {
  * empresa, y por eso el auxiliar se numera solo: quien lo crea está pensando en
  * "la caja del local nuevo", no en qué consecutivo sigue.
  */
-export function ArbolPlan({ cuentas, onCrearAuxiliar, onDesactivar, creando = false }: Props) {
+export function ArbolPlan({ cuentas, onCrearAuxiliar, onDesactivar, onActivar, creando = false }: Props) {
   const madres = raices(cuentas);
   const hijasDe = (codigo: string) => cuentas.filter((c) => c.codigo_padre === codigo);
 
   if (cuentas.length === 0) {
     return (
       <p className="rounded-lg border border-border bg-card px-3 py-8 text-center text-sm text-muted-foreground">
-        Sin cuentas. Empezá por las sugerencias.
+        Sin cuentas. Empiece por las sugerencias.
       </p>
     );
   }
@@ -55,6 +58,7 @@ export function ArbolPlan({ cuentas, onCrearAuxiliar, onDesactivar, creando = fa
           profundidad={0}
           onCrearAuxiliar={onCrearAuxiliar}
           onDesactivar={onDesactivar}
+          onActivar={onActivar}
           creando={creando}
         />
       ))}
@@ -69,14 +73,17 @@ function Rama({
   profundidad,
   onCrearAuxiliar,
   onDesactivar,
+  onActivar,
   creando,
 }: {
   cuenta: CuentaEmpresa;
   hijas: CuentaEmpresa[];
   hijasDe: (codigo: string) => CuentaEmpresa[];
   profundidad: number;
-  onCrearAuxiliar?: (d: { codigo: string; nombre: string }) => void;
+  onCrearAuxiliar?: (d: { madre: string; nombre: string }) => void;
   onDesactivar?: (id: string) => void;
+  /** Volver a ofrecer una cuenta desactivada. */
+  onActivar?: (id: string) => void;
   creando: boolean;
 }) {
   const [agregando, setAgregando] = useState(false);
@@ -85,7 +92,7 @@ function Rama({
 
   const confirmar = () => {
     if (nombre.trim().length < 2) return;
-    onCrearAuxiliar?.({ codigo, nombre: nombre.trim() });
+    onCrearAuxiliar?.({ madre: cuenta.codigo, nombre: nombre.trim() });
     setNombre("");
     setAgregando(false);
   };
@@ -106,7 +113,7 @@ function Rama({
         </span>
         <span className="shrink-0 text-[11px] text-muted-foreground">{cuenta.naturaleza}</span>
 
-        {/* Lo que la cuenta le va a exigir a cada asiento. Se muestra acá porque
+        {/* Lo que la cuenta le va a exigir a cada asiento. Se muestra aquí porque
             es lo que después frena una factura al digitarla. */}
         {cuenta.exige_tercero && <Etiqueta>tercero</Etiqueta>}
         {cuenta.exige_centro_costo && <Etiqueta>centro de costo</Etiqueta>}
@@ -128,6 +135,11 @@ function Rama({
             Desactivar
           </Button>
         )}
+        {!cuenta.activa && onActivar !== undefined && (
+          <Button variant="ghost" size="sm" onClick={() => onActivar(cuenta.id)}>
+            Activar
+          </Button>
+        )}
       </div>
 
       {agregando && (
@@ -135,8 +147,9 @@ function Rama({
           className="flex flex-wrap items-center gap-2 bg-muted/40 px-3 py-2"
           style={{ paddingLeft: `${(profundidad + 1) * 20 + 12}px` }}
         >
-          {/* El código va bloqueado: lo calcula el sistema para que no queden
-              huecos ni repetidos entre los auxiliares de una misma madre. */}
+          {/* El código va bloqueado: es la propuesta con lo que se ve, y el
+              definitivo lo pone el servidor contando también las
+              desactivadas, para que no queden repetidos. */}
           <Input
             readOnly
             value={codigo}
@@ -177,6 +190,7 @@ function Rama({
               profundidad={profundidad + 1}
               onCrearAuxiliar={onCrearAuxiliar}
               onDesactivar={onDesactivar}
+              onActivar={onActivar}
               creando={creando}
             />
           ))}

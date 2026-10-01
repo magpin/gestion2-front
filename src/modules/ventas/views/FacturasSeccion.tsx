@@ -9,6 +9,7 @@ import {
   FilePlus,
   Loader2,
   Trash2,
+  TriangleAlert,
   Undo2,
 } from "lucide-react";
 
@@ -27,14 +28,18 @@ import {
   AccionesDropdown,
   type DropdownAccion,
 } from "@/components/shared/AccionesDropdown";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
+import { avisoNotasVivas } from "@/lib/notas-vivas";
 import { avisarErrorVenta } from "../lib/errores";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { VacioConMaria } from "@/modules/asistente/components/VacioConMaria";
 import { DetalleVenta } from "../components/DetalleVenta";
+import { funcionActiva } from "@/core/config/funciones";
+import { ReciboCajaDialog } from "@/modules/cobros/components/ReciboCajaDialog";
 import { FormularioCobro } from "../components/FormularioCobro";
 import { FormularioDocumentoVenta } from "../components/FormularioDocumentoVenta";
 import { FormularioNotaCredito } from "../components/FormularioNotaCredito";
@@ -88,9 +93,16 @@ export function FacturasSeccion({
   const [devolviendoDe, setDevolviendoDe] =
     useState<VentaDocumentoResumen | null>(null);
 
-  const { data: resultado, isLoading } = useQuery({
+  const {
+    data: resultado,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: [...CLAVE, pagina],
     queryFn: () => facturasApi.listar({ pagina }),
+    meta: SILENCIOSO,
   });
 
   const { data: detalle } = useQuery({
@@ -104,6 +116,22 @@ export function FacturasSeccion({
     aviso.exito("Factura creada");
     onCerrarCreacion();
   });
+
+  // Con notas vivas no se anula: primero las notas. Se avisa antes de pedir
+  // el motivo; el backend lo rechaza igual si alguien se adelanta.
+  const anulacion = useQuery({
+    queryKey: [...CLAVE, porAnular?.id, "anulacion"],
+    queryFn: () => facturasApi.porId(porAnular!.id),
+    enabled: porAnular !== null,
+  });
+  const bloqueoPorNotas = avisoNotasVivas(
+    "factura",
+    anulacion.data?.notas?.map((n) => ({
+      tipo: n.tipo,
+      estado: n.estado,
+      numero: [n.prefijo, String(n.consecutivo)].filter(Boolean).join("-"),
+    })),
+  );
 
   const anular = useMutation({
     mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
@@ -228,10 +256,16 @@ export function FacturasSeccion({
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      ) : isError && resultado === undefined ? (
+        <ErrorCarga
+          error={error}
+          titulo="No se pudieron leer las facturas"
+          onReintentar={refetch}
+        />
       ) : facturas.length === 0 ? (
         <VacioConMaria
           titulo="Todavía no hay facturas"
-          invitacion="Mandame el pedido de un cliente y te armo la factura para que la emitas."
+          invitacion="Envíeme el pedido de un cliente y le armo la factura para que la emita."
           roles={["DIRECTOR"]}
           sinMaria="Al emitir una factura se asienta y se descuenta el kardex, todo junto."
         />
@@ -366,14 +400,30 @@ export function FacturasSeccion({
         facturaFija={notaDebitoDe ?? undefined}
       />
 
-      <FormularioCobro
-        factura={cobrandoDe}
-        onCerrar={() => setCobrandoDe(null)}
-        onGuardar={(datos) =>
-          cobrandoDe && cobrar.mutate({ id: cobrandoDe.id, datos })
-        }
-        guardando={cobrar.isPending}
-      />
+      {/* Un hecho, un documento: con Cobros encendido, «Cobrar» abre el
+          mismo recibo de caja que la pantalla de Cobros, con esta factura
+          marcada. Mientras tanto, el cobro de siempre. */}
+      {funcionActiva("cobros") ? (
+        <ReciboCajaDialog
+          abierto={cobrandoDe !== null}
+          cliente={
+            cobrandoDe === null
+              ? null
+              : { id: cobrandoDe.tercero_id, nombre: cobrandoDe.tercero_nombre }
+          }
+          facturaId={cobrandoDe?.id}
+          onCerrar={() => setCobrandoDe(null)}
+        />
+      ) : (
+        <FormularioCobro
+          factura={cobrandoDe}
+          onCerrar={() => setCobrandoDe(null)}
+          onGuardar={(datos) =>
+            cobrandoDe && cobrar.mutate({ id: cobrandoDe.id, datos })
+          }
+          guardando={cobrar.isPending}
+        />
+      )}
 
       <FormularioCobro
         modo="DEVOLVER"
@@ -424,15 +474,28 @@ export function FacturasSeccion({
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <label className="block text-sm font-medium">
-            Motivo de la anulación
-            <Textarea
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Por qué se anula"
-              className="mt-2 min-h-24 rounded-xl px-4 py-3"
-            />
-          </label>
+          {bloqueoPorNotas !== null ? (
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-[15px] leading-6"
+            >
+              <TriangleAlert
+                className="mt-1 size-4 shrink-0 text-warning"
+                aria-hidden="true"
+              />
+              <span>{bloqueoPorNotas}</span>
+            </div>
+          ) : (
+            <label className="block text-sm font-medium">
+              Motivo de la anulación
+              <Textarea
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Por qué se anula"
+                className="mt-2 min-h-24 rounded-xl px-4 py-3"
+              />
+            </label>
+          )}
 
           <AlertDialogFooter className="-mx-6 -mb-6 p-6">
             <AlertDialogCancel className="h-11 rounded-xl px-6">
@@ -440,7 +503,11 @@ export function FacturasSeccion({
             </AlertDialogCancel>
             <AlertDialogAction
               className="h-11 rounded-xl bg-danger px-6 text-white hover:bg-danger/90"
-              disabled={anular.isPending || motivo.trim().length < 3}
+              disabled={
+                anular.isPending ||
+                bloqueoPorNotas !== null ||
+                motivo.trim().length < 3
+              }
               onClick={() =>
                 porAnular &&
                 anular.mutate({ id: porAnular.id, motivo: motivo.trim() })

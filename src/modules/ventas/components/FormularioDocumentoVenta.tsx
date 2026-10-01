@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { admiteDecimales, esEntero } from "@/lib/numeros";
 import { formatFecha, hoyEnColombia } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
@@ -25,12 +26,14 @@ import {
   type LineaVentaBorrador,
 } from "./EditorLineasVenta";
 import { SelectorFormaPago } from "@/modules/tesoreria/components/SelectorFormaPago";
+import { useAnticiposDelCliente } from "@/modules/cobros/hooks/useAnticiposDelCliente";
 import {
   aFormaPago,
   formaPagoVacia,
   problemaFormaPago,
   type FormaPagoInput,
 } from "@/modules/tesoreria/lib/formaPago";
+import { useTotalesBorrador } from "../hooks/useTotalesBorrador";
 import type { CrearCotizacionInput } from "../types/ventas.types";
 
 /**
@@ -50,7 +53,6 @@ export function FormularioDocumentoVenta({
   descripcion,
   etiquetaBoton,
   fechaDeHoy = false,
-  precioEditable = false,
   conFormaPago = false,
   inicial,
 }: {
@@ -68,11 +70,6 @@ export function FormularioDocumentoVenta({
    * la resolución ni asienta— y puede fecharse cuando haga falta.
    */
   fechaDeHoy?: boolean;
-  /**
-   * Solo la cotización: deja digitar el precio del producto que no tiene
-   * precio de lista, en vez de trabarse. Ver `EditorLineasVenta`.
-   */
-  precioEditable?: boolean;
   /**
    * Solo la factura: pregunta cómo se paga. Una cotización no mueve plata.
    */
@@ -92,6 +89,8 @@ export function FormularioDocumentoVenta({
     inicial?.tercero ?? null,
   );
   const [fecha, setFecha] = useState(inicial?.fecha ?? hoyEnColombia());
+  // Solo la factura se paga: con anticipos del cliente, «Anticipo» los aplica.
+  const anticiposDelCliente = useAnticiposDelCliente(conFormaPago ? tercero?.id : null);
   const [lineas, setLineas] = useState<LineaVentaBorrador[]>(
     inicial?.lineas ?? [lineaVentaVacia()],
   );
@@ -112,6 +111,30 @@ export function FormularioDocumentoVenta({
       l.cantidad.trim() === "" || Number(l.cantidad) <= 0 ? i + 1 : null,
     )
     .filter((n): n is number => n !== null);
+  // Una cantidad con decimales en un producto que va por unidades: pasa si se
+  // cambió un producto en kilos por uno en unidades sin corregir la cantidad.
+  const sinEntero = lineas
+    .map((l, i) =>
+      l.producto !== null &&
+      !admiteDecimales(l.producto.unidad_medida) &&
+      !esEntero(l.cantidad)
+        ? i + 1
+        : null,
+    )
+    .filter((n): n is number => n !== null);
+
+  // Un producto sin precio de lista y sin precio digitado: el servidor lo
+  // rechaza. Mientras cargan los precios no se dice nada.
+  const { porLinea, cargando: cargandoPrecios } = useTotalesBorrador(lineas);
+  const sinPrecio = cargandoPrecios
+    ? []
+    : lineas
+        .map((l, i) =>
+          l.producto !== null && Number(l.cantidad) > 0 && porLinea[i] === null
+            ? i + 1
+            : null,
+        )
+        .filter((n): n is number => n !== null);
 
   const nombrar = (renglones: number[]) =>
     renglones.length === 1
@@ -119,13 +142,17 @@ export function FormularioDocumentoVenta({
       : `los renglones ${renglones.join(", ")}`;
 
   const impedimento = (): string | null => {
-    if (tercero === null) return "Elegí el cliente.";
-    if (fecha === "") return "Elegí la fecha.";
-    if (lineas.length === 0) return "Agregá al menos una línea.";
+    if (tercero === null) return "Elija el cliente.";
+    if (fecha === "") return "Elija la fecha.";
+    if (lineas.length === 0) return "Agregue al menos una línea.";
     if (sinProducto.length > 0)
       return `Falta el producto en ${nombrar(sinProducto)}.`;
     if (sinCantidad.length > 0)
       return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;
+    if (sinEntero.length > 0)
+      return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
+    if (sinPrecio.length > 0)
+      return `Ingrese el precio en ${nombrar(sinPrecio)}: ese producto no tiene precio de lista.`;
     if (conFormaPago) return problemaFormaPago(formaPago);
     return null;
   };
@@ -141,7 +168,7 @@ export function FormularioDocumentoVenta({
         lineas: lineas.map((l) => ({
           productoId: l.producto!.id,
           cantidad: Number(l.cantidad),
-          // Solo viaja si se digitó: con precio de lista, el backend lo ignora.
+          // Solo viaja si se digitó: vacío es el de lista, y lo pone el backend.
           precioUnitario:
             l.precioUnitario === "" ? undefined : Number(l.precioUnitario),
         })),
@@ -207,11 +234,16 @@ export function FormularioDocumentoVenta({
           <EditorLineasVenta
             lineas={lineas}
             onCambiar={setLineas}
-            precioEditable={precioEditable}
           />
 
           {conFormaPago && (
-            <SelectorFormaPago valor={formaPago} onCambiar={setFormaPago} />
+            <SelectorFormaPago
+              valor={formaPago}
+              onCambiar={setFormaPago}
+              cajaFija
+              conVence
+              anticipos={anticiposDelCliente}
+            />
           )}
         </DialogBody>
 

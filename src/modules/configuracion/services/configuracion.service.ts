@@ -13,4 +13,11 @@ export const configuracionService = {
    */
   elegirModo: (modo: "IA" | "MANUAL") =>
     api.post("/empresas/actual/modo-configuracion", { modo }).then(() => undefined),
+
+  /**
+   * La bienvenida de María se mostró: de ahí en adelante se entra directo al
+   * tablero. El backend solo la marca la primera vez.
+   */
+  marcarBienvenidaVista: () =>
+    api.post("/empresas/actual/bienvenida-vista").then(() => undefined),
 };

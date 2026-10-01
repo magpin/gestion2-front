@@ -196,7 +196,7 @@ export function TarjetaPropuesta({
             ))}
           {verAsiento && pendiente && corregido && (
             <span className="text-xs text-muted-foreground">
-              Es el asiento de lo propuesto; con tu corrección cambian los valores.
+              Es el asiento de lo propuesto; con su corrección cambian los valores.
             </span>
           )}
         </div>
@@ -221,7 +221,7 @@ export function TarjetaPropuesta({
         </span>
       ) : estado === "VENCIDA" ? (
         <span className="text-xs text-muted-foreground">
-          Pasaron más de 24 horas. Si todavía hace falta, pedile al asistente que la arme de nuevo.
+          Pasaron más de 24 horas. Si todavía hace falta, pida al asistente que la arme de nuevo.
         </span>
       ) : null}
     </div>
@@ -278,7 +278,7 @@ function NoSePudo({
         <span className="text-muted-foreground">{sinPermiso ?? error}</span>
         <span className="text-muted-foreground">
           {periodoCerrado && sinPermiso === null
-            ? "Cambiá la fecha a un período abierto y confirmá de nuevo, o descartala."
+            ? "Cambie la fecha a un período abierto y confirme de nuevo, o descártela."
             : limite.salida}
         </span>
       </div>

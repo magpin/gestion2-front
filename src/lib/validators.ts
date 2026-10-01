@@ -27,17 +27,17 @@ export const lineaCotizacionSchema = z
     (linea) =>
       (linea.productoId && linea.productoId.length > 0) ||
       (linea.descripcion && linea.descripcion.trim().length > 0),
-    { message: "Elige un producto o describe el ítem", path: ["productoId"] },
+    { message: "Elija un producto o describa el ítem", path: ["productoId"] },
   );
 
 // `validoHasta` es opcional: si no se fija, lo calcula el backend con la
 // política de la empresa y lo GUARDA. Fijarlo acá es para el cliente que pide
 // un plazo distinto.
 export const cotizacionSchema = z.object({
-  terceroId: z.string().uuid("Selecciona un cliente"),
+  terceroId: z.string().uuid("Seleccione un cliente"),
   validoHasta: z.string().optional(),
   observacion: z.string().max(300).optional(),
-  lineas: z.array(lineaCotizacionSchema).min(1, "Agrega al menos una línea"),
+  lineas: z.array(lineaCotizacionSchema).min(1, "Agregue al menos una línea"),
 });
 
 export type CotizacionFormData = z.infer<typeof cotizacionSchema>;
@@ -45,8 +45,8 @@ export type CotizacionFormData = z.infer<typeof cotizacionSchema>;
 
 // --- Gastos ---
 export const gastoSchema = z.object({
-  tipoGasto: z.string().min(1, "Indica el tipo de gasto").max(50),
-  cuentaId: z.string().uuid("Selecciona la cuenta contable"),
+  tipoGasto: z.string().min(1, "Indique el tipo de gasto").max(50),
+  cuentaId: z.string().uuid("Seleccione la cuenta contable"),
   // Reason: opcional → "" = no seleccionado (el payload lo omite); si hay valor, debe ser UUID.
   terceroId: z.union([z.string().uuid(), z.literal("")]).optional(),
   medioPago: z.enum([
@@ -81,8 +81,8 @@ export const productoSchema = z.object({
   aplicaIva: z.boolean(),
   unidadMedida: z.string().min(1, "Requerido").max(20),
   categoriaId: z.union([z.string().uuid(), z.literal("")]).optional(),
-  ctaInventarioId: z.string().uuid("Selecciona la cuenta de inventario"),
-  ctaIngresosId: z.string().uuid("Selecciona la cuenta de ingresos"),
+  ctaInventarioId: z.string().uuid("Seleccione la cuenta de inventario"),
+  ctaIngresosId: z.string().uuid("Seleccione la cuenta de ingresos"),
 });
 
 export type ProductoFormData = z.infer<typeof productoSchema>;
@@ -93,18 +93,18 @@ export type ProductoFormData = z.infer<typeof productoSchema>;
 // bloquea. Bloquear duro empuja al vendedor a inventar productos falsos, que es
 // peor que la rebaja — el formulario avisa, y el director firma después.
 export const lineaVentaSchema = z.object({
-  productoId: z.string().uuid("Selecciona un producto"),
+  productoId: z.string().uuid("Seleccione un producto"),
   cantidad: z.number({ message: "Requerido" }).positive("La cantidad debe ser mayor a 0"),
   precioUnitario: z.number({ message: "Requerido" }).min(0, "Precio inválido"),
   porcentajeIva: z.number().refine((valor) => [0, 5, 19].includes(valor), "IVA inválido"),
 });
 
 export const ventaSchema = z.object({
-  terceroId: z.string().uuid("Selecciona un cliente"),
+  terceroId: z.string().uuid("Seleccione un cliente"),
   condicion: z.enum(["CONTADO", "CREDITO"]),
   fecha: z.string().optional(),
   observacion: z.string().max(300).optional(),
-  lineas: z.array(lineaVentaSchema).min(1, "Agrega al menos una línea"),
+  lineas: z.array(lineaVentaSchema).min(1, "Agregue al menos una línea"),
 });
 
 export type VentaFormData = z.infer<typeof ventaSchema>;
@@ -115,14 +115,14 @@ export type VentaFormData = z.infer<typeof ventaSchema>;
 // hay medio de pago ni casilla de retención —pagar es otro evento y la
 // retención se calcula al 2,5 % o se escribe para cuadrar con el papel—.
 export const lineaCompraSchema = z.object({
-  productoId: z.string().uuid("Selecciona un producto"),
+  productoId: z.string().uuid("Seleccione un producto"),
   cantidad: z.number({ message: "Requerido" }).positive("La cantidad debe ser mayor a 0"),
   costoUnitario: z.number({ message: "Requerido" }).min(0, "Costo inválido"),
   porcentajeIva: z.number().refine((valor) => [0, 5, 19].includes(valor), "IVA inválido"),
 });
 
 export const compraSchema = z.object({
-  terceroId: z.string().uuid("Selecciona un proveedor"),
+  terceroId: z.string().uuid("Seleccione un proveedor"),
   numeroFactura: z
     .string()
     .min(1, "El número de la factura del proveedor es obligatorio")
@@ -132,15 +132,15 @@ export const compraSchema = z.object({
   /** Vacío = el backend calcula el 2,5 %. Escrito = cuadra con la factura. */
   retefuente: z.number().min(0, "Inválido").optional(),
   observacion: z.string().max(300).optional(),
-  lineas: z.array(lineaCompraSchema).min(1, "Agrega al menos una línea"),
+  lineas: z.array(lineaCompraSchema).min(1, "Agregue al menos una línea"),
 });
 
 export type CompraFormData = z.infer<typeof compraSchema>;
 
 // --- Órdenes de compra ---
 export const ordenCompraSchema = z.object({
-  proveedorId: z.string().uuid("Selecciona un proveedor"),
-  productoId: z.string().uuid("Selecciona un producto"),
+  proveedorId: z.string().uuid("Seleccione un proveedor"),
+  productoId: z.string().uuid("Seleccione un producto"),
   cantidadSolicitada: z.number({ message: "Requerido" }).positive("La cantidad debe ser mayor a 0"),
 });
 
@@ -148,9 +148,9 @@ export type OrdenCompraFormData = z.infer<typeof ordenCompraSchema>;
 
 // --- Órdenes de trabajo (taller) ---
 export const ordenTrabajoSchema = z.object({
-  terceroId: z.string().uuid("Selecciona un cliente"),
-  tecnicoId: z.string().uuid("Selecciona un técnico"),
-  descripcionProblema: z.string().min(1, "Describe el problema reportado").max(500),
+  terceroId: z.string().uuid("Seleccione un cliente"),
+  tecnicoId: z.string().uuid("Seleccione un técnico"),
+  descripcionProblema: z.string().min(1, "Describa el problema reportado").max(500),
   fechaEntregaEstimada: z.string().optional(),
   observaciones: z.string().max(500).optional(),
 });
@@ -185,7 +185,7 @@ export type TerceroFormData = z.infer<typeof terceroSchema>;
 // --- Equipos (listado global) ---
 // terceroId va en el schema porque el formulario global selecciona el cliente dueño.
 export const equipoSchema = z.object({
-  terceroId: z.string().uuid("Selecciona un cliente"),
+  terceroId: z.string().uuid("Seleccione un cliente"),
   tipoEquipo: z.string().min(1, "Requerido").max(50),
   marca: z.string().max(100).optional(),
   modelo: z.string().max(100).optional(),
@@ -198,7 +198,7 @@ export type EquipoFormData = z.infer<typeof equipoSchema>;
 // --- Contratos de mantenimiento ---
 export const contratoSchema = z
   .object({
-    terceroId: z.string().uuid("Selecciona un cliente"),
+    terceroId: z.string().uuid("Seleccione un cliente"),
     numero: z.string().min(1, "Requerido").max(20),
     descripcion: z.string().max(500).optional(),
     frecuencia: z.enum(["MENSUAL", "TRIMESTRAL", "SEMESTRAL", "ANUAL"]),
@@ -241,7 +241,7 @@ export type EmpleadoFormData = z.infer<typeof empleadoSchema>;
 // --- Ausencias ---
 export const ausenciaSchema = z
   .object({
-    empleadoId: z.string().uuid("Selecciona un empleado"),
+    empleadoId: z.string().uuid("Seleccione un empleado"),
     tipo: z.enum([
       "VACACIONES",
       "INCAPACIDAD_GENERAL",
@@ -293,7 +293,7 @@ const MEDIOS_PAGO_VALUES = [
 ] as const;
 
 export const anticipoEmpleadoSchema = z.object({
-  empleadoId: z.string().uuid("Selecciona un empleado"),
+  empleadoId: z.string().uuid("Seleccione un empleado"),
   monto: z.number({ message: "Requerido" }).positive("El monto debe ser mayor a 0"),
   medioPago: z.enum(MEDIOS_PAGO_VALUES),
   observaciones: z.string().max(255).optional(),
@@ -359,7 +359,7 @@ export const tareaSchema = z.object({
   descripcion: z.string().optional(),
   tipo: z.enum(["LLAMADA", "VISITA", "SEGUIMIENTO", "RECORDATORIO", "OTRO"]),
   prioridad: z.enum(["ALTA", "MEDIA", "BAJA"]),
-  asignadoAId: z.string().uuid("Selecciona un responsable"),
+  asignadoAId: z.string().uuid("Seleccione un responsable"),
   terceroId: z.union([z.string().uuid(), z.literal("")]).optional(),
   fechaVencimiento: z.string().optional(),
 });
@@ -394,7 +394,7 @@ export const usuarioSchema = z.object({
   // Password solo se exige al crear (en edición el campo se omite).
   password: z.string().optional(),
   // VARIOS roles por persona: la cajera lleva cuatro. Los permisos se suman.
-  roles: z.array(z.enum(ROLES_VALUES)).min(1, "Asigna al menos un rol"),
+  roles: z.array(z.enum(ROLES_VALUES)).min(1, "Asigne al menos un rol"),
 });
 
 export type UsuarioFormData = z.infer<typeof usuarioSchema>;

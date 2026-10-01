@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Flag, Link2Off, Loader2 } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -80,28 +82,47 @@ export function ConciliacionSeccion() {
   const abiertos = extractos?.datos.filter((e) => e.estado === "ABIERTO") ?? [];
 
   const claveDetalle = ["extractos", "detalle", extractoId];
-  const { data: detalle, isLoading: cargandoDetalle } = useQuery({
+  // Las tres consultas de abajo son la pantalla: sin cualquiera de ellas, lo
+  // que se muestre («Todo cruzado», «Sin líneas») sería falso. Si una falla,
+  // se dice eso en lugar del tablero.
+  const consultaDetalle = useQuery({
     queryKey: claveDetalle,
     queryFn: () => extractosApi.porId(extractoId!),
     enabled: extractoId !== null,
+    meta: SILENCIOSO,
   });
+  const detalle = consultaDetalle.data;
+  const cargandoDetalle = detalle === undefined;
 
   const clavePropuestas = ["extractos", "propuestas", extractoId];
-  const { data: propuestas, isLoading: cargandoPropuestas } = useQuery({
+  const consultaPropuestas = useQuery({
     queryKey: clavePropuestas,
     queryFn: () => extractosApi.propuestas(extractoId!),
     enabled: extractoId !== null,
+    meta: SILENCIOSO,
   });
+  const propuestas = consultaPropuestas.data;
+  const cargandoPropuestas = propuestas === undefined;
 
   // El sufijo la separa del libro entero (`LibroBancoSeccion`), que es otra
   // consulta; invalidar por el prefijo refresca las dos, y un cruce cambia
   // `conciliado` en ambas.
   const claveMovimientos = ["cuentas-bancarias", "movimientos", cuenta?.id];
-  const { data: movimientos, isLoading: cargandoMovimientos } = useQuery({
+  const consultaMovimientos = useQuery({
     queryKey: [...claveMovimientos, "por-conciliar"],
     queryFn: () => movimientosBancoApi.porConciliar(cuenta!.id),
     enabled: cuenta !== null,
+    meta: SILENCIOSO,
   });
+  const movimientos = consultaMovimientos.data;
+  const cargandoMovimientos = movimientos === undefined;
+
+  // La primera que no se pudo leer (y no tiene datos viejos que mostrar).
+  const fallida = [consultaDetalle, consultaPropuestas, consultaMovimientos].find(
+    (c) => c.data === undefined && c.isError,
+  );
+  const reintentar = () =>
+    Promise.all([consultaDetalle.refetch(), consultaPropuestas.refetch(), consultaMovimientos.refetch()]);
 
   /** Otra cuenta u otro extracto: nada de lo elegido ni de lo abierto sigue valiendo. */
   const empezarDeNuevo = () => {
@@ -337,7 +358,7 @@ export function ConciliacionSeccion() {
               empezarDeNuevo();
             }}>
               <SelectTrigger className="h-auto border-0 bg-transparent p-0 text-sm font-semibold shadow-none">
-                <SelectValue placeholder="Elegí un extracto" />
+                <SelectValue placeholder="Elija un extracto" />
               </SelectTrigger>
               <SelectContent>
                 {abiertos.map((e) => (
@@ -368,13 +389,28 @@ export function ConciliacionSeccion() {
         )}
       </section>
 
-      {!extractoId ? (
-        <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card px-6 py-20 text-center">
-          <CheckCircle2 className="size-8 text-muted-foreground" />
-          <p className="font-semibold">
-            {cuenta ? "Elegí un extracto abierto para conciliar" : "Elegí una cuenta bancaria para empezar"}
-          </p>
-        </div>
+      {!cuenta ? (
+        <EmptyState
+          icon={CheckCircle2}
+          titulo="Elija una cuenta bancaria para empezar"
+          descripcion="Arriba, en «Cuenta bancaria»: después elige el extracto y el sistema le propone qué cruza con el libro."
+        />
+      ) : !extractoId ? (
+        extractos !== undefined && abiertos.length === 0 ? (
+          <EmptyState
+            icon={CheckCircle2}
+            titulo="Esta cuenta no tiene extractos por conciliar"
+            descripcion="Suba o digite el extracto del banco en «Extractos» y vuelva aquí para cruzarlo con el libro."
+          />
+        ) : (
+          <EmptyState
+            icon={CheckCircle2}
+            titulo="Elija un extracto abierto para conciliar"
+            descripcion="Arriba, en «Extracto abierto»: el sistema le propone qué cruza y usted confirma."
+          />
+        )
+      ) : fallida ? (
+        <ErrorCarga error={fallida.error} titulo="No se pudo leer la conciliación de este extracto" onReintentar={reintentar} />
       ) : (
         <>
           {/*
@@ -386,7 +422,7 @@ export function ConciliacionSeccion() {
             <Cuenta
               rotulo="Con más de un candidato"
               valor={propuestas?.ambiguas.length ?? 0}
-              nota="Elige una persona"
+              nota="Las elige una persona"
             />
             <Cuenta
               rotulo="Líneas sin explicar"
@@ -450,7 +486,7 @@ export function ConciliacionSeccion() {
               <div>
                 <h3 className="font-semibold">Lo que el sistema propone</h3>
                 <p className="text-xs text-muted-foreground">
-                  Propone; no concilia. Revisá y confirmá lo que sea cierto.
+                  Propone; no concilia. Revise y confirme lo que sea cierto.
                 </p>
               </div>
               {puedeOperar && !sinPropuestas && (
@@ -491,7 +527,7 @@ export function ConciliacionSeccion() {
             ) : sinPropuestas ? (
               <p className="px-5 py-10 text-center text-sm text-muted-foreground">
                 {quedanSueltos
-                  ? "No hay nada que proponer: lo que queda suelto no cruza por valor. Aparealo a mano abajo."
+                  ? "No hay nada que proponer: lo que queda suelto no cruza por valor. Aparéelo a mano abajo."
                   : "Todo cruzado."}
               </p>
             ) : (
@@ -573,7 +609,7 @@ export function ConciliacionSeccion() {
                     interés—, registrala{lineasElegidas.size === 1 ? "" : "s"} en el libro.
                   </>
                 ) : (
-                  "Elegí líneas y movimientos cuyas sumas coincidan para cruzarlos a mano."
+                  "Elija líneas y movimientos cuyas sumas coincidan para cruzarlos a mano."
                 )}
               </span>
               {hayEleccionManual && !cuadraLoElegido ? (
@@ -601,7 +637,7 @@ export function ConciliacionSeccion() {
                     variant="outline"
                     // La nota es por línea: con varias no se sabe cuál reclamar.
                     disabled={trabajando || lineasElegidas.size !== 1}
-                    title={lineasElegidas.size !== 1 ? "Se anota una línea a la vez: elegí una sola" : undefined}
+                    title={lineasElegidas.size !== 1 ? "Se anota una línea a la vez: elija una sola" : undefined}
                     onClick={() => {
                       setAnotando([...lineasElegidas][0]);
                       setTextoNota("");

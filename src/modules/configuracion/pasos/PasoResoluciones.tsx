@@ -149,7 +149,10 @@ export function PasoResoluciones() {
           <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
             <div className="flex flex-wrap items-start gap-4">
               <Campo id="tipoDocumento" etiqueta="Tipo de documento" className="w-44">
+                {/* `items`: sin él, el cuadro cerrado muestra el código
+                    («FACTURA_VENTA») y no la palabra. */}
                 <Select
+                  items={TIPOS.map(([value, label]) => ({ value, label }))}
                   value={form.watch("tipoDocumento")}
                   onValueChange={(v) =>
                     form.setValue("tipoDocumento", v as Datos["tipoDocumento"])
@@ -252,6 +255,10 @@ export function PasoResoluciones() {
             <div className="flex flex-wrap items-start gap-4">
               <Campo id="ambiente" etiqueta="Ambiente" className="w-44">
                 <Select
+                  items={[
+                    { value: "PRODUCCION", label: "Producción" },
+                    { value: "HABILITACION", label: "Habilitación" },
+                  ]}
                   value={form.watch("ambiente")}
                   onValueChange={(v) => form.setValue("ambiente", v as Datos["ambiente"])}
                 >

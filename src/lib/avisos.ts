@@ -86,6 +86,17 @@ export const aviso = {
   falla(error: unknown, momento: MomentoDelError = "guardar"): void {
     const explicado = explicarError(error, momento);
     if (explicado.silencioso) return;
+    // Falta o está inactiva una cuenta del plan (el servidor manda cuál en
+    // `cuentaCodigo`): se ofrece ir al plan ya filtrado en ella.
+    const cuentaCodigo = (error as { response?: { data?: { cuentaCodigo?: string } } })?.response?.data
+      ?.cuentaCodigo;
+    if (typeof cuentaCodigo === "string" && cuentaCodigo !== "") {
+      aviso.errorConSalida(explicado.titulo, {
+        etiqueta: "Ir al plan de cuentas",
+        ir: () => window.location.assign(`/dashboard/plan-cuentas?q=${encodeURIComponent(cuentaCodigo)}&inactivas=1`),
+      });
+      return;
+    }
     void Swal.fire({
       icon: "error",
       titleText: explicado.titulo,

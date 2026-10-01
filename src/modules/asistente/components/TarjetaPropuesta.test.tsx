@@ -134,7 +134,7 @@ describe("TarjetaPropuesta — cuando confirmar falló", () => {
   it("muestra el motivo y deja volver a intentarlo", () => {
     mostrar(
       propuesta({
-        error: "No se pudo registrar: la caja está cerrada. Probá de nuevo.",
+        error: "No se pudo registrar: la caja está cerrada. Intente de nuevo.",
       }),
     );
     expect(screen.getByRole("alert")).toHaveTextContent(/caja está cerrada/);
@@ -151,7 +151,7 @@ describe("TarjetaPropuesta — los límites con su cara", () => {
     );
     const alerta = screen.getByRole("alert");
     expect(alerta).toHaveTextContent("Ese período está cerrado");
-    expect(alerta).toHaveTextContent(/Cambiá la fecha a un período abierto/);
+    expect(alerta).toHaveTextContent(/Cambie la fecha a un período abierto/);
     // La fecha se puede corregir ahí mismo, así que el botón sigue.
     expect(screen.getByRole("button", { name: "Confirmar" })).toBeEnabled();
   });
@@ -170,7 +170,7 @@ describe("TarjetaPropuesta — los límites con su cara", () => {
     const alerta = screen.getByRole("alert");
     expect(alerta).toHaveTextContent("Eso no lo puedo ver");
     expect(alerta).toHaveTextContent(/rol CAJA o DIRECTOR/);
-    expect(alerta).toHaveTextContent(/Pedile acceso/);
+    expect(alerta).toHaveTextContent(/Solicite acceso/);
   });
 
   it("cualquier otro rechazo se dice tal cual, sin cara", () => {

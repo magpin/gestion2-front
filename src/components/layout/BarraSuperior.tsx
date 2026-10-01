@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -72,7 +73,7 @@ export function BarraSuperior() {
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold leading-tight">
-                  {elegir.isPending ? "Abriendo…" : (empresa?.razonSocial ?? "Tu empresa")}
+                  {elegir.isPending ? "Abriendo…" : (empresa?.razonSocial ?? "Su empresa")}
                 </span>
                 {empresa && (
                   <span className="block font-mono text-[10px] text-muted-foreground">
@@ -85,23 +86,27 @@ export function BarraSuperior() {
           }
         />
         <DropdownMenuContent align="start" className="w-80 max-w-[calc(100vw-32px)]">
-          <DropdownMenuLabel>Tus empresas</DropdownMenuLabel>
-          {lista.map((e) => (
-            <DropdownMenuItem
-              key={e.id}
-              onClick={() => {
-                if (e.id !== empresaId) elegir.mutate(e.id);
-              }}
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">{e.razonSocial}</span>
-                <span className="block font-mono text-[10px] text-muted-foreground">
-                  NIT {e.nit}-{e.dv}
+          {/* La etiqueta es de Base UI (GroupLabel): fuera de su grupo tumba
+              la página entera (error #31). */}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Sus empresas</DropdownMenuLabel>
+            {lista.map((e) => (
+              <DropdownMenuItem
+                key={e.id}
+                onClick={() => {
+                  if (e.id !== empresaId) elegir.mutate(e.id);
+                }}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{e.razonSocial}</span>
+                  <span className="block font-mono text-[10px] text-muted-foreground">
+                    NIT {e.nit}-{e.dv}
+                  </span>
                 </span>
-              </span>
-              {e.id === empresaId && <Check className="size-4 shrink-0" />}
-            </DropdownMenuItem>
-          ))}
+                {e.id === empresaId && <Check className="size-4 shrink-0" />}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
           {puedeCrear && (
             <>
               <DropdownMenuSeparator />

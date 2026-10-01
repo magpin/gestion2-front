@@ -1,10 +1,15 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
 import { z } from "zod";
 
+import {
+  CampoPesos,
+  comoNumero,
+  comoTexto,
+} from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
@@ -16,7 +21,7 @@ import type { TipoMovimientoBanco } from "../types/bancos.types";
 const esquema = z.object({
   fecha: z.string().min(1, "Requerido"),
   valor: z.number().positive("Tiene que ser mayor a cero"),
-  concepto: z.string().min(3, "Contá de qué se trata").max(300),
+  concepto: z.string().min(3, "Indique de qué se trata").max(300),
   // Vacía se manda como `undefined`: el backend exige de 1 a 100 si viene.
   referencia: z.string().trim().max(100, "Hasta 100 caracteres"),
 });
@@ -75,7 +80,7 @@ export function FormularioMovimientoBanco({
       className="flex flex-col gap-5"
       onSubmit={form.handleSubmit((d) => {
         if (requiereContraCuenta && !contraCuenta) {
-          form.setError("root", { message: "Elegí la contracuenta" });
+          form.setError("root", { message: "Elija la contracuenta" });
           return;
         }
         alGuardar({ ...d, contraCuentaId: contraCuenta?.id });
@@ -102,13 +107,18 @@ export function FormularioMovimientoBanco({
         </Campo>
 
         <Campo id="valor" etiqueta="Valor *" error={errores.valor?.message} escala="grande">
-          <Input
-            id="valor"
-            type="number"
-            min="0.01"
-            step="0.01"
-            className={CONTROL}
-            {...form.register("valor", { valueAsNumber: true })}
+          <Controller
+            control={form.control}
+            name="valor"
+            render={({ field }) => (
+              <CampoPesos
+                id="valor"
+                className={CONTROL}
+                value={comoTexto(field.value)}
+                onChange={(v) => field.onChange(comoNumero(v))}
+                onBlur={field.onBlur}
+              />
+            )}
           />
         </Campo>
       </div>
@@ -121,6 +131,7 @@ export function FormularioMovimientoBanco({
           escala="grande"
         >
           <SelectorCuenta
+            crear={{ madres: "cualquiera" }}
             valor={contraCuenta}
             onElegir={onContraCuenta}
             invalido={Boolean(form.formState.errors.root)}

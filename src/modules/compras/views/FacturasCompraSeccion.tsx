@@ -8,6 +8,7 @@ import {
   FilePlus,
   Loader2,
   Trash2,
+  TriangleAlert,
   Undo2,
 } from "lucide-react";
 
@@ -26,12 +27,16 @@ import {
   AccionesDropdown,
   type DropdownAccion,
 } from "@/components/shared/AccionesDropdown";
+import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { funcionActiva } from "@/core/config/funciones";
 import { useTieneRol } from "@/core/store/authStore";
 import { aviso } from "@/lib/avisos";
+import { avisoNotasVivas } from "@/lib/notas-vivas";
 import { formatCOP, formatFecha } from "@/lib/utils";
 import { VacioConMaria } from "@/modules/asistente/components/VacioConMaria";
+import { ComprobanteEgresoDialog } from "@/modules/pagos/components/ComprobanteEgresoDialog";
 import { DetalleCompra } from "../components/DetalleCompra";
 import { FormularioCompra } from "../components/FormularioCompra";
 import { FormularioNotaCreditoCompra } from "../components/FormularioNotaCreditoCompra";
@@ -85,9 +90,16 @@ export function FacturasCompraSeccion({
   const [notaDebitoDe, setNotaDebitoDe] =
     useState<CompraDocumentoResumen | null>(null);
 
-  const { data: resultado, isLoading } = useQuery({
+  const {
+    data: resultado,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: [...CLAVE, pagina],
     queryFn: () => comprasApi.listar({ pagina }),
+    meta: SILENCIOSO,
   });
 
   const { data: detalle } = useQuery({
@@ -105,6 +117,25 @@ export function FacturasCompraSeccion({
     },
     onError: (e: unknown) => aviso.falla(e),
   });
+
+  // Lo que se anula con la compra: los ajustes de su retención por cambio de
+  // norma (Fase 8, §8.3). Se avisa antes de confirmar.
+  const anulacion = useQuery({
+    queryKey: [...CLAVE, porAnular?.id, "detalle"],
+    queryFn: () => comprasApi.porId(porAnular!.id),
+    enabled: porAnular !== null,
+  });
+  const ajustesAnulables = anulacion.data?.ajustes_retencion ?? [];
+  // Con notas vivas no se anula: primero las notas. Se avisa antes de pedir
+  // el motivo; el backend lo rechaza igual si alguien se adelanta.
+  const bloqueoPorNotas = avisoNotasVivas(
+    "compra",
+    anulacion.data?.notas?.map((n) => ({
+      tipo: n.tipo,
+      estado: n.estado,
+      numero: n.numero_factura_proveedor,
+    })),
+  );
 
   const anular = useMutation({
     mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
@@ -181,7 +212,10 @@ export function FacturasCompraSeccion({
     // Solo si algo se pagó: el proveedor no devuelve plata que no recibió.
     if (puedePagar && Number(c.monto_pagado) > 0) {
       acciones.push({
-        label: Number(c.saldo_a_favor) > 0 ? "Recibir saldo a favor" : "Devolución del proveedor",
+        label:
+          Number(c.saldo_a_favor) > 0
+            ? "Recibir saldo a favor"
+            : "Devolución del proveedor",
         icon: Undo2,
         onSelect: () => setDevolucionDe(c),
       });
@@ -220,16 +254,25 @@ export function FacturasCompraSeccion({
         <div className="flex justify-center py-24 text-muted-foreground">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      ) : isError && resultado === undefined ? (
+        <ErrorCarga
+          error={error}
+          titulo="No se pudieron leer las compras"
+          onReintentar={refetch}
+        />
       ) : compras.length === 0 ? (
         <VacioConMaria
           titulo="Todavía no hay compras"
-          invitacion="Subime la primera factura de un proveedor y te la dejo lista para que la apruebes."
-          sinMaria="Acá van las facturas de los proveedores, con el costo que alimenta el kardex."
+          invitacion="Súbame la primera factura de un proveedor y se la dejo lista para que la apruebe."
+          sinMaria="Aquí van las facturas de los proveedores, con el costo que alimenta el kardex."
         />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left">
+            {/* 720 y no 900: con el menú lateral abierto, en una pantalla de
+                1280 el área útil ronda los 780 px, y con 900 la tabla quedaba
+                corrida —Acciones fuera de vista o el N.° cortado—. */}
+            <table className="w-full min-w-[720px] text-left">
               <thead className="border-b border-border bg-muted/40 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                 <tr>
                   {[
@@ -259,10 +302,15 @@ export function FacturasCompraSeccion({
                     className="cursor-pointer transition-colors hover:bg-muted/40"
                     onClick={() => setDetalleId(c.id)}
                   >
-                    <td className="px-5 py-5 font-mono text-sm font-bold">
+                    <td className="whitespace-nowrap px-5 py-5 font-mono text-sm font-bold">
                       {c.numero_factura_proveedor}
+                      {c.transmision === "SIN_TRANSMITIR" && (
+                        <span className="ml-2 rounded-full border border-warning/40 bg-warning/15 px-2 py-0.5 font-sans text-[11px] font-medium">
+                          Sin transmitir
+                        </span>
+                      )}
                     </td>
-                    <td className="px-5 py-5 text-sm text-muted-foreground">
+                    <td className="whitespace-nowrap px-5 py-5 text-sm text-muted-foreground">
                       {formatFecha(c.fecha)}
                     </td>
                     <td className="px-5 py-5 text-sm font-medium">
@@ -271,7 +319,7 @@ export function FacturasCompraSeccion({
                         {c.tercero_identificacion}
                       </span>
                     </td>
-                    <td className="px-5 py-5 font-mono text-sm font-semibold">
+                    <td className="whitespace-nowrap px-5 py-5 font-mono text-sm font-semibold">
                       {formatCOP(Number(c.neto_a_pagar))}
                     </td>
                     <td className="px-5 py-5">
@@ -291,7 +339,7 @@ export function FacturasCompraSeccion({
                       </span>
                     </td>
                     <td
-                      className="px-5 py-5"
+                      className="px-3 py-5"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-center justify-end gap-1">
@@ -350,14 +398,30 @@ export function FacturasCompraSeccion({
         compraFija={notaDebitoDe ?? undefined}
       />
 
-      <FormularioPago
-        compra={pagandoDe}
-        onCerrar={() => setPagandoDe(null)}
-        onGuardar={(datos) =>
-          pagandoDe && pagar.mutate({ id: pagandoDe.id, datos })
-        }
-        guardando={pagar.isPending}
-      />
+      {/* Un hecho, un documento: con Pagos encendido, «Pagar» abre el mismo
+          comprobante de egreso que la pantalla de Pagos, con esta compra
+          marcada. Mientras tanto, el pago de siempre. */}
+      {funcionActiva("pagos") ? (
+        <ComprobanteEgresoDialog
+          abierto={pagandoDe !== null}
+          proveedor={
+            pagandoDe === null
+              ? null
+              : { id: pagandoDe.tercero_id, nombre: pagandoDe.tercero_nombre }
+          }
+          compraId={pagandoDe?.id}
+          onCerrar={() => setPagandoDe(null)}
+        />
+      ) : (
+        <FormularioPago
+          compra={pagandoDe}
+          onCerrar={() => setPagandoDe(null)}
+          onGuardar={(datos) =>
+            pagandoDe && pagar.mutate({ id: pagandoDe.id, datos })
+          }
+          guardando={pagar.isPending}
+        />
+      )}
 
       <FormularioPago
         modo="DEVOLVER"
@@ -392,17 +456,42 @@ export function FacturasCompraSeccion({
               mercancía se devuelve al proveedor, hace falta un ajuste de
               inventario aparte.
             </AlertDialogDescription>
+            {ajustesAnulables.length > 0 && (
+              <p className="text-[15px] leading-6">
+                También se anula{ajustesAnulables.length > 1 ? "n" : ""} el
+                ajuste
+                {ajustesAnulables.length > 1 ? "s" : ""} de su retención por
+                cambio de norma:{" "}
+                <strong>
+                  {ajustesAnulables.map((x) => x.asiento).join(", ")}
+                </strong>
+                .
+              </p>
+            )}
           </AlertDialogHeader>
 
-          <label className="block text-sm font-medium">
-            Motivo de la anulación
-            <Textarea
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              placeholder="Por qué se anula"
-              className="mt-2 min-h-24 rounded-xl px-4 py-3"
-            />
-          </label>
+          {bloqueoPorNotas !== null ? (
+            <div
+              role="alert"
+              className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-[15px] leading-6"
+            >
+              <TriangleAlert
+                className="mt-1 size-4 shrink-0 text-warning"
+                aria-hidden="true"
+              />
+              <span>{bloqueoPorNotas}</span>
+            </div>
+          ) : (
+            <label className="block text-sm font-medium">
+              Motivo de la anulación
+              <Textarea
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Por qué se anula"
+                className="mt-2 min-h-24 rounded-xl px-4 py-3"
+              />
+            </label>
+          )}
 
           <AlertDialogFooter className="-mx-6 -mb-6 p-6">
             <AlertDialogCancel className="h-11 rounded-xl px-6">
@@ -410,7 +499,11 @@ export function FacturasCompraSeccion({
             </AlertDialogCancel>
             <AlertDialogAction
               className="h-11 rounded-xl bg-danger px-6 text-white hover:bg-danger/90"
-              disabled={anular.isPending || motivo.trim().length < 3}
+              disabled={
+                anular.isPending ||
+                bloqueoPorNotas !== null ||
+                motivo.trim().length < 3
+              }
               onClick={() =>
                 porAnular &&
                 anular.mutate({ id: porAnular.id, motivo: motivo.trim() })

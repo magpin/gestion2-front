@@ -7,7 +7,7 @@
  *     r(θ) = S · (base + amp · sen(k·θ + φ))
  *
  * y con esos números las coordenadas salen idénticas a las de las láminas de
- * `maria-identidad/` al centésimo de píxel. El plan que lo explica es
+ * `mocks/maria-identidad/` al centésimo de píxel. El plan que lo explica es
  * `docs/planes/maria.md`.
  *
  * Los tres aros usan **distinto número de lóbulos y distinta fase**, y giran

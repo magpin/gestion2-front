@@ -15,8 +15,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { CampoCantidad } from "@/components/shared/CampoNumero";
 import { Textarea } from "@/components/ui/textarea";
+import { esEntero } from "@/lib/numeros";
 import { formatCOP, formatFecha, hoyEnColombia } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { SelectorFacturaVigente } from "./SelectorFacturaVigente";
@@ -55,9 +56,8 @@ export function FormularioNotaCredito({
   // formulario se reabre desde filas distintas de la lista de facturas—, así
   // que la elegida es la fija cuando viene, nunca lo que quedó en el estado
   // de una apertura anterior.
-  const [elegidaAMano, setElegidaAMano] = useState<VentaDocumentoResumen | null>(
-    null,
-  );
+  const [elegidaAMano, setElegidaAMano] =
+    useState<VentaDocumentoResumen | null>(null);
   const factura = facturaFija ?? elegidaAMano;
   const [fecha, setFecha] = useState(hoyEnColombia());
   const [motivo, setMotivo] = useState("");
@@ -89,12 +89,12 @@ export function FormularioNotaCredito({
     .filter((l) => l.cantidad > 0);
 
   const impedimento = (): string | null => {
-    if (factura === null) return "Elegí la factura que vas a corregir.";
-    if (fecha === "") return "Elegí la fecha.";
+    if (factura === null) return "Elija la factura que va a corregir.";
+    if (fecha === "") return "Elija la fecha.";
     if (motivo.trim().length < 3)
-      return "Contá por qué se corrige esta factura. Es lo primero que lee quien audita.";
+      return "Indique por qué se corrige esta factura. Es lo primero que lee quien audita.";
     if (porLineas && elegidas.length === 0)
-      return "Poné cuánto vuelve de al menos una línea.";
+      return "Indique cuánto vuelve de al menos una línea.";
     return null;
   };
 
@@ -126,7 +126,7 @@ export function FormularioNotaCredito({
             <DialogTitle>Nota crédito</DialogTitle>
             <DialogDescription>
               Baja lo que el cliente debe: la factura completa, o solo las
-              cantidades que elijas. Si la mercancía vuelve a bodega, se
+              cantidades que elija. Si la mercancía vuelve a bodega, se
               registra aparte como ajuste de inventario.
             </DialogDescription>
           </div>
@@ -141,7 +141,10 @@ export function FormularioNotaCredito({
                 {facturaFija.consecutivo}
               </p>
             ) : (
-              <SelectorFacturaVigente valor={factura} onElegir={setElegidaAMano} />
+              <SelectorFacturaVigente
+                valor={factura}
+                onElegir={setElegidaAMano}
+              />
             )}
           </Campo>
 
@@ -210,7 +213,26 @@ export function FormularioNotaCredito({
                     {(detalle?.lineas ?? []).map((l) => (
                       <tr key={l.id}>
                         <td className="px-4 py-3 text-sm font-medium">
-                          {l.producto_nombre}
+                          {l.producto_nombre ?? (
+                            <>
+                              {l.detalle}
+                              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                                {l.concepto_operacional === false
+                                  ? "Otro ingreso"
+                                  : "Servicio"}{" "}
+                                · {l.concepto_nombre}
+                                {l.cuenta_codigo && (
+                                  <>
+                                    {" "}
+                                    ·{" "}
+                                    <span className="font-mono">
+                                      {l.cuenta_codigo}
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            </>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right font-mono text-sm">
                           {l.cantidad}
@@ -219,21 +241,18 @@ export function FormularioNotaCredito({
                           {formatCOP(Number(l.precio_unitario))}
                         </td>
                         <td className="px-4 py-3">
-                          <Input
-                            type="number"
-                            min="0"
-                            max={l.cantidad}
-                            step="any"
+                          <CampoCantidad
+                            fraccionable={!esEntero(l.cantidad)}
                             value={cantidades[l.id] ?? ""}
-                            onChange={(e) =>
+                            onChange={(cantidad) =>
                               setCantidades((c) => ({
                                 ...c,
-                                [l.id]: e.target.value,
+                                [l.id]: cantidad,
                               }))
                             }
                             placeholder="0"
                             className="h-11 w-28 rounded-xl px-4 text-right font-mono"
-                            aria-label={`Cuánto vuelve de ${l.producto_nombre}`}
+                            aria-label={`Cuánto vuelve de ${l.producto_nombre ?? l.detalle}`}
                           />
                         </td>
                       </tr>

@@ -6,11 +6,16 @@ import { AlertCircle, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { NOMBRE_ESTADO, NOMBRE_PLAN, type EstadoCuenta, type Plan } from "../types/plataforma.types";
+import {
+  NOMBRE_ESTADO,
+  NOMBRE_PLAN,
+  type EstadoCuenta,
+  type Plan,
+} from "../types/plataforma.types";
 
 /**
  * Las piezas con que se arma cada pantalla de la consola
- * (`docs/plataforma-diseno/`). Ningún color escrito a mano: todo por rol.
+ * (`docs/mocks/plataforma-diseno/`). Ningún color escrito a mano: todo por rol.
  */
 
 /** El título de la página: Instrument Serif, con su línea de contexto. */
@@ -31,8 +36,14 @@ export function Encabezado({
     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6">
       <div className="flex min-w-0 flex-col gap-1.5">
         {ruta && (
-          <nav aria-label="Ruta" className="flex gap-1.5 text-[13px] text-muted-foreground">
-            <Link href={ruta.href} className="hover:text-foreground hover:underline">
+          <nav
+            aria-label="Ruta"
+            className="flex gap-1.5 text-[13px] text-muted-foreground"
+          >
+            <Link
+              href={ruta.href}
+              className="hover:text-foreground hover:underline"
+            >
               {ruta.texto}
             </Link>
             <span aria-hidden>/</span>
@@ -44,10 +55,14 @@ export function Encabezado({
         <h1 className="m-0 font-serif text-[32px] font-normal leading-[1.1] md:text-[40px]">
           {titulo}
         </h1>
-        {subtitulo && <div className="text-sm text-muted-foreground">{subtitulo}</div>}
+        {subtitulo && (
+          <div className="text-sm text-muted-foreground">{subtitulo}</div>
+        )}
         {children}
       </div>
-      {acciones && <div className="flex flex-wrap items-center gap-2.5">{acciones}</div>}
+      {acciones && (
+        <div className="flex flex-wrap items-center gap-2.5">{acciones}</div>
+      )}
     </div>
   );
 }
@@ -76,7 +91,9 @@ export function Tarjeta({
     >
       {(titulo || accion) && (
         <div className="flex items-center justify-between gap-3">
-          {titulo && <h2 className="m-0 text-[15px] font-semibold">{titulo}</h2>}
+          {titulo && (
+            <h2 className="m-0 text-[15px] font-semibold">{titulo}</h2>
+          )}
           {accion}
         </div>
       )}
@@ -98,17 +115,29 @@ export function Cifra({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1.5 px-[18px] py-4", className)}>
+    <div
+      className={cn("flex min-w-0 flex-col gap-1.5 px-[18px] py-4", className)}
+    >
       <span className="text-xs text-muted-foreground">{etiqueta}</span>
-      <span className="truncate font-mono text-lg font-medium tabular-nums">{valor}</span>
+      <span className="truncate font-mono text-lg font-medium tabular-nums">
+        {valor}
+      </span>
       {nota && <span className="text-xs text-muted-foreground">{nota}</span>}
     </div>
   );
 }
 
 /** Lo que llega con la fase 2 (precios y cobros): se dice, no se inventa. */
-export function SinConfigurar({ texto = "Sin configurar" }: { texto?: string }) {
-  return <span className="font-sans text-sm font-normal text-muted-foreground">{texto}</span>;
+export function SinConfigurar({
+  texto = "Sin configurar",
+}: {
+  texto?: string;
+}) {
+  return (
+    <span className="font-sans text-sm font-normal text-muted-foreground">
+      {texto}
+    </span>
+  );
 }
 
 /** Cifras: JetBrains Mono con números tabulares. */
@@ -122,7 +151,10 @@ export function Mono({
   title?: string;
 }) {
   return (
-    <span className={cn("whitespace-nowrap font-mono tabular-nums", className)} title={title}>
+    <span
+      className={cn("whitespace-nowrap font-mono tabular-nums", className)}
+      title={title}
+    >
       {children}
     </span>
   );
@@ -156,7 +188,11 @@ export function EstadoCuentaBadge({ estado }: { estado: EstadoCuenta }) {
 
 export function PlanBadge({ plan }: { plan: Plan }) {
   // Con nombre, como el estado: «Plan: Profesional» se lee solo.
-  return <Pastilla etiqueta={"Plan: " + NOMBRE_PLAN[plan]}>{NOMBRE_PLAN[plan]}</Pastilla>;
+  return (
+    <Pastilla etiqueta={"Plan: " + NOMBRE_PLAN[plan]}>
+      {NOMBRE_PLAN[plan]}
+    </Pastilla>
+  );
 }
 
 export function Pastilla({
@@ -212,7 +248,11 @@ export function BarraCupo({
         <div className="flex justify-between gap-3 text-[13px]">
           {etiqueta && <span>{etiqueta}</span>}
           <span className="flex items-center gap-2">
-            {cerca && <Mono className="text-xs text-muted-foreground">{Math.round(parte * 100)} %</Mono>}
+            {cerca && (
+              <Mono className="text-xs text-muted-foreground">
+                {Math.round(parte * 100)} %
+              </Mono>
+            )}
             <Mono>
               {usados} de {max}
             </Mono>
@@ -224,11 +264,19 @@ export function BarraCupo({
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={usados}
-        aria-label={etiqueta ? `${etiqueta}: ${usados} de ${max}` : `${usados} de ${max}`}
-        className={cn("w-full overflow-hidden rounded-full bg-muted", compacta ? "h-1" : "h-1.5")}
+        aria-label={
+          etiqueta ? `${etiqueta}: ${usados} de ${max}` : `${usados} de ${max}`
+        }
+        className={cn(
+          "w-full overflow-hidden rounded-full bg-muted",
+          compacta ? "h-1" : "h-1.5",
+        )}
       >
         <div
-          className={cn("h-full rounded-full", cerca ? "bg-warning" : "bg-foreground/70")}
+          className={cn(
+            "h-full rounded-full",
+            cerca ? "bg-warning" : "bg-foreground/70",
+          )}
           style={{ width: `${parte * 100}%` }}
         />
       </div>
@@ -294,7 +342,11 @@ export function Pastillas<T extends string>({
   etiqueta: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={etiqueta} className="flex flex-wrap gap-2">
+    <div
+      role="radiogroup"
+      aria-label={etiqueta}
+      className="flex flex-wrap gap-2"
+    >
       {opciones.map((o) => {
         const activa = o.valor === valor;
         return (
@@ -313,7 +365,12 @@ export function Pastillas<T extends string>({
           >
             {o.texto}
             {o.cuenta !== undefined && (
-              <Mono className={cn("text-xs", activa ? "opacity-80" : "text-muted-foreground")}>
+              <Mono
+                className={cn(
+                  "text-xs",
+                  activa ? "opacity-80" : "text-muted-foreground",
+                )}
+              >
                 {o.cuenta}
               </Mono>
             )}
@@ -337,7 +394,9 @@ export function Vacio({
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
       <p className="m-0 font-medium">{titulo}</p>
-      {texto && <p className="m-0 max-w-md text-sm text-muted-foreground">{texto}</p>}
+      {texto && (
+        <p className="m-0 max-w-md text-sm text-muted-foreground">{texto}</p>
+      )}
       {accion && <div className="mt-3">{accion}</div>}
     </div>
   );
@@ -359,9 +418,15 @@ export function ErrorCarga({
       <AlertCircle className="size-5 text-danger" aria-hidden />
       <p className="m-0 font-medium">No se pudieron cargar {que}.</p>
       <p className="m-0 text-sm text-muted-foreground">
-        Puede ser la conexión o la API. Si vuelve a fallar, revise que el servidor esté arriba.
+        Puede ser la conexión o la API. Si vuelve a fallar, revise que el
+        servidor esté arriba.
       </p>
-      <Button variant="outline" size="sm" className="mt-3" onClick={alReintentar}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-3"
+        onClick={alReintentar}
+      >
         <RotateCw /> Reintentar
       </Button>
     </div>

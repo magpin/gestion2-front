@@ -1,3 +1,5 @@
+import type { ConfiguracionCuentas } from "@/modules/plan-cuentas/types/cuentas-automaticas.types";
+
 // Espejo de `/productos`, `/productos/:id/movimientos` e
 // `/inventario/configuracion`.
 //
@@ -163,20 +165,33 @@ export interface PaginaMovimientos {
   total: number;
 }
 
-/** `cuenta_ajuste_id` viene `null` si nadie la ha fijado todavía. */
-export interface InventarioConfiguracion {
-  empresa_id: string;
-  cuenta_ajuste_id: string | null;
-  /** Si la empresa acepta facturar sin existencia. Ver migración `0037`. */
-  permite_existencia_negativa: boolean;
-}
+/** Los conceptos de las cuentas automáticas de inventario. */
+export type ConceptoInventario =
+  | "INVENTARIO"
+  | "INGRESO"
+  | "COSTO_VENTA"
+  | "SOBRANTE"
+  | "FALTANTE_ASUMIDO"
+  | "FALTANTE_COBRABLE";
+
+/**
+ * Las cuentas automáticas de inventario: las que toma un producto nuevo y las
+ * de un ajuste de existencias. Se muestran en Plan de cuentas → Cuentas
+ * automáticas. «Vender sin existencia» ya no vive acá: es una pregunta del
+ * asistente (hecho operativo `VENDE_SIN_EXISTENCIA`).
+ */
+export type InventarioConfiguracion = ConfiguracionCuentas<ConceptoInventario>;
+
+/** Un faltante de bodega lo asume la empresa (merma) o lo paga alguien. */
+export type TratamientoFaltante = "EMPRESA" | "RESPONSABLE";
 
 export interface CrearProductoInput {
   codigo: string;
   nombre: string;
   unidadMedida?: UnidadMedida;
   ivaTarifa: number;
-  cuentaInventarioId: string;
+  /** Sin ella, toma la cuenta de inventario de la empresa. */
+  cuentaInventarioId?: string;
   /**
    * Opcional: un producto sin esto se puede seguir usando en inventario,
    * solo no se podrá vender hasta que alguien la fije. No hay pantalla de

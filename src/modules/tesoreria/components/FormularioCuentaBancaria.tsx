@@ -24,7 +24,7 @@ const esquema = z.object({
   banco: z.string().min(2, "Requerido").max(100),
   numeroCuenta: z.string().min(1, "Requerido").max(40),
   tipoCuenta: z.enum(TIPOS_CUENTA_BANCARIA),
-  cuentaId: z.string().min(1, "Elegí una cuenta contable"),
+  cuentaId: z.string().min(1, "Elija una cuenta contable"),
 });
 
 export type DatosCuentaBancaria = z.infer<typeof esquema>;
@@ -115,8 +115,20 @@ export function FormularioCuentaBancaria({
         ayuda="No se puede cambiar después de creada"
         escala="grande"
       >
-        <SelectorCuenta valor={cuenta} onElegir={elegirCuenta} invalido={Boolean(errores.cuentaId)} />
+        <SelectorCuenta
+          valor={cuenta}
+          onElegir={elegirCuenta}
+          invalido={Boolean(errores.cuentaId)}
+          crear={{ madres: ["111005"], nombreSugerido: nombreDelAuxiliar(form.watch("banco"), form.watch("numeroCuenta")) }}
+        />
       </Campo>
     </form>
   );
+}
+
+/** «Bancos - Bancolombia ···1234»: el nombre que se propone para su auxiliar. */
+export function nombreDelAuxiliar(banco: string, numero: string): string | undefined {
+  if (banco.trim() === "") return undefined;
+  const ultimos = numero.replace(/\D/g, "").slice(-4);
+  return `Bancos - ${banco.trim()}${ultimos ? ` ···${ultimos}` : ""}`;
 }

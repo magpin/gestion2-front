@@ -25,8 +25,8 @@ describe("Bienvenida", () => {
       <Bienvenida pendientes={{ total: 2, propuestas: 0, facturas: 1, pedidos: 1 }} momento={null} />,
     );
     expect(tiene(container.innerHTML, "levanta")).toBe(true);
-    expect(screen.getByText(/Te esperan 2 cosas/)).toHaveTextContent(
-      "1 factura leída sin registrar (Compras → Leídas) · 1 pedido leído sin facturar",
+    expect(screen.getByText(/Tiene 2 cosas pendientes/)).toHaveTextContent(
+      "1 factura leída sin registrar · 1 pedido leído sin facturar (María → Documentos leídos)",
     );
   });
 

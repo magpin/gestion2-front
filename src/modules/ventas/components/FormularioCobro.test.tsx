@@ -36,7 +36,7 @@ describe("FormularioCobro en modo devolver", () => {
   it("arranca con el saldo a favor y dice que no es una nota crédito", () => {
     abrir("DEVOLVER");
     expect(screen.getByRole("heading", { name: "Devolver al cliente" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Valor del renglón 1")).toHaveValue(19000);
+    expect(screen.getByLabelText("Valor del renglón 1")).toHaveValue("19.000");
     expect(screen.getByText(/lo que va es una nota\s+crédito/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Devolver" })).toBeInTheDocument();
   });
@@ -46,13 +46,13 @@ describe("FormularioCobro en modo devolver", () => {
     const valor = screen.getByLabelText("Valor del renglón 1");
     await userEvent.clear(valor);
     await userEvent.type(valor, "119000");
-    expect(screen.queryByText(/Te pasaste/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Se pasó/)).not.toBeInTheDocument();
 
     // El pie muestra un problema a la vez (primero, elegir la caja); el
     // exceso lo marca el editor al lado del botón de agregar medio.
     await userEvent.clear(valor);
     await userEvent.type(valor, "119001");
-    expect(screen.getByText(/Te pasaste por/)).toBeInTheDocument();
+    expect(screen.getByText(/Se pasó por/)).toBeInTheDocument();
   });
 
   it("no dice «falta repartir» al devolver: no hay que devolverlo todo", () => {
@@ -62,12 +62,12 @@ describe("FormularioCobro en modo devolver", () => {
 
   it("sin saldo a favor arranca vacío: cuánto devolver lo decide una persona", () => {
     abrir("DEVOLVER", { ...factura, saldo_a_favor: "0" } as VentaDocumentoResumen);
-    expect(screen.getByLabelText("Valor del renglón 1")).toHaveValue(null);
+    expect(screen.getByLabelText("Valor del renglón 1")).toHaveValue("");
   });
 
   it("en modo cobrar sigue igual que antes", () => {
     abrir("COBRAR", { ...factura, monto_pagado: "0", pendiente: "100000", saldo_a_favor: "0" } as VentaDocumentoResumen);
     expect(screen.getByRole("heading", { name: "Cobrar" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Valor del renglón 1")).toHaveValue(100000);
+    expect(screen.getByLabelText("Valor del renglón 1")).toHaveValue("100.000");
   });
 });

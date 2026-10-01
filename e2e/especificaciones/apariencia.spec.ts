@@ -60,7 +60,10 @@ test.describe("Modo oscuro", () => {
   test("el interruptor cambia el tema y la preferencia sobrevive al recargar", async ({
     page,
   }) => {
-    // Esta prueba arranca en claro para poder encenderlo desde el botón.
+    // Esta prueba arranca en claro para poder encenderlo desde el botón. Sin
+    // cookie el tema sigue al sistema, y este bloque simula un sistema oscuro:
+    // acá el sistema está en claro.
+    await page.emulateMedia({ colorScheme: "light" });
     await page.context().clearCookies({ name: "tema" });
     await page.context().clearCookies({ name: "tema-efectivo" });
     await page.goto("/plataforma");

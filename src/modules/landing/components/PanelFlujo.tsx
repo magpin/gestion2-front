@@ -1,8 +1,9 @@
-import { Destello, Visto } from "./Marca";
+import { Visto } from "./Marca";
+import { MariaDelPanel } from "./MariaDelPanel";
 import styles from "../landing.module.css";
 
 /**
- * Documento → la IA → asiento.
+ * Documento → María → asiento propuesto.
  *
  * Decorativo y `aria-hidden`: lo que dice ya está dicho en el titular y en la
  * sección "Cómo funciona". Un lector de pantalla que recorriera estas tres
@@ -16,21 +17,20 @@ import styles from "../landing.module.css";
 
 const CHEQUEOS = [
   { texto: "Proveedor y NIT validados", retraso: styles.k1 },
-  { texto: "Clasificado como útiles y papelería", retraso: styles.k2 },
+  { texto: "Útiles y papelería: la cuenta que usted indicó la vez pasada", retraso: styles.k2 },
   { texto: "IVA descontable identificado", retraso: styles.k3 },
-  { texto: "Retención en la fuente 2,5 %", retraso: styles.k4 },
+  { texto: "Sumas del papel cuadradas", retraso: styles.k4 },
 ];
 
 const ASIENTO = [
   { cuenta: "519530", debe: "2.000.000", haber: "", retraso: styles.r2 },
   { cuenta: "240810", debe: "380.000", haber: "", retraso: styles.r3 },
-  { cuenta: "236540", debe: "", haber: "50.000", retraso: styles.r4 },
-  { cuenta: "220505", debe: "", haber: "2.330.000", retraso: styles.r5 },
+  { cuenta: "220505", debe: "", haber: "2.380.000", retraso: styles.r4 },
 ];
 
 function FlechaPaso({ retraso }: { retraso: string }) {
   return (
-    <div className="flex justify-center max-lg:rotate-90">
+    <div className="flex justify-center max-lg:rotate-90 max-sm:hidden">
       <svg
         width="22"
         height="22"
@@ -54,11 +54,12 @@ export function PanelFlujo() {
     <div className="relative mt-20 flex flex-col items-center gap-4">
       <div
         aria-hidden="true"
-        className={`${styles.panel} ${styles.trama} ${styles.sombraPanel} grid w-full max-w-[1200px] items-center gap-4 rounded-[1.35rem] p-6 text-rail-foreground sm:p-9 lg:grid-cols-[1fr_44px_1fr_44px_1.25fr] lg:gap-0`}
+        className={`${styles.panel} ${styles.trama} ${styles.sombraPanel} grid w-full max-w-[1200px] items-center gap-4 rounded-[1.35rem] p-4 text-rail-foreground sm:p-9 grid-cols-[minmax(0,1fr)] [&>*]:min-w-0 lg:grid-cols-[1fr_44px_1fr_44px_1.25fr] lg:gap-0`}
       >
-        {/* 1 · El documento, tal como llega */}
+        {/* 1 · El documento, tal como llega. En el celular no va: el panel es
+            una sola tarjeta, y el documento es el chip de la tarjeta de María. */}
         <div
-          className={`${styles.card} ${styles.c1} flex flex-col gap-3.5 rounded-lg border border-rail-line bg-rail-foreground/5 p-5`}
+          className={`${styles.card} ${styles.c1} flex flex-col max-sm:hidden gap-3.5 rounded-lg border border-rail-line bg-rail-foreground/5 p-5`}
         >
           <span className="font-mono text-[11px] uppercase tracking-[1px] text-rail-muted">
             1 · Documento
@@ -85,13 +86,20 @@ export function PanelFlujo() {
 
         <FlechaPaso retraso={styles.a1} />
 
-        {/* 2 · Lo que la IA reconoce. Los chequeos llegan de a uno: está pensando. */}
+        {/* 2 · María lee. Los chequeos llegan de a uno. El borde naranja: es la
+            tarjeta donde está ella. */}
         <div
-          className={`${styles.card} ${styles.c2} flex flex-col gap-3.5 rounded-lg border border-rail-line bg-rail-foreground/5 p-5`}
+          className={`${styles.card} ${styles.c2} flex flex-col gap-4 rounded-lg border border-brand/45 bg-brand/[0.06] p-5`}
         >
-          <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[1px] text-rail-muted">
-            <Destello className="text-brand" />2 · La IA analiza
+          <span className="font-mono text-[11px] uppercase tracking-[1px] text-rail-muted">
+            2 · María lee
           </span>
+          {/* El documento en chip: solo en el celular, donde no hay tarjeta 1. */}
+          <span className="flex items-center justify-between gap-3 rounded-md border border-rail-line bg-rail-foreground/5 px-3 py-2 font-mono text-xs sm:hidden">
+            <span className="truncate text-rail-muted">FE-2231 · Papelería Central</span>
+            <span className="font-medium text-rail-foreground">$2.380.000</span>
+          </span>
+          <MariaDelPanel />
           <div className="flex flex-col gap-2.5 text-[13px] text-rail-foreground">
             {CHEQUEOS.map(({ texto, retraso }) => (
               <div key={texto} className={`${styles.row} ${retraso} flex items-start gap-2.5`}>
@@ -114,13 +122,13 @@ export function PanelFlujo() {
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase tracking-[1px] text-rail-muted">
-              3 · Asiento
+              3 · Asiento propuesto
             </span>
             <span
               className={`${styles.pop} flex items-center gap-1.5 rounded-full border border-success/40 bg-success/15 px-2.5 py-0.5 font-sans text-xs font-medium text-rail-foreground`}
             >
               <Visto size={11} strokeWidth={2.6} />
-              Auditado
+              Cuadra
             </span>
           </div>
           <div className="flex flex-col text-rail-foreground">

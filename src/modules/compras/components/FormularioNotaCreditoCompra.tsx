@@ -15,8 +15,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CampoCantidad } from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { esEntero } from "@/lib/numeros";
 import { formatCOP } from "@/lib/utils";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { SelectorCompraVigente } from "./SelectorCompraVigente";
@@ -93,14 +95,14 @@ export function FormularioNotaCreditoCompra({
     .filter((l) => l.cantidad > 0);
 
   const impedimento = (): string | null => {
-    if (compra === null) return "Elegí la compra que se corrige.";
-    if (fecha === "") return "Elegí la fecha.";
+    if (compra === null) return "Elija la compra que se corrige.";
+    if (fecha === "") return "Elija la fecha.";
     if (numeroNota.trim() === "")
       return "Falta el número que el proveedor le puso a su nota.";
     if (motivo.trim().length < 3)
-      return "Contá por qué se corrige esta compra. Es lo primero que lee quien audita.";
+      return "Indique por qué se corrige esta compra. Es lo primero que lee quien audita.";
     if (porLineas && elegidas.length === 0)
-      return "Poné cuánto vuelve de al menos una línea.";
+      return "Indique cuánto vuelve de al menos una línea.";
     return null;
   };
 
@@ -243,16 +245,13 @@ export function FormularioNotaCreditoCompra({
                           {formatCOP(Number(l.costo_unitario))}
                         </td>
                         <td className="px-4 py-3">
-                          <Input
-                            type="number"
-                            min="0"
-                            max={l.cantidad}
-                            step="any"
+                          <CampoCantidad
+                            fraccionable={!esEntero(l.cantidad)}
                             value={cantidades[l.id] ?? ""}
-                            onChange={(e) =>
+                            onChange={(cantidad) =>
                               setCantidades((c) => ({
                                 ...c,
-                                [l.id]: e.target.value,
+                                [l.id]: cantidad,
                               }))
                             }
                             placeholder="0"

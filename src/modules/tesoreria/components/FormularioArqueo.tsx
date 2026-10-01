@@ -5,14 +5,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { CampoPesos } from "@/components/shared/CampoNumero";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { Aviso } from "@/components/shared/Aviso";
 import { cn, formatCOP } from "@/lib/utils";
+import { SelectorTercero } from "@/modules/ventas/components/SelectorTercero";
+import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import type {
   ArqueoResumen,
+  CajaResumen,
   CerrarArqueoInput,
+  TratamientoFaltante,
 } from "../types/tesoreria.types";
 
 const CONTROL = "h-11 rounded-xl px-4";
@@ -78,16 +83,28 @@ export type DatosCerrarArqueo = CerrarArqueoInput;
 export function FormularioCerrarArqueo({
   id,
   arqueo,
+  caja,
   alGuardar,
 }: {
   id: string;
   arqueo: ArqueoResumen;
+  /** Trae al responsable: a quién se le cobra un faltante si nadie dice otra cosa. */
+  caja: CajaResumen;
   alGuardar: (datos: DatosCerrarArqueo) => void;
 }) {
   const [modo, setModo] = useState<"DENOMINACIONES" | "TOTAL">("DENOMINACIONES");
   const [cantidades, setCantidades] = useState<Record<string, string>>({});
   const [total, setTotal] = useState("");
   const [nota, setNota] = useState("");
+  // Qué pasa con un faltante lo sabe quien cerró la caja, no el sistema: por
+  // eso no viene elegido.
+  const [tratamiento, setTratamiento] = useState<TratamientoFaltante | null>(null);
+  const [responsable, setResponsable] = useState<TerceroResumen | null>(
+    caja.responsable === null
+      ? null
+      : ({ ...caja.responsable } as TerceroResumen),
+  );
+  const [intento, setIntento] = useState(false);
 
   const cantidadDe = (tipo: TipoDenominacion, valor: number) => {
     const n = Number(cantidades[clave(tipo, valor)] || 0);
@@ -107,8 +124,24 @@ export function FormularioCerrarArqueo({
   const diferencia = contado - Number(arqueo.saldo_sistema);
   const totalInvalido = modo === "TOTAL" && (total.trim() === "" || !(Number(total) >= 0));
 
+  const faltante = diferencia < 0;
+  const faltaTratamiento = faltante && tratamiento === null;
+  const faltaResponsable = faltante && tratamiento === "RESPONSABLE" && responsable === null;
+
   const enviar = (e: FormEvent) => {
     e.preventDefault();
+    setIntento(true);
+    if (faltaTratamiento || faltaResponsable) return;
+    // Solo un faltante lleva tratamiento; con sobrante el backend lo ignora
+    // igual, pero no tiene sentido mandarlo.
+    const decision: Pick<CerrarArqueoInput, "tratamientoFaltante" | "responsableTerceroId"> =
+      faltante && tratamiento !== null
+        ? {
+            tratamientoFaltante: tratamiento,
+            responsableTerceroId:
+              tratamiento === "RESPONSABLE" ? responsable?.id : undefined,
+          }
+        : {};
     if (modo === "DENOMINACIONES") {
       if (conteoInvalido) return;
       alGuardar({
@@ -118,10 +151,11 @@ export function FormularioCerrarArqueo({
             .filter((d) => d.cantidad > 0),
         ),
         nota: nota || undefined,
+        ...decision,
       });
     } else {
       if (totalInvalido) return;
-      alGuardar({ saldoContado: Number(total), nota: nota || undefined });
+      alGuardar({ saldoContado: Number(total), nota: nota || undefined, ...decision });
     }
   };
 
@@ -201,14 +235,11 @@ export function FormularioCerrarArqueo({
         </div>
       ) : (
         <Campo id="saldoContado" etiqueta="Saldo contado *" escala="grande" error={totalInvalido && total !== "" ? "No puede ser negativo" : undefined}>
-          <Input
+          <CampoPesos
             id="saldoContado"
-            type="number"
-            min="0"
-            step="0.01"
             className={CONTROL}
             value={total}
-            onChange={(e) => setTotal(e.target.value)}
+            onChange={setTotal}
           />
         </Campo>
       )}
@@ -228,8 +259,67 @@ export function FormularioCerrarArqueo({
       >
         {diferencia === 0
           ? "Lo contado coincide con el sistema: el cierre no genera ningún asiento."
-          : "Se va a asentar contra la cuenta de diferencia configurada."}
+          : diferencia > 0
+            ? "Se asienta como sobrante de caja."
+            : "Indique qué pasa con el dinero que falta: el asiento depende de eso."}
       </Aviso>
+
+      {faltante && (
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            ¿Quién responde por el faltante?
+          </legend>
+          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
+            {(
+              [
+                ["RESPONSABLE", "Lo paga el responsable", "Queda como cuenta por cobrar a esa persona."],
+                ["EMPRESA", "Lo asume la empresa", "Se registra como gasto."],
+              ] as const
+            ).map(([valor, titulo, detalle]) => (
+              <button
+                key={valor}
+                type="button"
+                role="radio"
+                aria-checked={tratamiento === valor}
+                onClick={() => setTratamiento(valor)}
+                className={cn(
+                  "rounded-2xl border p-4 text-left transition-colors",
+                  tratamiento === valor
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-accent",
+                )}
+              >
+                <span className="block text-sm font-semibold">{titulo}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">{detalle}</span>
+              </button>
+            ))}
+          </div>
+          {intento && faltaTratamiento && (
+            <p className="text-sm text-danger">Elija una de las dos para poder cerrar.</p>
+          )}
+
+          {tratamiento === "RESPONSABLE" && (
+            <Campo
+              id="responsable"
+              etiqueta="¿A quién se le cobra? *"
+              ayuda={
+                caja.responsable
+                  ? "Viene el responsable de la caja; cámbielo si ese día contó otra persona."
+                  : "Esta caja no tiene responsable asignado."
+              }
+              error={intento && faltaResponsable ? "Elija a quién se le cobra" : undefined}
+              escala="grande"
+            >
+              <SelectorTercero
+                rol="empleado"
+                valor={responsable}
+                onElegir={setResponsable}
+                invalido={intento && faltaResponsable}
+              />
+            </Campo>
+          )}
+        </fieldset>
+      )}
 
       <Campo id="nota" etiqueta="Nota" escala="grande">
         <Textarea

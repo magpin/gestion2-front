@@ -209,8 +209,8 @@ export function TarjetaExtraido({
           <div className="flex items-center justify-between border-t border-muted py-2.5">
             <span className="text-xs text-muted-foreground">
               {dudosos.length === 1
-                ? "1 dato que no pude leer con seguridad: te lo pregunto en vez de adivinarlo"
-                : `${dudosos.length} datos que no pude leer con seguridad: te los pregunto en vez de adivinarlos`}
+                ? "1 dato que no pude leer con seguridad: se lo pregunto en vez de adivinarlo"
+                : `${dudosos.length} datos que no pude leer con seguridad: se los pregunto en vez de adivinarlos`}
             </span>
           </div>
           {dudosos.map((dato) => (
@@ -222,8 +222,8 @@ export function TarjetaExtraido({
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
         <span className="text-xs text-muted-foreground">
           {yaConfirmado
-            ? "Ya lo confirmaste. Abajo está lo que se guardó y lo que quedó pendiente."
-            : "Nada se guarda hasta que confirmes."}
+            ? "Ya lo confirmó. Abajo está lo que se guardó y lo que quedó pendiente."
+            : "Nada se guarda hasta que usted confirme."}
         </span>
         <span className="flex gap-2">
           {/* Un enlace, no un botón: lleva al paso manual con la pantalla de

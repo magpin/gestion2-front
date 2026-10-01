@@ -27,12 +27,24 @@ import {
   type Plan,
   type Suscripcion,
 } from "../types/plataforma.types";
-import { ErrorCarga, Mono, Pastilla, SinConfigurar, Tarjeta, Td, Th, Vacio } from "./piezas";
+import {
+  ErrorCarga,
+  Mono,
+  Pastilla,
+  SinConfigurar,
+  Tarjeta,
+  Td,
+  Th,
+  Vacio,
+} from "./piezas";
 
 const campo =
   "h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
-const TONO_CARGO: Record<EstadoCargo, { tono: "exito" | "advertencia" | "peligro" | "neutro"; texto: string }> = {
+const TONO_CARGO: Record<
+  EstadoCargo,
+  { tono: "exito" | "advertencia" | "peligro" | "neutro"; texto: string }
+> = {
   PAGADO: { tono: "exito", texto: "Pagado" },
   PARCIAL: { tono: "advertencia", texto: "Parcial" },
   PENDIENTE: { tono: "neutro", texto: "Por vencer" },
@@ -48,11 +60,19 @@ const periodo = (p: string) => {
 const dia = (d: string) => fecha(`${d}T12:00:00Z`);
 
 /** «Al día», «Vencido hace 3 días» o «Morosa: 22 días sin pagar». */
-export function EstadoPago({ diasMora, vencido }: { diasMora: number; vencido: number }) {
+export function EstadoPago({
+  diasMora,
+  vencido,
+}: {
+  diasMora: number;
+  vencido: number;
+}) {
   if (vencido <= 0) return <Pastilla tono="exito">Al día</Pastilla>;
   return (
     <Pastilla tono={diasMora >= 15 ? "peligro" : "advertencia"}>
-      {diasMora >= 15 ? `${diasMora} días sin pagar` : `Vencido hace ${plural(diasMora, "día")}`}
+      {diasMora >= 15
+        ? `${diasMora} días sin pagar`
+        : `Vencido hace ${plural(diasMora, "día")}`}
     </Pastilla>
   );
 }
@@ -69,7 +89,12 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
   });
 
   if (consulta.isError)
-    return <ErrorCarga que="la suscripción" alReintentar={() => void consulta.refetch()} />;
+    return (
+      <ErrorCarga
+        que="la suscripción"
+        alReintentar={() => void consulta.refetch()}
+      />
+    );
   if (!consulta.data)
     return (
       <div className="flex justify-center py-16 text-muted-foreground">
@@ -87,7 +112,11 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
           titulo="Lo que paga"
           className="gap-2"
           accion={
-            <Button variant="outline" size="sm" onClick={() => setDialogo("precio")}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDialogo("precio")}
+            >
               Cambiar
             </Button>
           }
@@ -109,17 +138,28 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
           <span className="text-[13px] text-muted-foreground">
             {e.vencido > 0
               ? `${pesos(e.vencido)} vencido. ${
-                  e.diasMora >= 15 ? "Ya pasó a morosa." : "A los 15 días pasa sola a morosa."
+                  e.diasMora >= 15
+                    ? "Ya pasó a morosa."
+                    : "A los 15 días pasa sola a morosa."
                 }`
               : "Sin nada vencido."}
           </span>
         </Tarjeta>
         <Tarjeta titulo="Saldo" className="gap-2">
-          <Mono className={cn("text-2xl font-medium", e.saldo < 0 && "text-success")}>
+          <Mono
+            className={cn(
+              "text-2xl font-medium",
+              e.saldo < 0 && "text-success",
+            )}
+          >
             {pesos(Math.abs(e.saldo))}
           </Mono>
           <span className="text-[13px] text-muted-foreground">
-            {e.saldo < 0 ? "A favor de la cuenta." : e.saldo === 0 ? "No debe nada." : "Por pagar, vencido o no."}
+            {e.saldo < 0
+              ? "A favor de la cuenta."
+              : e.saldo === 0
+                ? "No debe nada."
+                : "Por pagar, vencido o no."}
           </span>
         </Tarjeta>
         <Tarjeta titulo="Próximo cobro" className="gap-2">
@@ -171,7 +211,9 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
                         )}
                       </Td>
                       <Td derecha>
-                        <Pastilla tono={TONO_CARGO[c.estado].tono}>{TONO_CARGO[c.estado].texto}</Pastilla>
+                        <Pastilla tono={TONO_CARGO[c.estado].tono}>
+                          {TONO_CARGO[c.estado].texto}
+                        </Pastilla>
                       </Td>
                     </tr>
                   ))}
@@ -183,14 +225,21 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
           {/* En celular, una línea por período. */}
           <ul className="m-0 flex list-none flex-col divide-y divide-border p-0 sm:hidden">
             {e.cargos.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+              <li
+                key={c.id}
+                className="flex items-center justify-between gap-3 py-2.5 first:pt-0"
+              >
                 <span className="flex flex-col">
                   <span className="text-[13px]">{periodo(c.periodo)}</span>
-                  <span className="text-xs text-muted-foreground">Vence {dia(c.venceEn)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Vence {dia(c.venceEn)}
+                  </span>
                 </span>
                 <span className="flex flex-col items-end gap-1">
                   <Mono className="text-[13px]">{pesos(c.monto)}</Mono>
-                  <Pastilla tono={TONO_CARGO[c.estado].tono}>{TONO_CARGO[c.estado].texto}</Pastilla>
+                  <Pastilla tono={TONO_CARGO[c.estado].tono}>
+                    {TONO_CARGO[c.estado].texto}
+                  </Pastilla>
                 </span>
               </li>
             ))}
@@ -224,9 +273,12 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
                         <Mono>{dia(p.fecha)}</Mono>
                       </Td>
                       <Td>
-                        <span className="block">{MEDIOS_PAGO[p.medio] ?? p.medio}</span>
+                        <span className="block">
+                          {MEDIOS_PAGO[p.medio] ?? p.medio}
+                        </span>
                         <span className="block text-xs text-muted-foreground">
-                          {p.referencia ? `${p.referencia}. ` : ""}Registró {p.admin}
+                          {p.referencia ? `${p.referencia}. ` : ""}Registró{" "}
+                          {p.admin}
                         </span>
                       </Td>
                       <Td derecha>
@@ -242,7 +294,10 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
           {/* En celular, una línea por pago. */}
           <ul className="m-0 flex list-none flex-col divide-y divide-border p-0 sm:hidden">
             {s.pagos.map((p) => (
-              <li key={p.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+              <li
+                key={p.id}
+                className="flex items-center justify-between gap-3 py-2.5 first:pt-0"
+              >
                 <span className="flex flex-col">
                   <Mono className="text-[13px]">{dia(p.fecha)}</Mono>
                   <span className="text-xs text-muted-foreground">
@@ -255,17 +310,25 @@ export function PestanaSuscripcion({ cuenta }: { cuenta: Cuenta }) {
             ))}
           </ul>
           <p className="m-0 text-xs text-muted-foreground">
-            Los pagos cubren los cargos del más viejo al más nuevo. No se editan ni se borran: uno mal
-            registrado se compensa con otro.
+            Los pagos cubren los cargos del más viejo al más nuevo. No se editan
+            ni se borran: uno mal registrado se compensa con otro.
           </p>
         </Tarjeta>
       </div>
 
       {dialogo === "pago" && (
-        <DialogoPago cuenta={cuenta} suscripcion={s} alCerrar={() => setDialogo(null)} />
+        <DialogoPago
+          cuenta={cuenta}
+          suscripcion={s}
+          alCerrar={() => setDialogo(null)}
+        />
       )}
       {dialogo === "precio" && (
-        <DialogoPrecio cuenta={cuenta} suscripcion={s} alCerrar={() => setDialogo(null)} />
+        <DialogoPrecio
+          cuenta={cuenta}
+          suscripcion={s}
+          alCerrar={() => setDialogo(null)}
+        />
       )}
     </>
   );
@@ -282,7 +345,8 @@ export function DialogoPago({
   alCerrar: () => void;
 }) {
   const qc = useQueryClient();
-  const sugerido = Math.max(0, suscripcion.estado.saldo) || suscripcion.precio || 0;
+  const sugerido =
+    Math.max(0, suscripcion.estado.saldo) || suscripcion.precio || 0;
   const [f, setF] = useState({
     fecha: hoyEnColombia(),
     monto: sugerido > 0 ? String(sugerido) : "",
@@ -302,7 +366,9 @@ export function DialogoPago({
     onSuccess: async (r) => {
       aviso.exito(
         "Pago registrado",
-        r.reactivada ? `${cuenta.nombre} se puso al día y volvió a estar activa.` : undefined,
+        r.reactivada
+          ? `${cuenta.nombre} se puso al día y volvió a estar activa.`
+          : undefined,
       );
       await qc.invalidateQueries({ queryKey: ["plataforma"] });
       alCerrar();
@@ -333,7 +399,9 @@ export function DialogoPago({
               onChange={(e) => setF({ ...f, monto: e.target.value })}
               className="text-right font-mono tabular-nums"
             />
-            <span className="text-xs text-muted-foreground">{monto > 0 ? pesos(monto) : "En pesos."}</span>
+            <span className="text-xs text-muted-foreground">
+              {monto > 0 ? pesos(monto) : "En pesos."}
+            </span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium">Fecha</span>
@@ -346,7 +414,11 @@ export function DialogoPago({
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium">Medio</span>
-            <select className={campo} value={f.medio} onChange={(e) => setF({ ...f, medio: e.target.value })}>
+            <select
+              className={campo}
+              value={f.medio}
+              onChange={(e) => setF({ ...f, medio: e.target.value })}
+            >
               {Object.entries(MEDIOS_PAGO).map(([k, v]) => (
                 <option key={k} value={k}>
                   {v}
@@ -368,7 +440,10 @@ export function DialogoPago({
           <Button variant="outline" onClick={alCerrar}>
             Cancelar
           </Button>
-          <Button disabled={monto <= 0 || !f.fecha || guardar.isPending} onClick={() => guardar.mutate()}>
+          <Button
+            disabled={monto <= 0 || !f.fecha || guardar.isPending}
+            onClick={() => guardar.mutate()}
+          >
             {guardar.isPending && <Loader2 className="animate-spin" />}
             Registrar {monto > 0 ? pesos(monto) : "el pago"}
           </Button>
@@ -393,13 +468,17 @@ function DialogoPrecio({
     suscripcion.precioPactado === null ? "" : String(suscripcion.precioPactado),
   );
   const [corte, setCorte] = useState(String(suscripcion.diaCorte));
-  const precio = pactado.trim() === "" ? null : Number(pactado.replace(/\D/g, ""));
+  const precio =
+    pactado.trim() === "" ? null : Number(pactado.replace(/\D/g, ""));
   const diaCorte = Number(corte);
   const valido = Number.isInteger(diaCorte) && diaCorte >= 1 && diaCorte <= 28;
 
   const guardar = useMutation({
     mutationFn: () =>
-      plataformaService.cambiarSuscripcion(cuenta.id, { precioPactado: precio, diaCorte }),
+      plataformaService.cambiarSuscripcion(cuenta.id, {
+        precioPactado: precio,
+        diaCorte,
+      }),
     onSuccess: async () => {
       aviso.exito("Suscripción actualizada", "Aplica desde el próximo cobro.");
       await qc.invalidateQueries({ queryKey: ["plataforma"] });
@@ -415,7 +494,8 @@ function DialogoPrecio({
           <div>
             <DialogTitle>Precio y corte</DialogTitle>
             <DialogDescription>
-              {cuenta.nombre}. Los cargos ya generados no cambian: esto aplica desde el próximo cobro.
+              {cuenta.nombre}. Los cargos ya generados no cambian: esto aplica
+              desde el próximo cobro.
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -435,15 +515,26 @@ function DialogoPrecio({
           </label>
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium">Día de corte</span>
-            <Input type="number" min={1} max={28} value={corte} onChange={(e) => setCorte(e.target.value)} />
-            <span className="text-xs text-muted-foreground">Del 1 al 28, para que exista en todos los meses.</span>
+            <Input
+              type="number"
+              min={1}
+              max={28}
+              value={corte}
+              onChange={(e) => setCorte(e.target.value)}
+            />
+            <span className="text-xs text-muted-foreground">
+              Del 1 al 28, para que exista en todos los meses.
+            </span>
           </label>
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={alCerrar}>
             Cancelar
           </Button>
-          <Button disabled={!valido || guardar.isPending} onClick={() => guardar.mutate()}>
+          <Button
+            disabled={!valido || guardar.isPending}
+            onClick={() => guardar.mutate()}
+          >
             {guardar.isPending && <Loader2 className="animate-spin" />}
             Guardar
           </Button>

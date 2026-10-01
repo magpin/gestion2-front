@@ -1,20 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 
 import { Maria } from "./Maria";
 import { useSemanaDeMaria } from "../hooks/usePendientes";
 
 /**
- * «María esta semana», en el tablero. Lámina `Aplicada` de `maria-identidad/`:
+ * «María esta semana», en el tablero. Lámina `Aplicada` de `mocks/maria-identidad/`:
  * cara de 24 px en reposo y tres cifras.
  *
  * «Asientos aprobados» y no «asentados»: todo lo que está ahí lo aprobó una
  * persona. Lo que espera lleva el punto naranja —el acento señala— y lleva al
  * chat, que es donde se decide.
+ *
+ * `children` va debajo de las cifras: en el tablero de la plata, lo que María
+ * ve en la plata (las alertas).
  */
-export function MariaEstaSemana() {
+export function MariaEstaSemana({ children }: { children?: ReactNode } = {}) {
   const semana = useSemanaDeMaria();
   const cifra = (n: number | undefined) => (n === undefined ? "…" : String(n));
 
@@ -35,13 +39,14 @@ export function MariaEstaSemana() {
           className="-m-1.5 flex items-center rounded-md p-1.5 transition-colors hover:bg-accent"
         >
           <Cifra
-            etiqueta="Esperan tu revisión"
+            etiqueta="Esperan su revisión"
             valor={cifra(semana?.esperan)}
             punto={(semana?.esperan ?? 0) > 0}
           />
           <ChevronRight className="ml-auto size-4 shrink-0 text-muted-foreground" />
         </Link>
       </div>
+      {children}
     </section>
   );
 }

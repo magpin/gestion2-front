@@ -17,9 +17,16 @@ export interface TerceroResumen {
   nombre: string;
   esCliente: boolean;
   esProveedor: boolean;
+  /** Trabaja para la empresa: responde por una caja. */
+  esEmpleado: boolean;
+  /** Plazo habitual como cliente y como proveedor, en días (PC25). */
+  diasPlazoCliente?: number | null;
+  diasPlazoProveedor?: number | null;
   responsableIva: boolean;
   /** Si declara renta. Decide la tarifa de retefuente donde hay dos (4% o 6%). */
   declaranteRenta: boolean;
+  /** La ley distingue natural y jurídica en algunas retenciones (honorarios). */
+  tipoPersona: "NATURAL" | "JURIDICA";
   activo: boolean;
 }
 
@@ -47,6 +54,10 @@ export interface TerceroDetalle {
   municipio_nombre: string | null;
   es_cliente: boolean;
   es_proveedor: boolean;
+  es_empleado: boolean;
+  /** Plazo habitual en días (PC25): propone el vencimiento de la factura y de la compra. */
+  dias_plazo_cliente: number | null;
+  dias_plazo_proveedor: number | null;
   responsable_iva: boolean;
   es_agente_retenedor: boolean;
   es_autorretenedor: boolean;
@@ -70,6 +81,7 @@ export interface FiltroTerceros {
   q?: string;
   esCliente?: boolean;
   esProveedor?: boolean;
+  esEmpleado?: boolean;
   incluirInactivos?: boolean;
   /** Solo los desactivados. Manda sobre `incluirInactivos`. */
   soloInactivos?: boolean;
@@ -96,8 +108,10 @@ export function resumirTercero(d: TerceroDetalle): TerceroResumen {
         .join(" "),
     esCliente: d.es_cliente,
     esProveedor: d.es_proveedor,
+    esEmpleado: d.es_empleado,
     responsableIva: d.responsable_iva,
     declaranteRenta: d.declarante_renta ?? true,
+    tipoPersona: d.tipo_persona,
     activo: d.activo,
   };
 }

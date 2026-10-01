@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cn, formatCOP, formatFecha } from "@/lib/utils";
 import styles from "../asistente.module.css";
 import type { ArchivoDelLote, Lote, SituacionArchivo } from "../types/lote.types";
+import type { EstadoMaria } from "./Maria";
 import { Turno } from "./Mensajes";
 import { BotonTarjeta, ChipArchivo } from "./Piezas";
 
@@ -49,7 +50,7 @@ export function TurnosDelLote({
           )}
         </div>
         <div className="max-w-[420px] rounded-xl rounded-br-[0.3rem] bg-primary px-4 py-2.5 text-sm leading-normal text-primary-foreground">
-          {lote.total === 1 ? "Leé este documento." : `Leé estos ${lote.total} documentos.`}
+          {lote.total === 1 ? "Lea este documento." : `Lea estos ${lote.total} documentos.`}
         </div>
       </div>
 
@@ -60,6 +61,7 @@ export function TurnosDelLote({
           texto: enMarcha ? undefined : resumen(lote),
         }}
         pensando={enMarcha}
+        cara={caraDelLote(lote)}
         tarjeta={
           enMarcha ? (
             <Procesando lote={lote} deteniendo={deteniendo} alDetener={alDetener} />
@@ -72,19 +74,31 @@ export function TurnosDelLote({
   );
 }
 
+/**
+ * La cara del turno del lote. Mientras lee, con las membranas abiertas. Al
+ * terminar, «no pude» si algún archivo falló —eso no cambia después—; si no,
+ * en reposo. Lo apartado no pone la cara en espera acá: se resuelve y este
+ * turno queda en el historial, y la espera la cuenta la cabecera, que sí sabe
+ * lo que falta hoy.
+ */
+export function caraDelLote(lote: Lote): EstadoMaria | undefined {
+  if (lote.terminadoEn === null) return "leyendo";
+  return lote.archivos.some((a) => a.situacion === "FALLO") ? "noPude" : undefined;
+}
+
 /** Lo que dice María cuando termina. Sin «asenté»: nada se asentó. */
 export function resumen(lote: Lote): string {
   if (lote.detenido && lote.hechos < lote.total) {
-    return `Paré, como pediste. Alcancé a mirar ${lote.hechos} de ${lote.total}.`;
+    return `Paré, como me pidió. Alcancé a mirar ${lote.hechos} de ${lote.total}.`;
   }
   const partes = [
     lote.listas > 0 &&
-      `**${lote.listas}** ${lote.listas === 1 ? "está lista" : "están listas"} para que ${lote.listas === 1 ? "la apruebes" : "las apruebes"}`,
+      `**${lote.listas}** ${lote.listas === 1 ? "está lista" : "están listas"} para que ${lote.listas === 1 ? "la apruebe" : "las apruebe"}`,
     lote.apartadas > 0 &&
       `**${lote.apartadas}** ${lote.apartadas === 1 ? "la aparté" : "las aparté"} porque hay algo que decidir`,
   ].filter(Boolean);
   if (partes.length === 0) return "Listo. Esto es lo que encontré:";
-  return `Listo. ${partes.join(", y ")}. Nada se registra hasta que lo apruebes.`;
+  return `Listo. ${partes.join(", y ")}. Nada se registra hasta que lo apruebe.`;
 }
 
 function Marco({ children }: { children: React.ReactNode }) {
@@ -140,7 +154,7 @@ function Procesando({
         </div>
         <p className="m-0 text-xs leading-normal text-muted-foreground">
           Leo de a uno y compruebo cada uno igual: que las cuentas den, que conozca al
-          proveedor o al cliente, que no esté repetido. Lo que no pase, lo aparto y te pregunto.
+          proveedor o al cliente, que no esté repetido. Lo que no pase, lo aparto y le pregunto.
         </p>
       </div>
       <ul className="m-0 list-none divide-y divide-border border-t border-border p-0">
@@ -230,6 +244,8 @@ function FilaResultado({
     (m) => m.clave === "DUPLICADO" || m.clave === "REPETIDO_EN_LOTE",
   );
   const esPedido = a.tipo === "PEDIDO_VENTA";
+  // Facturas del sistema anterior: se eligen y se cargan en Ventas (fase 11).
+  const esVentaAnterior = a.tipo === "VENTA_HISTORICA";
   return (
     <li className="flex flex-col gap-2 px-4 py-3">
       <div className="flex items-start gap-3">
@@ -273,17 +289,17 @@ function FilaResultado({
           {duplicado && (
             <BotonTarjeta onClick={() => alDescartar(a)}>Es la misma, descartala</BotonTarjeta>
           )}
-          {esPedido ? (
+          {esPedido || esVentaAnterior ? (
             <Link
-              href="/dashboard/ventas?seccion=pedidos"
+              href={esPedido ? "/dashboard/asistente/leidos?tipo=pedidos" : "/dashboard/datos-anteriores"}
               className="inline-flex h-[34px] items-center rounded-md border border-input bg-card px-4 text-[13px] font-medium whitespace-nowrap"
             >
-              Facturarlo en Ventas
+              {esPedido ? "Facturarlo en Ventas" : "Revisarlas y cargarlas"}
             </Link>
           ) : (
             <BotonTarjeta principal={a.situacion === "LISTA"} onClick={() => alRevisar(a)}>
               {duplicado
-                ? "Es distinta, revisala"
+                ? "Es distinta, revísela"
                 : a.situacion === "LISTA"
                   ? "Revisar y aprobar"
                   : "Revisar"}

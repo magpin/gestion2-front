@@ -10,37 +10,42 @@ import { useGuardar } from "../hooks/useGuardar";
 import { legalApi } from "../services/nucleo.service";
 
 /**
- * Las cuatro preguntas que ningún documento responde.
+ * Las preguntas que ningún documento responde.
  *
  * El RUT dice si la empresa cobra IVA y la CIIU de qué son sus ingresos, pero
  * ningún papel dice si tiene empleados. Sin eso el plan de cuentas no puede
  * decidir entre proponer las quince cuentas de nómina o ninguna, y adivinar es
  * peor que preguntar.
  *
- * Cada respuesta dice cuántas cuentas agrega, porque esa es la única razón por
- * la que se pregunta. Sin ese número, cuatro casillas sueltas parecen un
- * formulario más.
+ * Cada respuesta dice qué cambia —cuántas cuentas agrega, o qué permite—,
+ * porque esa es la única razón por la que se pregunta. Sin eso, las casillas
+ * sueltas parecen un formulario más.
  */
 const PREGUNTAS = [
   {
     hecho: "TIENE_EMPLEADOS",
     pregunta: "¿Tiene empleados?",
-    agrega: "15 cuentas de nómina, prestaciones y aportes",
+    efecto: "Agrega 15 cuentas de nómina, prestaciones y aportes",
   },
   {
     hecho: "TIENE_ACTIVOS_FIJOS",
     pregunta: "¿Tiene activos fijos?",
-    agrega: "6 de equipos y su depreciación",
+    efecto: "Agrega 6 de equipos y su depreciación",
   },
   {
     hecho: "TIENE_CREDITO_BANCARIO",
     pregunta: "¿Tiene crédito bancario?",
-    agrega: "2: la obligación y sus intereses",
+    efecto: "Agrega 2: la obligación y sus intereses",
   },
   {
     hecho: "MANEJA_CAJA_MENOR",
     pregunta: "¿Maneja caja menor?",
-    agrega: "1: el fondo fijo",
+    efecto: "Agrega 1, el fondo fijo, y crea la caja menor",
+  },
+  {
+    hecho: "VENDE_SIN_EXISTENCIA",
+    pregunta: "¿Vende productos sin tenerlos en existencia?",
+    efecto: "Permite facturar sin la mercancía en bodega, confirmándolo en cada factura",
   },
 ] as const;
 
@@ -79,8 +84,8 @@ export function HechosOperativos() {
 
   return (
     <Bloque
-      titulo="Sobre tu operación"
-      descripcion="Cuatro respuestas que ningún documento trae. Deciden qué cuentas se te proponen abajo."
+      titulo="Sobre su operación"
+      descripcion="Cuatro respuestas que ningún documento trae. Deciden qué cuentas se le proponen abajo."
     >
       {isLoading ? (
         <div className="flex justify-center py-6 text-muted-foreground">
@@ -117,7 +122,7 @@ export function HechosOperativos() {
                       {p.pregunta}
                     </span>
                     <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                      Agrega {p.agrega}
+                      {p.efecto}
                     </span>
                   </span>
                 </button>

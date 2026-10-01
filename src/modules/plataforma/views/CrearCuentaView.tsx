@@ -16,7 +16,12 @@ import { dolares, pesos } from "../lib/formato";
 import { plataformaService } from "../services/plataforma.service";
 import { NOMBRE_PLAN, type Plan } from "../types/plataforma.types";
 
-const PASOS = ["Cuenta", "Administrador", "Plan y cupos", "Confirmación"] as const;
+const PASOS = [
+  "Cuenta",
+  "Administrador",
+  "Plan y cupos",
+  "Confirmación",
+] as const;
 
 const CORREO = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i;
 
@@ -37,7 +42,10 @@ export function CrearCuentaView() {
     maxUsuarios: "",
   });
 
-  const planes = useQuery({ queryKey: ["plataforma", "planes"], queryFn: plataformaService.planes });
+  const planes = useQuery({
+    queryKey: ["plataforma", "planes"],
+    queryFn: plataformaService.planes,
+  });
   const plan = planes.data?.find((p) => p.clave === f.plan);
   const cupoEmpresas = Number(f.maxEmpresas) || plan?.maxEmpresas || 1;
   const cupoUsuarios = Number(f.maxUsuarios) || plan?.maxUsuarios || 1;
@@ -73,9 +81,12 @@ export function CrearCuentaView() {
         <Pasos actual={PASOS.length} />
         <Tarjeta className="mx-auto w-full max-w-2xl gap-6 p-6 md:p-8">
           <div className="flex flex-col gap-1">
-            <h2 className="m-0 font-serif text-[28px] font-normal">Cuenta creada</h2>
+            <h2 className="m-0 font-serif text-[28px] font-normal">
+              Cuenta creada
+            </h2>
             <p className="m-0 text-sm text-muted-foreground">
-              {f.nombreCuenta.trim()} ya puede entrar con el correo de su administrador.
+              {f.nombreCuenta.trim()} ya puede entrar con el correo de su
+              administrador.
             </p>
           </div>
           {r.password ? (
@@ -86,7 +97,14 @@ export function CrearCuentaView() {
               aviso="Cópiela o díctela ahora. Si se pierde, hay que restablecerla desde la cuenta."
             />
           ) : null}
-          <Resumen f={f} plan={plan ? `${NOMBRE_PLAN[f.plan]}: ${cupoEmpresas} empresas, ${cupoUsuarios} usuarios` : ""} />
+          <Resumen
+            f={f}
+            plan={
+              plan
+                ? `${NOMBRE_PLAN[f.plan]}: ${cupoEmpresas} empresas, ${cupoUsuarios} usuarios`
+                : ""
+            }
+          />
           <div className="flex flex-wrap justify-end gap-3">
             <Link
               href={`/plataforma/cuentas/${r.tenantId}?pestana=empresas`}
@@ -94,7 +112,10 @@ export function CrearCuentaView() {
             >
               Agregar la primera empresa
             </Link>
-            <Link href={`/plataforma/cuentas/${r.tenantId}`} className={buttonVariants()}>
+            <Link
+              href={`/plataforma/cuentas/${r.tenantId}`}
+              className={buttonVariants()}
+            >
               Ir a la cuenta
             </Link>
           </div>
@@ -114,8 +135,14 @@ export function CrearCuentaView() {
 
       <Tarjeta className="mx-auto w-full max-w-2xl gap-6 p-6 md:p-8">
         {paso === 0 && (
-          <Campos titulo="La cuenta" texto="Es el cliente que paga. Puede tener varias empresas adentro.">
-            <Campo texto="Nombre del cliente" nota="Como aparece en la factura que se le cobra.">
+          <Campos
+            titulo="La cuenta"
+            texto="Es el cliente que paga. Puede tener varias empresas adentro."
+          >
+            <Campo
+              texto="Nombre del cliente"
+              nota="Como aparece en la factura que se le cobra."
+            >
               <Input
                 autoFocus
                 value={f.nombreCuenta}
@@ -135,11 +162,16 @@ export function CrearCuentaView() {
               <Input
                 autoFocus
                 value={f.nombreAdministrador}
-                onChange={(e) => setF({ ...f, nombreAdministrador: e.target.value })}
+                onChange={(e) =>
+                  setF({ ...f, nombreAdministrador: e.target.value })
+                }
                 placeholder="Laura Gómez"
               />
             </Campo>
-            <Campo texto="Correo" nota="Con este correo entra. La contraseña se genera al final.">
+            <Campo
+              texto="Correo"
+              nota="Con este correo entra. La contraseña se genera al final."
+            >
               <Input
                 type="email"
                 value={f.email}
@@ -151,11 +183,18 @@ export function CrearCuentaView() {
         )}
 
         {paso === 2 && (
-          <Campos titulo="Plan y cupos" texto="Los cupos salen del plan. Se pueden cambiar solo para esta cuenta.">
+          <Campos
+            titulo="Plan y cupos"
+            texto="Los cupos salen del plan. Se pueden cambiar solo para esta cuenta."
+          >
             {planes.isPending ? (
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
             ) : (
-              <div role="radiogroup" aria-label="Plan" className="grid gap-3 sm:grid-cols-2">
+              <div
+                role="radiogroup"
+                aria-label="Plan"
+                className="grid gap-3 sm:grid-cols-2"
+              >
                 {planes.data?.map((p) => {
                   const elegido = p.clave === f.plan;
                   return (
@@ -164,10 +203,19 @@ export function CrearCuentaView() {
                       type="button"
                       role="radio"
                       aria-checked={elegido}
-                      onClick={() => setF({ ...f, plan: p.clave, maxEmpresas: "", maxUsuarios: "" })}
+                      onClick={() =>
+                        setF({
+                          ...f,
+                          plan: p.clave,
+                          maxEmpresas: "",
+                          maxUsuarios: "",
+                        })
+                      }
                       className={cn(
                         "flex flex-col gap-1 rounded-xl border p-4 text-left transition-colors",
-                        elegido ? "border-foreground bg-muted/60" : "border-border hover:bg-muted/40",
+                        elegido
+                          ? "border-foreground bg-muted/60"
+                          : "border-border hover:bg-muted/40",
                       )}
                     >
                       <span className="flex items-center justify-between font-medium">
@@ -175,11 +223,18 @@ export function CrearCuentaView() {
                         {elegido && <Check className="size-4" />}
                       </span>
                       <span className="text-[13px] text-muted-foreground">
-                        {p.maxEmpresas} {p.maxEmpresas === 1 ? "empresa" : "empresas"}, {p.maxUsuarios} usuarios
-                        {p.topeIaUsd !== null && `, ${dolares(p.topeIaUsd)} de IA`}
+                        {p.maxEmpresas}{" "}
+                        {p.maxEmpresas === 1 ? "empresa" : "empresas"},{" "}
+                        {p.maxUsuarios} usuarios
+                        {p.topeIaUsd !== null &&
+                          `, ${dolares(p.topeIaUsd)} de IA`}
                       </span>
                       <span className="text-[13px]">
-                        {p.precioMensual === null ? <SinConfigurar texto="Precio sin configurar" /> : `${pesos(p.precioMensual)} al mes`}
+                        {p.precioMensual === null ? (
+                          <SinConfigurar texto="Precio sin configurar" />
+                        ) : (
+                          `${pesos(p.precioMensual)} al mes`
+                        )}
                       </span>
                     </button>
                   );
@@ -208,7 +263,10 @@ export function CrearCuentaView() {
         )}
 
         {paso === 3 && (
-          <Campos titulo="Confirmación" texto="Revise antes de crear. Al confirmar se genera la contraseña.">
+          <Campos
+            titulo="Confirmación"
+            texto="Revise antes de crear. Al confirmar se genera la contraseña."
+          >
             <Resumen
               f={f}
               plan={`${NOMBRE_PLAN[f.plan]}: ${cupoEmpresas} ${cupoEmpresas === 1 ? "empresa" : "empresas"}, ${cupoUsuarios} usuarios`}
@@ -222,7 +280,10 @@ export function CrearCuentaView() {
               Atrás
             </Button>
           ) : (
-            <Link href="/plataforma/cuentas" className={buttonVariants({ variant: "outline" })}>
+            <Link
+              href="/plataforma/cuentas"
+              className={buttonVariants({ variant: "outline" })}
+            >
               Cancelar
             </Link>
           )}
@@ -244,19 +305,31 @@ export function CrearCuentaView() {
 
 function Pasos({ actual }: { actual: number }) {
   return (
-    <ol aria-label="Pasos del alta" className="m-0 mx-auto flex w-full max-w-2xl list-none gap-2 p-0">
+    <ol
+      aria-label="Pasos del alta"
+      className="m-0 mx-auto flex w-full max-w-2xl list-none gap-2 p-0"
+    >
       {PASOS.map((p, i) => {
         const hecho = i < actual;
         const aca = i === actual;
         return (
-          <li key={p} className="flex flex-1 flex-col gap-2" aria-current={aca ? "step" : undefined}>
+          <li
+            key={p}
+            className="flex flex-1 flex-col gap-2"
+            aria-current={aca ? "step" : undefined}
+          >
             <span
               className={cn(
                 "h-1 rounded-full",
                 hecho ? "bg-foreground/70" : aca ? "bg-brand" : "bg-muted",
               )}
             />
-            <span className={cn("text-xs", aca ? "font-medium text-foreground" : "text-muted-foreground")}>
+            <span
+              className={cn(
+                "text-xs",
+                aca ? "font-medium text-foreground" : "text-muted-foreground",
+              )}
+            >
               {p}
             </span>
           </li>
@@ -286,7 +359,15 @@ function Campos({
   );
 }
 
-function Campo({ texto, nota, children }: { texto: string; nota?: string; children: React.ReactNode }) {
+function Campo({
+  texto,
+  nota,
+  children,
+}: {
+  texto: string;
+  nota?: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
       <span className="font-medium">{texto}</span>
