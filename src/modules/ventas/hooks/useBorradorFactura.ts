@@ -59,6 +59,9 @@ export function useBorradorFactura(inicio?: InicioFactura) {
   // El plazo sale del cliente (PC25) y se puede cambiar. Texto: "" es sin elegir.
   const [plazo, setPlazo] = useState("30");
   const [retenciones, setRetenciones] = useState<RetencionBorrador[]>([]);
+  // El centro de costo elegido. `null`: el que proponga el servidor (el del
+  // usuario, el de la sede de la caja, el de por defecto).
+  const [centro, setCentro] = useState<string | null>(null);
 
   const setCliente = (t: TerceroResumen) => {
     // Los anticipos son del cliente: al cambiarlo, se sueltan.
@@ -161,6 +164,7 @@ export function useBorradorFactura(inicio?: InicioFactura) {
     return {
       terceroId: cliente.id,
       fecha,
+      ...(centro !== null && { centroCostoId: centro }),
       lineas: lineas.map((l) =>
         l.tipo === "CONCEPTO"
           ? {
@@ -209,6 +213,8 @@ export function useBorradorFactura(inicio?: InicioFactura) {
     setRetenciones,
     problema,
     datos,
+    centro,
+    setCentro,
   };
 }
 

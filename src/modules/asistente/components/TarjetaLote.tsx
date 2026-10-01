@@ -287,7 +287,7 @@ function FilaResultado({
       {(a.situacion === "LISTA" || a.situacion === "APARTADA") && a.documentoId !== null && (
         <div className="flex flex-wrap gap-2">
           {duplicado && (
-            <BotonTarjeta onClick={() => alDescartar(a)}>Es la misma, descartala</BotonTarjeta>
+            <BotonTarjeta onClick={() => alDescartar(a)}>Es la misma, descártela</BotonTarjeta>
           )}
           {esPedido || esVentaAnterior ? (
             <Link

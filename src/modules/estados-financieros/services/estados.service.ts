@@ -5,6 +5,7 @@ import type {
   FormatoEstado,
   Proyectado,
   Resultados,
+  ResultadosPorCentro,
   TipoEstado,
 } from "../types/estados.types";
 
@@ -15,9 +16,17 @@ function nombreDeArchivo(disposicion: string | undefined, porDefecto: string): s
 }
 
 export const estadosApi = {
-  resultados: (mes: string, comparar?: string) =>
+  /** `centro`: el id de un centro de costo, o `SIN` para lo que quedó sin centro. */
+  resultados: (mes: string, comparar?: string, centro?: string) =>
     api
-      .get<Resultados>("/estados-financieros/resultados", { params: { mes, comparar } })
+      .get<Resultados>("/estados-financieros/resultados", { params: { mes, comparar, centro } })
+      .then((r) => r.data),
+
+  resultadosPorCentro: (mes: string, agrupar: "CENTRO" | "TIPO") =>
+    api
+      .get<ResultadosPorCentro>("/estados-financieros/resultados-por-centro", {
+        params: { mes, agrupar },
+      })
       .then((r) => r.data),
 
   balance: (mes: string, comparar?: string) =>

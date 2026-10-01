@@ -184,10 +184,42 @@ function DelMes({
       <Total resumen={data} />
       <div className="grid gap-7 lg:grid-cols-[1.6fr_1fr]">
         <PorConcepto resumen={data} />
-        <Recurrentes onVerTodos={onVerRecurrentes} />
+        <div className="flex flex-col gap-7">
+          <PorCentro resumen={data} />
+          <Recurrentes onVerTodos={onVerRecurrentes} />
+        </div>
       </div>
       <Ultimos resumen={data} mes={mes} onRegistrar={onRegistrar} />
     </div>
+  );
+}
+
+/** Dónde se gastó: una barra por centro de costo. Sin centros, no se muestra. */
+function PorCentro({ resumen }: { resumen: ResumenGastos }) {
+  const centros = resumen.porCentro ?? [];
+  if (centros.length === 0) return null;
+  const mayor = Math.max(1, ...centros.map((c) => Math.abs(c.total)));
+  return (
+    <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+      <h2 className="text-lg font-semibold">Por centro de costo</h2>
+      <p className="mb-3 text-xs text-muted-foreground">Dónde se gastó este mes</p>
+      <ul className="flex flex-col gap-2.5">
+        {centros.map((c) => (
+          <li key={c.id ?? "sin"} className="flex flex-col gap-1">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className={c.id === null ? "text-muted-foreground" : ""}>{c.nombre}</span>
+              <span className="font-mono whitespace-nowrap tabular-nums">{formatCOP(c.total)}</span>
+            </div>
+            <span className="h-1.5 rounded-full bg-muted">
+              <span
+                className="block h-full rounded-full bg-foreground/60"
+                style={{ width: `${Math.max(2, (Math.abs(c.total) / mayor) * 100)}%` }}
+              />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

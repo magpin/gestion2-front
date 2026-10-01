@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { PropuestaRenta } from "@/modules/retenciones/components/PropuestaRenta";
 import { useSimulacionRenta } from "@/modules/retenciones/hooks/useSimulacionRenta";
@@ -66,6 +67,8 @@ export function DetalleFacturaLeida({
   >({});
 
   const [renta, setRenta] = useState(respuestasRentaVacias);
+  // El centro de costo de la compra. `null`: el que proponga el servidor.
+  const [centro, setCentro] = useState<string | null>(null);
 
   // Lo que la persona contestó de los renglones, igual para simular y para
   // registrar: la retención se calcula sobre lo mismo que se va a registrar.
@@ -97,7 +100,11 @@ export function DetalleFacturaLeida({
     // trabaja mientras se registra y hace el gesto de aprobado al terminar.
     mutationKey: LLAVE_APROBAR,
     mutationFn: () =>
-      lecturasApi.registrar(lectura.id, { ...respuestas(), ...aEnvioRenta(renta) }),
+      lecturasApi.registrar(lectura.id, {
+        ...respuestas(),
+        ...aEnvioRenta(renta),
+        ...(centro !== null && { centroCostoId: centro }),
+      }),
     onSuccess: (compra) => {
       void cliente.invalidateQueries({ queryKey: ["compras"] });
       void cliente.invalidateQueries({ queryKey: ["lecturas-factura"] });
@@ -208,6 +215,8 @@ export function DetalleFacturaLeida({
               </p>
             )}
           </section>
+
+          {registrable && <CentroDelDocumento valor={centro} onCambiar={setCentro} className="max-w-sm" />}
 
           {puedeSimular && (
             <PropuestaRenta

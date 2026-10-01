@@ -124,6 +124,8 @@ export interface RegistrarMovimientoBancoInput {
   contraCuentaId: string;
   /** Número de cheque o de la transferencia: con él la conciliación cruza por referencia. */
   referencia?: string;
+  /** Si la contracuenta es de resultado: dónde. */
+  centroCostoId?: string;
 }
 
 /** El cuadre diario no existe en Bancos: esto es la conciliación por extracto. */
@@ -242,6 +244,8 @@ export interface RegistrarDesdeExtractoInput {
   concepto: string;
   /** Solo si la contra cuenta exige tercero. */
   terceroId?: string;
+  /** Si la contra cuenta es de resultado: dónde. */
+  centroCostoId?: string;
 }
 
 /** Un cruce al que le falta la diferencia: se registra la nota y se cruza todo junto. */
@@ -271,6 +275,8 @@ export interface PropuestasExtracto {
     reglaId: string;
     nombre: string;
     contraCuentaId: string;
+    /** El centro de costo de la regla, si tiene. */
+    centroCostoId: string | null;
     concepto: string;
     lineaIds: string[];
     total: string;
@@ -346,6 +352,7 @@ export interface ReglaExtractoResumen {
   contra_cuenta_id: string;
   concepto: string;
   activa: boolean;
+  centro_costo_id: string | null;
 }
 
 export interface CrearReglaExtractoInput {
@@ -355,6 +362,7 @@ export interface CrearReglaExtractoInput {
   tipoLinea: TipoLineaExtracto;
   contraCuentaId: string;
   concepto: string;
+  centroCostoId?: string;
 }
 
 /** El tipo de línea y la cuenta bancaria no se cambian: eso es otra regla. */
@@ -364,6 +372,8 @@ export interface ActualizarReglaExtractoInput {
   contraCuentaId?: string;
   concepto?: string;
   activa?: boolean;
+  /** `null` le quita el centro. */
+  centroCostoId?: string | null;
 }
 
 /**

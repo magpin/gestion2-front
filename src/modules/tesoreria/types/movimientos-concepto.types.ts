@@ -40,7 +40,9 @@ export interface CrearMovimientoConceptoInput {
   detalle: string;
   valor?: number;
   /** Varios conceptos en un solo comprobante (PC14). */
-  lineas?: Array<{ conceptoId: string; valor: number }>;
+  lineas?: Array<{ conceptoId: string; valor: number; centroCostoId?: string; repartoId?: string }>;
+  /** Dónde se gastó o se ganó; sin él, el que proponga el servidor. */
+  centroCostoId?: string;
   /** Lo que nos retuvieron, solo en una entrada (PC17). */
   retencion?: { tipo: "RENTA" | "IVA" | "ICA"; valor: number };
 }

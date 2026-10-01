@@ -124,6 +124,8 @@ export interface LecturaFactura {
 
 /** Lo que una persona responde de lo que el cruce no pudo. */
 export interface RegistrarLecturaInput {
+  /** El centro de costo de la compra; sin él, el que proponga el servidor. */
+  centroCostoId?: string;
   /** Si el documento no traía número: una cuenta de cobro no lo trae. */
   numero?: string;
   /** Si el proveedor no se encontró por NIT. */

@@ -15,21 +15,17 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Campo } from "@/modules/configuracion/components/Campo";
 import { ArbolPlan } from "../components/ArbolPlan";
+import { CentrosDeCosto } from "../components/CentrosDeCosto";
+import { useCentrosCosto } from "../components/SelectorCentroCosto";
 import { CuentasAutomaticas } from "../components/CuentasAutomaticas";
 import { SelectorCuentaPuc } from "../components/SelectorCuentaPuc";
 import { planCuentasApi } from "../services/plan-cuentas.service";
 
 const CLAVE = ["plan-cuentas"];
-const CLAVE_CENTROS = ["plan-cuentas", "centros"];
 
 const esquemaCuenta = z.object({
   codigo: z.string().regex(/^[0-9]{1,20}$/, "Solo dígitos"),
   nombre: z.string().min(2, "Requerido").max(200),
-});
-
-const esquemaCentro = z.object({
-  codigo: z.string().min(1, "Requerido").max(20),
-  nombre: z.string().min(2, "Requerido").max(120),
 });
 
 /**
@@ -57,11 +53,6 @@ export function PlanCuentasView() {
         q: busqueda.trim() || undefined,
         incluirInactivas: inactivas ? "true" : undefined,
       }),
-  });
-
-  const { data: centros = [] } = useQuery({
-    queryKey: CLAVE_CENTROS,
-    queryFn: planCuentasApi.centros,
   });
 
   // Un auxiliar nuevo puede volver elegible una cuenta automática (o dejar
@@ -115,27 +106,23 @@ export function PlanCuentasView() {
     onError: (e: unknown) => aviso.falla(e),
   });
 
+  // Con los centros encendidos, cada cuenta de resultado puede dejar de
+  // exigirlo (o volver a exigirlo) una por una.
+  const { maneja: manejaCentros } = useCentrosCosto();
+  const exigirCentro = useMutation({
+    mutationFn: ({ id, exige }: { id: string; exige: boolean }) =>
+      planCuentasApi.editar(id, { exigeCentroCosto: exige }),
+    onSuccess: async () => {
+      await refrescar();
+    },
+    onError: (e: unknown) => aviso.falla(e),
+  });
+
   const desactivar = useMutation({
     mutationFn: (id: string) => planCuentasApi.desactivar(id),
     onSuccess: async () => {
       await refrescar();
       aviso.exito("Cuenta desactivada");
-    },
-    onError: (e: unknown) => aviso.falla(e),
-  });
-
-  const formCentro = useForm<z.infer<typeof esquemaCentro>>({
-    resolver: zodResolver(esquemaCentro),
-    defaultValues: { codigo: "", nombre: "" },
-  });
-
-  const crearCentro = useMutation({
-    mutationFn: (d: z.infer<typeof esquemaCentro>) =>
-      planCuentasApi.crearCentro(d),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: CLAVE_CENTROS });
-      formCentro.reset();
-      aviso.exito("Centro de costo agregado");
     },
     onError: (e: unknown) => aviso.falla(e),
   });
@@ -222,6 +209,9 @@ export function PlanCuentasView() {
           onCrearAuxiliar={(d) => crearAuxiliar.mutate(d)}
           onActivar={(id) => activar.mutate(id)}
           onDesactivar={(id) => desactivar.mutate(id)}
+          onExigirCentro={
+            manejaCentros ? (id, exige) => exigirCentro.mutate({ id, exige }) : undefined
+          }
         />
       )}
 
@@ -282,66 +272,7 @@ export function PlanCuentasView() {
         </form>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-lg border border-border p-4">
-        <h2 className="text-sm font-semibold">Centros de costo</h2>
-        <p className="text-xs text-muted-foreground">
-          Sirven para saber qué parte del negocio generó cada gasto. Las cuentas
-          que los exijan no dejarán asentar sin uno.
-        </p>
-
-        {centros.length > 0 && (
-          <ul className="divide-y divide-border rounded-lg border border-border">
-            {centros.map((c) => (
-              <li
-                key={c.id}
-                className="flex items-center gap-3 px-3 py-2 text-sm"
-              >
-                <span className="w-16 shrink-0 font-mono text-xs">
-                  {c.codigo}
-                </span>
-                <span className="flex-1 truncate">{c.nombre}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <form
-          onSubmit={formCentro.handleSubmit((d) => crearCentro.mutate(d))}
-          className="flex flex-wrap items-end gap-3"
-        >
-          <Campo
-            id="centroCodigo"
-            etiqueta="Código"
-            error={formCentro.formState.errors.codigo?.message}
-          >
-            <Input
-              id="centroCodigo"
-              className="w-28 font-mono"
-              {...formCentro.register("codigo")}
-            />
-          </Campo>
-          <Campo
-            id="centroNombre"
-            etiqueta="Nombre"
-            error={formCentro.formState.errors.nombre?.message}
-            className="min-w-56 flex-1"
-          >
-            <Input id="centroNombre" {...formCentro.register("nombre")} />
-          </Campo>
-          <Button
-            type="submit"
-            variant="outline"
-            disabled={crearCentro.isPending}
-          >
-            {crearCentro.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Plus className="size-4" />
-            )}
-            Agregar
-          </Button>
-        </form>
-      </section>
+      <CentrosDeCosto />
     </div>
   );
 }

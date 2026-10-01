@@ -42,7 +42,7 @@ export function problemaDelAsiento(a: {
   if (faltaTercero.length > 0)
     return `Falta el tercero en ${nombrarRenglones(faltaTercero)}.`;
   const faltaCentro = renglones(
-    (l) => Boolean(l.cuenta?.exige_centro_costo) && !l.centroCostoId,
+    (l) => Boolean(l.cuenta?.exige_centro_costo) && !l.centroCostoId && !l.repartoId,
   );
   if (faltaCentro.length > 0)
     return `Falta el centro de costo en ${nombrarRenglones(faltaCentro)}.`;
@@ -62,7 +62,8 @@ export function aLineasNuevas(lineas: LineaBorrador[]): LineaNueva[] {
   return lineas.map((l) => ({
     cuentaId: l.cuenta!.id,
     terceroId: l.terceroId || undefined,
-    centroCostoId: l.centroCostoId || undefined,
+    centroCostoId: l.repartoId ? undefined : l.centroCostoId || undefined,
+    repartoId: l.repartoId || undefined,
     baseGravable: l.baseGravable === "" ? undefined : Number(l.baseGravable),
     detalle: l.detalle.trim() || undefined,
     debito: Number(l.debito || 0),

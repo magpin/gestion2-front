@@ -901,6 +901,7 @@ export function ConciliacionSeccion() {
               lineaIds: reglaARegistrar.lineaIds,
               contraCuentaId: reglaARegistrar.contraCuentaId,
               concepto: reglaARegistrar.concepto,
+              ...(reglaARegistrar.centroCostoId && { centroCostoId: reglaARegistrar.centroCostoId }),
             })
           }
           onCerrar={() => setRegistrando(null)}

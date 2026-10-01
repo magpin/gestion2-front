@@ -5,7 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { CampoPesos, CampoPrecio } from "@/components/shared/CampoNumero";
 import { Button } from "@/components/ui/button";
-import { cn, formatCOP, formatCOPExacto } from "@/lib/utils";
+import { cn, formatCOP, formatCOPConCentavos } from "@/lib/utils";
 import { renglonRepartoVacio, type AnticipoDisponible, type RenglonReparto } from "../lib/formaPago";
 import { CajaPrincipal } from "./CajaPrincipal";
 import { SelectorCaja } from "./SelectorCaja";
@@ -162,7 +162,7 @@ export function RepartoEnTarjetas({
               <CampoPrecio
                 value={r.valor}
                 onChange={(valor) => cambiarRenglon(r.clave, { valor })}
-                placeholder={estado !== null && estado.resto > 0 ? `el resto: ${formatCOPExacto(estado.resto)}` : "el resto"}
+                placeholder={estado !== null && estado.resto > 0 ? `el resto: ${formatCOPConCentavos(estado.resto)}` : "el resto"}
                 className="h-11 rounded-xl px-4 text-right font-mono"
                 aria-label={`Valor del medio ${i + 1}`}
               />
@@ -184,8 +184,8 @@ export function RepartoEnTarjetas({
         {estado !== null && (estado.falta > 0 || estado.sobra > 0) && (
           <p className={cn("text-sm font-medium", estado.sobra > 0 ? "text-danger" : "text-muted-foreground")}>
             {estado.sobra > 0
-              ? `Se pasó por ${formatCOPExacto(estado.sobra)}`
-              : `Falta repartir ${formatCOPExacto(estado.falta)}`}
+              ? `Se pasó por ${formatCOPConCentavos(estado.sobra)}`
+              : `Falta repartir ${formatCOPConCentavos(estado.falta)}`}
           </p>
         )}
       </div>

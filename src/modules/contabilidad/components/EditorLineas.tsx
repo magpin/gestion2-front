@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCOP } from "@/lib/utils";
-import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
+import { SelectorCentroOReparto, useCentrosCosto } from "@/modules/plan-cuentas/components/SelectorCentroCosto";
 import { tercerosApi } from "@/modules/terceros/services/terceros.service";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 import { calcularCuadre, contrapartida } from "../lib/cuadre";
@@ -28,6 +28,8 @@ export interface LineaBorrador {
   cuenta: CuentaEmpresa | null;
   terceroId: string;
   centroCostoId: string;
+  /** O repartida entre varios centros por porcentajes (fase 8). Vacío: sin reparto. */
+  repartoId?: string;
   baseGravable: string;
   detalle: string;
   debito: string;
@@ -76,7 +78,12 @@ export function EditorLineas({
   // Solo se piden si alguna línea los exige: la mayoría de asientos no los usa,
   // y traerlos siempre es una consulta que nadie mira.
   const exigeTercero = lineas.some((l) => l.cuenta?.exige_tercero);
-  const exigeCentro = lineas.some((l) => l.cuenta?.exige_centro_costo);
+  // Con centros de costo, toda línea de resultado (4 a 7) puede llevar el
+  // suyo: obligatorio si la cuenta lo exige, opcional si no.
+  const centrosCosto = useCentrosCosto();
+  const llevaCentro = (l: LineaBorrador) =>
+    l.cuenta !== null &&
+    (l.cuenta.exige_centro_costo || (centrosCosto.maneja && /^[4-7]/.test(l.cuenta.codigo)));
 
   const { data: terceros } = useQuery({
     queryKey: ["terceros", "para-asiento"],
@@ -85,12 +92,6 @@ export function EditorLineas({
     staleTime: 5 * 60_000,
   });
 
-  const { data: centros = [] } = useQuery({
-    queryKey: ["plan-cuentas", "centros"],
-    queryFn: planCuentasApi.centros,
-    enabled: exigeCentro,
-    staleTime: 5 * 60_000,
-  });
 
   const actualizar = (clave: number, cambio: Partial<LineaBorrador>) =>
     onCambiar(
@@ -188,26 +189,22 @@ export function EditorLineas({
                       </div>
                     )}
 
-                    {l.cuenta?.exige_centro_costo && (
+                    {llevaCentro(l) && (
                       <div className="mt-2">
-                        <Select
-                          items={centros.map((c) => ({ value: c.id, label: `${c.codigo} · ${c.nombre}` }))}
-                          value={l.centroCostoId}
-                          onValueChange={(v) =>
-                            actualizar(l.clave, { centroCostoId: v ?? "" })
+                        {/* Solo los que reciben movimientos: activos y sin hijos. */}
+                        <SelectorCentroOReparto
+                          centro={l.centroCostoId === "" ? null : l.centroCostoId}
+                          reparto={l.repartoId ? l.repartoId : null}
+                          onChange={({ centro, reparto }) =>
+                            actualizar(l.clave, { centroCostoId: centro ?? "", repartoId: reparto ?? "" })
                           }
-                        >
-                          <SelectTrigger className="h-11 w-full rounded-xl px-4">
-                            <SelectValue placeholder="Centro de costo (obligatorio)" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {centros.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.codigo} · {c.nombre}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          centros={centrosCosto.elegibles}
+                          repartos={centrosCosto.repartos}
+                          textoVacio="Sin centro de costo"
+                        />
+                        {l.cuenta?.exige_centro_costo && l.centroCostoId === "" && !l.repartoId && (
+                          <p className="mt-1 text-xs text-muted-foreground">Esta cuenta exige centro de costo.</p>
+                        )}
                       </div>
                     )}
 

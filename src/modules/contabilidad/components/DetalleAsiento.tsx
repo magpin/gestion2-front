@@ -119,6 +119,11 @@ export function DetalleAsiento({
                               {l.detalle}
                             </span>
                           )}
+                          {l.centro_costo_nombre && (
+                            <span className="block text-xs text-muted-foreground">
+                              Centro: {l.centro_costo_nombre}
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-sm text-muted-foreground">
                           {l.tercero_nombre ?? "—"}

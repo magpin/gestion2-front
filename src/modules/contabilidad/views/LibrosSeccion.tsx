@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SelectorCentroCosto, useCentrosCosto } from "@/modules/plan-cuentas/components/SelectorCentroCosto";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, CalendarRange, Loader2, Printer } from "lucide-react";
 
@@ -44,6 +45,8 @@ export function LibrosSeccion() {
   const [desde, setDesde] = useState(inicioDeMes());
   const [hasta, setHasta] = useState(hoy());
   const [cuenta, setCuenta] = useState<CuentaEmpresa | null>(null);
+  const [centro, setCentro] = useState<string | null>(null);
+  const centros = useCentrosCosto();
   const [periodoId, setPeriodoId] = useState("");
 
   const { data: periodos = [] } = useQuery({
@@ -126,6 +129,18 @@ export function LibrosSeccion() {
                 <SelectorCuenta valor={cuenta} onElegir={setCuenta} crear={false} />
               </label>
             )}
+            {libro === "mayor" && centros.maneja && (
+              <label className="flex min-w-56 flex-col gap-2 text-sm font-medium">
+                Centro de costo
+                <SelectorCentroCosto
+                  value={centro}
+                  onChange={setCentro}
+                  centros={centros.todos.filter((c) => !c.agrupa)}
+                  permitirVacio
+                  textoVacio="Todos los centros"
+                />
+              </label>
+            )}
             <label className="flex flex-col gap-2 text-sm font-medium">
               Desde
               <Input
@@ -150,7 +165,7 @@ export function LibrosSeccion() {
 
       {libro === "diario" && <Diario desde={desde} hasta={hasta} />}
       {libro === "mayor" && (
-        <Mayor cuenta={cuenta} desde={desde} hasta={hasta} />
+        <Mayor cuenta={cuenta} desde={desde} hasta={hasta} centro={centro} />
       )}
       {libro === "balance" && <Balance periodoId={periodoId} />}
     </div>
@@ -246,14 +261,17 @@ function Mayor({
   cuenta,
   desde,
   hasta,
+  centro,
 }: {
   cuenta: CuentaEmpresa | null;
   desde: string;
   hasta: string;
+  /** Solo las líneas de este centro de costo; el saldo, del centro. */
+  centro: string | null;
 }) {
   const { data, isError, error, refetch } = useQuery({
-    queryKey: ["libros", "mayor", cuenta?.id, desde, hasta],
-    queryFn: () => librosApi.mayor(cuenta!.id, desde, hasta),
+    queryKey: ["libros", "mayor", cuenta?.id, desde, hasta, centro],
+    queryFn: () => librosApi.mayor(cuenta!.id, desde, hasta, centro ?? undefined),
     enabled: cuenta !== null,
     meta: SILENCIOSO,
   });

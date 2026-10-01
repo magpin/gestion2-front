@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, TriangleAlert } from "lucide-react";
 
 import { ArbolPlan } from "@/modules/plan-cuentas/components/ArbolPlan";
+import { PreguntaCentrosDeCosto } from "@/modules/plan-cuentas/components/PreguntaCentrosDeCosto";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
 
 import { prepararTodoApi } from "@/modules/tesoreria/services/tesoreria.service";
@@ -209,6 +210,8 @@ export function PasoPlanCuentas() {
               empleados suma cuentas ahí abajo, y verlas aparecer es lo que
               explica para qué sirvió la pregunta. */}
           <HechosOperativos />
+
+          <PreguntaCentrosDeCosto />
 
           {/* Lo que no se pudo deducir, y por qué. Resolverlo cambia la
               sugerencia entera, así que atenderlo después obliga a rehacer. */}

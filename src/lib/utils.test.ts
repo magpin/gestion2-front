@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { formatFecha } from "./utils";
+import { formatCOPConCentavos, formatFecha } from "./utils";
 
 const zonaOriginal = process.env.TZ;
 
@@ -33,5 +33,19 @@ describe("formatFecha", () => {
     // Las 2 a. m. UTC del 28 son las 9 p. m. del 27 en Bogotá.
     expect(formatFecha("2026-09-28T02:00:00.000Z")).toBe("27 sep 2026");
     expect(formatFecha("2026-09-28T15:00:00.000Z")).toBe("28 sep 2026");
+  });
+});
+
+describe("formatCOPConCentavos", () => {
+  // Intl separa la moneda con un espacio duro; se normaliza para comparar.
+  const ver = (v: number) => formatCOPConCentavos(v).replace(/\s/g, " ");
+
+  it("muestra los centavos cuando los hay", () => {
+    expect(ver(0.25)).toBe("$ 0,25");
+    expect(ver(29369.75)).toBe("$ 29.369,75");
+  });
+
+  it("sin centavos, en pesos enteros", () => {
+    expect(ver(1500)).toBe("$ 1.500");
   });
 });

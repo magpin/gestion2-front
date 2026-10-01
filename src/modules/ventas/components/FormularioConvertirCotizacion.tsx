@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Loader2, PackagePlus, ShoppingCart } from "lucide-react";
@@ -85,6 +86,8 @@ function Formulario({
 }) {
   const fecha = hoyEnColombia();
   const [formaPago, setFormaPago] = useState(formaPagoVacia);
+  // La factura hereda el centro de la cotización; cambiarlo aquí lo reemplaza.
+  const [centro, setCentro] = useState<string | null>(cotizacion.centro_costo_id ?? null);
   // Con anticipos o saldo a favor del cliente, «Anticipo» paga con ellos.
   const anticipos = useAnticiposDelCliente(cotizacion.tercero_id);
 
@@ -165,6 +168,7 @@ function Formulario({
             />
             <SoloLectura etiqueta="Fecha de la factura" valor={formatFecha(fecha)} ayuda="Se emite hoy" />
           </div>
+          <CentroDelDocumento valor={centro} onCambiar={setCentro} className="max-w-sm" />
 
           {detalle === undefined ? (
             <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
@@ -238,6 +242,7 @@ function Formulario({
             onClick={() =>
               onGuardar({
                 fecha,
+                ...(centro !== null && { centroCostoId: centro }),
                 ...aFormaPago(formaPago),
                 ...(sinAlcanzar && vendeSinExistencia && { confirmaSinExistencia: true }),
               })

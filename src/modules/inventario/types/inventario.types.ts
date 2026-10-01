@@ -220,6 +220,8 @@ export interface RegistrarMovimientoInput {
   cantidad: number;
   costoUnitario?: number;
   motivo: string;
+  /** Solo los ajustes: dónde va la merma o el sobrante. */
+  centroCostoId?: string;
 }
 
 /** Lo que `PATCH /productos/:id` acepta — ver `EditarProductoDto` del backend. */
