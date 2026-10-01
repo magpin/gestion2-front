@@ -20,6 +20,8 @@ interface Props {
   onDesactivar?: (id: string) => void;
   /** Volver a ofrecer una cuenta desactivada. */
   onActivar?: (id: string) => void;
+  /** Que una cuenta de resultado (clases 4 a 7) exija o no centro de costo. */
+  onExigirCentro?: (id: string, exige: boolean) => void;
   creando?: boolean;
 }
 
@@ -35,7 +37,14 @@ interface Props {
  * empresa, y por eso el auxiliar se numera solo: quien lo crea está pensando en
  * "la caja del local nuevo", no en qué consecutivo sigue.
  */
-export function ArbolPlan({ cuentas, onCrearAuxiliar, onDesactivar, onActivar, creando = false }: Props) {
+export function ArbolPlan({
+  cuentas,
+  onCrearAuxiliar,
+  onDesactivar,
+  onActivar,
+  onExigirCentro,
+  creando = false,
+}: Props) {
   const madres = raices(cuentas);
   const hijasDe = (codigo: string) => cuentas.filter((c) => c.codigo_padre === codigo);
 
@@ -59,6 +68,7 @@ export function ArbolPlan({ cuentas, onCrearAuxiliar, onDesactivar, onActivar, c
           onCrearAuxiliar={onCrearAuxiliar}
           onDesactivar={onDesactivar}
           onActivar={onActivar}
+          onExigirCentro={onExigirCentro}
           creando={creando}
         />
       ))}
@@ -74,6 +84,7 @@ function Rama({
   onCrearAuxiliar,
   onDesactivar,
   onActivar,
+  onExigirCentro,
   creando,
 }: {
   cuenta: CuentaEmpresa;
@@ -84,6 +95,7 @@ function Rama({
   onDesactivar?: (id: string) => void;
   /** Volver a ofrecer una cuenta desactivada. */
   onActivar?: (id: string) => void;
+  onExigirCentro?: (id: string, exige: boolean) => void;
   creando: boolean;
 }) {
   const [agregando, setAgregando] = useState(false);
@@ -116,7 +128,22 @@ function Rama({
         {/* Lo que la cuenta le va a exigir a cada asiento. Se muestra aquí porque
             es lo que después frena una factura al digitarla. */}
         {cuenta.exige_tercero && <Etiqueta>tercero</Etiqueta>}
-        {cuenta.exige_centro_costo && <Etiqueta>centro de costo</Etiqueta>}
+        {onExigirCentro !== undefined && cuenta.activa && /^[4-7]/.test(cuenta.codigo) ? (
+          <button
+            type="button"
+            onClick={() => onExigirCentro(cuenta.id, !cuenta.exige_centro_costo)}
+            title={cuenta.exige_centro_costo ? "Dejar de exigir centro de costo" : "Exigir centro de costo"}
+            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${
+              cuenta.exige_centro_costo
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground line-through hover:bg-muted"
+            }`}
+          >
+            centro de costo
+          </button>
+        ) : (
+          cuenta.exige_centro_costo && <Etiqueta>centro de costo</Etiqueta>
+        )}
         {cuenta.exige_base_gravable && <Etiqueta>base gravable</Etiqueta>}
         {!cuenta.es_auxiliar && <Etiqueta>agrupa</Etiqueta>}
 
@@ -191,6 +218,7 @@ function Rama({
               onCrearAuxiliar={onCrearAuxiliar}
               onDesactivar={onDesactivar}
               onActivar={onActivar}
+              onExigirCentro={onExigirCentro}
               creando={creando}
             />
           ))}

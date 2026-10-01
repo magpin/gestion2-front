@@ -12,7 +12,7 @@ export function AsientoPrevio({
   lineas,
   nota,
 }: {
-  lineas: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
+  lineas: Array<{ codigo: string; nombre: string; centro?: string | null; debito: number; credito: number }>;
   /** Lo que va debajo: el costo aparte, en la factura. */
   nota?: ReactNode;
 }) {
@@ -48,6 +48,7 @@ export function AsientoPrevio({
               <tr key={i}>
                 <td className="py-2 pr-2">
                   <span className="font-mono text-muted-foreground">{l.codigo}</span> {l.nombre}
+                  {l.centro && <span className="block text-xs text-muted-foreground">Centro: {l.centro}</span>}
                 </td>
                 <td className="py-2 text-right font-mono whitespace-nowrap tabular-nums">
                   {l.debito > 0 ? formatCOP(l.debito) : ""}

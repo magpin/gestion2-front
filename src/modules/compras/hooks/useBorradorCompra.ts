@@ -63,6 +63,8 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
   // Dónde se recibe la compra: decide dónde se causa la ReteICA. Solo se
   // pregunta si la empresa tiene sedes en más de un municipio.
   const [municipio, setMunicipio] = useState("");
+  // El centro de costo de la compra. `null`: el que proponga el servidor.
+  const [centro, setCentro] = useState<string | null>(null);
   const { data: municipiosIca = [] } = useQuery({
     queryKey: ["retenciones", "ica"],
     queryFn: retencionesApi.ica,
@@ -99,6 +101,7 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
     setCufe("");
     setLineas([lineaCompraVacia()]);
     setMunicipio("");
+    setCentro(null);
     setRenta(respuestasRentaVacias());
     setConTarjeta(false);
     setFormaPago(formaPagoVacia());
@@ -157,6 +160,8 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
             ivaTarifa: Number(l.ivaTarifa),
             cantidad: Number(l.cantidad),
             costoUnitario: Number(l.costoUnitario),
+            ...(l.centro && { centroCostoId: l.centro }),
+            ...(l.reparto && { repartoId: l.reparto }),
           },
     );
 
@@ -188,6 +193,7 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
       terceroId: proveedor.id,
       fecha,
       numeroFacturaProveedor: soporte ? "" : numeroFactura.trim(),
+      ...(centro !== null && { centroCostoId: centro }),
       ...(soporte && { claseDocumento: "DOCUMENTO_SOPORTE" as const }),
       ...(!soporte && cufe.trim() !== "" && { cufe: cufe.trim() }),
       lineas: lineasParaEnviar(),
@@ -208,6 +214,7 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
     cufe, setCufe,
     lineas, setLineas,
     municipio, setMunicipio, municipiosIca,
+    centro, setCentro,
     renta, setRenta,
     conTarjeta, setConTarjeta,
     formaPago, setFormaPago,

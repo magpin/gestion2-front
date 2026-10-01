@@ -117,6 +117,8 @@ export interface IngresoCajaInput {
   valor: number;
   concepto: string;
   contraCuentaId: string;
+  /** Si la contracuenta es de resultado: dónde. */
+  centroCostoId?: string;
 }
 
 export type EgresoCajaInput = IngresoCajaInput;

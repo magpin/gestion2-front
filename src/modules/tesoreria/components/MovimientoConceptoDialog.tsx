@@ -32,6 +32,11 @@ import type { CuentaBancariaResumen } from "../types/bancos.types";
 import type { Direccion } from "../types/movimientos-concepto.types";
 import type { CajaResumen } from "../types/tesoreria.types";
 import { problemaDelMedio, SelectorMedio, type Medio } from "./SelectorMedio";
+import {
+  SelectorCentroOReparto,
+  useCentroPropuesto,
+  useCentrosCosto,
+} from "@/modules/plan-cuentas/components/SelectorCentroCosto";
 
 /** Hoy en Colombia, no en el reloj del navegador: es la fecha que acepta el backend. */
 const hoy = (): string => hoyEnColombia();
@@ -89,6 +94,10 @@ interface Linea {
   clave: number;
   concepto: Concepto | null;
   valor: string;
+  /** Con centros de costo y una cuenta de resultado: dónde. `null`: el propuesto. */
+  centro?: string | null;
+  /** O repartida entre varios centros por porcentajes (fase 8). */
+  reparto?: string | null;
   /** Lo que la línea es en la plantilla: «Capital», «Intereses». */
   etiqueta?: string;
 }
@@ -140,6 +149,7 @@ function Formulario({
 }) {
   const queryClient = useQueryClient();
   const entra = direccion === "ENTRADA";
+  const centros = useCentrosCosto();
   const [fecha, setFecha] = useState(hoy());
   const [lineasElegidas, setLineas] = useState<Linea[]>(() => [
     inicial ? { ...lineaNueva(), valor: String(inicial.valor) } : lineaNueva(),
@@ -148,6 +158,9 @@ function Formulario({
   const [tercero, setTercero] = useState<TerceroResumen | null>(null);
   const [medio, setMedio] = useState<Medio>(entra ? "BANCO" : "CAJA");
   const [caja, setCaja] = useState<CajaResumen | null>(null);
+  // El que propone el sistema (el del usuario o el de por defecto); el
+  // servidor usa además el de la sede de la caja si nadie elige otro.
+  const propuesto = useCentroPropuesto();
   const [cuenta, setCuenta] = useState<CuentaBancariaResumen | null>(null);
   const [detalle, setDetalle] = useState(inicial?.detalle ?? "");
   const [conRetencion, setConRetencion] = useState(false);
@@ -204,7 +217,12 @@ function Formulario({
         fecha,
         terceroId: tercero?.id,
         detalle: detalle.trim(),
-        lineas: lineas.map((l) => ({ conceptoId: l.concepto!.id, valor: Number(l.valor) })),
+        lineas: lineas.map((l) => ({
+          conceptoId: l.concepto!.id,
+          valor: Number(l.valor),
+          ...(l.centro && { centroCostoId: l.centro }),
+          ...(l.reparto && { repartoId: l.reparto }),
+        })),
         retencion: conRetencion ? { tipo: tipoRetencion, valor: retenido } : undefined,
       }),
     onSuccess: async () => {
@@ -302,6 +320,17 @@ function Formulario({
                   {l.concepto.afectaResultado ? "" : " · no es gasto"}
                 </p>
               )}
+              {centros.maneja && l.concepto?.cuenta && /^[4-7]/.test(l.concepto.cuenta.codigo) && (
+                <div className="md:col-span-2">
+                  <SelectorCentroOReparto
+                    centro={l.centro ?? propuesto}
+                    reparto={l.reparto ?? null}
+                    onChange={({ centro, reparto }) => cambiar(l.clave, { centro, reparto })}
+                    centros={centros.elegibles}
+                    repartos={centros.repartos}
+                  />
+                </div>
+              )}
             </div>
           ))}
           {lineas.length < 10 && (
@@ -315,7 +344,7 @@ function Formulario({
           <div className="rounded-2xl border border-border p-4">
             <label className="flex items-center gap-2.5 text-sm font-medium">
               <Checkbox checked={conRetencion} onCheckedChange={(v) => setConRetencion(v === true)} />
-              Te retuvieron algo
+              Le retuvieron algo
             </label>
             {conRetencion && (
               <div className="mt-3 grid gap-3 md:grid-cols-2">

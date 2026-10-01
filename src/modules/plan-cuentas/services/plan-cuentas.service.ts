@@ -3,6 +3,9 @@ import type {
   CatalogoParaEmpresa,
   CentroCosto,
   CuentaEmpresa,
+  DatosCentro,
+  GuardarRepartoInput,
+  Reparto,
   Sugerencia,
 } from "../types/plan-cuentas.types";
 
@@ -63,12 +66,67 @@ export const planCuentasApi = {
 
   centros: () => api.get<CentroCosto[]>("/plan-cuentas/centros-costo").then((r) => r.data),
 
-  crearCentro: (datos: { codigo: string; nombre: string }) =>
+  crearCentro: (datos: DatosCentro & { codigo: string; nombre: string }) =>
     api.post<CentroCosto>("/plan-cuentas/centros-costo", datos).then((r) => r.data),
 
-  editarCentro: (id: string, datos: { nombre: string }) =>
+  editarCentro: (id: string, datos: DatosCentro) =>
     api.patch<CentroCosto>(`/plan-cuentas/centros-costo/${id}`, datos).then((r) => r.data),
 
   desactivarCentro: (id: string) =>
     api.post(`/plan-cuentas/centros-costo/${id}/desactivar`).then(() => undefined),
+
+  activarCentro: (id: string) =>
+    api.post(`/plan-cuentas/centros-costo/${id}/activar`).then(() => undefined),
+
+  repartos: () =>
+    api.get<Reparto[]>("/plan-cuentas/centros-costo/repartos").then((r) => r.data),
+
+  crearReparto: (datos: GuardarRepartoInput) =>
+    api.post<Reparto>("/plan-cuentas/centros-costo/repartos", datos).then((r) => r.data),
+
+  editarReparto: (id: string, datos: GuardarRepartoInput) =>
+    api.put<Reparto>(`/plan-cuentas/centros-costo/repartos/${id}`, datos).then((r) => r.data),
+
+  fijarRepartoActivo: (id: string, activo: boolean) =>
+    api
+      .post(`/plan-cuentas/centros-costo/repartos/${id}/${activo ? "activar" : "desactivar"}`)
+      .then(() => undefined),
+
+  /** Un centro por cada sede activa que no tenga el suyo. */
+  centrosDesdeSedes: () =>
+    api.post<CentroCosto[]>("/plan-cuentas/centros-costo/desde-sedes").then((r) => r.data),
+
+  manejoCentros: () =>
+    api.get<{ activo: boolean }>("/plan-cuentas/centros-costo/manejo").then((r) => r.data.activo),
+
+  /** Encender marca las cuentas 4–7 con «exige centro»; exige un centro por defecto. */
+  fijarManejoCentros: (activo: boolean) =>
+    api.post("/plan-cuentas/centros-costo/manejo", { activo }).then(() => undefined),
+
+  /** El centro que el sistema propone para un documento nuevo; `null` si no se manejan. */
+  centroPropuesto: (sedeId?: string) =>
+    api
+      .get<{ centroCostoId: string | null }>("/plan-cuentas/centros-costo/propuesto", {
+        params: sedeId ? { sedeId } : undefined,
+      })
+      .then((r) => r.data.centroCostoId),
+
+  /** El centro del usuario en sesión: lo que él registra va ahí si no dice otro. */
+  miCentro: () =>
+    api
+      .get<{ centroCostoId: string | null }>("/plan-cuentas/centros-costo/mio")
+      .then((r) => r.data.centroCostoId),
+
+  fijarMiCentro: (centroCostoId: string | null) =>
+    api.put("/plan-cuentas/centros-costo/mio", { centroCostoId }).then(() => undefined),
+
+  centroDeUsuario: (usuarioId: string) =>
+    api
+      .get<{ centroCostoId: string | null }>(`/plan-cuentas/centros-costo/usuarios/${usuarioId}`)
+      .then((r) => r.data.centroCostoId),
+
+  fijarCentroDeUsuario: (usuarioId: string, centroCostoId: string | null) =>
+    api
+      .put(`/plan-cuentas/centros-costo/usuarios/${usuarioId}`, { centroCostoId })
+      .then(() => undefined),
 };

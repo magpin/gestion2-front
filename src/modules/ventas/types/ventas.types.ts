@@ -22,6 +22,10 @@ export interface VentaDocumentoResumen {
   tercero_id: string;
   /** Razón social o nombre completo: viene de la API para no resolverlo acá. */
   tercero_nombre: string;
+  /** Dónde se vendió; `null` sin centros de costo. */
+  centro_costo_id?: string | null;
+  /** `ADM · Administración`. */
+  centro_costo_nombre?: string | null;
   /** Ya formateada por el backend: `NIT 900123456-7`, `CC 19400748`. */
   tercero_identificacion: string;
   fecha: string;
@@ -143,11 +147,18 @@ export interface CrearCotizacionInput {
   terceroId: string;
   fecha: string;
   lineas: LineaDocumentoInput[];
+  /** Dónde se va a vender; la factura que salga la hereda. */
+  centroCostoId?: string;
 }
 
 export interface CrearFacturaInput {
   terceroId: string;
   fecha: string;
+  /**
+   * Dónde se vendió. Sin él, el servidor propone: el del usuario, el de la
+   * sede de la caja, el de por defecto.
+   */
+  centroCostoId?: string;
   lineas: LineaDocumentoInput[];
   /**
    * "Sé que no hay existencia y la emito igual". No es un permiso: el backend
@@ -196,7 +207,7 @@ export interface FacturaPrevia {
   /** Lo que va a entrar: el total menos lo retenido. */
   neto: number;
   vence: string | null;
-  asiento: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
+  asiento: Array<{ codigo: string; nombre: string; centro?: string | null; debito: number; credito: number }>;
   /** El costo de lo que sale del inventario, aparte del asiento que se muestra. */
   costo: number;
   /** De contado: por dónde entra la plata y cuánto por cada medio (el renglón en blanco, el resto). */
@@ -257,6 +268,8 @@ export interface CrearNotaCreditoInput {
  */
 export interface ConvertirCotizacionInput {
   fecha: string;
+  /** Cambia el centro de la cotización; sin él, la factura hereda el suyo. */
+  centroCostoId?: string;
   /** Ver `CrearFacturaInput.confirmaSinExistencia`: la factura sale igual. */
   confirmaSinExistencia?: boolean;
   /** Ver `CrearFacturaInput.confirmaPrecioBajoCosto`. */

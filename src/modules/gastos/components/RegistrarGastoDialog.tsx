@@ -30,6 +30,7 @@ import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcept
 import { conceptosApi } from "@/modules/conceptos/services/conceptos.service";
 import type { Concepto } from "@/modules/conceptos/types/conceptos.types";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import type { TerceroResumen } from "@/modules/terceros/types/terceros.types";
 import { admiteSinFactura } from "@/modules/tesoreria/components/MovimientoConceptoDialog";
 import { problemaDelMedio, SelectorMedio, type Medio } from "@/modules/tesoreria/components/SelectorMedio";
@@ -88,6 +89,8 @@ function Formulario({
   const queryClient = useQueryClient();
   const veMaria = useAuthStore((s) => ROLES_MARIA.some((r) => s.roles.includes(r)));
   const [descripcion, setDescripcion] = useState("");
+  // El centro de costo del gasto. `null`: el que proponga el servidor.
+  const [centro, setCentro] = useState<string | null>(null);
   const [tercero, setTercero] = useState<TerceroResumen | null>(null);
   const [concepto, setConcepto] = useState<Concepto | null>(null);
   const [conFactura, setConFactura] = useState(false);
@@ -154,6 +157,7 @@ function Formulario({
         terceroId: tercero?.id,
         detalle: descripcion.trim(),
         valor: Number(valor),
+        ...(centro !== null && { centroCostoId: centro }),
       }),
     onSuccess: async (m) => {
       await Promise.all(
@@ -286,6 +290,7 @@ function Formulario({
             {concepto.operacional ? "Gasto de la operación" : "No es de la operación"}
           </p>
         )}
+        {!porCompras && <CentroDelDocumento valor={centro} onCambiar={setCentro} className="max-w-sm" />}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo id="gasto-valor" etiqueta={porCompras ? "Valor antes de IVA (opcional)" : "Valor"}>

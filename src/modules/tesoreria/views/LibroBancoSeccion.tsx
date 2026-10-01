@@ -101,6 +101,7 @@ export function LibroBancoSeccion() {
         concepto: d.concepto,
         contraCuentaId: d.contraCuentaId!,
         referencia: d.referencia || undefined,
+        ...(d.centroCostoId && { centroCostoId: d.centroCostoId }),
       });
     },
     onSuccess: async () => {

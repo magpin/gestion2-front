@@ -72,6 +72,7 @@ export function DetalleVenta({
                   {documento.tercero_identificacion}
                   {" · "}
                   {formatFecha(documento.fecha)}
+                  {documento.centro_costo_nombre && ` · Centro ${documento.centro_costo_nombre}`}
                 </DialogDescription>
               </div>
               <DialogCloseIcon />

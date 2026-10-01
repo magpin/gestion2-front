@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SelectorCentroCosto, useCentrosCosto } from "@/modules/plan-cuentas/components/SelectorCentroCosto";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, Loader2, Search, Trash2 } from "lucide-react";
@@ -60,6 +61,8 @@ export function AsientosSeccion() {
   const [busqueda, setBusqueda] = useState("");
   const [tipo, setTipo] = useState(TODOS);
   const [verAnulados, setVerAnulados] = useState(false);
+  const [centro, setCentro] = useState<string | null>(null);
+  const centros = useCentrosCosto();
   const [pagina, setPagina] = useState(1);
 
   const [creando, setCreando] = useState(false);
@@ -69,12 +72,13 @@ export function AsientosSeccion() {
   const [motivo, setMotivo] = useState("");
   const [detalleId, setDetalleId] = useState<string | null>(null);
 
-  const hayFiltro = busqueda.trim() !== "" || tipo !== TODOS || verAnulados;
+  const hayFiltro = busqueda.trim() !== "" || tipo !== TODOS || verAnulados || centro !== null;
 
   const limpiar = () => {
     setBusqueda("");
     setTipo(TODOS);
     setVerAnulados(false);
+    setCentro(null);
     setPagina(1);
   };
 
@@ -91,11 +95,12 @@ export function AsientosSeccion() {
     refetch,
   } = useQuery({
     meta: SILENCIOSO,
-    queryKey: [...CLAVE, busqueda, tipo, verAnulados, pagina],
+    queryKey: [...CLAVE, busqueda, tipo, verAnulados, pagina, centro],
     queryFn: () =>
       asientosApi.listar({
         q: busqueda.trim() || undefined,
         comprobanteTipoId: tipo === TODOS ? undefined : tipo,
+        centroCostoId: centro ?? undefined,
         incluirAnulados: verAnulados,
         pagina,
       }),
@@ -175,6 +180,21 @@ export function AsientosSeccion() {
           />
           Ver anulados
         </label>
+
+        {centros.maneja && (
+          <div className="min-w-56">
+            <SelectorCentroCosto
+              value={centro}
+              onChange={(id) => {
+                setCentro(id);
+                setPagina(1);
+              }}
+              centros={centros.todos.filter((c) => !c.agrupa)}
+              permitirVacio
+              textoVacio="Todos los centros"
+            />
+          </div>
+        )}
 
         <Button
           variant="outline"

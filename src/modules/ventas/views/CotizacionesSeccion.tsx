@@ -131,6 +131,7 @@ export function CotizacionesSeccion({
       ? {
           tercero: resumirTercero(clienteACorregir),
           fecha: aCorregir.fecha.slice(0, 10),
+          centro: aCorregir.centro_costo_id ?? null,
           lineas: aCorregir.lineas.map((l, i) => ({
             clave: i,
             producto: productosACorregir[i],

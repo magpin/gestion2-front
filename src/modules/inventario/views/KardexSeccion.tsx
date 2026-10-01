@@ -70,7 +70,11 @@ export function KardexSeccion() {
   const registrar = useMutation({
     mutationFn: (d: DatosMovimiento) => {
       const id = producto!.id;
-      if (tipo === "ENTRADA_INICIAL") return kardexApi.cargaInicial(id, d);
+      if (tipo === "ENTRADA_INICIAL") {
+        // La carga inicial no tiene asiento: no lleva centro de costo.
+        const { centroCostoId: _centro, ...sinCentro } = d;
+        return kardexApi.cargaInicial(id, sinCentro);
+      }
       if (tipo === "ENTRADA_AJUSTE") return kardexApi.entradaAjuste(id, d);
       // La salida no lleva costo: se valora al promedio vigente. Lleva quién
       // asume el faltante, que el formulario ya exigió.

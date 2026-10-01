@@ -10,6 +10,7 @@ import { cn, formatCOP } from "@/lib/utils";
 import { useResponsableIva } from "@/core/hooks/useResponsableIva";
 import { useQuieto } from "@/hooks/useQuieto";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
+import { SelectorCentroOReparto, useCentrosCosto } from "@/modules/plan-cuentas/components/SelectorCentroCosto";
 import { conceptosApi } from "@/modules/conceptos/services/conceptos.service";
 import { gastosApi } from "@/modules/gastos/services/gastos.service";
 import { PALABRAS_CERTEZA } from "@/modules/gastos/types/gastos.types";
@@ -46,6 +47,13 @@ export interface LineaCompraBorrador {
    * cosa —un régimen simple, una exportación, un excluido—.
    */
   sinIva: boolean;
+  /**
+   * Solo en las de gasto y con centros de costo: el centro de este renglón si
+   * es distinto al de la compra (el arriendo de dos sedes). `null`: el de la compra.
+   */
+  centro?: string | null;
+  /** O repartido entre varios centros por porcentajes (fase 8). */
+  reparto?: string | null;
 }
 
 export function lineaCompraVacia(
@@ -95,6 +103,7 @@ export function EditorLineasCompra({
   sinMarco?: boolean;
 }) {
   const conIva = useResponsableIva();
+  const centros = useCentrosCosto();
 
   const actualizar = (clave: number, cambio: Partial<LineaCompraBorrador>) =>
     onCambiar(
@@ -216,6 +225,16 @@ export function EditorLineasCompra({
                             <p className="text-xs text-muted-foreground">
                               {l.concepto.cuenta.nombre} · <span className="font-mono">{l.concepto.cuenta.codigo}</span>
                             </p>
+                          )}
+                          {centros.maneja && (
+                            <SelectorCentroOReparto
+                              centro={l.centro ?? null}
+                              reparto={l.reparto ?? null}
+                              onChange={({ centro, reparto }) => actualizar(l.clave, { centro, reparto })}
+                              centros={centros.elegibles}
+                              repartos={centros.repartos}
+                              textoVacio="El centro de la compra"
+                            />
                           )}
                         </>
                       )}

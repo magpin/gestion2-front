@@ -79,11 +79,49 @@ export interface Sugerencia {
   faltantes: HechoFaltante[];
 }
 
+export type TipoCentro = "PRODUCTIVO" | "APOYO" | "ADMINISTRATIVO";
+
+/**
+ * Dónde se vendió o se gastó: una sede, un área, un proyecto. La cuenta dice
+ * en qué; el centro, dónde. Se agrupan en dos niveles y solo el último recibe
+ * movimientos (`agrupa` = false).
+ */
 export interface CentroCosto {
   id: string;
   codigo: string;
   nombre: string;
   activo: boolean;
+  padreId: string | null;
+  sedeId: string | null;
+  sedeNombre: string | null;
+  tipo: TipoCentro;
+  esPorDefecto: boolean;
+  agrupa: boolean;
+}
+
+/** «Arriendo: 60 % Norte, 40 % Sur»: un gasto común repartido entre centros. */
+export interface Reparto {
+  id: string;
+  nombre: string;
+  /** Con qué se calcularon los porcentajes: «por metros cuadrados». */
+  base: string | null;
+  activo: boolean;
+  partes: Array<{ centroCostoId: string; centroNombre: string; porcentaje: number }>;
+}
+
+export interface GuardarRepartoInput {
+  nombre: string;
+  base?: string;
+  partes: Array<{ centroCostoId: string; porcentaje: number }>;
+}
+
+export interface DatosCentro {
+  codigo?: string;
+  nombre?: string;
+  padreId?: string | null;
+  sedeId?: string | null;
+  tipo?: TipoCentro;
+  esPorDefecto?: boolean;
 }
 
 /**

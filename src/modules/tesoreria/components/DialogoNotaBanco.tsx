@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import { SelectorCuenta } from "@/modules/contabilidad/components/SelectorCuenta";
 import type { CuentaEmpresa } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 import { tercerosApi } from "@/modules/terceros/services/terceros.service";
@@ -32,6 +33,8 @@ export interface DatosNotaBanco {
   contraCuentaId: string;
   concepto: string;
   terceroId?: string;
+  /** Si la cuenta es de ingreso, costo o gasto: dónde. */
+  centroCostoId?: string;
 }
 
 /**
@@ -66,6 +69,9 @@ export function DialogoNotaBanco({
   const [cuenta, setCuenta] = useState<CuentaEmpresa | null>(null);
   const [concepto, setConcepto] = useState("");
   const [terceroId, setTerceroId] = useState("");
+  // `null`: el que proponga el sistema (el del usuario o el de por defecto).
+  const [centro, setCentro] = useState<string | null>(null);
+  const deResultado = cuenta !== null && /^[4-7]/.test(cuenta.codigo);
 
   const exigeTercero = cuenta?.exige_tercero ?? false;
   const { data: terceros } = useQuery({
@@ -76,15 +82,11 @@ export function DialogoNotaBanco({
   });
 
   /*
-   * `registrar` y `completar` no reciben centro de costo ni base gravable, y
-   * el trigger del asiento rechaza una cuenta que los exige. Se dice acá, al
-   * elegirla, y no después con el error de la base.
+   * `registrar` y `completar` no reciben base gravable, y el trigger del
+   * asiento rechaza una cuenta que la exige. Se dice acá, al elegirla, y no
+   * después con el error de la base. El centro de costo sí lo reciben.
    */
-  const noSirve = cuenta?.exige_centro_costo
-    ? "centro de costo"
-    : cuenta?.exige_base_gravable
-      ? "base gravable"
-      : null;
+  const noSirve = cuenta?.exige_base_gravable ? "base gravable" : null;
 
   const conceptoLimpio = concepto.trim();
   const completo =
@@ -140,6 +142,8 @@ export function DialogoNotaBanco({
             </Campo>
           )}
 
+          {deResultado && <CentroDelDocumento valor={centro} onCambiar={setCentro} className="max-w-sm" />}
+
           <Campo id="concepto" etiqueta="Concepto" ayuda="Lo que va a decir el movimiento en el libro." escala="grande">
             <Input
               id="concepto"
@@ -164,6 +168,7 @@ export function DialogoNotaBanco({
                 contraCuentaId: cuenta.id,
                 concepto: conceptoLimpio,
                 terceroId: exigeTercero ? terceroId : undefined,
+                ...(deResultado && centro !== null && { centroCostoId: centro }),
               })
             }
             className="h-12 gap-2 rounded-xl px-6"

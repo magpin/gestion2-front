@@ -7,6 +7,9 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorCarga, SILENCIOSO } from "@/components/shared/ErrorCarga";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { cn, formatCOP } from "@/lib/utils";
+import { SelectField } from "@/components/shared/SelectField";
+import { etiquetaCentro, useCentrosCosto } from "@/modules/plan-cuentas/components/SelectorCentroCosto";
+import type { CentroCosto } from "@/modules/plan-cuentas/types/plan-cuentas.types";
 import { nombreMes } from "@/modules/gastos/lib/mes";
 import { formatoPorcentaje, mesCorto, valoresResultados } from "../lib/estados";
 import { estadosApi } from "../services/estados.service";
@@ -15,17 +18,45 @@ import { Dato, Fila, TablaEstado, Tarjeta, rangoDelPeriodo } from "./Comun";
 
 /** El estado de resultados del mes, contra otro si se eligió, con la utilidad de seis meses y los márgenes. */
 export function EstadoResultadosTab({ mes, comparar }: { mes: string; comparar?: string }) {
+  // Con centros de costo: el de un centro, el de lo que quedó sin centro, o
+  // todos en columnas.
+  const centros = useCentrosCosto();
+  const [centro, setCentro] = useState<string>(TODOS);
+  const [vista, setVista] = useState<"UNO" | "CENTRO" | "TIPO">("UNO");
+
   const { data, isError, error, refetch } = useQuery({
-    queryKey: ["estados-financieros", "resultados", mes, comparar ?? ""],
-    queryFn: () => estadosApi.resultados(mes, comparar),
+    queryKey: ["estados-financieros", "resultados", mes, comparar ?? "", centro],
+    queryFn: () => estadosApi.resultados(mes, comparar, centro === TODOS ? undefined : centro),
     meta: SILENCIOSO,
+    enabled: vista === "UNO",
   });
+
+  const barra = centros.maneja ? (
+    <BarraCentros
+      centros={centros.todos.filter((c) => !c.agrupa)}
+      centro={centro}
+      onCentro={setCentro}
+      vista={vista}
+      onVista={setVista}
+    />
+  ) : null;
+
+  if (vista !== "UNO") {
+    return (
+      <div className="flex flex-col gap-4">
+        {barra}
+        <PorCentro mes={mes} agrupar={vista} />
+      </div>
+    );
+  }
 
   if (data === undefined) {
     return isError ? <ErrorCarga error={error} titulo="No se pudo armar el estado" onReintentar={refetch} /> : <SkeletonTable />;
   }
 
   return (
+    <div className="flex flex-col gap-4">
+    {barra}
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
       <Tabla datos={data} />
       <aside className="flex w-full flex-col gap-4 lg:w-72 lg:shrink-0">
@@ -36,6 +67,116 @@ export function EstadoResultadosTab({ mes, comparar }: { mes: string; comparar?:
           <Dato etiqueta="Antes de impuestos" valor={formatoPorcentaje(data.margenes.antesDeImpuestos, false)} />
         </Tarjeta>
       </aside>
+    </div>
+    </div>
+  );
+}
+
+const TODOS = "__todos";
+const SIN = "SIN";
+
+/** Qué centro se mira, o todos en columnas (por centro o por tipo de centro). */
+function BarraCentros({
+  centros,
+  centro,
+  onCentro,
+  vista,
+  onVista,
+}: {
+  centros: CentroCosto[];
+  centro: string;
+  onCentro: (c: string) => void;
+  vista: "UNO" | "CENTRO" | "TIPO";
+  onVista: (v: "UNO" | "CENTRO" | "TIPO") => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-end gap-3">
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
+        Ver
+        <div className="w-56">
+          <SelectField
+            value={vista}
+            onChange={(v) => onVista(v as "UNO" | "CENTRO" | "TIPO")}
+            options={[
+              { value: "UNO", label: "Un estado" },
+              { value: "CENTRO", label: "Columnas por centro" },
+              { value: "TIPO", label: "Columnas por tipo de centro" },
+            ]}
+          />
+        </div>
+      </label>
+      {vista === "UNO" && (
+        <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
+          Centro de costo
+          <div className="w-64">
+            <SelectField
+              value={centro}
+              onChange={onCentro}
+              options={[
+                { value: TODOS, label: "Toda la empresa" },
+                ...centros.map((c) => ({ value: c.id, label: etiquetaCentro(c) })),
+                { value: SIN, label: "Sin centro" },
+              ]}
+            />
+          </div>
+        </label>
+      )}
+    </div>
+  );
+}
+
+/**
+ * El estado de resultados en columnas: los renglones del PUC (ingresos, costo,
+ * gastos de administración y de ventas, no operacionales) y una columna por
+ * centro, con «Sin centro» y el total. Las columnas suman el total.
+ */
+function PorCentro({ mes, agrupar }: { mes: string; agrupar: "CENTRO" | "TIPO" }) {
+  const { data, isError, error, refetch } = useQuery({
+    queryKey: ["estados-financieros", "resultados-por-centro", mes, agrupar],
+    queryFn: () => estadosApi.resultadosPorCentro(mes, agrupar),
+    meta: SILENCIOSO,
+  });
+  if (data === undefined) {
+    return isError ? <ErrorCarga error={error} titulo="No se pudo armar el estado por centro" onReintentar={refetch} /> : <SkeletonTable />;
+  }
+  if (data.columnas.length === 0) {
+    return (
+      <EmptyState
+        titulo="Sin movimientos en el período"
+        descripcion="Cuando se registren ventas, compras o gastos de este mes, el estado por centro sale solo del libro."
+      />
+    );
+  }
+  const valorDe = (estado: { renglones: Array<{ clave: string; valor: number }> }, clave: string) =>
+    estado.renglones.find((r) => r.clave === clave)?.valor ?? 0;
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      <table className="w-full min-w-[640px] text-sm">
+        <thead className="border-b border-border bg-muted/40 text-[11px] font-semibold text-muted-foreground">
+          <tr>
+            <th scope="col" className="px-4 py-3 text-left">{rangoDelPeriodo(data.periodo)}</th>
+            {data.columnas.map((c) => (
+              <th key={c.clave} scope="col" className="px-4 py-3 text-right whitespace-nowrap">
+                {c.nombre}
+              </th>
+            ))}
+            <th scope="col" className="px-4 py-3 text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {data.total.renglones.map((r) => (
+            <tr key={r.clave} className={cn(r.tipo !== "grupo" && "bg-muted/30 font-semibold")}>
+              <th scope="row" className="px-4 py-2.5 text-left font-medium">{r.etiqueta}</th>
+              {data.columnas.map((c) => (
+                <td key={c.clave} className="px-4 py-2.5 text-right font-mono whitespace-nowrap tabular-nums">
+                  {formatCOP(valorDe(c.estado, r.clave))}
+                </td>
+              ))}
+              <td className="px-4 py-2.5 text-right font-mono whitespace-nowrap tabular-nums">{formatCOP(r.valor)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -36,6 +36,14 @@ export interface EstadoResultados {
   utilidadNeta: number;
 }
 
+/** El estado de resultados en columnas: una por centro de costo (o tipo), «Sin centro» y el total. */
+export interface ResultadosPorCentro {
+  periodo: Periodo;
+  agrupar: "CENTRO" | "TIPO";
+  columnas: Array<{ clave: string; nombre: string; estado: EstadoResultados }>;
+  total: EstadoResultados;
+}
+
 export interface Resultados {
   periodo: Periodo;
   actual: EstadoResultados;

@@ -163,9 +163,9 @@ export const librosApi = {
       .get<AsientoDiario[]>("/libros/diario", { params: { desde, hasta } })
       .then((r) => r.data),
 
-  mayor: (cuentaId: string, desde: string, hasta: string) =>
+  mayor: (cuentaId: string, desde: string, hasta: string, centroCostoId?: string) =>
     api
-      .get<Mayor>("/libros/mayor", { params: { cuentaId, desde, hasta } })
+      .get<Mayor>("/libros/mayor", { params: { cuentaId, desde, hasta, centroCostoId } })
       .then((r) => r.data),
 
   auxiliarTercero: (terceroId: string, desde: string, hasta: string) =>

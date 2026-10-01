@@ -97,7 +97,13 @@ export function LibroCajaSeccion() {
           concepto: d.concepto,
         });
       }
-      const datos = { fecha: d.fecha, valor: d.valor, concepto: d.concepto, contraCuentaId: d.contraCuentaId! };
+      const datos = {
+        fecha: d.fecha,
+        valor: d.valor,
+        concepto: d.concepto,
+        contraCuentaId: d.contraCuentaId!,
+        ...(d.centroCostoId && { centroCostoId: d.centroCostoId }),
+      };
       return tipoFormulario === "INGRESO"
         ? movimientosCajaApi.ingreso(id, datos)
         : movimientosCajaApi.egreso(id, datos);

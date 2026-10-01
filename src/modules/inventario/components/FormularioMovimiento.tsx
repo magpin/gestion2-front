@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
@@ -39,6 +40,8 @@ const esquema = z.object({
   // Solo la salida de ajuste: quién asume lo que falta.
   tratamientoFaltante: z.enum(["EMPRESA", "RESPONSABLE"]).optional(),
   responsableTerceroId: z.string().optional(),
+  // Solo los ajustes (la carga inicial no tiene asiento): dónde va la merma o el sobrante.
+  centroCostoId: z.string().optional(),
 });
 
 export type DatosMovimiento = z.infer<typeof esquema>;
@@ -266,6 +269,14 @@ export function FormularioMovimiento({
             </Campo>
           )}
         </fieldset>
+      )}
+
+      {tipo !== "ENTRADA_INICIAL" && (
+        <CentroDelDocumento
+          valor={form.watch("centroCostoId") ?? null}
+          onCambiar={(id) => form.setValue("centroCostoId", id ?? undefined)}
+          className="max-w-sm"
+        />
       )}
 
       <Campo

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Pencil } from "lucide-react";
 
@@ -281,6 +282,9 @@ function DialogoRegla({
   const [b, setB] = useState<BorradorRegla>(inicial);
   const [cuenta, setCuenta] = useState<CuentaEmpresa | null>(cuentaInicial);
   const [bancaria, setBancaria] = useState<string>(TODAS);
+  // El centro de costo de la regla. `null`: el del usuario o el de por defecto.
+  const [centro, setCentro] = useState<string | null>(regla?.centro_costo_id ?? null);
+  const deResultado = cuenta !== null && /^[4-7]/.test(cuenta.codigo);
 
   // Al editar, la cuenta cambia solo si se eligió otra. Sin esto se reenviaba
   // siempre, y una regla cuya cuenta hoy no pasa la validación (inactiva, o
@@ -298,12 +302,14 @@ function DialogoRegla({
         ? reglasExtractoApi.actualizar(regla.id, {
             ...comun,
             ...(cuentaCambio ? { contraCuentaId: cuenta!.id } : {}),
+            centroCostoId: deResultado ? centro : null,
           })
         : reglasExtractoApi.crear({
             ...comun,
             contraCuentaId: cuenta!.id,
             tipoLinea: b.tipoLinea,
             cuentaBancariaId: bancaria === TODAS ? undefined : bancaria,
+            ...(deResultado && centro !== null && { centroCostoId: centro }),
           });
     },
     onSuccess: async () => {
@@ -314,14 +320,12 @@ function DialogoRegla({
   });
 
   // Mismo criterio que el backend (`exigirContraCuenta`): la regla registra
-  // sin tercero, centro de costo ni base gravable.
+  // sin tercero ni base gravable. El centro de costo lo lleva la regla.
   const noSirve = cuenta?.exige_tercero
     ? "tercero"
-    : cuenta?.exige_centro_costo
-      ? "centro de costo"
-      : cuenta?.exige_base_gravable
-        ? "base gravable"
-        : null;
+    : cuenta?.exige_base_gravable
+      ? "base gravable"
+      : null;
   // Al editar sin tocar la cuenta, su problema se muestra pero no bloquea: lo
   // que se está cambiando es otra cosa. Y si el plan todavía no cargó, la
   // cuenta sigue siendo la de la regla aunque el selector esté vacío.
@@ -440,6 +444,8 @@ function DialogoRegla({
               otra auxiliar.
             </p>
           )}
+
+          {deResultado && <CentroDelDocumento valor={centro} onCambiar={setCentro} className="max-w-sm" />}
 
           <Campo id="concepto" etiqueta="Concepto" ayuda="Lo que va a decir cada nota en el libro." escala="grande">
             <Input

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
 import { Campo } from "@/modules/configuracion/components/Campo";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import { PropuestaRenta } from "@/modules/retenciones/components/PropuestaRenta";
 import { fechaConDia, PlazoYPago } from "@/modules/tesoreria/components/PlazoYPago";
 import type { BorradorCompra, ClaseDocumento } from "../hooks/useBorradorCompra";
@@ -125,6 +126,7 @@ export function DocumentoCompra({ b, completa = false }: { b: BorradorCompra; co
           />
         </Campo>
       </div>
+      <CentroDelDocumento valor={b.centro} onCambiar={b.setCentro} className="max-w-sm" />
 
       {completa && !b.soporte && (
         <Campo

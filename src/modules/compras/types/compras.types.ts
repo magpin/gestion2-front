@@ -45,6 +45,9 @@ export interface CompraDocumentoResumen {
   tercero_id: string;
   /** Razón social o nombre completo: viene de la API para no resolverlo acá. */
   tercero_nombre: string;
+  /** Dónde se gastó; `null` sin centros de costo. */
+  centro_costo_id?: string | null;
+  centro_costo_nombre?: string | null;
   /** Ya formateada por el backend: `NIT 900123456-7`, `CC 19400748`. */
   tercero_identificacion: string;
   fecha: string;
@@ -139,6 +142,10 @@ export interface FiltroCompras {
 export interface LineaCompraInput {
   /** En una línea de gasto no va: lo que se compró lo dicen `cuentaId` y `detalle`. */
   productoId?: string;
+  /** El centro de costo del renglón, si es distinto al de la compra. */
+  centroCostoId?: string;
+  /** O repartido entre varios centros por porcentajes. */
+  repartoId?: string;
   /** Contra qué cuenta se debita el gasto. Excluyente con `productoId`. */
   cuentaId?: string;
   /** Lo normal en una línea de gasto: el concepto, y la cuenta la pone él. */
@@ -173,6 +180,8 @@ export interface CrearCompraInput {
   terceroId: string;
   fecha: string;
   numeroFacturaProveedor: string;
+  /** Dónde se gastó; sin él, el que proponga el servidor. */
+  centroCostoId?: string;
   /** Factura electrónica del proveedor, o documento soporte que numera la empresa. */
   claseDocumento?: "FACTURA_ELECTRONICA" | "DOCUMENTO_SOPORTE";
   /** El CUFE, como dato: no se valida en la DIAN (PC2). */
@@ -263,7 +272,7 @@ export interface CompraPrevia {
   detalleRetenciones: Array<{ tipo: string | null; nombre: string; tarifa: number | null; base: number; valor: number }>;
   neto: number;
   vence: string | null;
-  asiento: Array<{ codigo: string; nombre: string; debito: number; credito: number }>;
+  asiento: Array<{ codigo: string; nombre: string; centro?: string | null; debito: number; credito: number }>;
 }
 
 /** La numeración del documento soporte (`GET /compras/soporte/numeracion`). */

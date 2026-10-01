@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -83,12 +84,16 @@ export function FormularioDocumentoVenta({
     tercero: TerceroResumen | null;
     fecha: string;
     lineas: LineaVentaBorrador[];
+    /** El centro de costo que ya tenía (al corregir una cotización). */
+    centro?: string | null;
   };
 }) {
   const [tercero, setTercero] = useState<TerceroResumen | null>(
     inicial?.tercero ?? null,
   );
   const [fecha, setFecha] = useState(inicial?.fecha ?? hoyEnColombia());
+  // `null`: el que proponga el sistema.
+  const [centro, setCentro] = useState<string | null>(inicial?.centro ?? null);
   // Solo la factura se paga: con anticipos del cliente, «Anticipo» los aplica.
   const anticiposDelCliente = useAnticiposDelCliente(conFormaPago ? tercero?.id : null);
   const [lineas, setLineas] = useState<LineaVentaBorrador[]>(
@@ -101,6 +106,7 @@ export function FormularioDocumentoVenta({
     setFecha(inicial?.fecha ?? hoyEnColombia());
     setLineas(inicial?.lineas ?? [lineaVentaVacia()]);
     setFormaPago(formaPagoVacia());
+    setCentro(inicial?.centro ?? null);
   };
 
   const sinProducto = lineas
@@ -165,6 +171,7 @@ export function FormularioDocumentoVenta({
       {
         terceroId: tercero.id,
         fecha,
+        ...(centro !== null && { centroCostoId: centro }),
         lineas: lineas.map((l) => ({
           productoId: l.producto!.id,
           cantidad: Number(l.cantidad),
@@ -230,6 +237,7 @@ export function FormularioDocumentoVenta({
               )}
             </Campo>
           </div>
+          <CentroDelDocumento valor={centro} onCambiar={setCentro} className="-mt-4 max-w-sm" />
 
           <EditorLineasVenta
             lineas={lineas}

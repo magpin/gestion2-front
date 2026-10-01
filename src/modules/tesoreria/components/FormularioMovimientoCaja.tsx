@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
@@ -26,6 +28,8 @@ const esquema = z.object({
 
 export type DatosMovimientoCaja = z.infer<typeof esquema> & {
   contraCuentaId?: string;
+  /** Si la contracuenta es de ingreso, costo o gasto: dónde. */
+  centroCostoId?: string;
 };
 
 const CONTROL = "h-11 rounded-xl px-4";
@@ -62,6 +66,10 @@ export function FormularioMovimientoCaja({
 }) {
   const requiereContraCuenta = tipo !== "SALDO_INICIAL";
 
+  // Una contracuenta de ingreso, costo o gasto lleva centro de costo.
+  const [centro, setCentro] = useState<string | null>(null);
+  const deResultado = contraCuenta !== null && /^[4-7]/.test(contraCuenta.codigo);
+
   const form = useForm<z.infer<typeof esquema>>({
     resolver: zodResolver(esquema),
     defaultValues: { fecha: hoy(), valor: 0, concepto: "" },
@@ -77,7 +85,11 @@ export function FormularioMovimientoCaja({
           form.setError("root", { message: "Elija la contracuenta" });
           return;
         }
-        alGuardar({ ...d, contraCuentaId: contraCuenta?.id });
+        alGuardar({
+          ...d,
+          contraCuentaId: contraCuenta?.id,
+          ...(centro !== null && deResultado && { centroCostoId: centro }),
+        });
       })}
     >
       {saldoActual !== null && (
@@ -131,6 +143,9 @@ export function FormularioMovimientoCaja({
             invalido={Boolean(form.formState.errors.root)}
           />
         </Campo>
+      )}
+      {requiereContraCuenta && deResultado && (
+        <CentroDelDocumento valor={centro} onCambiar={setCentro} className="max-w-sm" />
       )}
 
       <Campo id="concepto" etiqueta="Concepto *" error={errores.concepto?.message} escala="grande">

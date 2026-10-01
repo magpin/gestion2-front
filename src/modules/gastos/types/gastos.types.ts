@@ -45,6 +45,8 @@ export interface ResumenGastos {
   variacion: number | null;
   grupos: GrupoGasto[];
   ultimos: GastoReciente[];
+  /** Cuánto en cada centro de costo; `id` en `null` es «Sin centro». Vacío sin centros. */
+  porCentro?: Array<{ id: string | null; nombre: string; total: number }>;
 }
 
 export type Certeza = "CLARA" | "DEDUCIDA" | "NO_SE";

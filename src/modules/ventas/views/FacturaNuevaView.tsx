@@ -21,6 +21,7 @@ import { retencionesApi } from "@/modules/retenciones/services/retenciones.servi
 import { PlazoYPago } from "@/modules/tesoreria/components/PlazoYPago";
 import { EditorLineasVenta } from "../components/EditorLineasVenta";
 import { SelectorTercero } from "../components/SelectorTercero";
+import { CentroDelDocumento } from "@/modules/plan-cuentas/components/CentroDelDocumento";
 import { useBorradorFactura, type BorradorFactura, type InicioFactura } from "../hooks/useBorradorFactura";
 import { useAnticiposDelCliente } from "@/modules/cobros/hooks/useAnticiposDelCliente";
 import { sobranteDeAnticipos } from "@/modules/tesoreria/lib/formaPago";
@@ -186,6 +187,7 @@ function FacturaNueva({ inicio }: { inicio?: InicioFactura }) {
             </div>
           </div>
         </div>
+        <CentroDelDocumento valor={b.centro} onCambiar={b.setCentro} />
       </Seccion>
 
       <section aria-labelledby="v-lineas" className="overflow-hidden rounded-[26px] border border-border bg-card shadow-sm">

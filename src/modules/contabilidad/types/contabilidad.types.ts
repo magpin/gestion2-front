@@ -119,6 +119,8 @@ export interface FiltroAsientos {
   desde?: string;
   hasta?: string;
   comprobanteTipoId?: string;
+  /** Solo los asientos con alguna línea en este centro de costo. */
+  centroCostoId?: string;
   incluirAnulados?: boolean;
   pagina?: number;
 }
@@ -128,6 +130,8 @@ export interface LineaNueva {
   cuentaId: string;
   terceroId?: string;
   centroCostoId?: string;
+  /** Repartida entre varios centros por porcentajes: el servidor la parte. */
+  repartoId?: string;
   baseGravable?: number;
   detalle?: string;
   debito: number;
