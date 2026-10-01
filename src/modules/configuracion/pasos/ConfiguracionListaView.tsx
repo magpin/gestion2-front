@@ -138,7 +138,7 @@ function Bienvenida({ pasos }: { pasos: string[] }) {
         style={retardo(1200)}
       >
         Ya quedó lista
-        <br className="sm:hidden" /> tu contabilidad.
+        <br className="sm:hidden" /> su contabilidad.
       </h1>
 
       {/* La frase es fija: es identidad, no contenido. No la escribe el modelo. */}
@@ -147,11 +147,11 @@ function Bienvenida({ pasos }: { pasos: string[] }) {
         style={retardo(1400)}
       >
         <span className="hidden sm:inline">
-          Ya conozco tu empresa y tu plan de cuentas. Desde ahora tú facturas y yo voy detrás
-          armando los asientos; lo que no me cuadre, te lo paso.
+          Ya conozco su empresa y su plan de cuentas. Desde ahora usted factura y yo voy detrás
+          armando los asientos; lo que no me cuadre, se lo paso.
         </span>
         <span className="sm:hidden">
-          Tú facturas y yo voy detrás armando los asientos. Lo que no me cuadre, te lo paso.
+          Usted factura y yo voy detrás armando los asientos. Lo que no me cuadre, se lo paso.
         </span>
       </p>
 

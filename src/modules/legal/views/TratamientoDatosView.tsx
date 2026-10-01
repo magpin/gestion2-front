@@ -129,25 +129,25 @@ export function TratamientoDatosView() {
       </section>
 
       <section>
-        <h2>7. Tus derechos como titular</h2>
-        <p>Según el artículo 8 de la Ley 1581 de 2012, tenés derecho a:</p>
+        <h2>7. Sus derechos como titular</h2>
+        <p>Según el artículo 8 de la Ley 1581 de 2012, usted tiene derecho a:</p>
         <ol>
-          <li>Conocer, actualizar y rectificar tus datos.</li>
-          <li>Pedir prueba de la autorización que diste, salvo cuando la ley no la exija.</li>
-          <li>Saber qué uso se le ha dado a tus datos.</li>
+          <li>Conocer, actualizar y rectificar sus datos.</li>
+          <li>Pedir prueba de la autorización que otorgó, salvo cuando la ley no la exija.</li>
+          <li>Saber qué uso se le ha dado a sus datos.</li>
           <li>
             Presentar quejas ante la Superintendencia de Industria y Comercio, después de haber
             agotado el trámite de consulta o reclamo ante nosotros.
           </li>
           <li>
-            Revocar la autorización o pedir que se supriman tus datos, cuando no exista un deber
+            Revocar la autorización o pedir que se supriman sus datos, cuando no exista un deber
             legal o contractual de conservarlos.
           </li>
-          <li>Acceder gratis a tus datos personales.</li>
+          <li>Acceder gratis a sus datos personales.</li>
         </ol>
         <p>
-          Si tus datos los cargó una empresa cliente (por ejemplo, porque sos su proveedor), esa
-          empresa es la responsable: podés dirigirte a ella, o escribirnos y le trasladamos tu
+          Si sus datos los cargó una empresa cliente (por ejemplo, porque usted es su proveedor),
+          esa empresa es la responsable: puede dirigirse a ella, o escribirnos y le trasladamos su
           solicitud.
         </p>
       </section>
@@ -155,19 +155,19 @@ export function TratamientoDatosView() {
       <section>
         <h2>8. Cómo hacer una consulta o un reclamo</h2>
         <p>
-          Escribí a <strong>{CORREO_SOPORTE}</strong> con tu nombre, tu documento de identidad, lo
-          que pedís y cómo contactarte.
+          Escriba a <strong>{CORREO_SOPORTE}</strong> con su nombre, su documento de identidad, lo
+          que solicita y cómo contactarlo.
         </p>
         <ul>
           <li>
-            <strong>Consultas:</strong> respondemos en máximo 10 días hábiles. Si no alcanzamos, te
+            <strong>Consultas:</strong> respondemos en máximo 10 días hábiles. Si no alcanzamos, le
             avisamos el motivo y respondemos en máximo 5 días hábiles más.
           </li>
           <li>
             <strong>Reclamos</strong> (corregir, actualizar, suprimir o revocar): respondemos en
             máximo 15 días hábiles, prorrogables 8 días hábiles más con aviso. Si el reclamo está
-            incompleto, te pedimos lo que falta dentro de los 5 días siguientes; si pasan 2 meses
-            sin que lo completes, se entiende que desististe.
+            incompleto, le pedimos lo que falta dentro de los 5 días siguientes; si pasan 2 meses
+            sin que lo complete, se entiende que desistió.
           </li>
         </ul>
       </section>

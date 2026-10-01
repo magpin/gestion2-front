@@ -91,25 +91,25 @@ const FUNCIONES: Funcion[] = [
   {
     titulo: "Compras",
     texto:
-      "La factura leída llega con el proveedor cruzado por NIT y el IVA descontable. Vos la revisás y la aprobás.",
+      "La factura leída llega con el proveedor cruzado por NIT y el IVA descontable. Usted la revisa y la aprueba.",
     icono: <IconoCompras />,
   },
   {
     titulo: "Ventas",
     texto:
-      "Ingresos, IVA generado y cuentas por cobrar asentados al facturar. Y si tu cliente te manda un pedido, María te arma la factura.",
+      "Ingresos, IVA generado y cuentas por cobrar asentados al facturar. Y si su cliente le envía un pedido, María le arma la factura.",
     icono: <IconoVentas />,
   },
   {
-    titulo: "Recuerda tus cuentas",
+    titulo: "Recuerda sus cuentas",
     texto:
-      "La primera vez te pregunta a qué cuenta va un gasto. Después lo recuerda para ese proveedor, con quién lo decidió y cuándo.",
+      "La primera vez le pregunta a qué cuenta va un gasto. Después lo recuerda para ese proveedor, con quién lo decidió y cuándo.",
     icono: <IconoPuc />,
   },
   {
-    titulo: "Revisión de tus libros",
+    titulo: "Revisión de sus libros",
     texto:
-      "María revisa tus libros y te muestra lo que no cuadra, lo repetido y lo que parece mal clasificado, con el porqué.",
+      "María revisa sus libros y le muestra lo que no cuadra, lo repetido y lo que parece mal clasificado, con el porqué.",
     icono: <IconoAuditoria />,
     oscura: true,
   },
@@ -142,7 +142,7 @@ export function Funciones() {
             </TituloSeccion>
           </div>
           <p className="m-0 max-w-[360px] text-base leading-relaxed text-muted-foreground">
-            El trabajo repetitivo lo hace María. El criterio contable sigue siendo tuyo.
+            El trabajo repetitivo lo hace María. El criterio contable sigue siendo suyo.
           </p>
         </div>
 

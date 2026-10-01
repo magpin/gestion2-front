@@ -42,9 +42,9 @@ export function DiferenciasRecalculo() {
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {pendientes === 0 ? "Nada pendiente." : `${pendientes} por revisar.`}{" "}
-          Cuando la ley cambia, recalculo tus compras y tus autorretenciones con
-          la norma nueva y te muestro lo que cambió. Los asientos que ya hiciste
-          no se tocan: cada diferencia se corrige con un ajuste que vos aprobás.
+          Cuando la ley cambia, recalculo sus compras y sus autorretenciones con
+          la norma nueva y le muestro lo que cambió. Los asientos que ya hizo
+          no se tocan: cada diferencia se corrige con un ajuste que usted aprueba.
         </p>
       </div>
       <ul className="divide-y divide-border">
@@ -81,7 +81,7 @@ function FilaDiferencia({ fila }: { fila: DiferenciaRecalculo }) {
   const descartar = useMutation({
     mutationFn: () => retencionesApi.descartarDiferencia(fila.id, motivo),
     onSuccess: async () => {
-      aviso.exito("Listo: queda descartada con tu motivo.");
+      aviso.exito("Listo: queda descartada con su motivo.");
       await refrescar();
     },
     onError: (e: unknown) => aviso.falla(e),
@@ -161,7 +161,7 @@ function FilaDiferencia({ fila }: { fila: DiferenciaRecalculo }) {
             <>
               <p className="text-sm text-muted-foreground">
                 {diferencia > 0
-                  ? "Se retuvo de menos: le pagás menos al proveedor y la diferencia va a la retención por pagar."
+                  ? "Se retuvo de menos: le paga menos al proveedor y la diferencia va a la retención por pagar."
                   : "Se retuvo de más: se le debe al proveedor y baja la retención por pagar."}{" "}
                 El asiento va con fecha de hoy.
               </p>

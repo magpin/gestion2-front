@@ -46,7 +46,7 @@ export function CajaHoy({ onVerMovimientos, onAgregar }: { onVerMovimientos: () 
     return (
       <EmptyState
         titulo="Todavía no hay cajas ni cuentas"
-        descripcion="Agregá la caja de la oficina y tus cuentas de banco con el saldo que tienen hoy."
+        descripcion="Agregue la caja de la oficina y las cuentas de banco de la empresa con el saldo que tienen hoy."
         icon={Wallet}
         accion={onAgregar ? { label: "Agregar caja o cuenta", onClick: onAgregar } : undefined}
         accionSecundaria={{ label: "Subir extracto", href: "/dashboard/control" }}
@@ -121,7 +121,7 @@ function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: ()
           </li>
         </ul>
         {/* Lo que entra y sale sin factura va por Ingresos y Egresos, con su
-            concepto: acá solo contar la caja y llevar al banco. */}
+            concepto: aquí solo contar la caja y llevar al banco. */}
         {puedeMover && (
           <div className="mt-5 grid grid-cols-2 gap-3">
             <Button variant="outline" className="h-auto flex-col gap-1.5 rounded-2xl py-4" render={<Link href="/dashboard/control" />}>
@@ -176,16 +176,16 @@ function Contenido({ d, onVerMovimientos }: { d: DiaDeCaja; onVerMovimientos: ()
             <Maria estado="reposo" tamano={28} />
             <div>
               <p className="text-sm font-semibold">María</p>
-              <p className="text-xs text-muted-foreground">Ve lo mismo que vos</p>
+              <p className="text-xs text-muted-foreground">Ve lo mismo que usted</p>
             </div>
           </div>
           {d.saldo > SALDO_ALTO && (
             <p className="mb-2 text-sm">
-              Hay más de <span className="font-mono font-semibold">{formatCOP(SALDO_ALTO)}</span> en efectivo. Si no los vas a
-              usar esta semana, llevá una parte al banco.
+              Hay más de <span className="font-mono font-semibold">{formatCOP(SALDO_ALTO)}</span> en efectivo. Si no los va a
+              usar esta semana, lleve una parte al banco.
             </p>
           )}
-          <p className="text-sm text-muted-foreground">Contá la caja al cerrar el día.</p>
+          <p className="text-sm text-muted-foreground">Cuente la caja al cerrar el día.</p>
         </section>
       </aside>
 

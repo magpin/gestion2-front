@@ -90,7 +90,7 @@ export function PagosView() {
         ruta={[{ etiqueta: "Egresos" }, { etiqueta: "Pagos" }]}
         cuando={format(parseISO(hoyEnColombia()), "EEEE d MMM", { locale: es }).replace(".", "")}
         titulo="Pagos"
-        subtitulo="Lo que le debés a proveedores, a la DIAN y al municipio, en una sola lista."
+        subtitulo="Lo que le debe a proveedores, a la DIAN y al municipio, en una sola lista."
         derecha={boton}
       />
 
@@ -244,7 +244,7 @@ function Comprobantes({ puedeAnular }: { puedeAnular: boolean }) {
           titulo={data.egresos.length === 0 ? `Nada salió en ${mesTexto}` : "Nada coincide"}
           descripcion={
             data.egresos.length === 0
-              ? "Cada pago que registres queda acá con su número: a proveedores, sin factura y de impuestos."
+              ? "Cada pago que registre queda aquí con su número: a proveedores, sin factura y de impuestos."
               : "Ningún egreso del mes coincide con la búsqueda, el tipo o el medio elegido."
           }
           icon={data.egresos.length === 0 ? ReceiptText : ListFilter}
@@ -359,8 +359,8 @@ function DialogoAnular({ comprobante, onCerrar }: { comprobante: Anulable | null
           <div>
             <DialogTitle>Anular {comprobante?.numero}</DialogTitle>
             <DialogDescription>
-              Vuelve la plata a {comprobante?.destino}, las compras vuelven a deber lo pagado y descontado y se
-              reversa la retención del anticipo. Si el anticipo ya se cruzó, primero anulá el cruce.
+              Vuelve el dinero a {comprobante?.destino}, las compras vuelven a deber lo pagado y descontado y se
+              reversa la retención del anticipo. Si el anticipo ya se cruzó, primero anule el cruce.
             </DialogDescription>
           </div>
           <DialogCloseIcon />

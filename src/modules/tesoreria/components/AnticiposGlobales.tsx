@@ -105,10 +105,10 @@ export const CLIENTES: Lado = {
   nombreOrigen: "Anticipo",
   pideMotivo: true,
   titulo: "Anticipos por aplicar",
-  explicacion: "Plata de clientes que todavía no es venta. Está en 280505 hasta que factures o la devuelvas.",
+  explicacion: "Dinero de clientes que todavía no es venta. Está en 280505 hasta que se facture o se devuelva.",
   vacio: {
     titulo: "No hay anticipos pendientes",
-    descripcion: "Cuando un cliente deje plata para un pedido, se registra con «Recibir anticipo» y aparece aquí.",
+    descripcion: "Cuando un cliente deje dinero para un pedido, se registra con «Recibir anticipo» y aparece aquí.",
   },
   loQueSeLee: "los anticipos de clientes",
   pendiente: ["factura por cobrar", "facturas por cobrar"],
@@ -156,10 +156,10 @@ export const PROVEEDORES: Lado = {
   nombreOrigen: "Anticipo",
   pideMotivo: true,
   titulo: "Anticipos por legalizar",
-  explicacion: "Plata que ya diste y todavía no tiene factura. Está en 133005 hasta que llegue la compra o te la devuelvan.",
+  explicacion: "Dinero que ya entregó y todavía no tiene factura. Está en 133005 hasta que llegue la compra o se lo devuelvan.",
   vacio: {
     titulo: "No hay anticipos pendientes",
-    descripcion: "Cuando le des plata a un proveedor antes de la factura, registrala como anticipo en el comprobante de egreso.",
+    descripcion: "Cuando le entregue dinero a un proveedor antes de la factura, regístrelo como anticipo en el comprobante de egreso.",
   },
   loQueSeLee: "los anticipos a proveedores",
   pendiente: ["compra por pagar", "compras por pagar"],
@@ -173,7 +173,7 @@ export const PROVEEDORES: Lado = {
   cuenta: { codigo: "133005", nombre: "Anticipos a proveedores" },
   contra: { codigo: "220505", nombre: "Proveedores" },
   anticipoAlDebito: false,
-  queda: "Te falta pagar",
+  queda: "Falta pagar",
   devolucionSale: false,
   listar: async () => {
     const r = await pagosApi.anticipos();
@@ -217,11 +217,11 @@ export const SALDOS_A_FAVOR: Lado = {
   pideMotivo: false,
   titulo: "Saldos a favor de clientes",
   explicacion:
-    "Una nota crédito sobre una factura que ya estaba pagada deja plata a favor del cliente: se cruza con otra factura suya o se le devuelve.",
+    "Una nota crédito sobre una factura que ya estaba pagada deja un saldo a favor del cliente: se cruza con otra factura suya o se le devuelve.",
   vacio: {
     titulo: "Ningún cliente tiene saldo a favor",
     descripcion:
-      "Aparece acá cuando una nota crédito cae sobre una factura que ya estaba pagada: esa plata se cruza con otra factura del cliente o se le devuelve desde acá mismo.",
+      "Aparece aquí cuando una nota crédito cae sobre una factura que ya estaba pagada: ese saldo se cruza con otra factura del cliente o se le devuelve desde aquí mismo.",
   },
   loQueSeLee: "los saldos a favor",
   pendiente: ["factura por cobrar", "facturas por cobrar"],
@@ -497,7 +497,7 @@ function PanelCruce({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: Antici
   const tope = elegido ? Math.min(elegido.pendiente, anticipo.pendiente) : anticipo.pendiente;
   const monto = valor === "" ? tope : Number(valor);
   const problema =
-    elegido === null ? "Elegí la factura." : !(monto > 0) ? "Escribí cuánto se aplica." : monto > tope + 0.004 ? `No se puede aplicar más de ${formatCOP(tope)}.` : null;
+    elegido === null ? "Elija la factura." : !(monto > 0) ? "Escriba cuánto se aplica." : monto > tope + 0.004 ? `No se puede aplicar más de ${formatCOP(tope)}.` : null;
 
   const cruzar = useMutation({
     mutationFn: () => lado.cruzar(anticipo, elegido!, monto, fecha),
@@ -585,7 +585,7 @@ function PanelCruce({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: Antici
             </Campo>
           </div>
           {lado.cruceSinAsiento ? (
-            <p className="text-xs text-muted-foreground">No lleva asiento: la plata ya está en Clientes (130505), solo pasa de una factura a otra.</p>
+            <p className="text-xs text-muted-foreground">No lleva asiento: el dinero ya está en Clientes (130505), solo pasa de una factura a otra.</p>
           ) : (
             <EnElLibro
               lineas={[
@@ -597,7 +597,7 @@ function PanelCruce({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: Antici
           <p className="rounded-2xl bg-muted px-4 py-3 text-xs text-muted-foreground">
             {lado.conEstado && elegido
               ? `Los ${formatCOP(Math.max(0, elegido.pendiente - monto))} quedan en Por pagar con el vencimiento de la factura.`
-              : `No entra ni sale plata: solo se descuenta de lo que ${lado.devolucionSale ? "te debe" : "le debés"}.`}
+              : `No entra ni sale dinero: solo se descuenta de lo que ${lado.devolucionSale ? "le debe a la empresa" : "la empresa le debe"}.`}
             {!lado.anticipoAlDebito && " Si el anticipo tuvo retención, se reversa en proporción: la compra retiene sobre su propia base."}
           </p>
           <Button type="button" className="h-12 rounded-xl" disabled={problema !== null || cruzar.isPending} onClick={() => cruzar.mutate()}>
@@ -622,11 +622,11 @@ function PanelDevolucion({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: A
   const problema =
     problemaDelMedio(medio, caja, cuenta) ??
     (!(monto > 0)
-      ? "Escribí cuánto se devuelve."
+      ? "Escriba cuánto se devuelve."
       : monto > anticipo.pendiente + 0.004
         ? `Quedan ${formatCOP(anticipo.pendiente)}.`
         : lado.pideMotivo && motivo.trim().length < 3
-          ? "Escribí por qué se devuelve."
+          ? "Escriba por qué se devuelve."
           : null);
 
   const devolver = useMutation({
@@ -690,8 +690,8 @@ function PanelDevolucion({ lado, anticipo, onCerrar }: { lado: Lado; anticipo: A
             ? gmf > 0
               ? `El 4×1000 lo asume el cliente: le llegan ${formatCOP(monto - gmf)} y ${formatCOP(gmf)} se van en el impuesto. ${lado.nombreOrigen === "Anticipo" ? "El anticipo" : "El saldo a favor"} baja ${formatCOP(monto)}.`
               : lado.gmfLoAsumeElCliente
-                ? `Sale la plata y ${lado.nombreOrigen === "Anticipo" ? "el anticipo" : "el saldo a favor"} baja. Si sale de un banco, el 4×1000 lo asume el cliente: sale de lo que se le devuelve.`
-                : "Sale la plata y el anticipo baja."
+                ? `Sale el dinero y ${lado.nombreOrigen === "Anticipo" ? "el anticipo" : "el saldo a favor"} baja. Si sale de un banco, el 4×1000 lo asume el cliente: sale de lo que se le devuelve.`
+                : "Sale el dinero y el anticipo baja."
             : "Entra lo que devuelve el proveedor. Si al anticipo se le retuvo, esa retención se reversa en proporción y entra el neto."}
         </p>
         <Button type="button" className="h-12 rounded-xl" disabled={problema !== null || devolver.isPending} onClick={() => devolver.mutate()}>

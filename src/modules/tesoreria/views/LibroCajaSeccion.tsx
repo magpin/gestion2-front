@@ -182,8 +182,8 @@ export function LibroCajaSeccion() {
           <EmptyState
             sinMarco
             icon={History}
-            titulo="Elegí una caja para ver su libro"
-            descripcion="Arriba, en «Caja»: acá aparece cada peso que entró y salió de ella, con su saldo."
+            titulo="Elija una caja para ver su libro"
+            descripcion="Arriba, en «Caja»: aquí aparece cada peso que entró y salió de ella, con su saldo."
           />
         ) : movimientos === undefined ? (
           isError ? (
@@ -236,7 +236,7 @@ export function LibroCajaSeccion() {
                       )}
                     </td>
                     {/* El saldo inicial no va en ninguna de las dos columnas:
-                        no es plata que entró, es de dónde arrancó la caja. Si
+                        no es dinero que entró, es de dónde arrancó la caja. Si
                         fuera a "Entrada", la columna dejaría de sumar lo mismo
                         que el total del pie. */}
                     <td className="px-5 py-5 text-right font-mono font-semibold text-success">
@@ -291,7 +291,7 @@ export function LibroCajaSeccion() {
             sinMarco
             icon={History}
             titulo="Esta caja todavía no tiene movimientos"
-            descripcion="Cargá la plata que tiene hoy como saldo inicial: desde ahí se suma cada entrada y se resta cada salida."
+            descripcion="Cargue el dinero que tiene hoy como saldo inicial: desde ahí se suma cada entrada y se resta cada salida."
             accion={puedeOperar ? { label: "Cargar saldo inicial", onClick: () => setAbierto(true) } : undefined}
           />
         )}

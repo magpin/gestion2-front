@@ -120,7 +120,7 @@ function Formulario({
   });
 
   const problema =
-    madre === null ? "Elegí bajo qué cuenta va." : nombre.trim().length < 2 ? "Poné el nombre de la cuenta." : null;
+    madre === null ? "Elija bajo qué cuenta va." : nombre.trim().length < 2 ? "Ingrese el nombre de la cuenta." : null;
 
   return (
     <>

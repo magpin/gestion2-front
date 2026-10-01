@@ -121,14 +121,14 @@ export function CajasSeccion() {
           <EmptyState
             icon={Landmark}
             titulo="Todavía no hay cajas"
-            descripcion="Agregá la caja de la oficina con el saldo que tiene hoy: desde ahí se registra cada peso en efectivo."
+            descripcion="Agregue la caja de la oficina con el saldo que tiene hoy: desde ahí se registra cada peso en efectivo."
             accion={puedeOperar ? { label: "Agregar caja", onClick: () => setCreando(true) } : undefined}
           />
         ) : (
           <EmptyState
             icon={Landmark}
             titulo="No hay cajas activas"
-            descripcion="Agregá la caja de la oficina con el saldo que tiene hoy, o mirá las inactivas por si hay una para reactivar."
+            descripcion="Agregue la caja de la oficina con el saldo que tiene hoy, o mire las inactivas por si hay una para reactivar."
             accion={puedeOperar ? { label: "Agregar caja", onClick: () => setCreando(true) } : undefined}
             accionSecundaria={{ label: "Ver inactivas", onClick: () => setIncluirInactivas(true) }}
           />

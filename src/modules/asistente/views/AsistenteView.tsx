@@ -249,7 +249,7 @@ export function AsistenteView({
    */
   const alSubir = (tipo: TipoDocumento, archivo: File) => {
     if (!(TIPOS_ACEPTADOS as readonly string[]).includes(archivo.type)) {
-      aviso.error("Ese archivo no se puede leer", "Subí un PDF o una foto (JPG, PNG o WEBP).");
+      aviso.error("Ese archivo no se puede leer", "Suba un PDF o una foto (JPG, PNG o WEBP).");
       return;
     }
     subir.mutate(
@@ -354,8 +354,8 @@ export function AsistenteView({
             </p>
             <p className="m-0 text-[13px] leading-normal text-muted-foreground">
               {enPausa
-                ? "La pausó quien administra la plataforma, y se levanta desde ahí. Podés configurar la empresa a mano mientras tanto."
-                : "Falta configurarla en el servidor. Podés configurar la empresa a mano mientras tanto: es el mismo resultado, con más tecleo."}
+                ? "La pausó quien administra la plataforma, y se levanta desde ahí. Puede configurar la empresa a mano mientras tanto."
+                : "Falta configurarla en el servidor. Puede configurar la empresa a mano mientras tanto: es el mismo resultado, con más tecleo."}
             </p>
             <Link
               href="/configuracion/empresa"
@@ -377,7 +377,7 @@ export function AsistenteView({
             id: `subida-${documento.id}`,
             autor: "PERSONA",
             archivo: subidos[documento.id],
-            texto: `Leé esto como ${NOMBRE_DOCUMENTO[documento.tipo]}.`,
+            texto: `Lea esto como ${NOMBRE_DOCUMENTO[documento.tipo]}.`,
           }}
         />
       )}
@@ -410,7 +410,7 @@ export function AsistenteView({
             <TarjetaFalla
               titulo={`No pude leer ${NOMBRE_DOCUMENTO[documento.tipo]}`}
               detalle={
-                documento.error ?? "La lectura terminó sin resultado. Probá con otro archivo."
+                documento.error ?? "La lectura terminó sin resultado. Intente con otro archivo."
               }
             />
           }
@@ -427,7 +427,7 @@ export function AsistenteView({
               autor: "ASISTENTE",
               texto:
                 resultado.sinAplicar.length === 0
-                  ? "Guardado. Podés seguir con el paso que sigue."
+                  ? "Guardado. Puede seguir con el paso que sigue."
                   : "Guardé lo que se podía aplicar. Esto quedó pendiente:",
             }}
             tarjeta={<TarjetaConfirmado resultado={resultado} />}
@@ -561,8 +561,8 @@ export function AsistenteView({
             id: "saludo",
             autor: "ASISTENTE",
             texto: conversa
-              ? "Soltá acá facturas de proveedores, pedidos de clientes, el RUT, la Cámara de Comercio o la resolución de la DIAN —uno o varios de una— y te muestro lo que leí antes de registrar nada. O preguntame cómo hacer algo en el sistema."
-              : "Soltá acá facturas de proveedores, pedidos de clientes, el RUT, la Cámara de Comercio o la resolución de la DIAN. Leo lo que diga y te lo muestro antes de registrar nada.",
+              ? "Suelte aquí facturas de proveedores, pedidos de clientes, el RUT, la Cámara de Comercio o la resolución de la DIAN —uno o varios a la vez— y le muestro lo que leí antes de registrar nada. O pregúnteme cómo hacer algo en el sistema."
+              : "Suelte aquí facturas de proveedores, pedidos de clientes, el RUT, la Cámara de Comercio o la resolución de la DIAN. Leo lo que diga y se lo muestro antes de registrar nada.",
           }}
           tarjeta={
             <TarjetaDocumentos
@@ -593,8 +593,8 @@ export function AsistenteView({
                     : `${crearLote.variables[0].name} y ${crearLote.variables.length - 1} más`,
                 texto:
                   crearLote.variables.length === 1
-                    ? "Leé este documento."
-                    : `Leé estos ${crearLote.variables.length} documentos.`,
+                    ? "Lea este documento."
+                    : `Lea estos ${crearLote.variables.length} documentos.`,
               }}
             />
             <Turno
@@ -737,7 +737,7 @@ function Pantalla({
     pensando
       ? subtitulo
       : momento === "trabajando"
-        ? "Registrando lo que aprobaste…"
+        ? "Registrando lo que aprobó…"
         : momento === "aprobado"
           ? "Listo: quedó registrado."
           : subtitulo;
@@ -787,7 +787,7 @@ function Pantalla({
               <PildoraPendientes pendientes={pendientes} />
             )}
             {/* Lo que María leyó y espera aprobación tiene su pantalla: se
-                llega desde acá y desde los atajos de Compras y Ventas. */}
+                llega desde aquí y desde los atajos de Compras y Ventas. */}
             <Link
               href="/dashboard/asistente/leidos"
               className="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-card px-3 text-xs font-medium whitespace-nowrap transition-colors hover:bg-accent"
@@ -804,7 +804,7 @@ function Pantalla({
 }
 
 /** Lo que dice el encabezado cuando no está pasando nada. La lámina `Aplicada`. */
-const SUBTITULO = "Nada se asienta sin tu aprobación";
+const SUBTITULO = "Nada se asienta sin su aprobación";
 
 /** «2 facturas leídas sin registrar · 1 pedido sin facturar», para el título. */
 function detalleDePendientes(p: Pendientes): string {
@@ -874,8 +874,8 @@ export function Bienvenida({
         </p>
         <p className="m-0 text-[13px] leading-normal text-muted-foreground">
           {total > 0
-            ? `Te espera${total === 1 ? "" : "n"} ${total} ${total === 1 ? "cosa" : "cosas"}: ${detalleDePendientes(pendientes!)}.`
-            : "Subime documentos y yo los leo; te pregunto solo lo que los papeles no dicen. Nada se asienta sin tu aprobación."}
+            ? `Tiene ${total} ${total === 1 ? "cosa pendiente" : "cosas pendientes"}: ${detalleDePendientes(pendientes!)}.`
+            : "Súbame documentos y yo los leo; le pregunto solo lo que los papeles no dicen. Nada se asienta sin su aprobación."}
         </p>
       </div>
     </div>
@@ -909,7 +909,7 @@ function RevisarLectura({
           <div>
             <DialogTitle>{archivo?.titulo}</DialogTitle>
             <DialogDescription>
-              Lo que leí de {archivo?.nombre}. Revisalo: se registra cuando lo apruebes.
+              Lo que leí de {archivo?.nombre}. Revíselo: se registra cuando lo apruebe.
             </DialogDescription>
           </div>
           <DialogCloseIcon />

@@ -98,7 +98,7 @@ export function RevisarLeido({
             {(d.dudoso || d.motivo !== undefined) && (
               <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
                 <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-warning" />
-                {d.motivo ?? "No lo leí con seguridad: revisalo antes de guardarlo."}
+                {d.motivo ?? "No lo leí con seguridad: revíselo antes de guardarlo."}
               </span>
             )}
           </li>
@@ -115,7 +115,7 @@ export function RevisarLeido({
           {etiquetaBoton} {cuantos === datos.length ? "" : `(${cuantos} de ${datos.length})`}
         </button>
         <span className="text-xs text-muted-foreground">
-          Lo que desmarques no se guarda. Lo que falte al final lo completás en su paso.
+          Lo que desmarque no se guarda. Lo que falte al final lo completa en su paso.
         </span>
       </div>
     </div>

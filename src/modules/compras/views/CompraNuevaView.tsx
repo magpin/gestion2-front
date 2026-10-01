@@ -66,7 +66,7 @@ export function CompraNuevaView() {
         titulo={b.soporte ? "Documento soporte" : "Nueva compra"}
         subtitulo={
           b.soporte
-            ? "Para comprarle a quien no factura. Lo emitís vos con tu numeración; queda sin transmitir."
+            ? "Para comprarle a quien no factura. Lo emite usted con la numeración de la empresa; queda sin transmitir."
             : "Mercancía y gastos en la misma factura. Cada línea va a su cuenta según el concepto."
         }
       />
@@ -145,7 +145,7 @@ export function CompraNuevaView() {
 
 /** Lo que pasa al registrarla, en una frase (pie del diseño). */
 function pie(b: BorradorCompra): string {
-  if (b.soporte) return "Al registrarlo queda numerado con tu resolución y sin transmitir.";
+  if (b.soporte) return "Al registrarlo queda numerado con la resolución de la empresa y sin transmitir.";
   const unidades = b.lineas
     .filter((l) => l.tipo === "PRODUCTO" && l.producto !== null)
     .reduce((s, l) => s + (Number(l.cantidad) || 0), 0);
@@ -209,7 +209,7 @@ function Resumen({
           ) : error !== null ? (
             <span className="text-danger">{error}</span>
           ) : (
-            "Cuando esté todo, acá ves cuánto queda, qué se retiene y el asiento, antes de guardar."
+            "Cuando esté todo, aquí ve cuánto queda, qué se retiene y el asiento, antes de guardar."
           )}
         </p>
       ) : (
@@ -228,7 +228,7 @@ function Resumen({
           ))}
           <div className="mt-2 border-t border-border pt-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              {b.soporte ? "Le entregás" : "Le vas a pagar"}
+              {b.soporte ? "Le entrega" : "Le va a pagar"}
             </p>
             <p className="mt-1 font-mono text-[28px] leading-[34px] font-semibold tracking-[-0.03em]">
               {formatCOP(previa.neto)}

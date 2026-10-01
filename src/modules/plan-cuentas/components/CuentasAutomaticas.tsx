@@ -213,7 +213,7 @@ function Concepto({
               className="h-9 w-full rounded-lg px-3 text-sm"
               aria-label={`Cuenta para ${c.etiqueta}`}
             >
-              <SelectValue placeholder={`${c.codigoPorDefecto} tiene varios auxiliares: elegí uno`} />
+              <SelectValue placeholder={`${c.codigoPorDefecto} tiene varios auxiliares: elija uno`} />
             </SelectTrigger>
             <SelectContent>
               {c.opciones.map((o) => (

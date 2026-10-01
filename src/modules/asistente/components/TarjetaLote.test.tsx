@@ -67,7 +67,7 @@ function mostrar(l: Lote) {
 describe("TurnosDelLote", () => {
   it("terminado: nunca dice «asenté»; separa listas, apartadas y lo demás", () => {
     mostrar(lote({}));
-    expect(screen.getByText("Leé estos 3 documentos.")).toBeInTheDocument();
+    expect(screen.getByText("Lea estos 3 documentos.")).toBeInTheDocument();
     expect(screen.queryByText(/asent/i)).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Listas para aprobar" })).toHaveTextContent(
       "Papelería Central · FC-0231",
@@ -84,7 +84,7 @@ describe("TurnosDelLote", () => {
     const apartadas = screen.getByRole("region", { name: "Apartadas" });
     await userEvent.click(within(apartadas).getByRole("button", { name: "Es la misma, descartala" }));
     expect(alDescartar).toHaveBeenCalledWith(expect.objectContaining({ documentoId: "d2" }));
-    expect(within(apartadas).getByRole("button", { name: "Es distinta, revisala" })).toBeInTheDocument();
+    expect(within(apartadas).getByRole("button", { name: "Es distinta, revísela" })).toBeInTheDocument();
   });
 
   it("en marcha: cuántos van, cuál se lee, y se puede detener", async () => {
@@ -101,12 +101,12 @@ describe("TurnosDelLote", () => {
 describe("resumen", () => {
   it("cuenta listas y apartadas, y recuerda que nada se registra solo", () => {
     expect(resumen(lote({ listas: 9, apartadas: 3 }))).toBe(
-      "Listo. **9** están listas para que las apruebes, y **3** las aparté porque hay algo que decidir. Nada se registra hasta que lo apruebes.",
+      "Listo. **9** están listas para que las apruebe, y **3** las aparté porque hay algo que decidir. Nada se registra hasta que lo apruebe.",
     );
   });
   it("detenido dice hasta dónde llegó", () => {
     expect(resumen(lote({ detenido: true, hechos: 2 }))).toBe(
-      "Paré, como pediste. Alcancé a mirar 2 de 3.",
+      "Paré, como me pidió. Alcancé a mirar 2 de 3.",
     );
   });
 });

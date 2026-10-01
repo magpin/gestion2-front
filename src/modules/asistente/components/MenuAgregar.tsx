@@ -162,7 +162,7 @@ export function MenuAgregar({
         clave: "subir",
         icono: icono(FileUp),
         titulo: "Subir documento",
-        detalle: "Elegí el archivo: el asistente reconoce qué es",
+        detalle: "Elija el archivo: el asistente reconoce qué es",
         accion: { tipo: "SUBIR", fuente: "ARCHIVO" },
       },
     ];

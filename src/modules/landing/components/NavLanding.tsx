@@ -14,7 +14,7 @@ import styles from "../landing.module.css";
  * (`BarraMovil`), que es donde está el pulgar.
  */
 const ANCLAS = [
-  { href: "#como", texto: "Conocé a María" },
+  { href: "#como", texto: "Conozca a María" },
   { href: "#por-dentro", texto: "Por dentro" },
   { href: "#funciones", texto: "Funciones" },
   { href: "#revision", texto: "Revisión" },

@@ -50,7 +50,7 @@ const AYUDA_TIPO: Record<TipoConcepto, string> = {
   COSTO: "Costo de lo que se vende o del servicio. Va a una cuenta de clase 6 o 7.",
   GASTO: "Entra al estado de resultados como gasto. Va a una cuenta de clase 5.",
   NO_GASTO:
-    "Mueve plata sin ser ingreso ni gasto: un crédito, un impuesto por pagar, un anticipo. Va a una cuenta de clase 1, 2 o 3.",
+    "Mueve dinero sin ser ingreso ni gasto: un crédito, un impuesto por pagar, un anticipo. Va a una cuenta de clase 1, 2 o 3.",
 };
 
 /**
@@ -193,7 +193,7 @@ function Formulario({
 
       <DialogBody>
         <div className="flex flex-col gap-5">
-          <Campo id="concepto-nombre" etiqueta="Nombre" error={intentado && faltaNombre ? "Escribí el nombre." : undefined}>
+          <Campo id="concepto-nombre" etiqueta="Nombre" error={intentado && faltaNombre ? "Escriba el nombre." : undefined}>
             <Input
               id="concepto-nombre"
               value={nombre}
@@ -208,7 +208,7 @@ function Formulario({
             id="concepto-grupo"
             etiqueta="Grupo"
             ayuda="Cómo se agrupa en la lista: «Mantenimiento», «Financieros»."
-            error={intentado && faltaGrupo ? "Escribí el grupo." : undefined}
+            error={intentado && faltaGrupo ? "Escriba el grupo." : undefined}
           >
             <Input
               id="concepto-grupo"
@@ -248,7 +248,7 @@ function Formulario({
             id="concepto-cuenta"
             etiqueta="Va a la cuenta"
             ayuda={`Solo auxiliares de clase ${CLASES_TIPO[tipo].join(" o ")}.`}
-            error={intentado && faltaCuenta ? "Elegí la cuenta." : undefined}
+            error={intentado && faltaCuenta ? "Elija la cuenta." : undefined}
           >
             <SelectorCuenta
               valor={cuenta}

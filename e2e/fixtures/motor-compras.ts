@@ -328,7 +328,7 @@ export async function lineaGasto(
   costo: number,
 ) {
   await dialogo.getByRole("button", { name: "Gasto", exact: true }).first().click();
-  await dialogo.getByRole("combobox").filter({ hasText: "Elegí el concepto" }).first().click();
+  await dialogo.getByRole("combobox").filter({ hasText: "Elija el concepto" }).first().click();
   await page.getByRole("option", { name: new RegExp(`${cuenta}$`) }).first().click();
   await dialogo.getByLabel("Detalle de la línea 1").fill(detalle);
   // Cambiar el renglón a «Gasto» no le pone cantidad: se escribe.

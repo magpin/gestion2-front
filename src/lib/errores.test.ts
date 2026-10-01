@@ -41,12 +41,12 @@ describe("explicarError", () => {
   it("un rechazo del servidor usa su mensaje como título y dice que corrija", () => {
     const e = explicarError(conRespuesta(400, { message: "Esta factura ya está cobrada por completo." }));
     expect(e.titulo).toBe("Esta factura ya está cobrada por completo.");
-    expect(e.queHacer).toMatch(/Corregí/);
+    expect(e.queHacer).toMatch(/Corrija/);
   });
 
-  it("403 dice a quién pedírselo, y no muestra el texto en inglés de Nest", () => {
+  it("403 dice a quién solicitarlo, y no muestra el texto en inglés de Nest", () => {
     const e = explicarError(conRespuesta(403, { message: "Forbidden resource" }));
-    expect(e.titulo).toBe("Tu usuario no tiene permiso para esto");
+    expect(e.titulo).toBe("Su usuario no tiene permiso para esto");
     expect(e.queHacer).toMatch(/Director/);
   });
 
@@ -58,7 +58,7 @@ describe("explicarError", () => {
   });
 
   it("409 pide recargar antes de reintentar", () => {
-    expect(explicarError(conRespuesta(409, {})).queHacer).toMatch(/Recargá/);
+    expect(explicarError(conRespuesta(409, {})).queHacer).toMatch(/Recargue/);
   });
 
   it("5xx no expone el detalle técnico", () => {

@@ -107,7 +107,7 @@ function Contenido({
 
   const problema =
     fecha === ""
-      ? "Elegí la fecha."
+      ? "Elija la fecha."
       : problemaDe(renglones, tope, devolver ? "devolver" : "pagar");
 
   const enviar = () => {
@@ -149,7 +149,7 @@ function Contenido({
       <DialogBody className="flex flex-col gap-5">
         {devolver && (
           <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
-            La plata que devuelve el proveedor entra a la caja o al banco, y la compra sigue
+            El dinero que devuelve el proveedor entra a la caja o al banco, y la compra sigue
             valiendo lo mismo. Si devolvimos mercancía o hay que bajarle el valor, lo que va
             es una nota crédito de compra.
           </p>

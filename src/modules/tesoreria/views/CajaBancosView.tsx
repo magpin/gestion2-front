@@ -77,7 +77,7 @@ export function CajaBancosView() {
             Caja y bancos<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            La plata en efectivo y la plata en el banco, cada una en su pestaña.
+            El dinero en efectivo y el dinero en el banco, cada una en su pestaña.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

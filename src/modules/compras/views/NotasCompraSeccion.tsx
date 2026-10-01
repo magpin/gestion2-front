@@ -149,8 +149,8 @@ export function NotasCompraSeccion({
           titulo={`Todavía no hay notas ${esCredito ? "crédito" : "débito"}`}
           descripcion={`${
             esCredito
-              ? "Cuando el proveedor te acredita una devolución, un descuento posterior o un menor valor, la nota va acá y baja lo que le debés."
-              : "Cuando el proveedor te cobra de más sobre una compra ya registrada —un flete, un interés, un mayor valor—, la nota va acá y sube lo que le debés."
+              ? "Cuando el proveedor le acredita una devolución, un descuento posterior o un menor valor, la nota va aquí y baja lo que se le debe."
+              : "Cuando el proveedor le cobra de más sobre una compra ya registrada —un flete, un interés, un mayor valor—, la nota va aquí y sube lo que se le debe."
           }${
             puedeCrear
               ? ` Registrala con «Nueva nota ${esCredito ? "crédito" : "débito"}», arriba, o desde la compra en la pestaña Facturas.`

@@ -54,7 +54,7 @@ export function TusBancos() {
 
   return (
     <Bloque
-      titulo="Tus bancos"
+      titulo="Sus bancos"
       etiqueta="Opcional"
       descripcion="Cada cuenta bancaria con su propia cuenta contable, creada sola. Después se pueden agregar más en Bancos."
     >

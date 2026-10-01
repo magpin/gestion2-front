@@ -129,12 +129,12 @@ export function FormularioNotaDebitoCompra({
   );
 
   const impedimento = (): string | null => {
-    if (compra === null) return "Elegí la compra sobre la que cobra.";
-    if (fecha === "") return "Elegí la fecha.";
+    if (compra === null) return "Elija la compra sobre la que cobra.";
+    if (fecha === "") return "Elija la fecha.";
     if (numeroNota.trim() === "")
       return "Falta el número que el proveedor le puso a su nota.";
     if (motivo.trim().length < 3)
-      return "Contá por qué cobra de más. Es lo primero que lee quien audita.";
+      return "Indique por qué cobra de más. Es lo primero que lee quien audita.";
     if (lineas.some((l) => !lineaCompleta(l)))
       return "Cada línea necesita el producto, o la cuenta y el detalle del gasto.";
     if (lineas.some((l) => Number(l.cantidad) <= 0))

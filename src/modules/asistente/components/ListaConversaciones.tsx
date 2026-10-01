@@ -56,7 +56,7 @@ export function ListaConversaciones({
 
       {grupos.length === 0 && (
         <p className="m-0 px-3 text-xs leading-normal text-muted-foreground">
-          Todavía no conversaste. Lo que preguntes queda acá, para volver a
+          Todavía no hay conversaciones. Lo que pregunte queda aquí, para volver a
           leerlo.
         </p>
       )}

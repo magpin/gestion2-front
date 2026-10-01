@@ -142,9 +142,9 @@ export function FormularioDocumentoVenta({
       : `los renglones ${renglones.join(", ")}`;
 
   const impedimento = (): string | null => {
-    if (tercero === null) return "Elegí el cliente.";
-    if (fecha === "") return "Elegí la fecha.";
-    if (lineas.length === 0) return "Agregá al menos una línea.";
+    if (tercero === null) return "Elija el cliente.";
+    if (fecha === "") return "Elija la fecha.";
+    if (lineas.length === 0) return "Agregue al menos una línea.";
     if (sinProducto.length > 0)
       return `Falta el producto en ${nombrar(sinProducto)}.`;
     if (sinCantidad.length > 0)
@@ -152,7 +152,7 @@ export function FormularioDocumentoVenta({
     if (sinEntero.length > 0)
       return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
     if (sinPrecio.length > 0)
-      return `Poné el precio en ${nombrar(sinPrecio)}: ese producto no tiene precio de lista.`;
+      return `Ingrese el precio en ${nombrar(sinPrecio)}: ese producto no tiene precio de lista.`;
     if (conFormaPago) return problemaFormaPago(formaPago);
     return null;
   };

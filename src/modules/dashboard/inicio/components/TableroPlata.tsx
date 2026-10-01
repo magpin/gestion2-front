@@ -36,13 +36,13 @@ export function TableroPlata({ datos }: { datos: Tablero | undefined }) {
           detalle está a un toque, en Cobros y en Pagos. */}
       <div className="grid grid-cols-2 gap-3 md:hidden">
         <TarjetaCorta
-          etiqueta="Te deben"
+          etiqueta="Le deben"
           valor={datos.teDeben.total}
           vencido={datos.teDeben.vencido}
           href={funcionActiva("cobros") ? "/dashboard/cobros" : "/dashboard/ventas"}
         />
         <TarjetaCorta
-          etiqueta="Debés"
+          etiqueta="Debe"
           valor={datos.debes.total}
           vencido={datos.debes.vencido}
           href={funcionActiva("pagos") ? "/dashboard/pagos" : "/dashboard/compras"}
@@ -51,11 +51,11 @@ export function TableroPlata({ datos }: { datos: Tablero | undefined }) {
 
       <div className="hidden gap-6 md:grid md:grid-cols-2">
         <TarjetaCuenta
-          etiqueta="Te deben"
+          etiqueta="Le deben"
           valor={datos.teDeben.total}
           resumen={`${datos.teDeben.facturas} ${datos.teDeben.facturas === 1 ? "factura" : "facturas"} · ${datos.teDeben.clientes} ${datos.teDeben.clientes === 1 ? "cliente" : "clientes"}`}
           vencido={datos.teDeben.vencido}
-          vacio="Nadie te debe nada vencido."
+          vacio="Nadie le debe nada vencido."
           filas={datos.teDeben.masVencidos.map((c) => ({
             id: c.terceroId,
             titulo: c.nombre,
@@ -65,17 +65,17 @@ export function TableroPlata({ datos }: { datos: Tablero | undefined }) {
           enlace={funcionActiva("cobros") ? { href: "/dashboard/cobros", texto: "Ir a Cobros" } : { href: "/dashboard/ventas", texto: "Ir a Ventas" }}
         />
         <TarjetaCuenta
-          etiqueta="Debés"
+          etiqueta="Debe"
           valor={datos.debes.total}
           resumen={`${datos.debes.facturas} ${datos.debes.facturas === 1 ? "factura" : "facturas"} · ${datos.debes.proveedores} ${datos.debes.proveedores === 1 ? "proveedor" : "proveedores"}`}
           vencido={datos.debes.vencido}
-          vacio="No le debés a ningún proveedor."
+          vacio="No le debe a ningún proveedor."
           filas={datos.debes.proximos.map((f) => ({
             id: f.compraId,
             titulo: f.proveedor,
             detalle: `${f.vencida ? "Venció" : "Vence"} el ${diaCorto(f.vence)}${
               f.descuentoPct !== null && f.descuentoHasta !== null && f.descuentoHasta >= datos.hoy
-                ? ` · ${f.descuentoPct.toLocaleString("es-CO")} % si pagás hasta el ${diaCorto(f.descuentoHasta)}`
+                ? ` · ${f.descuentoPct.toLocaleString("es-CO")} % si paga hasta el ${diaCorto(f.descuentoHasta)}`
                 : ""
             }`,
             valor: f.valor,
@@ -85,7 +85,7 @@ export function TableroPlata({ datos }: { datos: Tablero | undefined }) {
       </div>
 
       <div className={cn("grid gap-6", datos.resultadoMes !== null && "lg:grid-cols-[2fr_1fr]")}>
-        {/* En el móvil (lienzo 66) no va: la plata y lo que se debe caben primero. */}
+        {/* En el móvil (lienzo 66) no va: el dinero y lo que se debe caben primero. */}
         <div className="max-md:hidden">
           <Semana datos={datos} />
         </div>
@@ -101,7 +101,7 @@ function PlataHoy({ datos }: { datos: Tablero }) {
     <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
       <div className="flex flex-wrap items-end justify-between gap-3 px-4 py-5 sm:px-6">
         <div>
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Plata hoy · caja + bancos</h2>
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Dinero hoy · caja + bancos</h2>
           <p className="font-mono text-3xl font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums">{formatCOP(total)}</p>
         </div>
         <span className="hidden sm:inline">
@@ -129,7 +129,7 @@ function PlataHoy({ datos }: { datos: Tablero }) {
   );
 }
 
-/** «Te deben» o «Debés» en corto, para el móvil: el total y lo vencido. */
+/** «Le deben» o «Debe» en corto, para el móvil: el total y lo vencido. */
 function TarjetaCorta({
   etiqueta,
   valor,

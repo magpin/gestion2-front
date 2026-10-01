@@ -104,11 +104,11 @@ const VACIO: DatosTercero = {
 };
 
 const CALIDADES: Array<[keyof DatosTercero, string, string]> = [
-  ["responsableIva", "Responsable de IVA", "Le facturás con IVA discriminado"],
+  ["responsableIva", "Responsable de IVA", "Se le factura con IVA discriminado"],
   [
     "esAgenteRetenedor",
     "Agente retenedor",
-    "Practica retención sobre lo que le pagás",
+    "Practica retención sobre lo que se le paga",
   ],
   [
     "esAutorretenedor",
@@ -446,14 +446,14 @@ export function FormularioTercero({
       </Seccion>
 
       <Seccion
-        titulo="Qué es para tu empresa"
+        titulo="Qué es para la empresa"
         descripcion="Decide en qué listas aparece al digitar. Puede ser varias cosas: el mismo NIT suele comprar y vender."
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <Tarjeta
             marcada={form.watch("esCliente")}
             titulo="Cliente"
-            detalle="Le vendés: aparece al hacer una factura"
+            detalle="Se le vende: aparece al hacer una factura"
             alAlternar={() =>
               form.setValue("esCliente", !form.watch("esCliente"))
             }
@@ -461,7 +461,7 @@ export function FormularioTercero({
           <Tarjeta
             marcada={form.watch("esProveedor")}
             titulo="Proveedor"
-            detalle="Le comprás: aparece al registrar una compra"
+            detalle="Se le compra: aparece al registrar una compra"
             alAlternar={() =>
               form.setValue("esProveedor", !form.watch("esProveedor"))
             }
@@ -483,7 +483,7 @@ export function FormularioTercero({
             {form.watch("esCliente") && (
               <Campo
                 id="diasPlazoCliente"
-                etiqueta="Le das plazo de"
+                etiqueta="Plazo que se le da al cliente"
                 ayuda="Días. La factura a crédito propone el vencimiento con esto."
                 error={errores.diasPlazoCliente?.message}
                 escala="grande"
@@ -500,7 +500,7 @@ export function FormularioTercero({
             {form.watch("esProveedor") && (
               <Campo
                 id="diasPlazoProveedor"
-                etiqueta="Te da plazo de"
+                etiqueta="Plazo que da el proveedor"
                 ayuda="Días. La compra a crédito propone el vencimiento con esto."
                 error={errores.diasPlazoProveedor?.message}
                 escala="grande"
@@ -520,7 +520,7 @@ export function FormularioTercero({
 
       <Seccion
         titulo="Calidades tributarias"
-        descripcion="Deciden qué impuestos lleva cada documento que le emitas. Salen de su RUT."
+        descripcion="Deciden qué impuestos lleva cada documento que se le emita. Salen de su RUT."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           {CALIDADES.map(([campo, titulo, detalle]) => (
@@ -550,7 +550,7 @@ export function FormularioTercero({
           cargado, y el formulario no manda el campo, así que no lo pisa. */}
       <Seccion
         titulo="Responsabilidades en la factura electrónica"
-        descripcion="Se habilitan con el módulo DIAN. Son las que viajan en el XML del receptor; hasta que haya algo que transmitir, no hay nada que decidir acá."
+        descripcion="Se habilitan con el módulo DIAN. Son las que viajan en el XML del receptor; hasta que haya algo que transmitir, no hay nada que decidir aquí."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           {responsabilidades.map((r) => (

@@ -94,7 +94,7 @@ export function AnticiposYCruces({ puedeCruzar }: { puedeCruzar: boolean }) {
         <div className="mt-5">
           {cliente === null ? (
             <p className="text-sm text-muted-foreground">
-              Elegí un cliente para ver sus anticipos y saldos a favor.
+              Elija un cliente para ver sus anticipos y saldos a favor.
             </p>
           ) : disponibles === undefined ? (
             isError ? (
@@ -111,8 +111,8 @@ export function AnticiposYCruces({ puedeCruzar }: { puedeCruzar: boolean }) {
             )
           ) : origenes.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Este cliente no tiene anticipos ni saldos a favor por aplicar. Cuando deje plata adelantada, registrala
-              con un recibo de caja como anticipo y aparece acá.
+              Este cliente no tiene anticipos ni saldos a favor por aplicar. Cuando deje dinero adelantado, regístrelo
+              con un recibo de caja como anticipo y aparece aquí.
             </p>
           ) : (
             <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
@@ -198,13 +198,13 @@ function ContenidoCruce({
 
   const problema =
     destino === null
-      ? "Elegí la factura."
+      ? "Elija la factura."
       : !(Number(valor) > 0)
-        ? "Escribí cuánto se aplica."
+        ? "Escriba cuánto se aplica."
         : Number(valor) > tope
           ? `No se puede aplicar más de ${formatCOP(tope)}.`
           : fecha === ""
-            ? "Elegí la fecha."
+            ? "Elija la fecha."
             : null;
 
   const crear = useMutation({
@@ -233,7 +233,7 @@ function ContenidoCruce({
             {origen.nombre}: quedan {formatCOP(origen.saldo)}.{" "}
             {origen.tipo === "ANTICIPO"
               ? "Se asienta débito a Anticipos de clientes (280505) y crédito a Clientes (130505)."
-              : "No lleva asiento: la plata ya está en Clientes, solo cambia de factura."}
+              : "No lleva asiento: el dinero ya está en Clientes, solo cambia de factura."}
           </DialogDescription>
         </div>
         <DialogCloseIcon />

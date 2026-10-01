@@ -48,7 +48,7 @@ export function DocumentosLeidosView({ inicial }: { inicial?: TipoLeido }) {
           Documentos leídos<span className="text-brand">.</span>
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Lo que María leyó. Nada de esto está registrado: lo revisás y lo aprobás vos.
+          Lo que María leyó. Nada de esto está registrado: usted lo revisa y lo aprueba.
         </p>
       </header>
 

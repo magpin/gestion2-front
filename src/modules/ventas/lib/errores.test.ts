@@ -37,7 +37,7 @@ describe("manejarErrorEmision", () => {
   it("si el backend dice que la empresa no vende sin existencia, no vuelve a preguntar", async () => {
     const reintentar = vi.fn();
     await manejarErrorEmision(
-      { message: "FER-001: Solo hay 3 en existencia; no se puede sacar 10. Esta empresa no vende sin existencia: registrá la compra o un ajuste de entrada." },
+      { message: "FER-001: Solo hay 3 en existencia; no se puede sacar 10. Esta empresa no vende sin existencia: registre la compra o un ajuste de entrada." },
       {},
       reintentar,
       () => {},

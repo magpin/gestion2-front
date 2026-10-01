@@ -70,7 +70,7 @@ export function LoginView() {
       <div
         className={`${styles.fade} flex justify-end gap-1.5 text-sm text-muted-foreground`}
       >
-        <span>¿Necesitas ayuda?</span>
+        <span>¿Necesita ayuda?</span>
         <a
           href="mailto:soporte@erpgestion.co"
           className="font-medium text-brand-text no-underline hover:text-brand-hover"
@@ -86,7 +86,7 @@ export function LoginView() {
               Bienvenido de nuevo
             </h1>
             <p className="m-0 text-sm leading-normal text-muted-foreground">
-              Ingresa con tu cuenta para continuar.
+              Ingrese con su cuenta para continuar.
             </p>
           </div>
 

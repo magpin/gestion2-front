@@ -71,7 +71,7 @@ export function GastosView() {
             Gastos<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            En qué se va la plata del mes, por concepto. Con factura se registra en Compras; sin factura, sale por Pagos.
+            En qué se va el dinero del mes, por concepto. Con factura se registra en Compras; sin factura, sale por Pagos.
           </p>
         </div>
         {puedeRegistrar &&
@@ -322,7 +322,7 @@ function Ultimos({ resumen, mes, onRegistrar }: { resumen: ResumenGastos; mes: s
     return (
       <EmptyState
         titulo={`${nombreMes(mes).split(" ")[0]} sin gastos todavía`}
-        descripcion="Lo que registres con factura en Compras o sin factura en Pagos aparece acá, por concepto. Los recurrentes aparecen cuando se pagan."
+        descripcion="Lo que registre con factura en Compras o sin factura en Pagos aparece aquí, por concepto. Los recurrentes aparecen cuando se pagan."
         icon={Receipt}
         accion={onRegistrar ? { label: "Registrar gasto", onClick: onRegistrar } : undefined}
       />

@@ -77,7 +77,7 @@ describe("BurbujaLectura", () => {
   it("sin eventos todavía, dice lo que dice la base y no inventa avance", () => {
     mostrar({ lectura: undefined });
     expect(screen.getByText("Leyendo el RUT…")).toBeInTheDocument();
-    expect(screen.getByText("Nada se guarda hasta que lo revises.")).toBeInTheDocument();
+    expect(screen.getByText("Nada se guarda hasta que usted lo revise.")).toBeInTheDocument();
   });
 
   it("en cola lo dice, y no dibuja el renglón que se sigue buscando", () => {

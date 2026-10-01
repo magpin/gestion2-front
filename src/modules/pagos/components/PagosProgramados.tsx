@@ -169,7 +169,7 @@ export function PagosProgramados({
       {pendientes.length === 0 && resueltos.length === 0 ? (
         <EmptyState
           titulo={todos ? "Todavía no hay pagos programados" : "No hay pagos pendientes"}
-          descripcion="Programá el arriendo, la cuota del préstamo o la nómina con su fecha, para que ninguno se te pase."
+          descripcion="Programe el arriendo, la cuota del préstamo o la nómina con su fecha, para que ninguno se le pase."
           accion={puedeProgramar ? { label: "Programar pago", onClick: () => setNuevoDesdeVacio(true) } : undefined}
           accionSecundaria={todos ? undefined : { label: "Ver pagados y cancelados", onClick: () => setTodos(true) }}
         />
@@ -277,11 +277,11 @@ function FormularioProgramado({ onCerrar }: { onCerrar: () => void }) {
 
   const problema =
     descripcion.trim().length < 3
-      ? "Escribí qué se paga."
+      ? "Escriba qué se paga."
       : !(Number(valor) > 0)
-        ? "Escribí el valor."
+        ? "Escriba el valor."
         : fecha === ""
-          ? "Elegí la fecha."
+          ? "Elija la fecha."
           : null;
 
   const crear = useMutation({
@@ -308,7 +308,7 @@ function FormularioProgramado({ onCerrar }: { onCerrar: () => void }) {
       <DialogHeader>
         <div>
           <DialogTitle>Programar un pago</DialogTitle>
-          <DialogDescription>Un recordatorio: no mueve plata hasta que se paga.</DialogDescription>
+          <DialogDescription>Un recordatorio: no mueve dinero hasta que se paga.</DialogDescription>
         </div>
         <DialogCloseIcon />
       </DialogHeader>

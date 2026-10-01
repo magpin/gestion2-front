@@ -112,8 +112,8 @@ export function ArqueoSeccion() {
       </section>
 
       {/* El resultado del último cuadre, en grande y en la cara: cuadrado en
-          verde, faltante en rojo, sobrante en ámbar. Un faltante es plata que
-          no está y un sobrante es plata sin explicar — se parecen poco y no
+          verde, faltante en rojo, sobrante en ámbar. Un faltante es dinero que
+          no está y un sobrante es dinero sin explicar — se parecen poco y no
           pueden verse igual. */}
       {diferenciaUltimo !== null && abierto === null && (
         <Aviso
@@ -155,7 +155,7 @@ export function ArqueoSeccion() {
               <b className="font-mono">
                 {formatCOP(Number(ultimoCerrado!.saldo_sistema))}
               </b>
-              . Falta plata: revisá si hay un cobro sin registrar, un egreso
+              . Falta dinero: revise si hay un cobro sin registrar, un egreso
               cargado de más o un error al contar. El arqueo ya quedó cerrado
               con su asiento de ajuste; corregirlo es abrir uno nuevo.
             </>
@@ -169,7 +169,7 @@ export function ArqueoSeccion() {
               <b className="font-mono">
                 {formatCOP(Number(ultimoCerrado!.saldo_sistema))}
               </b>
-              . Hay plata de más: casi siempre es un ingreso que no se registró.
+              . Hay dinero de más: casi siempre es un ingreso que no se registró.
             </>
           )}
         </Aviso>
@@ -196,8 +196,8 @@ export function ArqueoSeccion() {
           titulo={`Arqueo abierto desde el ${formatFecha(abierto.fecha)}`}
           cifra={formatCOP(Number(abierto.saldo_sistema))}
         >
-          Es lo que el sistema dice que debería haber en la caja. Contá el
-          efectivo y cerralo con lo que realmente encontraste.
+          Es lo que el sistema dice que debería haber en la caja. Cuente el
+          efectivo y ciérrelo con lo que realmente encontró.
         </Aviso>
       )}
 
@@ -213,8 +213,8 @@ export function ArqueoSeccion() {
           <EmptyState
             sinMarco
             icon={ClipboardCheck}
-            titulo="Elegí una caja para ver sus arqueos"
-            descripcion="Arriba, en «Caja»: acá queda cada conteo del efectivo, con lo que sobró o faltó."
+            titulo="Elija una caja para ver sus arqueos"
+            descripcion="Arriba, en «Caja»: aquí queda cada conteo del efectivo, con lo que sobró o faltó."
           />
         ) : arqueos === undefined ? (
           isError ? (
@@ -292,7 +292,7 @@ export function ArqueoSeccion() {
             sinMarco
             icon={ClipboardCheck}
             titulo="Esta caja todavía no tiene arqueos"
-            descripcion="Abrí un arqueo, contá el efectivo y cerralo con lo que encontraste: así sabés si la caja cuadra."
+            descripcion="Abra un arqueo, cuente el efectivo y ciérrelo con lo que encontró: así sabe si la caja cuadra."
             accion={puedeOperar ? { label: "Abrir arqueo", onClick: () => setModal("abrir") } : undefined}
           />
         )}
@@ -306,7 +306,7 @@ export function ArqueoSeccion() {
               <DialogDescription>
                 {modal === "abrir"
                   ? "Congela el saldo del sistema al momento de abrir."
-                  : "Contá la caja y registrá lo que hay — la diferencia se calcula sola."}
+                  : "Cuente la caja y registre lo que hay — la diferencia se calcula sola."}
               </DialogDescription>
             </div>
             <DialogCloseIcon />

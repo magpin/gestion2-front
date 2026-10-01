@@ -67,8 +67,8 @@ export function ListaMovimientosConcepto({
           titulo={entrada ? "Todavía no hay ingresos sin factura" : "Todavía no hay pagos sin factura"}
           descripcion={
             entrada
-              ? "Un rendimiento, un préstamo o un aporte entran sin factura de venta. Registralos con su concepto y quedan acá."
-              : "Lo financiero, los impuestos y lo que no es gasto se pagan sin factura. Registralos con su concepto y quedan acá; lo que lleva factura va por Compras."
+              ? "Un rendimiento, un préstamo o un aporte entran sin factura de venta. Regístrelos con su concepto y quedan aquí."
+              : "Lo financiero, los impuestos y lo que no es gasto se pagan sin factura. Regístrelos con su concepto y quedan aquí; lo que lleva factura va por Compras."
           }
           accion={
             puedeAnular

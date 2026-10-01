@@ -531,7 +531,7 @@ function Empresas({
       {empresas.length === 0 ? (
         <Vacio
           titulo="Todavía no tiene empresas."
-          texto="Lo normal es que su director la cree desde el asistente. Si no puede, agréguela acá."
+          texto="Lo normal es que su director la cree desde el asistente. Si no puede, agréguela aquí."
         />
       ) : (
         <TablaEmpresas empresas={empresas} />

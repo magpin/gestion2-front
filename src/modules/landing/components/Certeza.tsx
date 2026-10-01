@@ -32,7 +32,7 @@ const FILAS: Fila[] = [
   {
     texto: (
       <>
-        Útiles y papelería: a <span className="font-mono">519530</span>, como me dijiste la vez
+        Útiles y papelería: a <span className="font-mono">519530</span>, como me indicó la vez
         pasada.
       </>
     ),
@@ -41,8 +41,8 @@ const FILAS: Fila[] = [
     estado: "reposo",
   },
   {
-    texto: "Servicios EPM: no sé si es gasto de administración o de ventas. Decime vos y lo recuerdo.",
-    chip: "Te pregunto",
+    texto: "Servicios EPM: no sé si es gasto de administración o de ventas. Indíqueme cuál y lo recuerdo.",
+    chip: "Le pregunto",
     tono: "ambar",
     estado: "noEntendi",
   },
@@ -55,11 +55,11 @@ export function Certeza() {
         <div className={`${styles.rv} flex flex-col gap-5.5`}>
           <Rotulo>05 — Certeza</Rotulo>
           <TituloSeccion className="font-serif text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.02] tracking-[-1.4px]">
-            Te dice qué sabe. <span className="italic">Y qué no.</span>
+            Le dice qué sabe. <span className="italic">Y qué no.</span>
           </TituloSeccion>
           <p className="m-0 text-[17px] leading-[1.65] text-muted-foreground">
-            No te da porcentajes: un 87 % no le sirve a nadie. Te dice de dónde sacó cada dato, y
-            lo que no sabe te lo pregunta. Nada se asienta solo.
+            No le da porcentajes: un 87 % no le sirve a nadie. Le dice de dónde sacó cada dato, y
+            lo que no sabe se lo pregunta. Nada se asienta solo.
           </p>
         </div>
 
@@ -93,13 +93,13 @@ export function Certeza() {
             className={`${styles.rv} ${styles.e3} flex flex-col gap-3 rounded-[1.05rem] border border-border bg-card px-5 py-5 sm:px-6`}
           >
             <span className="font-mono text-[11px] tracking-[1.2px] text-muted-foreground uppercase">
-              Lo que le contestás, lo recuerda
+              Lo que usted le responde, lo recuerda
             </span>
             <div className="flex items-start gap-3">
               <Maria estado="lista" tamano={28} />
               <p className="m-0 text-sm leading-relaxed">
                 Listo: las compras de <strong>Papelería Central</strong> van a{" "}
-                <span className="font-mono">519530</span>. La próxima vez no te pregunto.
+                <span className="font-mono">519530</span>. La próxima vez no le pregunto.
               </p>
             </div>
             <span className="text-xs text-muted-foreground">

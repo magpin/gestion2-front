@@ -184,7 +184,7 @@ export function RepartoEnTarjetas({
         {estado !== null && (estado.falta > 0 || estado.sobra > 0) && (
           <p className={cn("text-sm font-medium", estado.sobra > 0 ? "text-danger" : "text-muted-foreground")}>
             {estado.sobra > 0
-              ? `Te pasaste por ${formatCOPExacto(estado.sobra)}`
+              ? `Se pasó por ${formatCOPExacto(estado.sobra)}`
               : `Falta repartir ${formatCOPExacto(estado.falta)}`}
           </p>
         )}

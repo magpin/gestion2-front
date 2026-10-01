@@ -17,7 +17,7 @@ import styles from "../landing.module.css";
 
 const CHEQUEOS = [
   { texto: "Proveedor y NIT validados", retraso: styles.k1 },
-  { texto: "Útiles y papelería: la cuenta que indicaste la vez pasada", retraso: styles.k2 },
+  { texto: "Útiles y papelería: la cuenta que usted indicó la vez pasada", retraso: styles.k2 },
   { texto: "IVA descontable identificado", retraso: styles.k3 },
   { texto: "Sumas del papel cuadradas", retraso: styles.k4 },
 ];

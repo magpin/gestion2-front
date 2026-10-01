@@ -54,7 +54,7 @@ export function PropuestasPerfil({ terceroId }: { terceroId?: string }) {
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Lo que dicen sus facturas y no coincide con lo que tengo. No cambio
-          nada hasta que lo apruebes: hasta entonces, calculo con lo que tengo.
+          nada hasta que lo apruebe: hasta entonces, calculo con lo que tengo.
         </p>
       </div>
       <div className="p-6">{lista}</div>

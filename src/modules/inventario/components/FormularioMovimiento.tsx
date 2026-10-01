@@ -35,7 +35,7 @@ const esquema = z.object({
   fecha: z.string().min(1, "Requerido"),
   cantidad: z.number().positive("Tiene que ser mayor a cero"),
   costoUnitario: z.number().min(0, "No puede ser negativo").optional(),
-  motivo: z.string().min(3, "Contá qué pasó").max(300),
+  motivo: z.string().min(3, "Indique qué pasó").max(300),
   // Solo la salida de ajuste: quién asume lo que falta.
   tratamientoFaltante: z.enum(["EMPRESA", "RESPONSABLE"]).optional(),
   responsableTerceroId: z.string().optional(),
@@ -128,7 +128,7 @@ export function FormularioMovimiento({
       ) : (
         <p className="rounded-2xl bg-muted p-4 text-sm">
           <span className="font-semibold">
-            {producto?.nombre ?? "Selecciona un producto"}
+            {producto?.nombre ?? "Seleccione un producto"}
           </span>
           {producto && (
             <>
@@ -245,13 +245,13 @@ export function FormularioMovimiento({
             ))}
           </div>
           {intento && faltaTratamiento && (
-            <p className="text-sm text-danger">Elegí una de las dos para poder registrar el faltante.</p>
+            <p className="text-sm text-danger">Elija una de las dos para poder registrar el faltante.</p>
           )}
           {tratamiento === "RESPONSABLE" && (
             <Campo
               id="responsable"
               etiqueta="¿A quién se le cobra? *"
-              error={intento && faltaResponsable ? "Elegí a quién se le cobra" : undefined}
+              error={intento && faltaResponsable ? "Elija a quién se le cobra" : undefined}
               escala="grande"
             >
               <SelectorTercero

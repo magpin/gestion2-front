@@ -20,7 +20,7 @@ export function RetencionesView() {
           Retenciones<span className="text-brand">.</span>
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Lo que practicás y lo que te practican: tarifas de la ley, perfiles de terceros y cambios de norma.
+          Lo que practica y lo que le practican: tarifas de la ley, perfiles de terceros y cambios de norma.
         </p>
       </header>
 

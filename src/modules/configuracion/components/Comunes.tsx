@@ -319,7 +319,7 @@ export function FilaVigencia({
         </span>
         {suprimida && (
           <span className="text-xs text-muted-foreground">
-            La DIAN la suprimió — usa el código{" "}
+            La DIAN la suprimió — use el código{" "}
             <span className="font-mono text-foreground">{suprimida}</span>
           </span>
         )}

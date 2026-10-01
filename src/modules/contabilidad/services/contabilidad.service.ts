@@ -134,7 +134,7 @@ export const asientosApi = {
     });
     if (!respuesta.ok) {
       throw new Error(
-        `El soporte no se pudo subir (${respuesta.status}). Revisá que el almacenamiento esté disponible.`,
+        `El soporte no se pudo subir (${respuesta.status}). Revise que el almacenamiento esté disponible.`,
       );
     }
     return { clave, nombre: archivo.name };

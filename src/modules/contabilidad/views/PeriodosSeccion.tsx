@@ -156,8 +156,8 @@ export function PeriodosSeccion() {
           titulo={anio === undefined ? "Todavía no hay períodos" : `Sin períodos en ${anio}`}
           descripcion={
             anio === undefined
-              ? "Cada mes aparece acá con sus cifras a medida que la empresa registra movimientos."
-              : "La empresa no llevó contabilidad en ese año. Pasá a otro año con las flechas."
+              ? "Cada mes aparece aquí con sus cifras a medida que la empresa registra movimientos."
+              : "La empresa no llevó contabilidad en ese año. Pase a otro año con las flechas."
           }
         />
       ) : (

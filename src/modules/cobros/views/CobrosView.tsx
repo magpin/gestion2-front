@@ -70,7 +70,7 @@ export function CobrosView() {
             Cobros<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Lo que te deben los clientes y cada peso que entra, con su recibo de caja.
+            Lo que le deben los clientes y cada peso que entra, con su recibo de caja.
           </p>
         </div>
         {/* El botón dice lo que se hace en cada pestaña. */}
@@ -128,7 +128,7 @@ function PorCobrar({ onCobrar }: { onCobrar?: (cliente: ClienteInicial) => void 
 
   if (cartera === undefined) {
     return isError ? (
-      <ErrorCarga error={error} titulo="No se pudo leer lo que te deben" onReintentar={refetch} />
+      <ErrorCarga error={error} titulo="No se pudo leer lo que le deben" onReintentar={refetch} />
     ) : (
       <SkeletonTable />
     );
@@ -147,7 +147,7 @@ function PorCobrar({ onCobrar }: { onCobrar?: (cliente: ClienteInicial) => void 
       <section className="mb-7 rounded-3xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-end justify-between gap-5 px-6 py-5">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Te deben</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Le deben</p>
             <p className="font-mono text-3xl font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums">
               {formatCOP(cartera.total)}
             </p>
@@ -186,11 +186,11 @@ function PorCobrar({ onCobrar }: { onCobrar?: (cliente: ClienteInicial) => void 
 
       {clientes.length === 0 ? (
         <EmptyState
-          titulo={q ? "Nada coincide con esa búsqueda" : "Nadie te debe"}
+          titulo={q ? "Nada coincide con esa búsqueda" : "Nadie le debe"}
           descripcion={
             q
               ? `Ningún cliente con saldo tiene «${busqueda.trim()}» en el nombre o el NIT.`
-              : "Cuando emitás una factura a crédito, aparece acá con su vencimiento."
+              : "Cuando emita una factura a crédito, aparece aquí con su vencimiento."
           }
           icon={q ? SearchX : HandCoins}
           accion={q ? undefined : { label: "Nueva factura de venta", href: "/dashboard/ventas" }}
@@ -339,7 +339,7 @@ function Recibos({ puedeAnular }: { puedeAnular: boolean }) {
           titulo={recibos.length === 0 ? `Sin recibos en ${mesTexto}` : "Nada coincide"}
           descripcion={
             recibos.length === 0
-              ? "Cada cobro que registres queda acá con su número. Se cobra desde Por cobrar o desde la factura."
+              ? "Cada cobro que registre queda aquí con su número. Se cobra desde Por cobrar o desde la factura."
               : "Ningún recibo del mes coincide con la búsqueda o con el medio elegido."
           }
           icon={recibos.length === 0 ? ReceiptText : SearchX}
@@ -472,7 +472,7 @@ function DialogoAnular({ recibo, onCerrar }: { recibo: ReciboCaja | null; onCerr
             <DialogDescription>
               Sale {formatCOP((recibo?.total ?? 0) - (recibo?.comision ?? 0))} de {recibo?.destino} y las
               facturas vuelven a deber lo que se les abonó y descontó. Si el anticipo ya se cruzó, primero
-              anulá el cruce. El recibo queda en el historial.
+              anule el cruce. El recibo queda en el historial.
             </DialogDescription>
           </div>
           <DialogCloseIcon />

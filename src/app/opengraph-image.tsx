@@ -14,7 +14,7 @@ import { ImageResponse } from "next/og";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt =
-  "Subís la factura. La contabilidad se hace sola. Con María, tu asistente contable.";
+  "Usted sube la factura. La contabilidad se hace sola. Con María, su asistente contable.";
 
 const TINTA = "#171717";
 const HUECO = "#ffffff";
@@ -85,7 +85,7 @@ export default function ImagenParaCompartir() {
             lineHeight: 1.15,
           }}
         >
-          Subís la factura. La contabilidad se hace sola.
+          Usted sube la factura. La contabilidad se hace sola.
         </div>
         <div style={{ fontSize: 30, color: "#6b6b6b" }}>
           ERP Gestión · con María

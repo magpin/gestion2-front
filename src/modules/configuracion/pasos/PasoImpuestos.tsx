@@ -96,8 +96,8 @@ function BloqueDian({ imp, pendiente }: { imp: EstadoImpuestos; pendiente: boole
 
   return (
     <Bloque
-      titulo="Tu empresa ante la DIAN"
-      descripcion="Sale de la casilla 53 del RUT. Si María leyó tu RUT, ya está contestado."
+      titulo="Su empresa ante la DIAN"
+      descripcion="Sale de la casilla 53 del RUT. Si María leyó el RUT, ya está contestado."
       pendiente={pendiente}
     >
       <ul className="m-0 flex list-none flex-col divide-y divide-border p-0">
@@ -124,7 +124,7 @@ function BloqueDian({ imp, pendiente }: { imp: EstadoImpuestos; pendiente: boole
       {/* Lo deducido no se pregunta: se dice, con su porqué. */}
       <p className="m-0 rounded-lg bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
         <span className="font-medium text-foreground">Agente de retención de IVA: </span>
-        {imp.agenteIva.es ? `sí. ${imp.agenteIva.porque ?? ""}` : "no, según lo que contestaste."}
+        {imp.agenteIva.es ? `sí. ${imp.agenteIva.porque ?? ""}` : "no, según lo que contestó."}
       </p>
 
       <button
@@ -148,7 +148,7 @@ function Origen({ pregunta }: { pregunta: EstadoImpuestos["preguntas"][number] }
   if (pregunta.fuente !== null) {
     return (
       <span className="text-[11px] text-muted-foreground">
-        Según tu RUT, casilla 53, código{" "}
+        Según el RUT, casilla 53, código{" "}
         <span className="font-mono">{String(pregunta.fuente.codigo).padStart(2, "0")}</span> ·
         desde el {fechaCorta(pregunta.fuente.desde)}
       </span>
@@ -156,7 +156,7 @@ function Origen({ pregunta }: { pregunta: EstadoImpuestos["preguntas"][number] }
   }
   // Un «No» sin código en el RUT solo llega si la persona lo contestó (o confirmó el paso).
   if (pregunta.respuesta === false) {
-    return <span className="text-[11px] text-muted-foreground">Lo contestaste vos.</span>;
+    return <span className="text-[11px] text-muted-foreground">Lo contestó usted.</span>;
   }
   return null;
 }
@@ -168,13 +168,13 @@ function Origen({ pregunta }: { pregunta: EstadoImpuestos["preguntas"][number] }
 function BloqueIca({ imp, pendiente }: { imp: EstadoImpuestos; pendiente: boolean }) {
   return (
     <Bloque
-      titulo="ICA en tus municipios"
-      descripcion="Lo decide cada municipio por acuerdo o resolución; no aparece en el RUT. Una fila por municipio donde tenés sede."
+      titulo="ICA en sus municipios"
+      descripcion="Lo decide cada municipio por acuerdo o resolución; no aparece en el RUT. Una fila por municipio donde tiene sede."
       pendiente={pendiente}
     >
       {imp.municipios.length === 0 ? (
         <p className="m-0 text-sm text-muted-foreground">
-          Todavía no hay sedes. El ICA se contesta por cada municipio donde tengas una.
+          Todavía no hay sedes. El ICA se contesta por cada municipio donde tenga una.
         </p>
       ) : (
         <ul className="m-0 flex list-none flex-col divide-y divide-border p-0">
@@ -220,7 +220,7 @@ function FilaMunicipio({ municipio: m }: { municipio: MunicipioIca }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <span className="text-xs text-muted-foreground">
-            ¿Te nombró agente retenedor de ICA?
+            ¿Lo nombró agente retenedor de ICA?
           </span>
           <SegmentadoSiNo
             etiquetaGrupo={`Agente retenedor de ICA en ${m.nombre}`}
@@ -235,7 +235,7 @@ function FilaMunicipio({ municipio: m }: { municipio: MunicipioIca }) {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-xs text-muted-foreground">¿Sos autorretenedor de ICA allí?</span>
+          <span className="text-xs text-muted-foreground">¿Es autorretenedor de ICA allí?</span>
           <SegmentadoSiNo
             etiquetaGrupo={`Autorretenedor de ICA en ${m.nombre}`}
             valor={r === null ? null : r.esAutorretenedor}
@@ -249,7 +249,7 @@ function FilaMunicipio({ municipio: m }: { municipio: MunicipioIca }) {
       </div>
 
       {/* La tarifa sale de la ley de ICA del municipio y del CIIU; mientras esa
-          ley no esté cargada, la que se escriba acá queda marcada como
+          ley no esté cargada, la que se escriba aquí queda marcada como
           provisional (R-D11) y se reemplaza sola cuando llegue. */}
       <div className="flex flex-col gap-1.5">
         <span className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -284,8 +284,8 @@ function FilaMunicipio({ municipio: m }: { municipio: MunicipioIca }) {
         </span>
         <span className="text-[11px] text-muted-foreground">
           {r === null
-            ? "Contestá primero si sos agente retenedor allí."
-            : `Todavía no tengo las tarifas de ICA de ${m.nombre}: usá la de tu acuerdo municipal mientras tanto.`}
+            ? "Conteste primero si es agente retenedor allí."
+            : `Todavía no tengo las tarifas de ICA de ${m.nombre}: use la de su acuerdo municipal mientras tanto.`}
           {tarifa !== null && escrita.trim() !== "" && !tarifaValida && (
             <span className="block font-medium text-foreground">
               Tiene que ser un número entre 0 y 30.
@@ -310,13 +310,13 @@ function BloqueResumen({ imp, pendiente }: { imp: EstadoImpuestos; pendiente: bo
 
   return (
     <Bloque
-      titulo="Lo que esto significa para vos"
-      descripcion="Se arma solo con lo que contestaste. Si algo no cuadra, cambiá la respuesta de arriba."
+      titulo="Lo que esto significa para usted"
+      descripcion="Se arma solo con lo que contestó. Si algo no cuadra, cambie la respuesta de arriba."
       pendiente={pendiente}
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <Lista titulo="Vas a retener" items={imp.resumen.vasARetener} vacio="Nada: no retenés a nadie." />
-        <Lista titulo="Te van a retener" items={imp.resumen.teVanARetener} />
+        <Lista titulo="Va a retener" items={imp.resumen.vasARetener} vacio="Nada: no le retiene a nadie." />
+        <Lista titulo="Le van a retener" items={imp.resumen.teVanARetener} />
       </div>
 
       <p className="m-0 text-sm">
@@ -339,7 +339,7 @@ function BloqueResumen({ imp, pendiente }: { imp: EstadoImpuestos; pendiente: bo
         </Button>
         {imp.confirmadoEn !== null && (
           <span className="text-xs text-muted-foreground">
-            Lo confirmaste el {fechaCorta(imp.confirmadoEn)}.
+            Lo confirmó el {fechaCorta(imp.confirmadoEn)}.
           </span>
         )}
       </div>

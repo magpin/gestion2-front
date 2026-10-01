@@ -19,7 +19,7 @@ describe("avisoNotasVivas", () => {
         { tipo: "NOTA_CREDITO", estado: "ANULADA", numero: "NC-4" },
         { tipo: "NOTA_CREDITO", estado: "EMITIDA", numero: "NC-5" },
       ]),
-    ).toBe("Esta factura tiene la nota crédito NC-5 viva: anulala primero.");
+    ).toBe("Esta factura tiene la nota crédito NC-5 viva: anúlela primero.");
   });
 
   it("nombra todas cuando son varias, crédito y débito", () => {
@@ -29,7 +29,7 @@ describe("avisoNotasVivas", () => {
         { tipo: "NOTA_DEBITO", estado: "EMITIDA", numero: "ND-3" },
       ]),
     ).toBe(
-      "Esta compra tiene vivas la nota crédito NC-77 y la nota débito ND-3: anulalas primero.",
+      "Esta compra tiene vivas la nota crédito NC-77 y la nota débito ND-3: anúlelas primero.",
     );
   });
 });

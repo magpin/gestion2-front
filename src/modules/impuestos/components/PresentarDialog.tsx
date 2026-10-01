@@ -53,10 +53,10 @@ function Formulario({ fila, onCerrar }: { fila: FilaCalendario; onCerrar: () => 
   const [intentado, setIntentado] = useState(false);
 
   const errores = {
-    numero: numero.trim() === "" ? "Escribí el número del formulario que te dio MUISCA." : null,
-    fecha: fecha === "" ? "Elegí la fecha." : fecha > hoyEnColombia() ? "La fecha no puede ser futura." : null,
-    valor: !(Number(valor) >= 0) || valor === "" ? "Escribí el valor a pagar del formulario." : null,
-    vence: fila.vence === null && vence === "" ? "El calendario no tiene esta fecha: escribí cuándo vence." : null,
+    numero: numero.trim() === "" ? "Escriba el número del formulario que le dio MUISCA." : null,
+    fecha: fecha === "" ? "Elija la fecha." : fecha > hoyEnColombia() ? "La fecha no puede ser futura." : null,
+    valor: !(Number(valor) >= 0) || valor === "" ? "Escriba el valor a pagar del formulario." : null,
+    vence: fila.vence === null && vence === "" ? "El calendario no tiene esta fecha: escriba cuándo vence." : null,
   };
   const problema = Object.values(errores).some((e) => e !== null);
   const ver = (k: keyof typeof errores) => (intentado ? (errores[k] ?? undefined) : undefined);
@@ -100,8 +100,8 @@ function Formulario({ fila, onCerrar }: { fila: FilaCalendario; onCerrar: () => 
       <DialogHeader>
         <DialogTitle>{d === null ? "Registrar la presentación" : "Corregir la presentación"}</DialogTitle>
         <DialogDescription>
-          {fila.etiqueta}. Presentala en {fila.municipio ? `el portal de ${fila.municipio.nombre}` : "MUISCA"} con tu
-          firma y dejá acá el número; el sistema no la manda a la DIAN.
+          {fila.etiqueta}. Preséntela en {fila.municipio ? `el portal de ${fila.municipio.nombre}` : "MUISCA"} con su
+          firma y deje aquí el número; el sistema no la manda a la DIAN.
         </DialogDescription>
         <DialogCloseIcon />
       </DialogHeader>
@@ -135,7 +135,7 @@ function Formulario({ fila, onCerrar }: { fila: FilaCalendario; onCerrar: () => 
             <Campo id="pres-impuesto" etiqueta="Impuesto neto de renta" ayuda="El renglón del 110. Sirve para el anticipo del año que viene." escala="grande">
               <CampoPesos id="pres-impuesto" value={impuestoNeto} onChange={setImpuestoNeto} className="h-11 rounded-xl px-4 text-right font-mono" />
             </Campo>
-            <Campo id="pres-anticipo" etiqueta="Anticipo del año siguiente" ayuda="El que liquidaste en el 110. Se resta el año que viene." escala="grande">
+            <Campo id="pres-anticipo" etiqueta="Anticipo del año siguiente" ayuda="El que liquidó en el 110. Se resta el año que viene." escala="grande">
               <CampoPesos id="pres-anticipo" value={anticipo} onChange={setAnticipo} className="h-11 rounded-xl px-4 text-right font-mono" />
             </Campo>
           </div>
@@ -159,7 +159,7 @@ function Formulario({ fila, onCerrar }: { fila: FilaCalendario; onCerrar: () => 
         <Campo id="pres-archivo" etiqueta="El PDF del formulario (opcional)" escala="grande">
           <label className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-4 text-sm text-muted-foreground hover:bg-accent">
             <FileText className="size-4" />
-            {archivo?.name ?? d?.archivoNombre ?? "Elegí el PDF que descargaste de MUISCA"}
+            {archivo?.name ?? d?.archivoNombre ?? "Elija el PDF que descargó de MUISCA"}
             <input
               id="pres-archivo"
               type="file"
@@ -173,7 +173,7 @@ function Formulario({ fila, onCerrar }: { fila: FilaCalendario; onCerrar: () => 
       <DialogFooter className="sm:justify-between">
         <p className="self-center text-sm text-muted-foreground">
           {intentado && problema
-            ? "Revisá lo marcado en rojo."
+            ? "Revise lo marcado en rojo."
             : renta
               ? "Después se registra cada cuota con su recibo 490."
               : `Después se registra el pago con ${fila.municipio ? "el recibo del municipio" : "el recibo 490"}.`}

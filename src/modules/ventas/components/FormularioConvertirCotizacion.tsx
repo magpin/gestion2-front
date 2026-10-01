@@ -134,7 +134,7 @@ function Formulario({
   const problema =
     problemaPago ??
     (bloqueadoPorExistencia
-      ? "No alcanza la existencia: registrá la compra o cargá la existencia antes de emitir."
+      ? "No alcanza la existencia: registre la compra o cargue la existencia antes de emitir."
       : null);
 
   return (
@@ -195,9 +195,9 @@ function Formulario({
               )}
               <Fila etiqueta="Total factura" valor={pesos(previa?.total ?? Number(detalle.total))} fuerte />
               {previa?.retenciones.map((r, i) => (
-                <Fila key={i} etiqueta={`Te retienen · ${r.nombre}`} valor={`− ${pesos(r.valor)}`} />
+                <Fila key={i} etiqueta={`Le retienen · ${r.nombre}`} valor={`− ${pesos(r.valor)}`} />
               ))}
-              {previa && previa.retenido > 0 && <Fila etiqueta="Vas a recibir" valor={pesos(previa.neto)} fuerte />}
+              {previa && previa.retenido > 0 && <Fila etiqueta="Va a recibir" valor={pesos(previa.neto)} fuerte />}
               {previo.isError && (
                 <p className="text-xs text-danger">{mensajeDeError(previo.error)}</p>
               )}
@@ -341,8 +341,8 @@ export function BloqueExistencia({
       </ul>
       <p className="text-xs text-muted-foreground">
         {vendeSinExistencia
-          ? "Tu empresa vende sin existencia: si emitís igual, el inventario queda en negativo y lo que falta queda en la lista de compras pendientes."
-          : "Tu empresa no vende sin existencia. Primero tiene que entrar la mercancía."}
+          ? "La empresa vende sin existencia: si emite igual, el inventario queda en negativo y lo que falta queda en la lista de compras pendientes."
+          : "La empresa no vende sin existencia. Primero tiene que entrar la mercancía."}
       </p>
       {!vendeSinExistencia && puedeComprar && (
         <Button

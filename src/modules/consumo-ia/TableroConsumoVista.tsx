@@ -82,7 +82,7 @@ export function TableroConsumoVista({
           className="m-0 rounded-md bg-warning/10 px-4 py-2 text-sm text-warning"
         >
           El período tiene más de 100.000 registros y se cortó: las cifras están
-          incompletas. Elegí un rango más corto.
+          incompletas. Elija un rango más corto.
         </p>
       )}
 

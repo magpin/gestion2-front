@@ -202,7 +202,7 @@ export function CotizacionesSeccion({
         <EmptyState
           icon={FileText}
           titulo="Todavía no hay cotizaciones"
-          descripcion={`Cuando le cotizás a un cliente, la propuesta queda acá hasta que la convertís en factura.${puedeCrear ? " Creá la primera con «Nueva cotización», arriba." : ""}`}
+          descripcion={`Cuando le cotiza a un cliente, la propuesta queda aquí hasta que la convierte en factura.${puedeCrear ? " Cree la primera con «Nueva cotización», arriba." : ""}`}
         />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">

@@ -59,7 +59,7 @@ export function LibrosSeccion() {
             Libros contables
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Consultá la información financiera sin modificarla.
+            Consulte la información financiera sin modificarla.
           </p>
         </div>
         {/* Un contador imprime los libros. Se usa la impresión del navegador:
@@ -106,7 +106,7 @@ export function LibrosSeccion() {
             Período
             <Select items={periodos.map((p) => ({ value: p.id, label: `${p.anio}-${String(p.mes).padStart(2, "0")}` }))} value={periodoId} onValueChange={(v) => setPeriodoId(v ?? "")}>
               <SelectTrigger className="h-11 w-full rounded-xl px-4">
-                <SelectValue placeholder="Elegí un período" />
+                <SelectValue placeholder="Elija un período" />
               </SelectTrigger>
               <SelectContent>
                 {periodos.map((p) => (
@@ -194,7 +194,7 @@ function Diario({ desde, hasta }: { desde: string; hasta: string }) {
     return (
       <SinDatos
         titulo="Sin asientos en estas fechas"
-        texto="Entre esas fechas no se registró nada. Ampliá el rango con Desde y Hasta."
+        texto="Entre esas fechas no se registró nada. Amplíe el rango con Desde y Hasta."
       />
     );
 
@@ -262,7 +262,7 @@ function Mayor({
     return (
       <SinDatos
         titulo="Falta la cuenta"
-        texto="El mayor se lee cuenta por cuenta. Elegí una arriba para ver sus movimientos y su saldo."
+        texto="El mayor se lee cuenta por cuenta. Elija una arriba para ver sus movimientos y su saldo."
       />
     );
   if (data === undefined)
@@ -275,7 +275,7 @@ function Mayor({
     return (
       <SinDatos
         titulo="Sin movimientos en estas fechas"
-        texto="Esa cuenta no se movió entre esas fechas. Ampliá el rango o elegí otra cuenta."
+        texto="Esa cuenta no se movió entre esas fechas. Amplíe el rango o elija otra cuenta."
       />
     );
 
@@ -341,7 +341,7 @@ function Balance({ periodoId }: { periodoId: string }) {
     return (
       <SinDatos
         titulo="Falta el período"
-        texto="El balance de prueba se arma por mes. Elegí un período arriba para verlo."
+        texto="El balance de prueba se arma por mes. Elija un período arriba para verlo."
       />
     );
   if (data === undefined)
@@ -354,7 +354,7 @@ function Balance({ periodoId }: { periodoId: string }) {
     return (
       <SinDatos
         titulo="Sin saldos en este período"
-        texto="Ese mes no tiene movimientos ni saldos que vengan de antes. Elegí otro período."
+        texto="Ese mes no tiene movimientos ni saldos que vengan de antes. Elija otro período."
       />
     );
 
@@ -418,7 +418,7 @@ function Balance({ periodoId }: { periodoId: string }) {
               Totales
               {!cuadra && (
                 <span className="ml-3 font-normal text-danger">
-                  no cuadran — revisá el libro
+                  no cuadran — revise el libro
                 </span>
               )}
             </td>

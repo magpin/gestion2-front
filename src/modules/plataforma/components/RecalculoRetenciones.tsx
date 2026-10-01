@@ -63,7 +63,7 @@ export function RecalculoRetenciones() {
   return (
     <Tarjeta titulo="Recalcular por cambio de norma">
       <p className="mb-4 text-xs text-muted-foreground">
-        Después de cargar la vigencia nueva, recalculá el rango que afecta. Se
+        Después de cargar la vigencia nueva, recalcule el rango que afecta. Se
         vuelve a correr el motor con la misma entrada y el mismo concepto de
         cada compra. No se toca ningún asiento: cada empresa ve sus diferencias
         en Contabilidad → Retenciones y las ajusta una persona.

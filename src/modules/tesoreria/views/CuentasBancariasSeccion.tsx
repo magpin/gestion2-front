@@ -106,14 +106,14 @@ export function CuentasBancariasSeccion() {
           <EmptyState
             icon={Landmark}
             titulo="Todavía no hay cuentas bancarias"
-            descripcion="Agregá tus cuentas de banco con el saldo que tienen hoy: así cuadrás cada extracto contra el libro."
+            descripcion="Agregue las cuentas de banco de la empresa con el saldo que tienen hoy: así cuadra cada extracto contra el libro."
             accion={puedeOperar ? { label: "Agregar cuenta bancaria", onClick: () => setCreando(true) } : undefined}
           />
         ) : (
           <EmptyState
             icon={Landmark}
             titulo="No hay cuentas bancarias activas"
-            descripcion="Agregá tus cuentas de banco con el saldo que tienen hoy, o mirá las inactivas por si hay una para reactivar."
+            descripcion="Agregue las cuentas de banco de la empresa con el saldo que tienen hoy, o mire las inactivas por si hay una para reactivar."
             accion={puedeOperar ? { label: "Agregar cuenta bancaria", onClick: () => setCreando(true) } : undefined}
             accionSecundaria={{ label: "Ver inactivas", onClick: () => setIncluirInactivas(true) }}
           />

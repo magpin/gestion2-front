@@ -64,7 +64,7 @@ export function RentaTab({
             ? "En el SIMPLE la renta va en el formulario 260, con sus anticipos bimestrales: este estimado no aplica."
             : c.tipoPersona === "NATURAL"
               ? "La renta de una persona natural se depura por cédulas, con sus propias tablas: la hace el contador."
-              : "Según el RUT no tiene la responsabilidad 05 (renta del régimen ordinario). Si cambió, actualizalo en Configurar empresa."
+              : "Según el RUT no tiene la responsabilidad 05 (renta del régimen ordinario). Si cambió, actualícelo en Configurar empresa."
         }
         icon={FileText}
         accion={{ label: "Ir a Configurar empresa", href: "/configuracion/impuestos" }}
@@ -155,8 +155,8 @@ function Contenido({
             </table>
           </div>
           <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
-            Calculado con tu contabilidad a hoy, al múltiplo de mil. No incluye la tasa mínima de tributación, rentas exentas,
-            descuentos ni diferencias fiscales: tu contador confirma los ajustes al cierre del año.
+            Calculado con su contabilidad a hoy, al múltiplo de mil. No incluye la tasa mínima de tributación, rentas exentas,
+            descuentos ni diferencias fiscales: su contador confirma los ajustes al cierre del año.
             {e.anticipoAnterior === null && ` Falta registrar la declaración de ${e.anio - 1}: sin ella no se resta su anticipo.`}
           </p>
         </section>
@@ -196,8 +196,8 @@ function Contenido({
           <section className="rounded-3xl border border-border bg-card px-5 py-4 shadow-sm">
             <p className="text-sm font-semibold">Para tenerlo listo</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Si apartás unos <span className="font-mono whitespace-nowrap text-foreground">{formatCOP(apartar)}</span> al mes desde{" "}
-              {MESES[mesHoy % 12]}, en {MESES[ultimoMes - 1]} tenés {e.cuotas.length === 1 ? "la cuota" : `las ${e.cuotas.length} cuotas`} sin
+              Si aparta unos <span className="font-mono whitespace-nowrap text-foreground">{formatCOP(apartar)}</span> al mes desde{" "}
+              {MESES[mesHoy % 12]}, en {MESES[ultimoMes - 1]} tiene {e.cuotas.length === 1 ? "la cuota" : `las ${e.cuotas.length} cuotas`} sin
               afectar la caja.
             </p>
           </section>

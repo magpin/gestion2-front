@@ -265,7 +265,7 @@ export function FacturasSeccion({
       ) : facturas.length === 0 ? (
         <VacioConMaria
           titulo="Todavía no hay facturas"
-          invitacion="Mandame el pedido de un cliente y te armo la factura para que la emitas."
+          invitacion="Envíeme el pedido de un cliente y le armo la factura para que la emita."
           roles={["DIRECTOR"]}
           sinMaria="Al emitir una factura se asienta y se descuenta el kardex, todo junto."
         />

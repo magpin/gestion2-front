@@ -129,7 +129,7 @@ export function ReglasExtractoSeccion() {
           <div className="p-5">
             <p className="mb-4 text-sm text-muted-foreground">
               Todavía no hay reglas. Estas tres cubren lo que casi todo extracto trae;
-              traen las palabras, y la cuenta la elegís vos.
+              traen las palabras, y la cuenta la elige usted.
             </p>
             <ul className="grid gap-3 md:grid-cols-3">
               {REGLAS_SUGERIDAS.map((s) => (
@@ -328,7 +328,7 @@ function DialogoRegla({
   const bloqueaCuenta = noSirve !== null && (regla === null || cuentaCambio);
   const problema =
     problemaRegla(b) ??
-    (regla === null && cuenta === null ? "Elegí la cuenta contable." : null);
+    (regla === null && cuenta === null ? "Elija la cuenta contable." : null);
 
   return (
     <Dialog open onOpenChange={(a) => !a && onCerrar()}>
@@ -359,7 +359,7 @@ function DialogoRegla({
           <Campo
             id="palabras"
             etiqueta="Palabras"
-            ayuda="Separadas por coma, hasta 10. «COMISION» no reconoce «COMISIONES»: escribí las dos."
+            ayuda="Separadas por coma, hasta 10. «COMISION» no reconoce «COMISIONES»: escriba las dos."
             escala="grande"
           >
             <Input
@@ -436,7 +436,7 @@ function DialogoRegla({
 
           {noSirve && (
             <p className="rounded-2xl bg-warning/10 p-4 text-sm text-warning">
-              Esta cuenta exige {noSirve}, y una regla registra sus líneas sin él. Elegí
+              Esta cuenta exige {noSirve}, y una regla registra sus líneas sin él. Elija
               otra auxiliar.
             </p>
           )}

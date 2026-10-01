@@ -15,8 +15,8 @@ export function retencionDelAnticipo(p: PropuestaRenta | undefined): number {
 /** Qué impide entregar el anticipo, con las mismas guardas que el servidor. */
 export function problemaDelAnticipo(p: PropuestaRenta | undefined, cargando: boolean): string | null {
   if (cargando || p === undefined) return "Calculando la retención del anticipo…";
-  if (p.decision === "REVISION") return `${p.motivo} Completalo antes de entregar el anticipo.`;
-  if (p.pendientes > 0) return "Elegí el concepto de retención del anticipo.";
+  if (p.decision === "REVISION") return `${p.motivo} Complételo antes de entregar el anticipo.`;
+  if (p.pendientes > 0) return "Elija el concepto de retención del anticipo.";
   return null;
 }
 

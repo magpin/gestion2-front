@@ -42,11 +42,11 @@ const esquemaRepresentante = z.object({
 const esquemaActividad = z.object({
   codigoCiiu: z
     .string()
-    .regex(/^[0-9]{4}$/, "Elegí una actividad del catálogo"),
+    .regex(/^[0-9]{4}$/, "Elija una actividad del catálogo"),
   // La descripción ya no se escribe: la pone el selector con el nombre oficial
   // del DANE, y el backend la congela junto a la actividad.
-  descripcion: z.string().min(3, "Elegí una actividad del catálogo").max(300),
-  municipioCodigo: z.string().regex(/^[0-9]{5}$/, "Elige un municipio"),
+  descripcion: z.string().min(3, "Elija una actividad del catálogo").max(300),
+  municipioCodigo: z.string().regex(/^[0-9]{5}$/, "Elija un municipio"),
   fechaInicio: FECHA,
 });
 
@@ -562,8 +562,8 @@ function BloqueActividad({ pendiente }: { pendiente: boolean }) {
             error={errores.codigoCiiu?.message ?? errores.descripcion?.message}
             ayuda={
               vigentes.length === 0
-                ? "Buscá por código o por nombre. La descripción la pone el catálogo del DANE."
-                : "El RUT admite varias. La principal es la que ya cargaste y decide la cuenta de ingresos."
+                ? "Busque por código o por nombre. La descripción la pone el catálogo del DANE."
+                : "El RUT admite varias. La principal es la que ya cargó y decide la cuenta de ingresos."
             }
           >
             <SelectorCiiu

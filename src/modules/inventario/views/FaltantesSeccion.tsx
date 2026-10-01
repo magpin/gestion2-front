@@ -62,7 +62,7 @@ export function FaltantesSeccion() {
               : "Nunca se facturó sin existencia"}
           </p>
           <p className="max-w-md text-sm leading-6 text-muted-foreground">
-            Acá aparece lo que salió sin estar en bodega, con la factura que lo
+            Aquí aparece lo que salió sin estar en bodega, con la factura que lo
             sacó. Se anota cuando alguien confirma una factura sin existencia.
           </p>
         </div>

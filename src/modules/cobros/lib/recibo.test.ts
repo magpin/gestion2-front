@@ -41,7 +41,7 @@ describe("recibo de caja", () => {
     expect(totalRecibo(abonos)).toBe(0);
   });
 
-  it("escribir un valor marca la factura: no hay casilla vacía con plata al lado", () => {
+  it("escribir un valor marca la factura: no hay casilla vacía con valor al lado", () => {
     const abonos = cambiarValor(abonosIniciales(facturas), "2", "500000");
     expect(abonos[1].marcada).toBe(true);
     expect(totalRecibo(abonos)).toBe(500_000);

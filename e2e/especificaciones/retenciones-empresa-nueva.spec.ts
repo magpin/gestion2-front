@@ -20,7 +20,7 @@ import { Consola, esperarAviso, expect, test } from "../fixtures/consola";
 const PASOS = ["Empresa", "Sedes", "Situación legal", "Impuestos", "Plan de cuentas", "Resoluciones"];
 
 const PREGUNTAS_DIAN = [
-  "¿Tu empresa cobra IVA en lo que vende?",
+  "¿La empresa cobra IVA en lo que vende?",
   "¿Está en el Régimen Simple de Tributación?",
   "¿La DIAN la calificó como gran contribuyente?",
   "¿Es agente de retención en la fuente?",
@@ -186,7 +186,7 @@ test.describe("Motor de retenciones: empresa nueva", () => {
     await test.step("Impuestos: Sí/No en lenguaje simple, ICA por municipio, «Todo correcto»", async () => {
       await expect(page.getByRole("heading", { name: "Impuestos", level: 1 })).toBeVisible();
       await expect(page.getByText("Paso 4 de 6")).toBeVisible();
-      await expect(page.getByText("Tu empresa ante la DIAN")).toBeVisible();
+      await expect(page.getByText("Su empresa ante la DIAN")).toBeVisible();
 
       // Las preguntas, en palabras de persona; ni una sigla de la casilla 53.
       for (const p of PREGUNTAS_DIAN) {
@@ -208,7 +208,7 @@ test.describe("Motor de retenciones: empresa nueva", () => {
       await contestar(page, PREGUNTAS_DIAN[4], "No");
 
       // El ICA, una fila por municipio con sede: aquí solo Medellín.
-      await expect(page.getByText("ICA en tus municipios")).toBeVisible();
+      await expect(page.getByText("ICA en sus municipios")).toBeVisible();
       await expect(page.getByRole("group", { name: /Agente retenedor de ICA en/ })).toHaveCount(1);
       await contestar(page, "Agente retenedor de ICA en Medellín", "Sí");
       await contestar(page, "Autorretenedor de ICA en Medellín", "No");
@@ -216,28 +216,28 @@ test.describe("Motor de retenciones: empresa nueva", () => {
       await page.getByRole("button", { name: "Guardar tarifa" }).click();
       await esperarAviso(page, /ICA de Medellín guardado/);
 
-      // «Lo que esto significa para vos».
-      await expect(page.getByRole("heading", { name: "Lo que esto significa para vos" })).toBeVisible();
-      await expect(page.getByText("Vas a retener", { exact: true })).toBeVisible();
-      await expect(page.getByText("Te van a retener", { exact: true })).toBeVisible();
-      await expect(page.getByText(/Retención en la fuente a tus proveedores/)).toBeVisible();
+      // «Lo que esto significa para usted».
+      await expect(page.getByRole("heading", { name: "Lo que esto significa para usted" })).toBeVisible();
+      await expect(page.getByText("Va a retener", { exact: true })).toBeVisible();
+      await expect(page.getByText("Le van a retener", { exact: true })).toBeVisible();
+      await expect(page.getByText(/Retención en la fuente a sus proveedores/)).toBeVisible();
       await expect(page.getByText("ReteICA en Medellín.")).toBeVisible();
-      await expect(page.getByText("ReteIVA, tus clientes que sean agentes de IVA.")).toBeVisible();
+      await expect(page.getByText("ReteIVA, sus clientes que sean agentes de IVA.")).toBeVisible();
       await mirar(
         page,
         [
           ...PREGUNTAS_DIAN.map((p) => page.getByRole("group", { name: p })),
           page.getByText(/Agente de retención de IVA:/),
           page.getByRole("group", { name: "Agente retenedor de ICA en Medellín" }),
-          page.getByRole("heading", { name: "Lo que esto significa para vos" }),
-          page.getByText(/Retención en la fuente a tus proveedores/),
+          page.getByRole("heading", { name: "Lo que esto significa para usted" }),
+          page.getByText(/Retención en la fuente a sus proveedores/),
         ],
         16,
       );
 
       await page.getByRole("button", { name: "Todo correcto" }).click();
       await esperarAviso(page, /quedó confirmado/);
-      await expect(page.getByText(/Lo confirmaste el/)).toBeVisible();
+      await expect(page.getByText(/Lo confirmó el/)).toBeVisible();
       // Confirmado, los «No» ya tienen que quedar marcados.
       for (const i of [1, 2, 4]) {
         await expect(
@@ -247,7 +247,7 @@ test.describe("Motor de retenciones: empresa nueva", () => {
       }
       await mirar(
         page,
-        [page.getByText(/Lo confirmaste el/), ...[1, 2, 4].map((i) => page.getByRole("group", { name: PREGUNTAS_DIAN[i] }))],
+        [page.getByText(/Lo confirmó el/), ...[1, 2, 4].map((i) => page.getByRole("group", { name: PREGUNTAS_DIAN[i] }))],
         6,
       );
       await expect(pie(page).getByRole("button", { name: "Continuar" })).toBeVisible();
@@ -375,14 +375,14 @@ test.describe("Motor de retenciones: empresa nueva", () => {
 
       // Entrar al paso muestra lo ya confirmado, no preguntas en blanco.
       await page.goto("/configuracion/impuestos");
-      await expect(page.getByText(/Lo confirmaste el/)).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(/Lo confirmó el/)).toBeVisible({ timeout: 20_000 });
       await expect(
         page.getByRole("group", { name: PREGUNTAS_DIAN[0] }).getByRole("button", { name: "Sí", exact: true }),
       ).toHaveAttribute("aria-pressed", "true");
       // Lo ya confirmado: la fecha y cada respuesta, con tiempo para leerlas.
       await mirar(
         page,
-        [page.getByText(/Lo confirmaste el/), ...PREGUNTAS_DIAN.map((p) => page.getByRole("group", { name: p }))],
+        [page.getByText(/Lo confirmó el/), ...PREGUNTAS_DIAN.map((p) => page.getByRole("group", { name: p }))],
         14,
       );
     });

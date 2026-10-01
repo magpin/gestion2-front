@@ -134,8 +134,8 @@ export function PorPagarLista({
   if (todos.length === 0) {
     return (
       <EmptyState
-        titulo="No le debés a nadie"
-        descripcion="Cuando registrés una compra a crédito o presentés una declaración, aparece acá con su vencimiento."
+        titulo="No le debe a nadie"
+        descripcion="Cuando registre una compra a crédito o presente una declaración, aparece aquí con su vencimiento."
         icon={HandCoins}
         accion={{ label: "Registrar compra", href: "/dashboard/compras/nueva" }}
       />
@@ -183,7 +183,7 @@ export function PorPagarLista({
         <div className="flex flex-wrap items-end justify-between gap-x-5 gap-y-1 px-6 py-5">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-              Debés
+              Debe
             </p>
             <p className="font-mono text-3xl font-semibold tracking-[-0.03em] whitespace-nowrap tabular-nums">
               {formatCOP(total)}
@@ -290,7 +290,7 @@ export function PorPagarLista({
       {visibles.length === 0 ? (
         <EmptyState
           titulo="Nada coincide"
-          descripcion="Nada de lo que debés coincide con el tramo, el filtro o la búsqueda."
+          descripcion="Nada de lo que debe coincide con el tramo, el filtro o la búsqueda."
           icon={ListFilter}
           accionSecundaria={{ label: "Limpiar filtros", onClick: limpiar }}
         />

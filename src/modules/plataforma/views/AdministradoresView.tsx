@@ -220,7 +220,7 @@ export function AdministradoresView() {
 
       <Tarjeta titulo="Cómo se agrega un administrador" className="gap-2">
         <p className="m-0 text-[13px] text-muted-foreground">
-          No desde acá. Es un acto de instalación: se corre en la máquina donde
+          No desde aquí. Es un acto de instalación: se corre en la máquina donde
           vive el servidor, con la conexión de aprovisionamiento. La contraseña
           se muestra una sola vez.
         </p>

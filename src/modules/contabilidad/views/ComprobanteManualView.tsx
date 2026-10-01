@@ -226,7 +226,7 @@ export function ComprobanteManualView() {
   const problema =
     problemaDelAsiento({ comprobanteTipoId, glosa, lineas }) ??
     (periodo?.estado === "CERRADO"
-      ? `${MESES[mes - 1]} está cerrado: elegí una fecha de un período abierto.`
+      ? `${MESES[mes - 1]} está cerrado: elija una fecha de un período abierto.`
       : null);
   const cuadre = calcularCuadre(lineas);
   const propuesta = respuesta?.plantilla ? respuesta.propuesta : null;
@@ -260,7 +260,7 @@ export function ComprobanteManualView() {
       <section className="mb-6 rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
         <p className="mb-3 flex items-center gap-2 font-semibold">
           <Maria estado="reposo" tamano={24} />
-          Contale a María qué querés registrar
+          Cuéntele a María qué quiere registrar
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
           <Input
@@ -331,7 +331,7 @@ export function ComprobanteManualView() {
                     }
                     className="h-11 w-full rounded-xl border border-input bg-transparent px-3 text-sm"
                   >
-                    <option value="">Elegí…</option>
+                    <option value="">Elija…</option>
                     {(Object.keys(CLASES_ACTIVO) as ClaseActivo[]).map((c) => (
                       <option key={c} value={c}>
                         {CLASES_ACTIVO[c]}
@@ -362,7 +362,7 @@ export function ComprobanteManualView() {
                     }
                     className="h-11 w-full rounded-xl border border-input bg-transparent px-3 text-sm"
                   >
-                    <option value="">Elegí…</option>
+                    <option value="">Elija…</option>
                     {(Object.keys(RAMOS_SEGURO) as RamoSeguro[]).map((r) => (
                       <option key={r} value={r}>
                         {RAMOS_SEGURO[r]}
@@ -528,7 +528,7 @@ export function ComprobanteManualView() {
                 .map((r) => (
                   <div key={r.codigo} className="mt-2 flex flex-wrap items-center gap-2">
                     <p className="text-xs text-danger">{r.problema}</p>
-                    {/* La cuenta que falta se agrega acá mismo, con el nombre
+                    {/* La cuenta que falta se agrega aquí mismo, con el nombre
                         del decreto, y la propuesta se vuelve a armar; la
                         inactiva se activa en el plan, ya filtrado. */}
                     {/inactiva/i.test(r.problema ?? "") ? (
@@ -581,7 +581,7 @@ export function ComprobanteManualView() {
               <Chequeo bien={soporte !== null ? true : null}>
                 {soporte !== null
                   ? "Con soporte adjunto"
-                  : "Sin soporte adjunto · es opcional, pero tu contador lo agradece"}
+                  : "Sin soporte adjunto · es opcional, pero su contador lo agradece"}
               </Chequeo>
             </ul>
           </div>

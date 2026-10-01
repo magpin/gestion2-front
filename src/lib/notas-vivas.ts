@@ -36,9 +36,9 @@ export function avisoNotasVivas(
   const vivas = notasVivas(notas);
   if (vivas.length === 0) return null;
   if (vivas.length === 1) {
-    return `Esta ${documento} tiene ${nombre(vivas[0])} viva: anulala primero.`;
+    return `Esta ${documento} tiene ${nombre(vivas[0])} viva: anúlela primero.`;
   }
   const nombres = vivas.map(nombre);
   const lista = `${nombres.slice(0, -1).join(", ")} y ${nombres[nombres.length - 1]}`;
-  return `Esta ${documento} tiene vivas ${lista}: anulalas primero.`;
+  return `Esta ${documento} tiene vivas ${lista}: anúlelas primero.`;
 }

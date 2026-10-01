@@ -30,7 +30,7 @@ export function SelectField({
   value,
   onChange,
   options,
-  placeholder = "Selecciona…",
+  placeholder = "Seleccione…",
   invalido = false,
   disabled = false,
 }: SelectFieldProps) {

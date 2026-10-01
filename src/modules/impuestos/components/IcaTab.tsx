@@ -211,13 +211,13 @@ function TablaReteIca({ reteica }: { reteica: ReteIcaDelPeriodo }) {
           <p>
             El libro (2368) dice {formatCOP(reteica.cuadre.libro)} y las compras dicen {formatCOP(reteica.cuadre.documentos)}: hay{" "}
             {formatCOP(Math.abs(reteica.cuadre.diferencia))} de diferencia. Suele ser un asiento manual contra la 2368. Se paga lo del
-            libro: revisalo antes de declarar.
+            libro: revíselo antes de declarar.
           </p>
         </div>
       )}
       {terceros.length === 0 ? (
         <p className="px-5 py-8 text-center text-sm text-muted-foreground">
-          En {periodoEnPalabras(reteica.periodo)} no le retuviste ICA a nadie en {reteica.municipio.nombre}.
+          En {periodoEnPalabras(reteica.periodo)} no se le retuvo ICA a nadie en {reteica.municipio.nombre}.
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -277,7 +277,7 @@ function EstimadoIca({ ica }: { ica: IcaDeMunicipio }) {
   return (
     <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-5 py-4">
-        <h2 className="text-base font-semibold">Tu ICA de {e.anio}, estimado a hoy</h2>
+        <h2 className="text-base font-semibold">El ICA de {e.anio}, estimado a hoy</h2>
         <p className="text-xs text-muted-foreground">Municipio de {ica.municipio.nombre}</p>
       </div>
       {e.tarifaPorMil === null ? (
@@ -285,7 +285,7 @@ function EstimadoIca({ ica }: { ica: IcaDeMunicipio }) {
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
           <p>
             No hay tarifa de ICA para {ica.municipio.nombre}: la ley del municipio no está cargada y la empresa no escribió la suya.
-            No se calcula: el sistema no inventa tarifas. Escribila en Configurar empresa → Impuestos.
+            No se calcula: el sistema no inventa tarifas. Escríbala en Configurar empresa → Impuestos.
           </p>
         </div>
       ) : (
@@ -299,8 +299,8 @@ function EstimadoIca({ ica }: { ica: IcaDeMunicipio }) {
                 concepto={`Impuesto de industria y comercio · ${e.tarifaPorMil.toLocaleString("es-CO")} por mil`}
                 detalle={
                   e.fuenteTarifa === "LEY"
-                    ? "La tarifa de tu actividad en la ley del municipio."
-                    : `Tarifa provisional: la que escribiste en Configurar empresa. ${ica.tieneLey ? "" : `La ley de ${ica.municipio.nombre} no está cargada.`}`
+                    ? "La tarifa de la actividad de la empresa en la ley del municipio."
+                    : `Tarifa provisional: la que se escribió en Configurar empresa. ${ica.tieneLey ? "" : `La ley de ${ica.municipio.nombre} no está cargada.`}`
                 }
                 valor={e.impuesto ?? 0}
               />
@@ -323,7 +323,7 @@ function EstimadoIca({ ica }: { ica: IcaDeMunicipio }) {
                 <td className="px-5 py-3 text-right font-semibold whitespace-nowrap">{formatCOP(e.avisos ?? 0)}</td>
               </tr>
               {e.anticipos > 0 && (
-                <Renglon concepto="Menos ReteICA que te practicaron y autorretención" detalle="Lo que ya se anticipó en el año (135518)." valor={-e.anticipos} />
+                <Renglon concepto="Menos ReteICA que le practicaron y autorretención" detalle="Lo que ya se anticipó en el año (135518)." valor={-e.anticipos} />
               )}
               <tr className="border-t-2 border-border bg-muted">
                 <th scope="row" className="px-5 py-3.5 text-left font-sans text-base font-bold">

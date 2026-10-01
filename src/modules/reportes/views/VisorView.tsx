@@ -227,7 +227,7 @@ function Visor({ reporte, eleccion }: { reporte: ClaveReporte; eleccion: Eleccio
           <Aviso
             icono={<AlertTriangle className="size-5" aria-hidden />}
             titulo="No se pudo armar el reporte"
-            texto="No es un problema de tus datos. Vuelve a intentar; si sigue igual, avísale a quien administra el sistema."
+            texto="No es un problema de sus datos. Intente de nuevo; si sigue igual, avise a quien administra el sistema."
             acciones={<Button onClick={() => hoja.refetch()}>Reintentar</Button>}
           />
         ) : vacia && hoja.data ? (
@@ -273,7 +273,7 @@ function Visor({ reporte, eleccion }: { reporte: ClaveReporte; eleccion: Eleccio
  * podría decir «algo falló».
  */
 async function mensajeDeBlob(datos: unknown): Promise<string> {
-  const generico = "No se pudo descargar el archivo. Vuelve a intentar.";
+  const generico = "No se pudo descargar el archivo. Intente de nuevo.";
   if (!(datos instanceof Blob)) return generico;
   try {
     const cuerpo = JSON.parse(await datos.text()) as { message?: string | string[] };
@@ -503,7 +503,7 @@ function Hoja({
                   Ahora no se puede armar {caido === "PDF" ? "el PDF" : "el Excel"}
                 </span>
                 <span className="text-xs leading-normal">
-                  La hoja de abajo está completa y es la misma que se descargaría. Puedes
+                  La hoja de abajo está completa y es la misma que se descargaría. Puede
                   imprimirla desde aquí; la descarga vuelve cuando el servicio responda.
                 </span>
               </span>
@@ -631,8 +631,8 @@ function SinPermiso({ area }: { area: string }) {
   return (
     <Aviso
       icono={<Lock className="size-5" aria-hidden />}
-      titulo={`Este reporte es de ${area.toLowerCase()} y tu rol no la incluye`}
-      texto={`Tu rol${empresa ? ` en ${empresa}` : ""} es ${suyos || "otro"}. Si necesitas verlo, pídele acceso a quien administra la empresa.`}
+      titulo={`Este reporte es de ${area.toLowerCase()} y su rol no la incluye`}
+      texto={`Su rol${empresa ? ` en ${empresa}` : ""} es ${suyos || "otro"}. Si necesita verlo, solicite acceso a quien administra la empresa.`}
       acciones={
         <Link href="/dashboard/reportes" className={buttonVariants({ variant: "outline" })}>
           <ArrowLeft aria-hidden />

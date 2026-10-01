@@ -32,50 +32,50 @@ const CHIP: Record<CertezaConcepto, { texto: string; clase: string }> = {
     clase: "border-warning/50 bg-warning/10 text-foreground",
   },
   PREGUNTA: {
-    texto: "Te pregunto",
+    texto: "Le pregunto",
     clase: "border-warning/50 bg-warning/10 text-foreground",
   },
 };
 
 const CHIP_TUYO = {
-  texto: "Lo dijiste vos",
+  texto: "Lo dijo usted",
   clase: "border-border bg-muted text-foreground",
 };
 
 /** De dónde salió el concepto que quedó, para «¿Por qué?». */
 const ORIGEN_EXPLICADO: Record<string, string> = {
-  CONFIRMADO: "ya me lo habías dicho",
+  CONFIRMADO: "ya me lo había dicho",
   PRODUCTO: "es un producto del inventario",
-  CIIU: "por la actividad del proveedor, y lo aceptaste",
-  PALABRAS: "por lo que dice el renglón, y lo aceptaste",
-  IA: "lo propuso la IA y lo aceptaste",
-  MANUAL: "lo elegiste vos",
+  CIIU: "por la actividad del proveedor, y usted lo aceptó",
+  PALABRAS: "por lo que dice el renglón, y usted lo aceptó",
+  IA: "lo propuso la IA y usted lo aceptó",
+  MANUAL: "lo eligió usted",
 };
 
 /** Cada guarda del motor, en palabras (las claves son de las reglas del backend). */
 const FUNDAMENTO: Record<string, string> = {
   // Renta
-  pagador_es_agente: "Tu empresa es agente de retención",
+  pagador_es_agente: "Su empresa es agente de retención",
   beneficiario_simple: "El proveedor está en el SIMPLE",
   beneficiario_no_contribuyente: "El proveedor no es contribuyente",
   beneficiario_autorretenedor: "El proveedor es autorretenedor",
   pago_con_tarjeta: "Se pagó con tarjeta",
   // IVA
-  pagador_agente_iva: "Tu empresa es agente de retención de IVA",
+  pagador_agente_iva: "Su empresa es agente de retención de IVA",
   vendedor_responsable_iva: "El proveedor es responsable de IVA",
   renglones_con_iva: "La factura trae IVA",
   entre_agentes_1_2_5:
     "Los dos son agentes de retención de IVA de los numerales 1, 2 o 5",
   servicio_desde_el_exterior: "Es un servicio desde el exterior",
   // ICA
-  agente_ica_en_municipio: "Tu empresa es agente de ReteICA en el municipio",
+  agente_ica_en_municipio: "Su empresa es agente de ReteICA en el municipio",
   proveedor_no_contribuyente_ica:
     "El proveedor no es contribuyente de ICA allí",
   proveedor_autorretenedor_ica: "El proveedor es autorretenedor de ICA allí",
   matriz_municipal: "La matriz del municipio ordena retener",
   // Ventas
   cliente_simple: "El cliente está en el SIMPLE",
-  vendedor_agente_renta: "Tu empresa es agente de retención de renta",
+  vendedor_agente_renta: "Su empresa es agente de retención de renta",
 };
 
 /**
@@ -103,7 +103,7 @@ export function estadoRenglon(
   if (cambiado) {
     return {
       chip: CHIP_TUYO,
-      razon: `Elegiste ${nombreDe(elegido).toLowerCase()}. Al registrar lo aprendo para las próximas compras de este proveedor.`,
+      razon: `Eligió ${nombreDe(elegido).toLowerCase()}. Al registrar lo aprendo para las próximas compras de este proveedor.`,
     };
   }
   // El estado lo dice el servidor, que ya recalculó con lo contestado.
@@ -193,7 +193,7 @@ export function PropuestaRenta({
         />
       ) : propuesta === undefined ? (
         <p className="text-sm text-muted-foreground">
-          Completá el proveedor y las líneas para ver la retención.
+          Complete el proveedor y las líneas para ver la retención.
         </p>
       ) : propuesta.renglones.length === 0 &&
         propuesta.retenciones.length === 0 ? (
@@ -322,8 +322,8 @@ export function PropuestaRenta({
           )}
           {asumido > 0 && (
             <p className="m-0 text-xs text-muted-foreground">
-              Además asumís {formatCOP(asumido)} de IVA del exterior: no se le
-              descuenta al proveedor, lo declarás y lo descontás vos.
+              Además asume {formatCOP(asumido)} de IVA del exterior: no se le
+              descuenta al proveedor, usted lo declara y lo descuenta.
             </p>
           )}
         </>
@@ -364,8 +364,8 @@ export function PropuestaRenta({
           El papel dice <strong>{formatCOP(propuesta.impresa ?? 0)}</strong> de
           retención; por norma corresponden{" "}
           <strong>{formatCOP(propuesta.calculada ?? 0)}</strong>. Registro la de
-          la norma. Si el proveedor tiene otra condición, corregila en su ficha
-          y volvé a abrir la factura.
+          la norma. Si el proveedor tiene otra condición, corríjala en su ficha
+          y vuelva a abrir la factura.
         </p>
       )}
 
@@ -512,8 +512,8 @@ function FilaRetencion({
       </div>
       {r.cuentaId === null && (
         <p className="m-0 mt-1 text-xs">
-          No tenés la cuenta de esta retención. Se crea sola en el plan de
-          cuentas si sos agente.
+          No tiene la cuenta de esta retención. Se crea sola en el plan de
+          cuentas si es agente.
         </p>
       )}
       <button

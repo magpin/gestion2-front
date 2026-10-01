@@ -95,7 +95,7 @@ export function VentasAnterioresSeccion() {
     if (archivo === undefined) return;
     if (!TIPOS.split(",").includes(archivo.type)) {
       aviso.error(
-        "Solo puedo leer facturas en PDF o en foto. Si tenés un Excel del sistema anterior, se carga por el importador.",
+        "Solo puedo leer facturas en PDF o en foto. Si tiene un Excel del sistema anterior, se carga por el importador.",
       );
       return;
     }
@@ -112,11 +112,11 @@ export function VentasAnterioresSeccion() {
           <Maria estado={subir.isPending ? "leyendo" : "reposo"} tamano={32} />
           <div>
             <p className="text-sm font-medium">
-              Subí las facturas que emitiste en el sistema anterior
+              Suba las facturas que emitió en el sistema anterior
             </p>
             <p className="text-xs text-muted-foreground">
-              Un PDF o una foto, aunque traiga varias. Te digo cuáles ya están
-              acá y cuáles faltan; cargarlas lo apretás vos.
+              Un PDF o una foto, aunque traiga varias. Le digo cuáles ya están
+              aquí y cuáles faltan; cargarlas lo decide usted.
             </p>
           </div>
         </div>
@@ -162,8 +162,8 @@ export function VentasAnterioresSeccion() {
       ) : lecturas.length === 0 ? (
         <EmptyState
           icon={Upload}
-          titulo="Todavía no le pasaste ventas del sistema anterior a María"
-          descripcion="Subí las facturas que emitiste antes de usar el sistema, en PDF o en foto. María te dice cuáles faltan y las cargás como históricas, para cobrar lo que siga pendiente."
+          titulo="Todavía no le ha pasado ventas del sistema anterior a María"
+          descripcion="Suba las facturas que emitió antes de usar el sistema, en PDF o en foto. María le dice cuáles faltan y las carga como históricas, para cobrar lo que siga pendiente."
           accion={
             subir.isPending
               ? undefined
@@ -190,7 +190,7 @@ export function VentasAnterioresSeccion() {
             <div>
               <DialogTitle>Las facturas que leí</DialogTitle>
               <DialogDescription>
-                Elegí cuáles cargar. Entran con su número y su fecha, sin
+                Elija cuáles cargar. Entran con su número y su fecha, sin
                 asiento y sin mover el inventario.
               </DialogDescription>
             </div>

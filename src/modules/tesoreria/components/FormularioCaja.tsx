@@ -31,7 +31,7 @@ const esquema = z.object({
   nombre: z.string().min(2, "Requerido").max(200),
   tipo: z.enum(TIPOS_CAJA),
   sedeId: z.string().optional(),
-  cuentaId: z.string().min(1, "Elegí una cuenta contable"),
+  cuentaId: z.string().min(1, "Elija una cuenta contable"),
   responsableTerceroId: z.string().optional(),
 });
 

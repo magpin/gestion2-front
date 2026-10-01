@@ -148,7 +148,7 @@ export function KardexSeccion() {
           <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
             <History className="size-8 text-muted-foreground" />
             <p className="font-semibold">
-              Elegí un producto para ver su kardex
+              Elija un producto para ver su kardex
             </p>
           </div>
         ) : isLoading ? (
@@ -211,7 +211,7 @@ export function KardexSeccion() {
               Este producto todavía no tiene movimientos
             </p>
             <p className="max-w-md text-sm text-muted-foreground">
-              Empezá con su carga inicial.
+              Empiece con su carga inicial.
             </p>
           </div>
         )}

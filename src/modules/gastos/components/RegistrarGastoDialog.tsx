@@ -119,10 +119,10 @@ function Formulario({
   // intentó guardar; antes, solo el primero, como pista al pie.
   const [intentado, setIntentado] = useState(false);
   const errores = {
-    descripcion: descripcion.trim().length < 2 ? "Escribí qué se pagó." : null,
-    concepto: concepto === null ? "Elegí el concepto." : null,
+    descripcion: descripcion.trim().length < 2 ? "Escriba qué se pagó." : null,
+    concepto: concepto === null ? "Elija el concepto." : null,
     valor: !porCompras && !(Number(valor) > 0) ? "El valor tiene que ser mayor que cero." : null,
-    fecha: !porCompras && fecha === "" ? "Elegí la fecha." : null,
+    fecha: !porCompras && fecha === "" ? "Elija la fecha." : null,
     // El banco admite sobregiro; la caja no puede quedar en negativo.
     medio: porCompras
       ? null
@@ -182,7 +182,7 @@ function Formulario({
       <DialogHeader>
         <div>
           <DialogTitle>Registrar gasto</DialogTitle>
-          <DialogDescription>Elegí el concepto; la cuenta la pone el sistema.</DialogDescription>
+          <DialogDescription>Elija el concepto; la cuenta la pone el sistema.</DialogDescription>
         </div>
         <DialogCloseIcon />
       </DialogHeader>
@@ -324,7 +324,7 @@ function Formulario({
 
       <DialogFooter className="sm:justify-between">
         <p className="self-center text-sm text-muted-foreground">
-          {(intentado && problema !== null ? "Revisá lo marcado en rojo." : problema) ??
+          {(intentado && problema !== null ? "Revise lo marcado en rojo." : problema) ??
             (porCompras
               ? "Se abre la compra con esto puesto: falta el número de la factura."
               : "Queda como pago sin factura en Pagos.")}

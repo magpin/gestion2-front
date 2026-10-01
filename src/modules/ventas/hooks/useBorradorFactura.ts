@@ -128,26 +128,26 @@ export function useBorradorFactura(inicio?: InicioFactura) {
   const falta = neto === null ? null : Math.max(0, Math.round((neto - aplicado) * 100) / 100);
 
   const problema = ((): string | null => {
-    if (cliente === null) return "Elegí el cliente.";
-    if (lineas.length === 0) return "Agregá al menos una línea.";
+    if (cliente === null) return "Elija el cliente.";
+    if (lineas.length === 0) return "Agregue al menos una línea.";
     if (incompletas.length > 0)
       return `Falta decir qué se vende en ${nombrar(incompletas)}: el producto, o el concepto y qué se cobró.`;
     if (sinCantidad.length > 0)
       return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;
     if (sinEntero.length > 0)
       return `La cantidad va en números enteros en ${nombrar(sinEntero)}: ese producto no se fracciona.`;
-    if (sinPrecio.length > 0) return `Poné el precio en ${nombrar(sinPrecio)}.`;
+    if (sinPrecio.length > 0) return `Ingrese el precio en ${nombrar(sinPrecio)}.`;
     if (productoSinPrecio.length > 0)
-      return `Poné el precio en ${nombrar(productoSinPrecio)}: ese producto no tiene precio de lista.`;
+      return `Ingrese el precio en ${nombrar(productoSinPrecio)}: ese producto no tiene precio de lista.`;
     if (retenciones.some((r) => r.conceptoId === ""))
-      return "Elegí el concepto de cada retención, o quitala.";
+      return "Elija el concepto de cada retención, o quítela.";
     if (retenciones.some((r) => !(Number(r.base) > 0)))
       return "La base de la retención tiene que ser mayor que cero.";
     if (neto !== null && aplicado > neto + 0.004)
       return `Lo aplicado con anticipo pasa del valor de la factura (${neto}).`;
     const pago = problemaFormaPago(formaPago, neto);
     if (pago !== null || cubierta) return pago;
-    if (credito && plazo === "") return "Elegí el plazo.";
+    if (credito && plazo === "") return "Elija el plazo.";
     return null;
   })();
 

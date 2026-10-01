@@ -180,7 +180,7 @@ export function SelectorProducto({
           </div>
 
           {/* Que el producto no esté en el catálogo no debería frenar una venta:
-            se da de alta acá mismo y la línea sigue armándose. */}
+            se da de alta aquí mismo y la línea sigue armándose. */}
           <div className="flex items-center gap-1 border-t border-border p-2">
             <Button
               type="button"

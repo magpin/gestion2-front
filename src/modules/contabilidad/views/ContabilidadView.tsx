@@ -71,7 +71,7 @@ export function ContabilidadView() {
             Contabilidad<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Registra, revisa y cierra la historia financiera de tu empresa.
+            Registre, revise y cierre la historia financiera de su empresa.
           </p>
         </div>
 
@@ -115,7 +115,7 @@ export function ContabilidadView() {
       {/* La regla que explica por qué no hay botón de editar en ninguna fila. */}
       <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground print:hidden">
         <ShieldCheck className="size-3.5 text-success" />
-        Los asientos registrados son inmutables. Para corregirlos, crea un
+        Los asientos registrados son inmutables. Para corregirlos, cree un
         contra-asiento.
       </p>
 

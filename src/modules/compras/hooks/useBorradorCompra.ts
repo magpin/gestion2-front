@@ -122,14 +122,14 @@ export function useBorradorCompra(inicial?: InicioCompra, activo = true) {
   const nombrar = (r: number[]) => (r.length === 1 ? `el renglón ${r[0]}` : `los renglones ${r.join(", ")}`);
 
   const impedimento = (): string | null => {
-    if (proveedor === null) return "Elegí el proveedor.";
-    if (fecha === "") return "Elegí la fecha.";
-    if (!soporte && numeroFactura.trim() === "") return "Escribí el número de la factura del proveedor.";
+    if (proveedor === null) return "Elija el proveedor.";
+    if (fecha === "") return "Elija la fecha.";
+    if (!soporte && numeroFactura.trim() === "") return "Escriba el número de la factura del proveedor.";
     // Lo mismo que exige el backend: un CUFE a medias no sirve para encontrarla.
     const largoCufe = cufe.trim().length;
     if (!soporte && largoCufe > 0 && (largoCufe < 20 || largoCufe > 200))
-      return "El CUFE tiene entre 20 y 200 caracteres: copialo completo o dejalo vacío.";
-    if (lineas.length === 0) return "Agregá al menos una línea.";
+      return "El CUFE tiene entre 20 y 200 caracteres: cópielo completo o déjelo vacío.";
+    if (lineas.length === 0) return "Agregue al menos una línea.";
     if (incompletas.length > 0)
       return `Falta decir qué se compró en ${nombrar(incompletas)}: el producto, o la cuenta y el detalle del gasto.`;
     if (sinCantidad.length > 0) return `La cantidad tiene que ser mayor a cero en ${nombrar(sinCantidad)}.`;

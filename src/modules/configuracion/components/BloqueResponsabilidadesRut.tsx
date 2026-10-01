@@ -25,7 +25,7 @@ const FECHA = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato AAAA-MM-DD");
 
 const esquemaResponsabilidad = z.object({
   codigo: z
-    .number({ message: "Elegí una responsabilidad del RUT" })
+    .number({ message: "Elija una responsabilidad del RUT" })
     .int()
     .min(1),
   fechaInicio: FECHA,
@@ -122,7 +122,7 @@ export function BloqueResponsabilidades({ pendiente }: { pendiente: boolean }) {
   return (
     <Bloque
       titulo="Responsabilidades del RUT"
-      descripcion="La casilla 53, tal como la imprime la DIAN. De acá sale si la empresa cobra IVA, si retiene y bajo qué régimen declara."
+      descripcion="La casilla 53, tal como la imprime la DIAN. De aquí sale si la empresa cobra IVA, si retiene y bajo qué régimen declara."
       pendiente={pendiente}
     >
       <ResponsabilidadesVigentes filas={vigentes} />

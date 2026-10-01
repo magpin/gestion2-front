@@ -92,7 +92,7 @@ export function SelectorFormaPago({
         soloCredito
           ? motivoSoloCredito
           : valor.modo === "REPARTIDO"
-            ? "Digitá lo que va por cada medio y dejá uno en blanco: ese se lleva lo que falte."
+            ? "Digite lo que va por cada medio y deje uno en blanco: ese se lleva lo que falte."
             : valor.modo === "EFECTIVO" || valor.modo === "TRANSFERENCIA"
               ? "Se registra por el total del documento en el mismo momento."
               : undefined

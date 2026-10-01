@@ -142,7 +142,7 @@ export function SelectorCuenta({
                       {c.nombre}
                     </span>
                   </span>
-                  {/* Lo que la cuenta va a exigir al guardar. Verlo acá evita
+                  {/* Lo que la cuenta va a exigir al guardar. Verlo aquí evita
                       volver a la línea después de que el servidor la rechace. */}
                   {(c.exige_tercero ||
                     c.exige_centro_costo ||
@@ -171,7 +171,7 @@ export function SelectorCuenta({
         </div>
 
         {/* Que la cuenta no exista todavía no debería frenar el formulario: se
-            crea acá mismo y queda elegida. */}
+            crea aquí mismo y queda elegida. */}
         {puedeCrear && (
           <div className="border-t border-border p-2">
             <Button

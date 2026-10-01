@@ -21,7 +21,7 @@ import type { TipoMovimientoCaja } from "../types/tesoreria.types";
 const esquema = z.object({
   fecha: z.string().min(1, "Requerido"),
   valor: z.number().positive("Tiene que ser mayor a cero"),
-  concepto: z.string().min(3, "Contá de qué se trata").max(300),
+  concepto: z.string().min(3, "Indique de qué se trata").max(300),
 });
 
 export type DatosMovimientoCaja = z.infer<typeof esquema> & {
@@ -74,7 +74,7 @@ export function FormularioMovimientoCaja({
       className="flex flex-col gap-5"
       onSubmit={form.handleSubmit((d) => {
         if (requiereContraCuenta && !contraCuenta) {
-          form.setError("root", { message: "Elegí la contracuenta" });
+          form.setError("root", { message: "Elija la contracuenta" });
           return;
         }
         alGuardar({ ...d, contraCuentaId: contraCuenta?.id });

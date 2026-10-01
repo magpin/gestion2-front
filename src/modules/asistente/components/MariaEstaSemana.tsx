@@ -39,7 +39,7 @@ export function MariaEstaSemana({ children }: { children?: ReactNode } = {}) {
           className="-m-1.5 flex items-center rounded-md p-1.5 transition-colors hover:bg-accent"
         >
           <Cifra
-            etiqueta="Esperan tu revisión"
+            etiqueta="Esperan su revisión"
             valor={cifra(semana?.esperan)}
             punto={(semana?.esperan ?? 0) > 0}
           />

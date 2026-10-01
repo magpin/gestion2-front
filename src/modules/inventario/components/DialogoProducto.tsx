@@ -130,7 +130,7 @@ export function DialogoProducto({
             <DialogDescription>
               {creando
                 ? "El precio de venta inicial va junto: un producto sin precio no tiene sentido."
-                : "El código, la cuenta de inventario y el precio no se cambian acá — el precio tiene su propia pantalla."}
+                : "El código, la cuenta de inventario y el precio no se cambian aquí — el precio tiene su propia pantalla."}
             </DialogDescription>
           </div>
           <DialogCloseIcon />

@@ -126,15 +126,15 @@ function Contenido({
   const destino = medio === "CAJA" ? caja : cuenta;
   const problema =
     cliente === null
-      ? "Elegí el cliente."
+      ? "Elija el cliente."
       : fecha === ""
-        ? "Elegí la fecha."
+        ? "Elija la fecha."
         : destino === null
           ? medio === "CAJA"
             ? "No hay caja principal."
-            : "Elegí la cuenta bancaria."
+            : "Elija la cuenta bancaria."
           : !renglones.some((a) => a.marcada)
-            ? "Marca al menos una factura. Un anticipo se recibe desde Anticipos."
+            ? "Marque al menos una factura. Un anticipo se recibe desde Anticipos."
             : problemaDelRecibo(renglones, "", conComision);
 
   const guardar = useMutation({
@@ -230,7 +230,7 @@ function Contenido({
             Facturas por cobrar de este cliente
           </h3>
           {cliente === null ? (
-            <p className="px-4 py-6 text-sm text-muted-foreground">Elegí el cliente para ver lo que debe.</p>
+            <p className="px-4 py-6 text-sm text-muted-foreground">Elija el cliente para ver lo que debe.</p>
           ) : isFetching && facturas === undefined ? (
             <div className="flex justify-center py-8 text-muted-foreground">
               <Loader2 className="size-5 animate-spin" />
@@ -314,7 +314,7 @@ function Contenido({
             Cada abono se registra como el cobro de su factura: débito a{" "}
             {medio === "CAJA" ? "la caja" : "la cuenta bancaria"} y crédito a Clientes (130505), con el
             número del recibo en el libro. La retención que el cliente practicó ya se descontó al facturar.
-            {descuentos > 0 && " El descuento por pronto pago va al gasto y salda la factura sin plata."}
+            {descuentos > 0 && " El descuento por pronto pago va al gasto y salda la factura sin mover dinero."}
           </div>
           <div className="rounded-2xl bg-muted p-4">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">

@@ -33,14 +33,14 @@ export function BalanceGeneralTab({ mes, comparar }: { mes: string; comparar?: s
       {b.diferencia !== 0 && (
         <Aviso tono="alarma" titulo="El libro no cuadra al corte" cifra={formatCOP(b.diferencia)}>
           El activo no es igual al pasivo más el patrimonio. Suele ser un asiento a medio registrar o un saldo inicial
-          sin su contrapartida: revisalo en el Libro con el balance de prueba.
+          sin su contrapartida: revíselo en el Libro con el balance de prueba.
         </Aviso>
       )}
       {!vacio && (
         <ul className="grid gap-4 md:grid-cols-3">
           {[
-            { rotulo: "Lo que tenés · activo", valor: b.activo.total },
-            { rotulo: "Lo que debés · pasivo", valor: b.pasivo.total },
+            { rotulo: "Lo que tiene · activo", valor: b.activo.total },
+            { rotulo: "Lo que debe · pasivo", valor: b.pasivo.total },
             { rotulo: "Lo que es de los socios · patrimonio", valor: b.patrimonio.total },
           ].map((t) => (
             <li key={t.rotulo} className="rounded-3xl border border-border bg-card px-5 py-4 shadow-sm">

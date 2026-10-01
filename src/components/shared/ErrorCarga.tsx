@@ -35,7 +35,7 @@ export function ErrorCarga({
     error === undefined
       ? {
           titulo: "No se pudieron cargar los datos",
-          queHacer: "Tocá Reintentar. Si sigue igual, avisale a quien administra el sistema.",
+          queHacer: "Pulse Reintentar. Si sigue igual, avise a quien administra el sistema.",
         }
       : explicarError(error, "cargar");
   const [reintentando, setReintentando] = useState(false);

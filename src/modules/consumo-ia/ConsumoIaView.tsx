@@ -285,7 +285,7 @@ function Entrada({
       >
         <h1 className="m-0 text-lg font-semibold">Consumo de la IA</h1>
         <p className="m-0 text-sm text-muted-foreground">
-          Página privada. Escribí la clave del tablero (
+          Página privada. Escriba la clave del tablero (
           <code className="text-xs">CLAVE_CONSUMO_IA</code>).
         </p>
         <input

@@ -16,8 +16,8 @@ import { EditorLineasCompra } from "./EditorLineasCompra";
 import { SelectorProveedor } from "./SelectorProveedor";
 
 const CLASES: Array<[ClaseDocumento, string, string]> = [
-  ["FACTURA_ELECTRONICA", "Factura electrónica del proveedor", "El proveedor factura; vos la registrás"],
-  ["DOCUMENTO_SOPORTE", "Documento soporte", "El vendedor no está obligado a facturar; lo emitís vos"],
+  ["FACTURA_ELECTRONICA", "Factura electrónica del proveedor", "El proveedor factura; usted la registra"],
+  ["DOCUMENTO_SOPORTE", "Documento soporte", "El vendedor no está obligado a facturar; lo emite usted"],
 ];
 
 /** Una tarjeta del formulario con su título en versalitas, como en el diseño. */
@@ -232,7 +232,7 @@ export function PlazoCompra({ b, ahorro }: { b: BorradorCompra; ahorro?: number 
                   className="h-11 rounded-xl px-4 font-mono"
                 />
               </Campo>
-              <Campo id="compra-pronto-hasta" etiqueta="Si pagás hasta">
+              <Campo id="compra-pronto-hasta" etiqueta="Si paga hasta">
                 <Input
                   id="compra-pronto-hasta"
                   type="date"
@@ -242,7 +242,7 @@ export function PlazoCompra({ b, ahorro }: { b: BorradorCompra; ahorro?: number 
                 />
               </Campo>
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-muted-foreground">Te ahorrás</span>
+                <span className="text-xs font-medium text-muted-foreground">Se ahorra</span>
                 <div className="flex h-11 items-center rounded-xl bg-muted px-4 font-mono text-sm font-semibold">
                   {ahorro != null && ahorro > 0 ? `$ ${Math.round(ahorro).toLocaleString("es-CO")}` : "—"}
                 </div>

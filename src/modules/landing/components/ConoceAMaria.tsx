@@ -32,17 +32,17 @@ const PASOS: Paso[] = [
   {
     titulo: "Recibe",
     texto:
-      "Facturas de compra, cuentas de cobro y pedidos de tus clientes, en PDF o foto. Se los soltás en el chat, uno o varios de una.",
+      "Facturas de compra, cuentas de cobro y pedidos de sus clientes, en PDF o foto. Usted se los entrega en el chat, uno o varios a la vez.",
     estado: "reposo",
     chip: "En reposo",
     tono: "neutro",
     mensaje:
-      "Subime las facturas y yo las leo; te pregunto solo lo que los papeles no dicen.",
+      "Súbame las facturas y yo las leo; le pregunto solo lo que los papeles no dicen.",
   },
   {
     titulo: "Lee",
     texto:
-      "Lee cada documento y te muestra el avance real: cuántos lleva y cuántos faltan. Nada de ruedas girando sin fin.",
+      "Lee cada documento y le muestra el avance real: cuántos lleva y cuántos faltan. Nada de ruedas girando sin fin.",
     estado: "leyendo",
     chip: "Leyendo",
     tono: "neutro",
@@ -51,23 +51,23 @@ const PASOS: Paso[] = [
   {
     titulo: "Propone",
     texto:
-      "Cruza cada renglón con tu catálogo, comprueba que las sumas cuadren y te deja la factura lista, con su soporte. Lo que no sabe, te lo pregunta.",
+      "Cruza cada renglón con su catálogo, comprueba que las sumas cuadren y le deja la factura lista, con su soporte. Lo que no sabe, se lo pregunta.",
     estado: "trabajando",
     chip: "Trabajando",
     tono: "neutro",
-    mensaje: "9 están listas para que las apruebes. Aparté 3 que necesitan que decidas algo.",
+    mensaje: "9 están listas para que las apruebe. Aparté 3 que necesitan que usted decida algo.",
     meta: "9 listas · 3 apartadas",
   },
   {
-    titulo: "Vos aprobás",
+    titulo: "Usted aprueba",
     texto:
-      "Lo que aparta llega con la razón escrita; lo listo lo aprobás con un clic. Nada entra a tus libros sin tu visto bueno.",
+      "Lo que aparta llega con la razón escrita; lo listo usted lo aprueba con un clic. Nada entra a sus libros sin su visto bueno.",
     estado: "espera",
-    chip: "Te toca a vos",
+    chip: "Le toca a usted",
     tono: "ambar",
     mensaje:
-      "La FT-9012 parece repetida: ya hay una igual registrada el 2 sep. No la registro hasta que me digas.",
-    meta: "3 esperan tu revisión",
+      "La FT-9012 parece repetida: ya hay una igual registrada el 2 sep. No la registro hasta que usted me indique.",
+    meta: "3 esperan su revisión",
   },
 ];
 
@@ -134,12 +134,12 @@ export function ConoceAMaria() {
     <section id="como" className={`${styles.ancla} border-b border-border bg-card py-18 sm:py-24 lg:py-32`}>
       <div className="mx-auto flex max-w-[1152px] flex-col gap-10 px-6 lg:gap-16">
         <div className={`${styles.rv} flex max-w-[760px] flex-col gap-4.5`}>
-          <Rotulo>01 — Conocé a María</Rotulo>
+          <Rotulo>01 — Conozca a María</Rotulo>
           <TituloSeccion className="font-serif text-[clamp(2.25rem,5.5vw,4rem)] leading-[1.02] tracking-[-1.4px]">
-            María hace la digitación. <span className="italic">Vos, el último paso.</span>
+            María hace la digitación. <span className="italic">Usted, el último paso.</span>
           </TituloSeccion>
           <p className="m-0 max-w-[620px] text-[17px] leading-relaxed text-muted-foreground">
-            Es la asistente de IA del sistema. Habla como una colega: breve, con tu vocabulario
+            Es la asistente de IA del sistema. Habla como una colega: breve, con su vocabulario
             contable, y pregunta cuando algo no está en el papel.
           </p>
         </div>
@@ -154,7 +154,7 @@ export function ConoceAMaria() {
               </div>
               <span className="text-lg font-semibold">María</span>
               <span className="text-xs text-muted-foreground">
-                Asistente de IA · nada se asienta sin tu aprobación
+                Asistente de IA · nada se asienta sin su aprobación
               </span>
               {chip}
               <p className="m-0 mt-2 max-w-[380px] rounded-xl border border-border bg-card px-5 py-3 text-[15px] leading-relaxed">

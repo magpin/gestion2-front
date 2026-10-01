@@ -39,8 +39,8 @@ const NOMBRE_BLOQUE: Record<ClaveBloque, string> = {
   BASE: "Lo que usa toda contabilidad",
   PATRIMONIO: "Patrimonio",
   IMPUESTOS: "Impuestos",
-  GIRO: "Tu giro",
-  OPERACION: "Tu operación",
+  GIRO: "Su giro",
+  OPERACION: "Su operación",
 };
 
 const MOTIVO_BLOQUE: Record<ClaveBloque, string> = {
@@ -48,10 +48,10 @@ const MOTIVO_BLOQUE: Record<ClaveBloque, string> = {
   PATRIMONIO:
     "Sale de la forma jurídica: una persona natural no emite acciones ni constituye reserva legal.",
   IMPUESTOS:
-    "Sale de la casilla 53 del RUT. Si no sos responsable de IVA, acá no hay cuentas de IVA.",
-  GIRO: "Sale del sector marcado y de la actividad CIIU: qué vendés y con qué lo producís.",
+    "Sale de la casilla 53 del RUT. Si la empresa no es responsable de IVA, aquí no hay cuentas de IVA.",
+  GIRO: "Sale del sector marcado y de la actividad CIIU: qué vende y con qué lo produce.",
   OPERACION:
-    "Sale de lo que declaraste sobre tu operación: empleados, activos, crédito, caja menor.",
+    "Sale de lo que declaró sobre su operación: empleados, activos, crédito, caja menor.",
 };
 
 /**
@@ -178,7 +178,7 @@ export function PasoPlanCuentas() {
           }}
         >
           {impuestos
-            ? "Todavía no se puede proponer un plan: las cuentas de IVA y de retención se desprenden de lo que contestes en Impuestos."
+            ? "Todavía no se puede proponer un plan: las cuentas de IVA y de retención se desprenden de lo que conteste en Impuestos."
             : "Todavía no se puede proponer un plan: las cuentas se desprenden de lo que diga el RUT, y la situación legal está sin completar."}
         </AvisoFaltante>
       </AsistenteShell>
@@ -233,7 +233,7 @@ export function PasoPlanCuentas() {
           {propuestas.length > 0 && (
             <>
               <NotaInformativa>
-                No se crea ninguna cuenta hasta que confirmes. En contabilidad, borrar una cuenta
+                No se crea ninguna cuenta hasta que usted confirme. En contabilidad, borrar una cuenta
                 con movimiento no es una opción.
               </NotaInformativa>
 
@@ -301,20 +301,20 @@ export function PasoPlanCuentas() {
           {propuestas.length === 0 && (sugerencia?.faltantes.length ?? 0) === 0 && (
             <EstadoVacio
               titulo="No queda nada por proponer"
-              ayuda="Tu plan ya cubre lo que se desprende de los datos de la empresa."
+              ayuda="Su plan ya cubre lo que se desprende de los datos de la empresa."
             />
           )}
 
           {/* La sugerencia cubre lo que se desprende de los datos de la empresa.
               Lo que falte se agrega del catálogo, y eso vive en su propia
-              pantalla: acá el foco es confirmar lo propuesto. */}
+              pantalla: aquí el foco es confirmar lo propuesto. */}
           <p className="m-0 text-xs text-muted-foreground">
-            ¿Te falta alguna?{" "}
+            ¿Le falta alguna?{" "}
             <Link
               href="/dashboard/plan-cuentas"
               className="text-brand-text underline underline-offset-2 hover:text-brand-hover"
             >
-              Buscala en el catálogo del Decreto 2650
+              Búsquela en el catálogo del Decreto 2650
             </Link>
             .
           </p>
@@ -328,7 +328,7 @@ export function PasoPlanCuentas() {
             {plan.length === 0 ? (
               <EstadoVacio
                 titulo="El plan todavía está vacío"
-                ayuda="Las cuentas que confirmes arriba aparecerán acá."
+                ayuda="Las cuentas que confirme arriba aparecerán aquí."
               />
             ) : (
               /* El mismo árbol de /dashboard/plan-cuentas, de solo lectura: dos
@@ -392,7 +392,7 @@ function FilaSugerida({
         </span>
 
         <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
-          {cuenta.requiereEleccion && <Etiqueta tono="aviso">elegí la subcuenta</Etiqueta>}
+          {cuenta.requiereEleccion && <Etiqueta tono="aviso">elija la subcuenta</Etiqueta>}
           {cuenta.exigeTercero && <Etiqueta>tercero</Etiqueta>}
           {/* El decreto deja libre este tramo: el número es propuesta, no norma. */}
           {cuenta.sugerido && <Etiqueta>{cuenta.rango ?? "numeración libre"}</Etiqueta>}

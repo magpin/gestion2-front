@@ -21,7 +21,7 @@ import type { TipoMovimientoBanco } from "../types/bancos.types";
 const esquema = z.object({
   fecha: z.string().min(1, "Requerido"),
   valor: z.number().positive("Tiene que ser mayor a cero"),
-  concepto: z.string().min(3, "Contá de qué se trata").max(300),
+  concepto: z.string().min(3, "Indique de qué se trata").max(300),
   // Vacía se manda como `undefined`: el backend exige de 1 a 100 si viene.
   referencia: z.string().trim().max(100, "Hasta 100 caracteres"),
 });
@@ -80,7 +80,7 @@ export function FormularioMovimientoBanco({
       className="flex flex-col gap-5"
       onSubmit={form.handleSubmit((d) => {
         if (requiereContraCuenta && !contraCuenta) {
-          form.setError("root", { message: "Elegí la contracuenta" });
+          form.setError("root", { message: "Elija la contracuenta" });
           return;
         }
         alGuardar({ ...d, contraCuentaId: contraCuenta?.id });

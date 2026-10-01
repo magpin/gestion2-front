@@ -47,7 +47,7 @@ export function GuardiaConfiguracion({ children }: { children: ReactNode }) {
         <h1 className="text-lg font-semibold">La empresa todavía se está configurando</h1>
         <p className="text-sm text-muted-foreground">
           Mientras falten datos —la resolución de la DIAN, el plan de cuentas, los impuestos— no se puede operar.
-          Pedile al administrador o al contador que termine la configuración ({data?.porcentaje ?? 0} % lista).
+          Solicite al administrador o al contador que termine la configuración ({data?.porcentaje ?? 0} % lista).
         </p>
       </div>
     );

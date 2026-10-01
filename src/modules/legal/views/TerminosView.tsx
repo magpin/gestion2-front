@@ -23,7 +23,7 @@ export function TerminosView() {
           adelante, «nosotros»).
         </p>
         <p>
-          Al crear una cuenta o usar el sistema aceptás estos términos y la{" "}
+          Al crear una cuenta o usar el sistema usted acepta estos términos y la{" "}
           <Link href="/tratamiento-de-datos">política de tratamiento de datos</Link>.
         </p>
       </section>
@@ -36,10 +36,10 @@ export function TerminosView() {
             administra la cuenta decide quién entra y qué puede hacer.
           </li>
           <li>
-            Cada persona responde por su contraseña y por lo que se haga con su usuario. Si creés
-            que alguien entró sin permiso, avisanos enseguida.
+            Cada persona responde por su contraseña y por lo que se haga con su usuario. Si cree
+            que alguien entró sin permiso, avísenos enseguida.
           </li>
-          <li>Tenés que dar información verdadera, y mantenerla al día.</li>
+          <li>Usted debe dar información verdadera, y mantenerla al día.</li>
         </ul>
       </section>
 
@@ -68,29 +68,29 @@ export function TerminosView() {
       <section>
         <h2>4. Lo que el sistema hace y lo que todavía no</h2>
         <p>
-          Guarda tus resoluciones de numeración y tus credenciales de la DIAN y numera tus
+          Guarda sus resoluciones de numeración y sus credenciales de la DIAN y numera sus
           documentos contra ellas, pero <strong>todavía no emite ni envía factura electrónica a la
           DIAN</strong> (CUFE, CUDE y acuses están en construcción). Tampoco presenta declaraciones
           de impuestos ni liquida nómina. Mientras eso no exista, cumplir esas obligaciones sigue
-          siendo tuyo, con las herramientas que correspondan.
+          siendo responsabilidad suya, con las herramientas que correspondan.
         </p>
       </section>
 
       <section>
-        <h2>5. Tu información</h2>
+        <h2>5. Su información</h2>
         <ul>
           <li>
-            La información contable que cargás es de tu empresa. Nos das permiso para guardarla y
-            procesarla solo para prestarte el servicio.
+            La información contable que usted carga es de su empresa. Usted nos da permiso para
+            guardarla y procesarla solo para prestarle el servicio.
           </li>
           <li>
-            Si cargás datos personales de terceros (clientes, proveedores, empleados), tu empresa es
+            Si carga datos personales de terceros (clientes, proveedores, empleados), su empresa es
             la responsable de haberlos obtenido con autorización y de tratarlos según la ley; nosotros
-            los tratamos como encargados, por cuenta tuya.
+            los tratamos como encargados, por cuenta suya.
           </li>
           <li>
-            Podés pedir una copia de tu información en cualquier momento, y al terminar el servicio
-            te la entregamos antes de suprimirla, salvo lo que la ley obligue a conservar.
+            Puede pedir una copia de su información en cualquier momento, y al terminar el servicio
+            se la entregamos antes de suprimirla, salvo lo que la ley obligue a conservar.
           </li>
         </ul>
       </section>
@@ -128,7 +128,7 @@ export function TerminosView() {
         <h2>9. Propiedad intelectual</h2>
         <p>
           El sistema, su diseño, sus textos y la marca y la imagen de María son nuestros. Usarlo no
-          te transfiere ningún derecho sobre ellos, salvo el de usar el servicio mientras tengas una
+          le transfiere ningún derecho sobre ellos, salvo el de usar el servicio mientras tenga una
           cuenta activa.
         </p>
       </section>
@@ -146,8 +146,8 @@ export function TerminosView() {
       <section>
         <h2>11. Terminación</h2>
         <p>
-          Podés cancelar tu cuenta cuando quieras. Nosotros podemos terminarla por incumplimiento de
-          estos términos, con aviso previo salvo en casos graves. En los dos casos te entregamos tu
+          Puede cancelar su cuenta cuando quiera. Nosotros podemos terminarla por incumplimiento de
+          estos términos, con aviso previo salvo en casos graves. En los dos casos le entregamos su
           información como dice el punto 5.
         </p>
       </section>

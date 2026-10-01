@@ -42,7 +42,7 @@ export function ArbolPlan({ cuentas, onCrearAuxiliar, onDesactivar, onActivar, c
   if (cuentas.length === 0) {
     return (
       <p className="rounded-lg border border-border bg-card px-3 py-8 text-center text-sm text-muted-foreground">
-        Sin cuentas. Empezá por las sugerencias.
+        Sin cuentas. Empiece por las sugerencias.
       </p>
     );
   }
@@ -113,7 +113,7 @@ function Rama({
         </span>
         <span className="shrink-0 text-[11px] text-muted-foreground">{cuenta.naturaleza}</span>
 
-        {/* Lo que la cuenta le va a exigir a cada asiento. Se muestra acá porque
+        {/* Lo que la cuenta le va a exigir a cada asiento. Se muestra aquí porque
             es lo que después frena una factura al digitarla. */}
         {cuenta.exige_tercero && <Etiqueta>tercero</Etiqueta>}
         {cuenta.exige_centro_costo && <Etiqueta>centro de costo</Etiqueta>}

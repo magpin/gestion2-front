@@ -72,7 +72,7 @@ async function sinErrores(page: Page, donde: string) {
   const alertas = page.getByRole("alert").filter({ hasText: /No se pudo|Error|error/ });
   expect(await alertas.count(), `${donde}: ${await alertas.allInnerTexts()}`).toBe(0);
   // El aviso de falla global (el que tapa la pantalla).
-  await expect(page.getByRole("dialog").filter({ hasText: /Recargá la pantalla/ }), donde).toHaveCount(0);
+  await expect(page.getByRole("dialog").filter({ hasText: /Recargue la pantalla/ }), donde).toHaveCount(0);
 }
 
 test.describe("Recorrido de todo el sistema", () => {
@@ -132,7 +132,7 @@ test.describe("Recorrido de todo el sistema", () => {
   test("el plazo del proveedor propone el vence de la compra", async ({ page }) => {
     await page.goto("/dashboard/terceros");
     await page.getByRole("row", { name: /Distribuidora del Valle/ }).getByRole("button", { name: "Editar" }).click();
-    await page.getByLabel("Te da plazo de").fill("45");
+    await page.getByLabel("Plazo que da el proveedor").fill("45");
     await page.getByRole("button", { name: "Guardar cambios" }).click();
     await expect(page.getByRole("dialog")).toBeHidden();
 
@@ -141,6 +141,6 @@ test.describe("Recorrido de todo el sistema", () => {
     await page.getByLabel("Buscar proveedor").fill("Distribuidora");
     await page.getByRole("button", { name: /Distribuidora del Valle/ }).first().click();
     await page.getByRole("radio", { name: "Crédito" }).click();
-    await expect(page.getByText(/te da 45 días/)).toBeVisible();
+    await expect(page.getByText(/Plazo habitual de este proveedor/)).toBeVisible();
   });
 });

@@ -69,7 +69,7 @@ test.describe("Pantallas complementarias", () => {
     await page.getByRole("radio", { name: "Crédito" }).click();
 
     // El resumen lo arma el servidor corriendo la compra y deshaciéndola.
-    await expect(page.getByText("Le vas a pagar")).toBeVisible();
+    await expect(page.getByText("Le va a pagar")).toBeVisible();
     await expect(page.getByText("Así queda en el libro")).toBeVisible();
     await expect(page.getByText("Proveedores nacionales").first()).toBeVisible();
     await page.screenshot({ path: "e2e/.capturas/compra-pagina.png", fullPage: true });
@@ -100,7 +100,7 @@ test.describe("Pantallas complementarias", () => {
     await page.getByLabel("Cantidad de la línea 1").fill("1");
 
     await page.getByRole("button", { name: "Agregar servicio u otro ingreso" }).click();
-    await page.getByRole("combobox").filter({ hasText: "Elegí el concepto" }).click();
+    await page.getByRole("combobox").filter({ hasText: "Elija el concepto" }).click();
     await page.getByRole("option", { name: /Servicios de taller/ }).click();
     await page.getByLabel("Detalle de la línea 2").fill("Instalación en el local del cliente");
     await page.getByLabel("Precio de la línea 2").fill("120000");
@@ -114,7 +114,7 @@ test.describe("Pantallas complementarias", () => {
     await expect(page.getByLabel("Totales de las líneas")).toContainText(/321\.300/);
 
     await page.getByRole("radio", { name: "Crédito" }).click();
-    await expect(page.getByText("Vas a recibir")).toBeVisible();
+    await expect(page.getByText("Va a recibir")).toBeVisible();
     // El servicio entra a su cuenta, no a la de la mercancía.
     await expect(page.getByText("415595").first()).toBeVisible();
     await expect(page.getByText(/Y aparte, el costo/)).toBeVisible();

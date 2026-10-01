@@ -2,7 +2,7 @@ import type { AciertoFuente } from "../types/retenciones.types";
 
 /** De dónde salió el concepto propuesto, dicho para una persona. */
 export const NOMBRE_FUENTE: Record<string, string> = {
-  CONFIRMADO: "Lo que ya me dijiste",
+  CONFIRMADO: "Lo que ya me dijo",
   PRODUCTO: "Producto del inventario",
   CIIU: "Actividad del proveedor (CIIU)",
   PALABRAS: "Lo que dice el renglón o la cuenta",
@@ -44,7 +44,7 @@ export function TablaAciertos({ filas }: { filas: AciertoFuente[] }) {
                 <td className="px-5 py-3 text-sm font-medium">
                   {propuso
                     ? (NOMBRE_FUENTE[f.origen!] ?? f.origen)
-                    : "Ninguna: te pregunté"}
+                    : "Ninguna: le pregunté"}
                 </td>
                 <td className="px-5 py-3 font-mono text-sm">{f.total}</td>
                 <td className="px-5 py-3 font-mono text-sm">

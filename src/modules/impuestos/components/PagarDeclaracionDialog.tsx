@@ -76,8 +76,8 @@ function Formulario({ fila, onCerrar }: { fila: FilaCalendario; onCerrar: () => 
       (medio === "CAJA" && caja !== null && total > Number(caja.saldo)
         ? `No alcanza: en ${caja.nombre} hay ${formatCOP(Number(caja.saldo))}.`
         : null),
-    recibo: recibo.trim() === "" ? `Escribí el número del ${recibo490 ? "recibo 490" : "recibo de pago"} con el que pagaste.` : null,
-    fecha: fecha === "" ? "Elegí la fecha." : fecha > hoyEnColombia() ? "La fecha no puede ser futura." : null,
+    recibo: recibo.trim() === "" ? `Escriba el número del ${recibo490 ? "recibo 490" : "recibo de pago"} con el que pagó.` : null,
+    fecha: fecha === "" ? "Elija la fecha." : fecha > hoyEnColombia() ? "La fecha no puede ser futura." : null,
     previo: previo.data && !previo.data.armado.ok ? previo.data.armado.motivo : null,
   };
   const problema = Object.values(errores).some((e) => e !== null) || previo.data === undefined;
@@ -146,7 +146,7 @@ function Formulario({ fila, onCerrar }: { fila: FilaCalendario; onCerrar: () => 
             etiqueta="Intereses de mora"
             ayuda={
               fila.situacion.vencida
-                ? `Venció hace ${-(dias ?? 0)} días: corren intereses. Escribí los que liquidó MUISCA.`
+                ? `Venció hace ${-(dias ?? 0)} días: corren intereses. Escriba los que liquidó MUISCA.`
                 : "A tiempo: sin intereses."
             }
             escala="grande"
@@ -226,8 +226,8 @@ function Formulario({ fila, onCerrar }: { fila: FilaCalendario; onCerrar: () => 
       <DialogFooter className="sm:justify-between">
         <p className="self-center text-sm text-muted-foreground">
           {intentado && problema
-            ? (errores.previo ?? "Revisá lo marcado en rojo.")
-            : `Pagá en el banco o por PSE con ${recibo490 ? "el recibo 490" : "el recibo del municipio"}, y registralo cuando el banco confirme.`}
+            ? (errores.previo ?? "Revise lo marcado en rojo.")
+            : `Pague en el banco o por PSE con ${recibo490 ? "el recibo 490" : "el recibo del municipio"}, y regístrelo cuando el banco confirme.`}
         </p>
         <div className="flex gap-3">
           <Button type="button" variant="outline" className="h-12 rounded-xl px-6" onClick={onCerrar}>

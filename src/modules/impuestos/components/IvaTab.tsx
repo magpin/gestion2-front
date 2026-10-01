@@ -40,7 +40,7 @@ export function IvaTab({
     return (
       <EmptyState
         titulo="La empresa no es responsable de IVA"
-        descripcion="Según el RUT no tiene la responsabilidad 48: no declara IVA. Si cambió, actualizalo en Configurar empresa."
+        descripcion="Según el RUT no tiene la responsabilidad 48: no declara IVA. Si cambió, actualícelo en Configurar empresa."
         icon={Receipt}
         accion={{ label: "Ir a Configurar empresa", href: "/configuracion/impuestos" }}
       />
@@ -132,13 +132,13 @@ function Contenido({
           )}
         </div>
         <ul className={cn("grid border-t border-border", iva.reteIvaSufrida > 0 ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
-          <Celda titulo="IVA que cobraste" detalle="En tus facturas de venta · generado" valor={formatCOP(iva.generado.total)} />
-          <Celda titulo="IVA que pagaste" detalle="En compras y gastos · descontable" valor={`− ${formatCOP(iva.descontable.total)}`} />
+          <Celda titulo="IVA que cobró" detalle="En sus facturas de venta · generado" valor={formatCOP(iva.generado.total)} />
+          <Celda titulo="IVA que pagó" detalle="En compras y gastos · descontable" valor={`− ${formatCOP(iva.descontable.total)}`} />
           {iva.reteIvaSufrida > 0 && (
-            <Celda titulo="IVA que te retuvieron" detalle="Tus clientes agentes de retención" valor={`− ${formatCOP(iva.reteIvaSufrida)}`} />
+            <Celda titulo="IVA que le retuvieron" detalle="Sus clientes agentes de retención" valor={`− ${formatCOP(iva.reteIvaSufrida)}`} />
           )}
           <Celda
-            titulo={aFavor ? "Saldo a favor" : "Le debés a la DIAN"}
+            titulo={aFavor ? "Saldo a favor" : "Le debe a la DIAN"}
             detalle={enCurso ? "Si el período cerrara hoy" : "Del período"}
             valor={formatCOP(Math.abs(iva.saldo))}
             fuerte
@@ -151,7 +151,7 @@ function Contenido({
           <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
           <p>
             El libro (2408) dice {formatCOP(iva.cuadre.libro)} y las facturas dicen {formatCOP(iva.cuadre.documentos)}: hay{" "}
-            {formatCOP(Math.abs(iva.cuadre.diferencia))} de diferencia. Suele ser un asiento manual contra la 2408. Revisalo en el
+            {formatCOP(Math.abs(iva.cuadre.diferencia))} de diferencia. Suele ser un asiento manual contra la 2408. Revíselo en el
             Libro antes de declarar.
           </p>
         </div>
@@ -208,7 +208,7 @@ function Contenido({
               <p className="mt-1 font-mono text-lg font-semibold whitespace-nowrap tabular-nums">{formatCOP(iva.noDescontable)}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 IVA de compras marcado como no descontable: va al costo o al gasto. Si alguna compra sí da derecho a descontarlo,
-                corregila en Compras.
+                corríjala en Compras.
               </p>
             </section>
           )}
@@ -259,7 +259,7 @@ function Borrador300({ iva }: { iva: IvaDelPeriodo }) {
             {iva.descontable.porTarifa.map((t) => (
               <Renglon key={`c${t.tarifa}`} concepto={`Compras y gastos gravados al ${t.tarifa} %`} base={t.base} iva={-t.iva} />
             ))}
-            {iva.reteIvaSufrida > 0 && <Renglon concepto="Retención de IVA que te practicaron" base={null} iva={-iva.reteIvaSufrida} />}
+            {iva.reteIvaSufrida > 0 && <Renglon concepto="Retención de IVA que le practicaron" base={null} iva={-iva.reteIvaSufrida} />}
             <tr className="border-t-2 border-border bg-muted">
               <th scope="row" className="px-5 py-3.5 text-left font-sans text-base font-bold">
                 {aFavor ? "Saldo a favor" : "Saldo a pagar"}
@@ -271,7 +271,7 @@ function Borrador300({ iva }: { iva: IvaDelPeriodo }) {
         </table>
       </div>
       <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
-        Valores al múltiplo de mil, como los pide la DIAN. El formulario lo presentás vos en MUISCA.
+        Valores al múltiplo de mil, como los pide la DIAN. El formulario lo presenta usted en MUISCA.
       </p>
     </section>
   );

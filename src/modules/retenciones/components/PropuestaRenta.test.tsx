@@ -107,7 +107,7 @@ describe("PropuestaRenta", () => {
       <PropuestaRenta
         propuesta={propuesta({
           decision: "NO_SUJETO",
-          motivo: "No retengo: tu empresa no es agente.",
+          motivo: "No retengo: su empresa no es agente.",
         })}
         cargando={false}
         error={null}
@@ -116,12 +116,12 @@ describe("PropuestaRenta", () => {
       />,
     );
     expect(
-      screen.getByText("No retengo: tu empresa no es agente."),
+      screen.getByText("No retengo: su empresa no es agente."),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Se retiene/)).not.toBeInTheDocument();
   });
 
-  it("bug #12: tras «No es esto» y elegir otro concepto el chip dice «Lo dijiste vos»", async () => {
+  it("bug #12: tras «No es esto» y elegir otro concepto el chip dice «Lo dijo usted»", async () => {
     const usuario = userEvent.setup();
     const { rerender } = render(
       <PropuestaRenta
@@ -150,7 +150,7 @@ describe("PropuestaRenta", () => {
         onCambiar={() => {}}
       />,
     );
-    expect(screen.getByText("Lo dijiste vos")).toBeInTheDocument();
+    expect(screen.getByText("Lo dijo usted")).toBeInTheDocument();
     expect(screen.queryByText("La vi clara")).not.toBeInTheDocument();
     expect(
       screen.queryByText("Es un producto del inventario: compras generales."),
@@ -174,7 +174,7 @@ describe("PropuestaRenta", () => {
               concepto: null,
               origen: null,
               certeza: "PREGUNTA",
-              razon: "Es un pago al exterior: decime qué concepto del exterior es.",
+              razon: "Es un pago al exterior: dígame qué concepto del exterior es.",
               elegido: "EXT_GENERAL",
               pendiente: false,
             },
@@ -200,9 +200,9 @@ describe("estadoRenglon", () => {
     expect(e.razon).toBe(renglonClaro.razon);
   });
 
-  it("cambiado a mano es «Lo dijiste vos» y no repite la razón vieja", () => {
+  it("cambiado a mano es «Lo dijo usted» y no repite la razón vieja", () => {
     const e = estadoRenglon(renglonClaro, "SERVICIOS_GENERALES", nombreDe);
-    expect(e.chip.texto).toBe("Lo dijiste vos");
+    expect(e.chip.texto).toBe("Lo dijo usted");
     expect(e.razon).toContain("servicios generales");
     expect(e.razon).not.toContain("producto del inventario");
   });
@@ -252,7 +252,7 @@ describe("fundamentoEnPalabras (bug #19)", () => {
     );
     const texto = document.body.textContent ?? "";
     expect(texto).not.toMatch(/[a-z]+_[a-z0-9]+/);
-    expect(texto).toContain("Tu empresa es agente de retención de IVA");
+    expect(texto).toContain("Su empresa es agente de retención de IVA");
   });
 });
 

@@ -97,7 +97,7 @@ export function ResidenciaFiscal({ terceroId }: { terceroId: string }) {
               value={pais}
               onChange={(e) => setPais(e.target.value)}
             >
-              <option value="">Elegí</option>
+              <option value="">Elija</option>
               {data.paises.map((p) => (
                 <option key={p.codigo} value={p.codigo}>
                   {p.nombre}

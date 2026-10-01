@@ -130,7 +130,7 @@ export function CorteBancoSeccion() {
       {!cuenta ? (
         <div className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card px-6 py-20 text-center">
           <CalendarCheck className="size-8 text-muted-foreground" />
-          <p className="font-semibold">Elegí una cuenta para ver su día</p>
+          <p className="font-semibold">Elija una cuenta para ver su día</p>
         </div>
       ) : isLoading ? (
         <div className="flex justify-center py-24 text-muted-foreground">

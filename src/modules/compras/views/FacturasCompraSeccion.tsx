@@ -263,8 +263,8 @@ export function FacturasCompraSeccion({
       ) : compras.length === 0 ? (
         <VacioConMaria
           titulo="Todavía no hay compras"
-          invitacion="Subime la primera factura de un proveedor y te la dejo lista para que la apruebes."
-          sinMaria="Acá van las facturas de los proveedores, con el costo que alimenta el kardex."
+          invitacion="Súbame la primera factura de un proveedor y se la dejo lista para que la apruebe."
+          sinMaria="Aquí van las facturas de los proveedores, con el costo que alimenta el kardex."
         />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">

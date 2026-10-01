@@ -43,7 +43,7 @@ test.describe("Tesorería", () => {
     await page.getByLabel("Valor del renglón 1").fill(String(valor));
   }
 
-  test("cobrar una factura mete la plata en la caja y la deja sin saldo", async ({
+  test("cobrar una factura mete el dinero en la caja y la deja sin saldo", async ({
     page,
     request,
   }) => {
@@ -67,7 +67,7 @@ test.describe("Tesorería", () => {
     await page.keyboard.press("Escape");
   });
 
-  test("pagarle al proveedor saca la plata de la misma caja", async ({ page, request }) => {
+  test("pagarle al proveedor saca el dinero de la misma caja", async ({ page, request }) => {
     // Primero entra la plata: una caja no puede quedar en negativo.
     await facturar(page, e);
     await page.getByRole("button", { name: "Más acciones" }).first().click();

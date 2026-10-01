@@ -131,11 +131,11 @@ export function FormularioPrecio({
       {bajoCosto && (
         <Aviso
           tono="error"
-          titulo="Ese precio pierde plata"
+          titulo="Ese precio pierde dinero"
           cifra={formatCOP(costo - precio)}
         >
           El producto cuesta <b className="font-mono">{formatCOP(costo)}</b> en
-          promedio y lo estás dejando en{" "}
+          promedio y lo está dejando en{" "}
           <b className="font-mono">{formatCOP(precio)}</b>: se pierde esa
           diferencia por unidad. El precio se puede guardar, pero facturar a ese
           valor lo va a tener que autorizar un DIRECTOR.
@@ -145,12 +145,12 @@ export function FormularioPrecio({
       {noRepone && (
         <Aviso
           tono="alarma"
-          titulo="Con ese precio no lo reponés"
+          titulo="Con ese precio no lo repone"
           cifra={formatCOP(ultimaCompra! - precio)}
         >
           Da ganancia contra el costo promedio, pero la última compra fue a{" "}
           <b className="font-mono">{formatCOP(ultimaCompra!)}</b>: si hay que
-          volver a comprarlo hoy, esa diferencia sale de tu bolsillo.
+          volver a comprarlo hoy, esa diferencia sale de su bolsillo.
         </Aviso>
       )}
 

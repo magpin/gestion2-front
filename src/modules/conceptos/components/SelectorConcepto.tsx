@@ -66,7 +66,7 @@ export function SelectorConcepto({
         aria-invalid={invalido || undefined}
         className="h-11 w-full rounded-xl px-4 aria-invalid:border-danger"
       >
-        <SelectValue placeholder="Elegí el concepto" />
+        <SelectValue placeholder="Elija el concepto" />
       </SelectTrigger>
       <SelectContent>
         {grupos.map((g) => (

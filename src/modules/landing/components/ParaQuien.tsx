@@ -14,10 +14,10 @@ const PUBLICOS = [
     titulo: "Contadores ",
     tituloCursiva: "independientes",
     texto:
-      "Dejá de digitar facturas y dedicá tu tiempo al análisis y la asesoría. Atendé más clientes con el mismo esfuerzo.",
+      "Deje de digitar facturas y dedique su tiempo al análisis y la asesoría. Atienda más clientes con el mismo esfuerzo.",
     puntos: [
       "Varias empresas desde una sola cuenta",
-      "Vos aprobás; María no contabiliza sin tu criterio",
+      "Usted aprueba; María no contabiliza sin su criterio",
       "Lo que propone María, con su soporte y su trazabilidad",
     ],
     oscura: false,
@@ -27,11 +27,11 @@ const PUBLICOS = [
     titulo: "Pymes ",
     tituloCursiva: "y sus dueños",
     texto:
-      "Tené tu contabilidad al día sin pelear con la digitación. Subile tus facturas a María: ella las lee y vos o tu contador las aprueban.",
+      "Tenga su contabilidad al día sin pelear con la digitación. Súbale sus facturas a María: ella las lee y usted o su contador las aprueban.",
     puntos: [
       "Sin digitar una sola factura",
-      "Libros listos para tu contador cuando los necesite",
-      "Sabés cómo va tu negocio sin esperar al cierre",
+      "Libros listos para su contador cuando los necesite",
+      "Sepa cómo va su negocio sin esperar al cierre",
     ],
     oscura: true,
   },

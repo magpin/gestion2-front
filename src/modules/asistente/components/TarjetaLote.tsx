@@ -50,7 +50,7 @@ export function TurnosDelLote({
           )}
         </div>
         <div className="max-w-[420px] rounded-xl rounded-br-[0.3rem] bg-primary px-4 py-2.5 text-sm leading-normal text-primary-foreground">
-          {lote.total === 1 ? "Leé este documento." : `Leé estos ${lote.total} documentos.`}
+          {lote.total === 1 ? "Lea este documento." : `Lea estos ${lote.total} documentos.`}
         </div>
       </div>
 
@@ -89,16 +89,16 @@ export function caraDelLote(lote: Lote): EstadoMaria | undefined {
 /** Lo que dice María cuando termina. Sin «asenté»: nada se asentó. */
 export function resumen(lote: Lote): string {
   if (lote.detenido && lote.hechos < lote.total) {
-    return `Paré, como pediste. Alcancé a mirar ${lote.hechos} de ${lote.total}.`;
+    return `Paré, como me pidió. Alcancé a mirar ${lote.hechos} de ${lote.total}.`;
   }
   const partes = [
     lote.listas > 0 &&
-      `**${lote.listas}** ${lote.listas === 1 ? "está lista" : "están listas"} para que ${lote.listas === 1 ? "la apruebes" : "las apruebes"}`,
+      `**${lote.listas}** ${lote.listas === 1 ? "está lista" : "están listas"} para que ${lote.listas === 1 ? "la apruebe" : "las apruebe"}`,
     lote.apartadas > 0 &&
       `**${lote.apartadas}** ${lote.apartadas === 1 ? "la aparté" : "las aparté"} porque hay algo que decidir`,
   ].filter(Boolean);
   if (partes.length === 0) return "Listo. Esto es lo que encontré:";
-  return `Listo. ${partes.join(", y ")}. Nada se registra hasta que lo apruebes.`;
+  return `Listo. ${partes.join(", y ")}. Nada se registra hasta que lo apruebe.`;
 }
 
 function Marco({ children }: { children: React.ReactNode }) {
@@ -154,7 +154,7 @@ function Procesando({
         </div>
         <p className="m-0 text-xs leading-normal text-muted-foreground">
           Leo de a uno y compruebo cada uno igual: que las cuentas den, que conozca al
-          proveedor o al cliente, que no esté repetido. Lo que no pase, lo aparto y te pregunto.
+          proveedor o al cliente, que no esté repetido. Lo que no pase, lo aparto y le pregunto.
         </p>
       </div>
       <ul className="m-0 list-none divide-y divide-border border-t border-border p-0">
@@ -299,7 +299,7 @@ function FilaResultado({
           ) : (
             <BotonTarjeta principal={a.situacion === "LISTA"} onClick={() => alRevisar(a)}>
               {duplicado
-                ? "Es distinta, revisala"
+                ? "Es distinta, revísela"
                 : a.situacion === "LISTA"
                   ? "Revisar y aprobar"
                   : "Revisar"}

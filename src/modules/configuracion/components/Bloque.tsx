@@ -40,7 +40,7 @@ export function Bloque({
   return (
     <section className="flex min-w-0 flex-col gap-5">
       {/* La línea va debajo del encabezado, no encima del bloque. Es la misma
-          diferencia que entre subrayar un título y separar dos párrafos: acá
+          diferencia que entre subrayar un título y separar dos párrafos: aquí
           la raya pertenece al título y anuncia lo que sigue. */}
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border pb-3">
         <h2 className="m-0 flex items-center gap-2 text-[15px] font-semibold">

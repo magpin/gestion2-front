@@ -36,13 +36,13 @@ const PREGUNTAS = [
     numeral: "iii.",
     pregunta: "¿Qué pasa si María se equivoca?",
     respuesta:
-      "Nada entra a tus libros sin que alguien lo apruebe: lo que ella no puede confirmar lo aparta con la razón. Y todo asiento se corrige con un contra-asiento, que queda registrado.",
+      "Nada entra a sus libros sin que alguien lo apruebe: lo que ella no puede confirmar lo aparta con la razón. Y todo asiento se corrige con un contra-asiento, que queda registrado.",
   },
   {
     numeral: "iv.",
     pregunta: "¿Funciona con facturación electrónica?",
     respuesta:
-      "El sistema guarda tus resoluciones de numeración y tus credenciales de la DIAN, y numera cada documento contra ellas. La emisión y el envío —CUFE, CUDE y acuses— están en construcción.",
+      "El sistema guarda sus resoluciones de numeración y sus credenciales de la DIAN, y numera cada documento contra ellas. La emisión y el envío —CUFE, CUDE y acuses— están en construcción.",
   },
   {
     numeral: "v.",
@@ -54,7 +54,7 @@ const PREGUNTAS = [
     numeral: "vi.",
     pregunta: "¿Lee facturas de venta o extractos del banco?",
     respuesta:
-      "Todavía no. Hoy lee facturas de compra, cuentas de cobro, pedidos de clientes y los documentos de tu empresa (RUT, Cámara de Comercio, resolución de la DIAN). Los extractos se importan en Tesorería.",
+      "Todavía no. Hoy lee facturas de compra, cuentas de cobro, pedidos de clientes y los documentos de su empresa (RUT, Cámara de Comercio, resolución de la DIAN). Los extractos se importan en Tesorería.",
   },
 ];
 

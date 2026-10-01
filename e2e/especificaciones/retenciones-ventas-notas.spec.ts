@@ -185,8 +185,8 @@ test.describe("Motor de retenciones · ventas y notas", () => {
     await emitirFactura(page, agente.nombre, producto, 4);
     detalle = await abrirDetalleFactura(page, agente.nombre);
     const avisoRet = detalle.locator("p").filter({ hasText: /^Retenciones ·/ });
-    await expect(avisoRet).toContainText(/de renta registraste \$0 y por norma corresponden \$25\.000/);
-    await expect(avisoRet).toContainText(/de IVA registraste \$0 y por norma corresponden \$28\.500/);
+    await expect(avisoRet).toContainText(/de renta registró \$0 y por norma corresponden \$25\.000/);
+    await expect(avisoRet).toContainText(/de IVA registró \$0 y por norma corresponden \$28\.500/);
     await mirar(page, avisoRet, 6);
   });
 
@@ -298,7 +298,7 @@ test.describe("Motor de retenciones · ventas y notas", () => {
     await dialogo.getByLabel("Motivo *").fill("Mantenimiento no incluido en la factura (prueba e2e)");
     await dialogo.getByRole("button", { name: "Gasto", exact: true }).click();
     // La línea de gasto se elige por concepto (0108): el que va a la 514510.
-    await dialogo.getByRole("combobox").filter({ hasText: "Elegí el concepto" }).first().click();
+    await dialogo.getByRole("combobox").filter({ hasText: "Elija el concepto" }).first().click();
     await page.getByRole("option", { name: /514510$/ }).first().click();
     await dialogo.getByLabel("Detalle de la línea 1").fill("Mantenimiento de la bodega");
     await dialogo.getByLabel("Cantidad de la línea 1").fill("1");
@@ -341,7 +341,7 @@ test.describe("Motor de retenciones · ventas y notas", () => {
     await mirar(page, cifras350(page), 3);
 
     // 1. La pantalla no deja: en vez del motivo, dice qué nota anular primero.
-    const mensaje = `Esta compra tiene la nota crédito ${nota} viva: anulala primero.`;
+    const mensaje = `Esta compra tiene la nota crédito ${nota} viva: anúlela primero.`;
     const alerta = await abrirAnulacionCompra(page, compra);
     const aviso = alerta.getByRole("alert");
     await expect(aviso).toHaveText(mensaje);
@@ -399,7 +399,7 @@ test.describe("Motor de retenciones · ventas y notas", () => {
     await mirar(page, cifras350(page), 3);
 
     // 1. La pantalla no deja: en vez del motivo, dice qué nota anular primero.
-    const mensaje = /^Esta factura tiene la nota crédito \S+ viva: anulala primero\.$/;
+    const mensaje = /^Esta factura tiene la nota crédito \S+ viva: anúlela primero\.$/;
     const alerta = await abrirAnulacionFactura(page, "José Vargas");
     const aviso = alerta.getByRole("alert");
     await expect(aviso).toHaveText(mensaje);

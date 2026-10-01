@@ -85,7 +85,7 @@ export function CiiuView() {
             ))}
           </Columna>
 
-          <Columna titulo="División" vacio={!seccion ? "Elegí una sección" : undefined}>
+          <Columna titulo="División" vacio={!seccion ? "Elija una sección" : undefined}>
             {divisiones.map((d) => (
               <Fila
                 key={d.codigo}
@@ -98,7 +98,7 @@ export function CiiuView() {
             ))}
           </Columna>
 
-          <Columna titulo="Clase" vacio={!division ? "Elegí una división" : undefined}>
+          <Columna titulo="Clase" vacio={!division ? "Elija una división" : undefined}>
             {clases.map((c) => (
               <Fila key={c.codigo}>
                 <span className="w-9 shrink-0 font-mono text-xs">{c.codigo}</span>

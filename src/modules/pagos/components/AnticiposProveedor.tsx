@@ -69,7 +69,7 @@ export function AnticiposProveedor({ puedeCruzar }: { puedeCruzar: boolean }) {
         </div>
         <div className="mt-5">
           {proveedor === null ? (
-            <p className="text-sm text-muted-foreground">Elegí un proveedor para ver sus anticipos.</p>
+            <p className="text-sm text-muted-foreground">Elija un proveedor para ver sus anticipos.</p>
           ) : anticipos === undefined ? (
             isError ? (
               <ErrorCarga
@@ -85,8 +85,8 @@ export function AnticiposProveedor({ puedeCruzar }: { puedeCruzar: boolean }) {
             )
           ) : conSaldo.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Este proveedor no tiene anticipos por cruzar. Si le adelantás plata, registrala como anticipo en un
-              comprobante de egreso y aparece acá para cruzarla cuando llegue la factura.
+              Este proveedor no tiene anticipos por cruzar. Si le adelanta dinero, regístrelo como anticipo en un
+              comprobante de egreso y aparece aquí para cruzarlo cuando llegue la factura.
             </p>
           ) : (
             <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
@@ -170,13 +170,13 @@ function ContenidoCruce({
 
   const problema =
     compra === null
-      ? "Elegí la compra."
+      ? "Elija la compra."
       : !(Number(valor) > 0)
-        ? "Escribí cuánto se cruza."
+        ? "Escriba cuánto se cruza."
         : Number(valor) > tope
           ? `El anticipo solo tiene ${formatCOP(tope)}.`
           : fecha === ""
-            ? "Elegí la fecha."
+            ? "Elija la fecha."
             : null;
 
   const crear = useMutation({

@@ -116,7 +116,7 @@ export function PreciosSeccion() {
           <Tag className="size-8 text-muted-foreground" />
           <p className="font-semibold">Todavía no hay cambios de precio</p>
           <p className="max-w-md text-sm text-muted-foreground">
-            Los cambios que registres, en cualquier producto, aparecen acá.
+            Los cambios que se registren, en cualquier producto, aparecen aquí.
           </p>
         </div>
       ) : (
@@ -179,7 +179,7 @@ export function PreciosSeccion() {
             <div>
               <DialogTitle>Cambiar precio</DialogTitle>
               <DialogDescription>
-                Elegí el producto y el precio nuevo. El anterior queda en el
+                Elija el producto y el precio nuevo. El anterior queda en el
                 historial.
               </DialogDescription>
             </div>

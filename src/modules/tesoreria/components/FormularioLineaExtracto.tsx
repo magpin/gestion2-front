@@ -22,7 +22,7 @@ import { TIPOS_LINEA_EXTRACTO } from "../types/bancos.types";
 
 const esquema = z.object({
   fecha: z.string().min(1, "Requerido"),
-  descripcion: z.string().min(3, "Contá qué dice el extracto").max(300),
+  descripcion: z.string().min(3, "Indique qué dice el extracto").max(300),
   valor: z.number().positive("Tiene que ser mayor a cero"),
   tipo: z.enum(TIPOS_LINEA_EXTRACTO),
 });

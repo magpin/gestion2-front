@@ -261,7 +261,7 @@ function NuevaVersion({
                 })
               }
             >
-              <option value="">Elegí…</option>
+              <option value="">Elija…</option>
               <option value="MICRO">Micro</option>
               <option value="PEQUENA">Pequeña</option>
               <option value="MEDIANA">Mediana</option>
@@ -377,7 +377,7 @@ function IcaDelTercero({
       </div>
       {vigentes.length === 0 ? (
         <p className="m-0 text-xs text-muted-foreground">
-          Sin datos: lo tomo como contribuyente de ICA donde le compres.
+          Sin datos: lo tomo como contribuyente de ICA donde usted le compre.
         </p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
@@ -408,7 +408,7 @@ function IcaDelTercero({
               value={f.municipioCodigo}
               onChange={(e) => setF({ ...f, municipioCodigo: e.target.value })}
             >
-              <option value="">Elegí…</option>
+              <option value="">Elija…</option>
               {municipios.map((m) => (
                 <option key={m.codigo} value={m.codigo}>
                   {m.nombre}

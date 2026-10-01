@@ -142,8 +142,8 @@ export function Compositor({
             {subiendo
               ? "Subiendo…"
               : encima
-                ? "Soltá los archivos para leerlos"
-                : "Arrastrá documentos acá —uno o varios—, o hacé clic para elegirlos."}
+                ? "Suelte los archivos para leerlos"
+                : "Arrastre documentos aquí —uno o varios—, o haga clic para elegirlos."}
           </span>
         </button>
       </div>
@@ -208,7 +208,7 @@ export function Compositor({
         >
           <textarea
             ref={campo}
-            aria-label="Tu pregunta"
+            aria-label="Su pregunta"
             rows={1}
             maxLength={MAXIMO_PREGUNTA}
             value={texto}
@@ -224,10 +224,10 @@ export function Compositor({
             }}
             placeholder={
               encima
-                ? "Soltá los archivos para leerlos"
+                ? "Suelte los archivos para leerlos"
                 : subiendo
                   ? "Subiendo…"
-                  : "Preguntá cómo hacer algo, o arrastrá acá facturas, pedidos o el RUT"
+                  : "Pregunte cómo hacer algo, o arrastre aquí facturas, pedidos o el RUT"
             }
             className="max-h-40 min-h-8 grow resize-none bg-transparent py-1.5 text-sm leading-normal outline-none [field-sizing:content] placeholder:text-muted-foreground disabled:opacity-50"
           />

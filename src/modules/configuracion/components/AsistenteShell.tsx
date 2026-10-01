@@ -37,7 +37,7 @@ const DESCRIPCION: Record<ClavePaso, string> = {
   SEDES: "Dónde opera. De cada municipio sale su ICA.",
   SITUACION_LEGAL: "Quién es la empresa: representante, actividad y matrícula.",
   IMPUESTOS: "Qué impuestos cobra, qué retiene y qué le retienen, en palabras simples.",
-  PLAN_CUENTAS: "Las cuentas que se desprenden de lo que ya declaraste.",
+  PLAN_CUENTAS: "Las cuentas que se desprenden de lo que ya declaró.",
   RESOLUCIONES: "La numeración que la DIAN autorizó para facturar.",
 };
 
@@ -163,7 +163,7 @@ export function AsistenteShell({
           actual={clave}
           completados={data.completados}
           porcentaje={data.porcentaje}
-          razonSocial={empresa?.razonSocial ?? "Tu empresa"}
+          razonSocial={empresa?.razonSocial ?? "Su empresa"}
         />
 
         <section className="flex min-w-0 grow flex-col">

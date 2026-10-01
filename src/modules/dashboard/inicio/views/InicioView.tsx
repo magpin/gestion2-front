@@ -84,7 +84,7 @@ const TONO: Record<
 };
 
 /** Quien ve la plata de la empresa: los mismos roles de `GET /tablero/plata`. */
-const ROLES_PLATA = ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"] as const;
+const ROLES_PLATA = ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"] as const; // voseo-ok: identificador
 
 export function InicioView() {
   const { data, isError, error, refetch } = useEstadoConfiguracion();
@@ -96,10 +96,10 @@ export function InicioView() {
     data !== undefined &&
     data.completados >= data.totalObligatorios &&
     funcionActiva("tableroPlata") &&
-    ROLES_PLATA.some((r) => roles.includes(r));
+    ROLES_PLATA.some((r) => roles.includes(r)); // voseo-ok: identificador
   const tablero = useQuery({
-    queryKey: ["tablero", "plata"],
-    queryFn: tableroApi.plata,
+    queryKey: ["tablero", "plata"], // voseo-ok: ruta del API
+    queryFn: tableroApi.plata, // voseo-ok: identificador
     enabled: conTablero,
     meta: SILENCIOSO,
   });
@@ -126,7 +126,7 @@ export function InicioView() {
             Inicio<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Cuánta plata hay, quién te debe, a quién le debés y cómo va el mes.
+            Cuánto dinero hay, cuánto le deben, cuánto debe y cómo va el mes.
           </p>
         </header>
 
@@ -135,7 +135,7 @@ export function InicioView() {
         {tablero.data === undefined && tablero.isError ? (
           <ErrorCarga
             error={tablero.error}
-            titulo="No se pudo leer la plata de la empresa"
+            titulo="No se pudo leer el dinero de la empresa"
             onReintentar={tablero.refetch}
           />
         ) : (

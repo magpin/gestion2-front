@@ -72,7 +72,7 @@ export function PanelMarcaLogin() {
                 <span className={`${styles.dot} ${styles.dot3} size-1.5 rounded-full bg-rail-muted`} />
               </div>
               <p className={`${styles.msg} m-0 text-[15px] leading-[1.55] text-rail-foreground`}>
-                Concilié 24 movimientos del extracto bancario. 2 necesitan tu revisión.
+                Concilié 24 movimientos del extracto bancario. 2 necesitan su revisión.
               </p>
             </div>
             <div className={`${styles.msg2} flex gap-2`}>
@@ -145,7 +145,7 @@ export function PanelMarcaLogin() {
         </h2>
         <p className="m-0 max-w-[420px] text-[15px] leading-relaxed text-rail-muted">
           Contabilidad, facturación e impuestos, con María: la asistente de IA que concilia,
-          clasifica y te avisa lo que necesita tu ojo.
+          clasifica y le avisa lo que requiere su atención.
         </p>
       </div>
     </section>

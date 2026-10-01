@@ -128,12 +128,12 @@ function Contenido({ datos, onPresentar }: { datos: RetencionDelMes; onPresentar
         ? `${fechaCorta(d.presentadaEl)}${d.presentadaPor ? ` · ${d.presentadaPor}` : ""}`
         : formulario.cuadre.cuadra
           ? "Cuadra con el libro"
-          : "Revisá la diferencia",
+          : "Revise la diferencia",
       hecho: d !== null,
     },
     {
       nombre: "Presentada en MUISCA",
-      detalle: d ? `${fechaCorta(d.presentadaEl)} · N.º ${d.numeroFormulario}` : "Con tu firma",
+      detalle: d ? `${fechaCorta(d.presentadaEl)} · N.º ${d.numeroFormulario}` : "Con su firma",
       hecho: d !== null,
     },
     {
@@ -177,7 +177,7 @@ function Contenido({ datos, onPresentar }: { datos: RetencionDelMes; onPresentar
       {estado === "PRESENTADA" && (
         <Aviso tono={fila.situacion.vencida ? "error" : "alarma"} titulo="Presentada, falta pagarla" cifra={formatCOP(d!.valorAPagar)}>
           Un 350 con saldo a pagar que no se paga dentro de los dos meses siguientes al vencimiento queda como no presentado (art.
-          580-1 ET). {fila.situacion.vencida ? "Ya venció: al pagar, sumá los intereses de mora." : ""}
+          580-1 ET). {fila.situacion.vencida ? "Ya venció: al pagar, sume los intereses de mora." : ""}
         </Aviso>
       )}
 
@@ -235,7 +235,7 @@ function Contenido({ datos, onPresentar }: { datos: RetencionDelMes; onPresentar
           {formulario.sinRenglon.length > 0 && (
             <p className="border-t border-border px-5 py-3 text-xs text-warning">
               {formulario.sinRenglon.length} {formulario.sinRenglon.length === 1 ? "retención no tiene" : "retenciones no tienen"} renglón
-              en el formulario: revisalas en Reportes → Formulario 350 antes de presentar.
+              en el formulario: revíselas en Reportes → Formulario 350 antes de presentar.
             </p>
           )}
         </section>
@@ -247,7 +247,7 @@ function Contenido({ datos, onPresentar }: { datos: RetencionDelMes; onPresentar
               <p className="mt-2 text-sm text-muted-foreground">
                 {estado === "CAUSANDOSE"
                   ? "El mes todavía no termina: la retención se sigue causando."
-                  : "Presentala en MUISCA y dejá acá el número del formulario y el PDF."}
+                  : "Preséntela en MUISCA y deje aquí el número del formulario y el PDF."}
               </p>
             ) : (
               <dl className="mt-3 flex flex-col gap-3 text-sm">

@@ -161,8 +161,8 @@ export function LibroBancoSeccion() {
           <EmptyState
             sinMarco
             icon={History}
-            titulo="Elegí una cuenta bancaria para ver su libro"
-            descripcion="Arriba, en «Cuenta bancaria»: acá aparece cada consignación, retiro y transferencia, con su saldo."
+            titulo="Elija una cuenta bancaria para ver su libro"
+            descripcion="Arriba, en «Cuenta bancaria»: aquí aparece cada consignación, retiro y transferencia, con su saldo."
           />
         ) : movimientos === undefined ? (
           isError ? (
@@ -268,7 +268,7 @@ export function LibroBancoSeccion() {
             sinMarco
             icon={History}
             titulo="Esta cuenta todavía no tiene movimientos"
-            descripcion="Cargá el saldo que dice el banco hoy como saldo inicial: desde ahí se suma y se resta cada movimiento."
+            descripcion="Cargue el saldo que dice el banco hoy como saldo inicial: desde ahí se suma y se resta cada movimiento."
             accion={puedeOperar ? { label: "Cargar saldo inicial", onClick: () => setAbierto(true) } : undefined}
           />
         )}

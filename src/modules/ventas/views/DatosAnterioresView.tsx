@@ -25,7 +25,7 @@ export function DatosAnterioresView() {
           Datos anteriores<span className="text-brand">.</span>
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Las ventas del sistema anterior que todavía te deben: María las lee y vos las cargás.
+          Las ventas del sistema anterior que todavía le deben: María las lee y usted las carga.
         </p>
       </header>
 

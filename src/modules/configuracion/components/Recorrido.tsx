@@ -27,7 +27,7 @@ const RESUMEN_CORTO: Record<ClavePaso, string> = {
   EMPRESA: "Identificación y políticas contables",
   SEDES: "Dónde opera la empresa",
   SITUACION_LEGAL: "Representante y actividad",
-  IMPUESTOS: "Qué retenés y qué te retienen",
+  IMPUESTOS: "Qué retiene y qué le retienen",
   PLAN_CUENTAS: "Cuentas para registrar",
   RESOLUCIONES: "Numeración autorizada por la DIAN",
 };
@@ -99,7 +99,7 @@ export function Recorrido({
         {modoIA && (
           <p className="m-0 rounded-lg border border-rail-line bg-rail-foreground/6 p-3.5 text-xs leading-relaxed text-rail-muted">
             <span className="font-medium text-rail-foreground">Modo IA.</span> Los pasos se
-            llenan a medida que la IA lee tus documentos. Vos confirmás cada uno.
+            llenan a medida que la IA lee sus documentos. Usted confirma cada uno.
           </p>
         )}
         {/* Se hace una vez, al empezar: por eso vive en la configuración y

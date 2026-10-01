@@ -64,7 +64,7 @@ export function ComprasView() {
             Compras<span className="text-brand">.</span>
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Registra la factura del proveedor — asienta y aumenta el kardex al
+            Aquí se registra la factura del proveedor — se asienta y aumenta el kardex al
             guardar — y sus notas, que no tocan el kardex.
           </p>
         </div>

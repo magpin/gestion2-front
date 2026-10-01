@@ -84,8 +84,8 @@ export function HechosOperativos() {
 
   return (
     <Bloque
-      titulo="Sobre tu operación"
-      descripcion="Cuatro respuestas que ningún documento trae. Deciden qué cuentas se te proponen abajo."
+      titulo="Sobre su operación"
+      descripcion="Cuatro respuestas que ningún documento trae. Deciden qué cuentas se le proponen abajo."
     >
       {isLoading ? (
         <div className="flex justify-center py-6 text-muted-foreground">

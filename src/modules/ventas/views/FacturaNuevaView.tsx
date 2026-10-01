@@ -208,7 +208,7 @@ function FacturaNueva({ inicio }: { inicio?: InicioFactura }) {
               certificado del cliente. */}
           <Seccion
             id="v-ret"
-            titulo="Te retienen"
+            titulo="Le retienen"
             derecha={<p className="text-xs text-muted-foreground">Lo que dice el certificado del cliente</p>}
           >
             <Retenciones b={b} subtotal={local.porLinea.some((c) => c !== null) ? local.totales.subtotal : null} />
@@ -318,7 +318,7 @@ function Retenciones({ b, subtotal }: { b: BorradorFactura; subtotal: number | n
   return (
     <div className="flex flex-col gap-3">
       {b.retenciones.length === 0 && (
-        <p className="text-sm text-muted-foreground">El cliente no te retiene nada en esta factura.</p>
+        <p className="text-sm text-muted-foreground">El cliente no le retiene nada en esta factura.</p>
       )}
       {b.retenciones.map((r, i) => (
         <div key={r.clave} className="grid items-end gap-3 sm:grid-cols-[1fr_180px_auto]">
@@ -329,7 +329,7 @@ function Retenciones({ b, subtotal }: { b: BorradorFactura; subtotal: number | n
               onChange={(e) => cambiar(r.clave, { conceptoId: e.target.value })}
               className="h-11 w-full rounded-xl border border-input bg-card px-3 text-sm"
             >
-              <option value="">Elegí…</option>
+              <option value="">Elija…</option>
               {deVenta.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nombre}
@@ -389,7 +389,7 @@ function diaMes(iso: string): string {
 
 /**
  * Subtotal, IVA y total, calculados en el navegador desde la primera línea;
- * lo que retienen, «Vas a recibir» y el vence, del previo del servidor. Si
+ * lo que retienen, «Va a recibir» y el vence, del previo del servidor. Si
  * el previo falla, el error va debajo, sin tapar los totales.
  */
 function Resumen({
@@ -423,7 +423,7 @@ function Resumen({
       </h2>
       {!hayLineas ? (
         <p className="text-sm text-muted-foreground">
-          Cuando agregues las líneas, acá ves el total y cuánto vas a recibir, antes de emitir.
+          Cuando agregue las líneas, aquí ve el total y cuánto va a recibir, antes de emitir.
         </p>
       ) : (
         <>
@@ -442,13 +442,13 @@ function Resumen({
               {previa.retenciones.map((r, i) => (
                 <p key={i} className="flex justify-between gap-3 text-sm">
                   <span className="text-muted-foreground">
-                    Te retienen {(r.tarifa * 100).toLocaleString("es-CO", { maximumFractionDigits: 3 })} %
+                    Le retienen {(r.tarifa * 100).toLocaleString("es-CO", { maximumFractionDigits: 3 })} %
                   </span>
                   <span className="font-mono whitespace-nowrap tabular-nums">− {pesos(r.valor)}</span>
                 </p>
               ))}
               <div className="mt-2 border-t border-border pt-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Vas a recibir</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Va a recibir</p>
                 <p className="mt-1 font-mono text-[28px] leading-[34px] font-semibold tracking-[-0.03em]">
                   {pesos(previa.neto)}
                 </p>

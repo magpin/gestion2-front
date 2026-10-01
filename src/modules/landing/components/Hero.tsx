@@ -52,7 +52,7 @@ export function Hero() {
         >
           {/* María en persona, no un destello: el sello presenta a alguien. */}
           <Maria estado="reposo" tamano={22} />
-          Con María, tu asistente contable
+          Con María, su asistente contable
         </span>
 
         {/* Cada línea vive dentro de una máscara con `overflow: hidden` y sube
@@ -60,7 +60,7 @@ export function Hero() {
             máscara recorta las cursivas y las descendentes. */}
         <h1 className="m-0 font-serif text-[clamp(2.75rem,8.5vw,6.5rem)] leading-[0.98] tracking-[-2.5px] text-foreground">
           <span className="block overflow-hidden px-[0.06em] pb-[0.08em]">
-            <span className={`${styles.line} ${styles.l1}`}>Subís la factura.</span>
+            <span className={`${styles.line} ${styles.l1}`}>Usted sube la factura.</span>
           </span>
           <span className="block overflow-hidden px-[0.1em] pb-[0.14em]">
             <span className={`${styles.line} ${styles.l2}`}>
@@ -94,8 +94,8 @@ export function Hero() {
         <p
           className={`${styles.up} ${styles.u1} m-0 max-w-[620px] text-lg leading-relaxed text-muted-foreground sm:text-[19px]`}
         >
-          María lee tus facturas de compra y los pedidos de tus clientes, cruza cada renglón con
-          tu catálogo y te deja el asiento listo. Nada se asienta sin tu aprobación.
+          María lee sus facturas de compra y los pedidos de sus clientes, cruza cada renglón con
+          su catálogo y le deja el asiento listo. Nada se asienta sin su aprobación.
         </p>
 
         <div
@@ -105,7 +105,7 @@ export function Hero() {
             href="#como"
             className={`${styles.flecha} flex h-13 items-center justify-center gap-2.5 rounded-[0.6rem] bg-primary px-6 text-[15px] font-medium text-primary-foreground no-underline`}
           >
-            Conocé a María
+            Conozca a María
             <Flecha />
           </a>
           <a

@@ -149,7 +149,7 @@ export function FormularioAsiento({
                   id="comprobante"
                   className="h-11 w-full rounded-xl px-4"
                 >
-                  <SelectValue placeholder="Elegí uno" />
+                  <SelectValue placeholder="Elija uno" />
                 </SelectTrigger>
                 <SelectContent>
                   {digitables.map((c) => (

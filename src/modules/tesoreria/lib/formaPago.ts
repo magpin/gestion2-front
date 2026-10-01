@@ -133,13 +133,13 @@ export function cubiertaPorAnticipo(b: FormaPagoBorrador, total: number | null |
 export function problemaFormaPago(b: FormaPagoBorrador, total?: number | null): string | null {
   switch (b.modo) {
     case null:
-      return "Elegí cómo se paga: crédito, efectivo, transferencia o repartido.";
+      return "Elija cómo se paga: crédito, efectivo, transferencia o repartido.";
     case "CREDITO":
       return null;
     case "EFECTIVO":
-      return b.caja === null ? "Elegí la caja donde entra el efectivo." : null;
+      return b.caja === null ? "Elija la caja donde entra el efectivo." : null;
     case "TRANSFERENCIA":
-      return b.cuenta === null ? "Elegí la cuenta de la transferencia." : null;
+      return b.cuenta === null ? "Elija la cuenta de la transferencia." : null;
     case "ANTICIPO": {
       const elegidos = b.aplicados.filter((a) => Number(a.valor) > 0);
       if (elegidos.length === 0) return "Falta marcar el anticipo con que se paga.";
@@ -165,15 +165,15 @@ export function problemaFormaPago(b: FormaPagoBorrador, total?: number | null): 
           continue;
         }
         if (r.medio === "CAJA" && r.caja === null)
-          return "Elegí la caja de cada medio.";
+          return "Elija la caja de cada medio.";
         if (r.medio === "BANCO" && r.cuenta === null)
-          return "Elegí la cuenta de cada medio.";
+          return "Elija la cuenta de cada medio.";
         if (r.valor.trim() !== "" && !(Number(r.valor) > 0))
           return "Cada valor tiene que ser mayor a cero, o quedar en blanco.";
       }
       const abiertos = b.renglones.filter((r) => r.medio !== "ANTICIPO" && r.valor.trim() === "").length;
       if (abiertos > 1)
-        return "Dejá en blanco un solo valor: es el medio que se lleva el resto.";
+        return "Deje en blanco un solo valor: es el medio que se lleva el resto.";
       return null;
     }
   }

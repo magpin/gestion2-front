@@ -46,7 +46,7 @@ export function ControlView() {
           Control<span className="text-brand">.</span>
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          El cuadre de la plata: arqueo de cajas, corte diario, extractos y conciliación con el banco.
+          El cuadre del dinero: arqueo de cajas, corte diario, extractos y conciliación con el banco.
         </p>
       </header>
 

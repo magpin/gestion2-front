@@ -24,7 +24,7 @@ const esquema = z.object({
   banco: z.string().min(2, "Requerido").max(100),
   numeroCuenta: z.string().min(1, "Requerido").max(40),
   tipoCuenta: z.enum(TIPOS_CUENTA_BANCARIA),
-  cuentaId: z.string().min(1, "Elegí una cuenta contable"),
+  cuentaId: z.string().min(1, "Elija una cuenta contable"),
 });
 
 export type DatosCuentaBancaria = z.infer<typeof esquema>;

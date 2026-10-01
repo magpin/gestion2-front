@@ -73,7 +73,7 @@ export function BarraSuperior() {
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold leading-tight">
-                  {elegir.isPending ? "Abriendo…" : (empresa?.razonSocial ?? "Tu empresa")}
+                  {elegir.isPending ? "Abriendo…" : (empresa?.razonSocial ?? "Su empresa")}
                 </span>
                 {empresa && (
                   <span className="block font-mono text-[10px] text-muted-foreground">
@@ -89,7 +89,7 @@ export function BarraSuperior() {
           {/* La etiqueta es de Base UI (GroupLabel): fuera de su grupo tumba
               la página entera (error #31). */}
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Tus empresas</DropdownMenuLabel>
+            <DropdownMenuLabel>Sus empresas</DropdownMenuLabel>
             {lista.map((e) => (
               <DropdownMenuItem
                 key={e.id}

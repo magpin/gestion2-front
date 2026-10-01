@@ -592,7 +592,7 @@ function DialogoTarifa({
             <DialogTitle>Nueva vigencia de tarifa</DialogTitle>
             <DialogDescription>
               Cierra la vigente el día antes de que empiece esta. Si la norma
-              trae fecha de fin (una suspensión), ponela.
+              trae fecha de fin (una suspensión), ingrésela.
             </DialogDescription>
           </div>
         </DialogHeader>

@@ -26,15 +26,15 @@ export function Revision() {
           <TituloSeccion className="font-serif text-[clamp(2.5rem,6vw,4.5rem)] leading-[0.98] tracking-[-1.6px]">
             María propone.
             <br />
-            <span className="italic text-brand-text">Vos decidís.</span>
+            <span className="italic text-brand-text">Usted decide.</span>
           </TituloSeccion>
           <p className="m-0 text-[17px] leading-[1.65] text-muted-foreground">
-            Antes de que la apruebes, María comprueba que las sumas de la factura cuadren, que el
-            proveedor exista y que no la hayas registrado ya. Si algo no encaja, la aparta y te
+            Antes de que usted la apruebe, María comprueba que las sumas de la factura cuadren, que
+            el proveedor exista y que no esté registrada ya. Si algo no encaja, la aparta y le
             dice por qué.
           </p>
           <p className="m-0 text-[17px] leading-[1.65] text-muted-foreground">
-            Y cuando querés, revisa tus libros enteros y te señala lo que no cuadra.
+            Y cuando usted quiera, revisa los libros enteros y le señala lo que no cuadra.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export function Revision() {
                 <span className="text-sm font-medium">María · posible factura repetida</span>
                 <span className="text-[13px] leading-normal text-muted-foreground">
                   La FT-9012 parece repetida: ya hay una igual registrada el 2 sep. No la registro
-                  hasta que me digas.
+                  hasta que usted me indique.
                 </span>
               </div>
             </div>

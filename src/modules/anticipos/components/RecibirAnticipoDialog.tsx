@@ -118,7 +118,7 @@ function Contenido({ onCerrar }: { onCerrar: () => void }) {
         <div>
           <DialogTitle>Recibir anticipo</DialogTitle>
           <DialogDescription>
-            Plata que el cliente deja para un pedido. Queda a su nombre hasta que se facture.
+            Dinero que el cliente deja para un pedido. Queda a su nombre hasta que se facture.
           </DialogDescription>
         </div>
         <DialogCloseIcon />

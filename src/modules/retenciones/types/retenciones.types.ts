@@ -258,13 +258,13 @@ export function problemaRenta(
 ): string | null {
   if (r.sinRetencion) {
     return r.motivo.trim().length < 5
-      ? "Escribí por qué va sin retención."
+      ? "Escriba por qué va sin retención."
       : null;
   }
   if (p === undefined) return null;
   if (p.decision === "REVISION") return p.motivo;
   if (p.pendientes > 0) {
-    return `Confirmá el concepto de retención de ${p.pendientes === 1 ? "un renglón" : `${p.pendientes} renglones`}.`;
+    return `Confirme el concepto de retención de ${p.pendientes === 1 ? "un renglón" : `${p.pendientes} renglones`}.`;
   }
   if (p.retenciones.some((x) => x.cuentaId === null)) {
     return "Falta la cuenta de una retención en el plan de cuentas.";

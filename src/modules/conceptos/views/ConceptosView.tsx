@@ -225,10 +225,10 @@ export function ConceptosView() {
           titulo={busqueda ? "Ningún concepto coincide" : `Sin conceptos de ${NOMBRE_TIPO[tipo].toLowerCase()}`}
           descripcion={
             busqueda
-              ? "No hay conceptos con esa palabra ni con ese código de cuenta. Probá con otra búsqueda."
+              ? "No hay conceptos con esa palabra ni con ese código de cuenta. Intente con otra búsqueda."
               : puedeEditar
-                ? "Mientras no haya uno, en esta pestaña no hay nada para elegir al registrar. Creá el primero."
-                : "Mientras no haya uno, en esta pestaña no hay nada para elegir al registrar. Pedile a quien dirige o lleva la contabilidad que lo cree."
+                ? "Mientras no haya uno, en esta pestaña no hay nada para elegir al registrar. Cree el primero."
+                : "Mientras no haya uno, en esta pestaña no hay nada para elegir al registrar. Solicítelo a quien dirige o lleva la contabilidad."
           }
           accion={
             !busqueda && puedeEditar ? { label: "Nuevo concepto", onClick: () => setCreando(true) } : undefined

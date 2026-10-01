@@ -20,7 +20,7 @@ test.describe("Menú nuevo", () => {
     await entrarAlProducto(page, e);
   });
 
-  test("los grupos del menú, en el orden de la plata", async ({ page }) => {
+  test("los grupos del menú, en el orden del dinero", async ({ page }) => {
     const menu = page.locator("[data-sidebar='sidebar']").first();
     for (const grupo of ["Ingresos", "Egresos", "Dinero", "Inventario", "Contabilidad", "Análisis"]) {
       await expect(menu.getByText(grupo, { exact: true }).first()).toBeVisible();

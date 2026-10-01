@@ -24,7 +24,7 @@ const esquema = z.object({
   codigo: z.string().min(1, "Requerido").max(20),
   nombre: z.string().min(2, "Requerido").max(120),
   direccion: z.string().min(3, "Requerido").max(200),
-  municipioCodigo: z.string().regex(/^[0-9]{5}$/, "Elige un municipio"),
+  municipioCodigo: z.string().regex(/^[0-9]{5}$/, "Elija un municipio"),
   telefono: z.string().max(40).optional(),
   esPrincipal: z.boolean(),
 });
@@ -105,7 +105,7 @@ export function PasoSedes() {
           {activas.length === 0 ? (
             <EstadoVacio
               titulo="Aún no hay sedes"
-              ayuda="La primera que registres será la principal."
+              ayuda="La primera que registre será la principal."
             />
           ) : (
             <Registradas>

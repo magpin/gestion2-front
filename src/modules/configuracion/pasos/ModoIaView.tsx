@@ -151,7 +151,7 @@ export function ModoIaView() {
 
   const alSubir = (tipo: TipoDocumento, archivo: File) => {
     if (!(TIPOS_ACEPTADOS as readonly string[]).includes(archivo.type)) {
-      aviso.error("Ese archivo no se puede leer", "Subí un PDF o una foto (JPG, PNG o WEBP).");
+      aviso.error("Ese archivo no se puede leer", "Suba un PDF o una foto (JPG, PNG o WEBP).");
       return;
     }
     subir.mutate(
@@ -266,7 +266,7 @@ export function ModoIaView() {
             autor: "ASISTENTE",
             texto: `Leí ${NOMBRE_DOCUMENTO[tipo]}: **${documento.datos.length}** ${
               documento.datos.length === 1 ? "dato" : "datos"
-            }. Revisalo: podés corregir cualquiera, y lo que marqué en ámbar no lo leí con seguridad.`,
+            }. Revíselo: puede corregir cualquiera, y lo que marqué en ámbar no lo leí con seguridad.`,
           }}
           tarjeta={
             <RevisarLeido
@@ -299,8 +299,8 @@ export function ModoIaView() {
             pendiente.faltantes.length > 0
               ? `Para terminar **${nombre}** me falta: ${pendiente.faltantes
                   .map((f) => f.etiqueta.toLowerCase())
-                  .join(", ")}. Eso no sale de los documentos: completalo acá.`
-              : `Sigue **${nombre}**. Completalo acá.`,
+                  .join(", ")}. Eso no sale de los documentos: complételo aquí.`
+              : `Sigue **${nombre}**. Complételo aquí.`,
         }}
       />,
       <div
@@ -324,7 +324,7 @@ export function ModoIaView() {
           actual={pendiente?.clave ?? estado.siguiente}
           completados={estado.completados}
           porcentaje={estado.porcentaje}
-          razonSocial={empresa?.razonSocial ?? "Tu empresa"}
+          razonSocial={empresa?.razonSocial ?? "Su empresa"}
           modoIA
         />
 
@@ -333,7 +333,7 @@ export function ModoIaView() {
             <div className="flex min-w-0 flex-col">
               <span className="text-sm font-semibold">Asistente de configuración · con IA</span>
               <span className="truncate text-xs text-muted-foreground" aria-live="polite">
-                {leyendo ? "Leyendo tu documento…" : "Nada se guarda sin tu confirmación"}
+                {leyendo ? "Leyendo su documento…" : "Nada se guarda sin su confirmación"}
               </span>
             </div>
           </div>
@@ -347,7 +347,7 @@ export function ModoIaView() {
                 id: "saludo",
                 autor: "ASISTENTE",
                 texto:
-                  "Hola. Voy a configurar tu empresa con tus documentos, de a uno. Leo lo necesario y te pregunto solo lo que los papeles no dicen. Nada se guarda sin que lo confirmes.",
+                  "Hola. Voy a configurar su empresa con sus documentos, uno por uno. Leo lo necesario y le pregunto solo lo que los papeles no dicen. Nada se guarda sin que usted lo confirme.",
               }}
             />
             {turnos}
@@ -459,7 +459,7 @@ function PedirDocumento({
           tarjeta={
             <TarjetaFalla
               titulo={`No pude leer ${NOMBRE_DOCUMENTO[tipo]}`}
-              detalle={falla.error ?? "Probá con otro archivo."}
+              detalle={falla.error ?? "Intente con otro archivo."}
             />
           }
         />
@@ -468,7 +468,7 @@ function PedirDocumento({
         turno={{
           id: `pedir-${tipo}`,
           autor: "ASISTENTE",
-          texto: falla === undefined ? texto : "Probá subirlo de nuevo.",
+          texto: falla === undefined ? texto : "Intente subirlo de nuevo.",
         }}
         tarjeta={
           <div className="flex flex-wrap items-center gap-2">

@@ -72,9 +72,9 @@ export function FormularioNotaDebito({
   };
 
   const impedimento = (): string | null => {
-    if (factura === null) return "Elegí la factura sobre la que vas a cobrar.";
+    if (factura === null) return "Elija la factura sobre la que va a cobrar.";
     if (motivo.trim().length < 3)
-      return "Contá por qué se cobra de más. Es lo primero que lee quien audita.";
+      return "Indique por qué se cobra de más. Es lo primero que lee quien audita.";
     if (lineas.some((l) => l.producto === null))
       return "Cada línea necesita un producto.";
     if (lineas.some((l) => Number(l.cantidad) <= 0))

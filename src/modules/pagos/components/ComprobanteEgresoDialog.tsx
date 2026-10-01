@@ -159,9 +159,9 @@ function Contenido({
 
   const problema =
     proveedor === null
-      ? "Elegí el proveedor."
+      ? "Elija el proveedor."
       : fecha === ""
-        ? "Elegí la fecha."
+        ? "Elija la fecha."
         : (problemaDelMedio(medio, caja, cuenta) ??
           problemaDelRecibo(renglones, anticipo, "", "compra") ??
           (anticipoValor > 0
@@ -256,14 +256,14 @@ function Contenido({
             Compras por pagar a este proveedor
           </h3>
           {proveedor === null ? (
-            <p className="px-4 py-6 text-sm text-muted-foreground">Elegí el proveedor para ver lo que se le debe.</p>
+            <p className="px-4 py-6 text-sm text-muted-foreground">Elija el proveedor para ver lo que se le debe.</p>
           ) : isFetching && compras === undefined ? (
             <div className="flex justify-center py-8 text-muted-foreground">
               <Loader2 className="size-5 animate-spin" />
             </div>
           ) : renglones.length === 0 ? (
             <p className="px-4 py-6 text-sm text-muted-foreground">
-              No se le debe nada: si le vas a adelantar plata, escribí el anticipo abajo.
+              No se le debe nada: si le va a adelantar dinero, escriba el anticipo abajo.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -337,7 +337,7 @@ function Contenido({
         </section>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Campo id="egreso-anticipo" etiqueta="Anticipo (plata adelantada, sin factura)">
+          <Campo id="egreso-anticipo" etiqueta="Anticipo (dinero adelantado, sin factura)">
             <CampoPesos
               id="egreso-anticipo"
               value={anticipo}
@@ -354,7 +354,7 @@ function Contenido({
                 onValueChange={(v) => setConceptoRetencion(v as string | null)}
               >
                 <SelectTrigger id="egreso-concepto-retencion" className="h-11 w-full rounded-xl px-4">
-                  <SelectValue placeholder="Elegí el concepto" />
+                  <SelectValue placeholder="Elija el concepto" />
                 </SelectTrigger>
                 <SelectContent>
                   {conceptos.map((c) => (
@@ -372,7 +372,7 @@ function Contenido({
           <div className="rounded-2xl border border-border p-4 text-sm text-muted-foreground">
             Cada pago se registra como el pago de su compra: débito a Proveedores (220505) y crédito a{" "}
             {medio === "CAJA" ? "la caja" : "la cuenta bancaria"}, con el número del comprobante en el libro.
-            {descuentos > 0 && " El descuento por pronto pago es un ingreso y salda la compra sin plata."}
+            {descuentos > 0 && " El descuento por pronto pago es un ingreso y salda la compra sin mover dinero."}
             {anticipoValor > 0 &&
               ` El anticipo va a Anticipos a proveedores (133005)${retencion > 0 ? ` y se le retienen ${formatCOP(retencion)} en la fuente` : ""}.`}
             {gmfMostrado > 0 && ` El banco cobra ${formatCOP(gmfMostrado)} de 4×1000, que se registra como gasto.`}

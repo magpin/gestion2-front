@@ -53,10 +53,10 @@ export function EntrandoView() {
       <Marco>
         <Maria estado="dormida" tamano={64} invertida />
         <span className="text-center text-sm font-medium text-primary-foreground">
-          Todavía no tenés acceso a ninguna empresa
+          Todavía no tiene acceso a ninguna empresa
         </span>
         <span className="text-center text-xs text-primary-foreground/70">
-          Pedile al administrador de la cuenta que te dé acceso.
+          Solicite acceso al administrador de la cuenta.
         </span>
         <Button variant="secondary" size="sm" onClick={() => cerrarSesion.mutate()}>
           Salir
@@ -72,7 +72,7 @@ export function EntrandoView() {
       <span className="text-center text-xs text-primary-foreground/70" aria-live="polite">
         {elegir.isError
           ? "No pude abrir la empresa."
-          : `Abriendo ${destino?.razonSocial ?? "tu empresa"}…`}
+          : `Abriendo ${destino?.razonSocial ?? "su empresa"}…`}
       </span>
       {elegir.isError && destino !== undefined && (
         <Button variant="secondary" size="sm" onClick={() => elegir.mutate(destino.id)}>

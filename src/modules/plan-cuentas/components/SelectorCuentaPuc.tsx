@@ -46,7 +46,7 @@ export function SelectorCuentaPuc({ onElegir }: Props) {
           y no repetidas en cada una de las cuatrocientas filas. */}
       {data && data.secciones.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          Se resalta lo que corresponde a tu actividad:{" "}
+          Se resalta lo que corresponde a la actividad de la empresa:{" "}
           <span className="text-foreground">
             {data.secciones.length <= 2
               ? data.secciones.map((s) => s.nombre.toLowerCase()).join(" y ")
@@ -119,7 +119,7 @@ function Lista({
           >
             <EyeOff className="size-3.5 shrink-0" />
             {verOtras ? "Ocultar" : "Ver"} {otras.length}{" "}
-            {otras.length === 1 ? "cuenta que no parece" : "cuentas que no parecen"} de tu actividad
+            {otras.length === 1 ? "cuenta que no parece" : "cuentas que no parecen"} de la actividad de la empresa
             {!verOtras && otras[0]?.motivo && ` — ${otras[0].motivo.toLowerCase()}`}
           </button>
         </li>
@@ -185,10 +185,10 @@ function Nodo({
         <span className="w-20 shrink-0 font-mono text-xs">{cuenta.codigo}</span>
         <span className="min-w-0 flex-1 truncate">{cuenta.nombre}</span>
 
-        {/* Ya hay una cuenta de la empresa anclada acá: agregar otra es legítimo
+        {/* Ya hay una cuenta de la empresa anclada aquí: agregar otra es legítimo
             —un banco más, otra caja— pero conviene saberlo antes. */}
         {cuenta.ya_en_el_plan && (
-          <span className="shrink-0 rounded bg-muted px-1.5 text-[10px]">en tu plan</span>
+          <span className="shrink-0 rounded bg-muted px-1.5 text-[10px]">en su plan</span>
         )}
         {hoja ? (
           <span className="shrink-0 text-[11px] text-muted-foreground">{cuenta.naturaleza}</span>
@@ -216,8 +216,8 @@ function Nodo({
             >
               <PenLine className="mt-0.5 size-3 shrink-0" />
               <span>
-                El decreto no numera este nivel: las cuentas de acá para abajo las creás vos, con
-                el código que elijas dentro del rango.
+                El decreto no numera este nivel: las cuentas de aquí para abajo las crea usted, con
+                el código que elija dentro del rango.
               </span>
             </p>
           )}

@@ -181,17 +181,17 @@ function Formulario({
 
   const problema =
     lineas.some((l) => l.concepto === null)
-      ? "Elegí el concepto de cada línea."
+      ? "Elija el concepto de cada línea."
       : lineas.some((l) => !(Number(l.valor) > 0))
-        ? "Escribí el valor de cada línea."
+        ? "Escriba el valor de cada línea."
         : detalle.trim().length < 3
-          ? "Contá de qué fue."
+          ? "Indique de qué fue."
           : conRetencion && !(retenido > 0)
-            ? "Escribí cuánto te retuvieron, o quitá la retención."
+            ? "Escriba cuánto le retuvieron, o quite la retención."
             : conRetencion && retenido >= total
               ? "La retención no puede ser todo el valor."
               : conRetencion && tercero === null
-                ? "Decí quién te retuvo: la retención va a su nombre."
+                ? "Indique quién le retuvo: la retención va a su nombre."
                 : (problemaDelMedio(medio, caja, cuenta) ?? null);
 
   const guardar = useMutation({
@@ -227,8 +227,8 @@ function Formulario({
           <DialogTitle>{entra ? "Ingreso sin factura" : "Pago sin factura"}</DialogTitle>
           <DialogDescription>
             {entra
-              ? "Plata sin factura: un aporte de un socio, un préstamo, intereses, un reintegro. El cobro de una factura no va aquí: va con recibo de caja en Cobros, y así no se cuenta dos veces."
-              : "Plata sin factura: una cuota de un préstamo, intereses, la nómina, la PILA, un retiro de un socio. El pago a un proveedor no va aquí: va con comprobante de egreso en Pagos, y así no se cuenta dos veces."}
+              ? "Dinero sin factura: un aporte de un socio, un préstamo, intereses, un reintegro. El cobro de una factura no va aquí: va con recibo de caja en Cobros, y así no se cuenta dos veces."
+              : "Dinero sin factura: una cuota de un préstamo, intereses, la nómina, la PILA, un retiro de un socio. El pago a un proveedor no va aquí: va con comprobante de egreso en Pagos, y así no se cuenta dos veces."}
           </DialogDescription>
         </div>
         <DialogCloseIcon />
@@ -236,7 +236,7 @@ function Formulario({
 
       <DialogBody className="flex flex-col gap-5">
         <div>
-          <p className="mb-2 text-sm font-medium">{entra ? "Qué entró" : "Qué estás pagando"}</p>
+          <p className="mb-2 text-sm font-medium">{entra ? "Qué entró" : "Qué está pagando"}</p>
           <div className="flex flex-wrap gap-1.5">
             {PLANTILLAS[direccion].map((p) => (
               <button
@@ -354,7 +354,7 @@ function Formulario({
           </Campo>
         </div>
 
-        <Campo id="mov-tercero" etiqueta={conRetencion ? "Quién te retuvo" : "A nombre de (opcional)"}>
+        <Campo id="mov-tercero" etiqueta={conRetencion ? "Quién le retuvo" : "A nombre de (opcional)"}>
           {entra ? <SelectorTercero valor={tercero} onElegir={setTercero} /> : <SelectorProveedor valor={tercero} onElegir={setTercero} />}
         </Campo>
 

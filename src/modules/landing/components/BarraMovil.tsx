@@ -54,7 +54,7 @@ export function BarraMovil() {
         <span className="inline-flex [--primary-foreground:var(--neutral-900)] [--primary:var(--neutral-0)]">
           <Maria estado="reposo" tamano={22} />
         </span>
-        Conocé a María
+        Conozca a María
       </a>
       <Link
         href="/login"

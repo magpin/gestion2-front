@@ -160,7 +160,7 @@ export function PasoEmpresa() {
             </Campo>
           </div>
 
-          {/* Píldoras y no las tarjetas de `SelectorSectores`: acá la empresa ya
+          {/* Píldoras y no las tarjetas de `SelectorSectores`: aquí la empresa ya
               existe y quien llega sabe a qué se dedica; lo que importa es ver
               de un golpe cuáles quedaron marcados. En `empresa-nueva`, donde
               alguien elige esto por primera vez, siguen las tarjetas con su

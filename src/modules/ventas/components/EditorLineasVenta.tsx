@@ -647,7 +647,7 @@ function PrecioDeLinea({
           Volver al de lista
         </button>
       )}
-      {/* Avisar acá y no solo al facturar: el precio se decide mientras se
+      {/* Avisar aquí y no solo al facturar: el precio se decide mientras se
           cotiza, con el cliente esperando. El costo sale del catálogo, que ya
           lo trae. No aplica a la nota débito —lo que se cobra de más no tiene
           costo contra el cual compararse—. */}

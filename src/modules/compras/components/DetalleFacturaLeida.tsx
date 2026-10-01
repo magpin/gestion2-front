@@ -156,7 +156,7 @@ export function DetalleFacturaLeida({
       <Comprobaciones cruzada={cruzada} />
 
       {/* Con las cuentas mal, resolver renglones no sirve de nada: el backend
-          rechaza el registro igual, y a propósito. Se dice y se para acá. */}
+          rechaza el registro igual, y a propósito. Se dice y se para aquí. */}
       {cuentasDan && (
         <>
           <section className="flex flex-col gap-3">

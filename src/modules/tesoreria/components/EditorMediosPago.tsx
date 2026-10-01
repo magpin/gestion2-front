@@ -53,17 +53,17 @@ export function problemaDe(
 ): string | null {
   for (const r of renglones) {
     if (r.medio === "CAJA" && r.caja === null)
-      return `Elegí la caja de cada renglón.`;
+      return `Elija la caja de cada renglón.`;
     if (r.medio === "BANCO" && r.cuenta === null)
-      return `Elegí la cuenta de cada renglón.`;
+      return `Elija la cuenta de cada renglón.`;
     if (!(Number(r.valor) > 0))
       return `Cada renglón necesita un valor mayor a cero.`;
   }
   const suma = sumaDe(renglones);
   if (suma > tope)
     return verbo === "devolver"
-      ? `Estás devolviendo ${formatCOP(suma - tope)} de más: no se puede devolver más de lo que entró.`
-      : `Estás repartiendo ${formatCOP(suma - tope)} de más: no se puede ${verbo} más de lo que falta.`;
+      ? `Está devolviendo ${formatCOP(suma - tope)} de más: no se puede devolver más de lo que entró.`
+      : `Está repartiendo ${formatCOP(suma - tope)} de más: no se puede ${verbo} más de lo que falta.`;
   return null;
 }
 
@@ -220,7 +220,7 @@ export function EditorMediosPago({
           >
             {falta > 0
               ? `Falta repartir ${formatCOP(falta)}`
-              : `Te pasaste por ${formatCOP(-falta)}`}
+              : `Se pasó por ${formatCOP(-falta)}`}
           </p>
         )}
       </div>

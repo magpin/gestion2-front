@@ -148,7 +148,7 @@ export function PlanCuentasView() {
             Plan de cuentas
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Lo que tu empresa usa del Decreto 2650, más tus auxiliares.
+            Lo que la empresa usa del Decreto 2650, más sus auxiliares.
           </p>
           {/* Cuántas quedaron y cuántas sirven para asentar. La segunda cifra no
               es un adorno: un plan lleno de cuentas de agrupación no deja
@@ -228,12 +228,12 @@ export function PlanCuentasView() {
       <section className="flex flex-col gap-3 rounded-lg border border-border p-4">
         <h2 className="text-sm font-semibold">Agregar una cuenta</h2>
         <p className="text-xs text-muted-foreground">
-          Buscala en el catálogo del Decreto 2650 y el código y el nombre se
-          llenan solos. Después los podés ajustar: donde el decreto deja la
-          numeración libre, el código es tuyo.
+          Búsquela en el catálogo del Decreto 2650 y el código y el nombre se
+          llenan solos. Después los puede ajustar: donde el decreto deja la
+          numeración libre, el código lo decide usted.
         </p>
 
-        {/* Antes acá había un campo de código a secas: había que saberse los seis
+        {/* Antes aquí había un campo de código a secas: había que saberse los seis
             dígitos de memoria, y uno equivocado solo se descubría al enviarlo. */}
         <SelectorCuentaPuc
           onElegir={(c) => {

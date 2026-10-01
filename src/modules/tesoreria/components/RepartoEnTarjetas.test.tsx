@@ -64,6 +64,6 @@ describe("RepartoEnTarjetas", () => {
 
   it("avisa si se pasaron", () => {
     montar([renglon("80000"), renglon("50000")], 100000);
-    expect(screen.getByText(/Te pasaste por/)).toBeInTheDocument();
+    expect(screen.getByText(/Se pasó por/)).toBeInTheDocument();
   });
 });

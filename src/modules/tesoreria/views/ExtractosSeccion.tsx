@@ -129,8 +129,8 @@ export function ExtractosSeccion() {
           <EmptyState
             sinMarco
             icon={FileText}
-            titulo="Elegí una cuenta bancaria para ver sus extractos"
-            descripcion="Arriba, en «Cuenta bancaria»: acá quedan los extractos del banco con los que después se concilia."
+            titulo="Elija una cuenta bancaria para ver sus extractos"
+            descripcion="Arriba, en «Cuenta bancaria»: aquí quedan los extractos del banco con los que después se concilia."
           />
         ) : extractos === undefined ? (
           isError ? (
@@ -185,7 +185,7 @@ export function ExtractosSeccion() {
             sinMarco
             icon={FileText}
             titulo="Esta cuenta todavía no tiene extractos"
-            descripcion="Subí el archivo que te da el banco, o digitá el extracto a mano: sin él no hay contra qué conciliar el libro."
+            descripcion="Suba el archivo que le da el banco, o digite el extracto a mano: sin él no hay contra qué conciliar el libro."
             accion={puedeOperar ? { label: "Subir extracto", onClick: () => setImportando(true) } : undefined}
             accionSecundaria={puedeOperar ? { label: "Digitar extracto", onClick: () => setCreando(true) } : undefined}
           />

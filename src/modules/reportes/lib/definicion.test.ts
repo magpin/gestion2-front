@@ -27,7 +27,7 @@ describe("el armador en la pantalla", () => {
     });
   });
 
-  it("la plata va en pesos enteros; las cantidades, con decimales si los hay", () => {
+  it("el dinero va en pesos enteros; las cantidades, con decimales si los hay", () => {
     expect(celda("1284500", "DINERO")).toBe("$ 1.284.500");
     expect(celda("1284500.5", "DINERO")).toBe("$ 1.284.501");
     expect(celda("2.5", "CANTIDAD")).toBe("2,50");

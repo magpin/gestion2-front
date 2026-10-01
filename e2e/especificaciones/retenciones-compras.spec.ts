@@ -42,7 +42,7 @@ test.describe("Motor de retenciones en compras", () => {
   // §1 — La ley, para consultar
   // -------------------------------------------------------------------------
 
-  test("@paso4 1. Tarifas de la ley con historia, y tus cuentas", async ({ page, request }) => {
+  test("@paso4 1. Tarifas de la ley con historia, y sus cuentas", async ({ page, request }) => {
     const e = await empresaMotor(request, "RENTA_IVA");
     await entrarAlProducto(page, e);
     await irARetenciones(page);
@@ -65,14 +65,14 @@ test.describe("Motor de retenciones en compras", () => {
     await expect(page.getByRole("button", { name: /Nuevo concepto|Nueva tarifa/ })).toHaveCount(0);
 
     // Tus cuentas: cada concepto con su cuenta.
-    await expect(page.getByRole("heading", { name: "Tus cuentas" })).toBeVisible();
-    const cuentas = page.locator("section").filter({ has: page.getByRole("heading", { name: "Tus cuentas" }) });
+    await expect(page.getByRole("heading", { name: "Sus cuentas" })).toBeVisible();
+    const cuentas = page.locator("section").filter({ has: page.getByRole("heading", { name: "Sus cuentas" }) });
     await expect(cuentas.getByRole("row").filter({ hasText: "Compras generales" })).toContainText("236540");
     await expect(cuentas.getByRole("row").filter({ hasText: "Retención de IVA en compras" })).toContainText(/2367\d*/);
     await mirar(
       page,
       [
-        page.getByRole("heading", { name: "Tus cuentas" }),
+        page.getByRole("heading", { name: "Sus cuentas" }),
         cuentas.getByRole("row").filter({ hasText: "Compras generales" }),
         cuentas.getByRole("row").filter({ hasText: "Retención de IVA en compras" }),
       ],
@@ -116,7 +116,7 @@ test.describe("Motor de retenciones en compras", () => {
     await renta.getByRole("button", { name: "¿Por qué?" }).click();
     await expect(renta.getByText(/Tarifa: 2,5 % — /)).toBeVisible();
     await expect(renta.getByText(/Base: \$\s*2\.000\.000/)).toBeVisible();
-    await expect(renta.getByText(/Tu empresa es agente de retención: sí/)).toBeVisible();
+    await expect(renta.getByText(/Su empresa es agente de retención: sí/)).toBeVisible();
     await expect(dialogo.getByRole("textbox", { name: /tarifa/i })).toHaveCount(0);
     await expect(dialogo.getByRole("spinbutton", { name: /tarifa/i })).toHaveCount(0);
     await mirar(page, [renta, iva, dialogo.getByText(/Se retiene/)], 7);
@@ -289,16 +289,16 @@ test.describe("Motor de retenciones en compras", () => {
     await elegirConcepto(page, dialogo, "Servicios generales");
     await expect(filaRetencion(dialogo, "Servicios generales")).toBeVisible();
     // El renglón dice que el concepto lo eligió la persona, no «La vi clara».
-    await expect(dialogo.getByText("Lo dijiste vos"), "tras «No es esto» el chip tiene que decir «Lo dijiste vos»").toBeVisible();
+    await expect(dialogo.getByText("Lo dijo usted"), "tras «No es esto» el chip tiene que decir «Lo dijo usted»").toBeVisible();
     await expect(dialogo.getByText("La vi clara")).toHaveCount(0);
-    await mirar(page, [dialogo.getByText("Lo dijiste vos"), filaRetencion(dialogo, "Servicios generales")], 4);
+    await mirar(page, [dialogo.getByText("Lo dijo usted"), filaRetencion(dialogo, "Servicios generales")], 4);
     await registrar(page, dialogo);
 
     await irARetenciones(page);
     const aprendido = page.locator("section").filter({ has: page.getByRole("heading", { name: "Lo que aprendí" }) });
     const fila = aprendido.getByRole("row").filter({ hasText: p.nombre });
     await expect(fila).toContainText("Servicios generales");
-    await expect(fila).toContainText("Lo cambiaste");
+    await expect(fila).toContainText("Lo cambió usted");
     await mirar(page, [aprendido.getByRole("heading", { name: "Lo que aprendí" }), fila], 5);
 
     await fila.getByRole("button", { name: "Quitar" }).click();
@@ -335,14 +335,14 @@ test.describe("Motor de retenciones en compras", () => {
 
     // «ICA en tus municipios»: agente en los tres; Apartadó sin ley.
     await irARetenciones(page);
-    const ica = page.locator("section").filter({ has: page.getByRole("heading", { name: "ICA en tus municipios" }) });
+    const ica = page.locator("section").filter({ has: page.getByRole("heading", { name: "ICA en sus municipios" }) });
     await expect(ica.getByRole("listitem")).toHaveCount(3);
-    await expect(ica.getByRole("listitem").filter({ hasText: /Bogot/ })).toContainText("Sos agente de retención de ICA aquí.");
+    await expect(ica.getByRole("listitem").filter({ hasText: /Bogot/ })).toContainText("Es agente de retención de ICA aquí.");
     await expect(ica.getByRole("listitem").filter({ hasText: /Apartad/ })).toContainText(/Todavía no tengo la ley de ICA/);
     await mirar(
       page,
       [
-        ica.getByRole("heading", { name: "ICA en tus municipios" }),
+        ica.getByRole("heading", { name: "ICA en sus municipios" }),
         ica.getByRole("listitem").filter({ hasText: /Bogot/ }),
         ica.getByRole("listitem").filter({ hasText: /Apartad/ }),
       ],
@@ -509,10 +509,10 @@ test.describe("Motor de retenciones en compras", () => {
     const reteiva = filaRetencion(dialogo, "Retención de IVA en servicios del exterior");
     await expect(reteiva).toContainText("100 %");
     await expect(reteiva).toContainText(pesos(190_000));
-    await expect(dialogo.getByText(/asumís \$\s*190\.000 de IVA del exterior/)).toBeVisible();
+    await expect(dialogo.getByText(/asume \$\s*190\.000 de IVA del exterior/)).toBeVisible();
     await mirar(
       page,
-      [aplicar, renta, reteiva, dialogo.getByText(/asumís \$\s*190\.000 de IVA del exterior/)],
+      [aplicar, renta, reteiva, dialogo.getByText(/asume \$\s*190\.000 de IVA del exterior/)],
       8,
     );
 
@@ -525,7 +525,7 @@ test.describe("Motor de retenciones en compras", () => {
     // Siendo agente, la cuenta de la retención del exterior (236550) se crea
     // sola al calcular: nadie la crea a mano y la pantalla no avisa que falte.
     await expect(
-      renta.getByText(/No tenés la cuenta de esta retención/),
+      renta.getByText(/No tiene la cuenta de esta retención/),
       "la retención del exterior tiene que tener su cuenta (236550) sin crearla a mano",
     ).toHaveCount(0);
 

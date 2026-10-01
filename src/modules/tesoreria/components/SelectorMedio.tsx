@@ -67,7 +67,7 @@ export function problemaDelMedio(
   caja: CajaResumen | null,
   cuenta: CuentaBancariaResumen | null,
 ): string | null {
-  if (medio === "CAJA" && caja === null) return "Elegí la caja.";
-  if (medio === "BANCO" && cuenta === null) return "Elegí la cuenta bancaria.";
+  if (medio === "CAJA" && caja === null) return "Elija la caja.";
+  if (medio === "BANCO" && cuenta === null) return "Elija la cuenta bancaria.";
   return null;
 }

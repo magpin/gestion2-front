@@ -29,7 +29,7 @@ const INVALIDAR = [["tesoreria"], ["cajas"], ["cuentas-bancarias"]];
 
 const ORIGENES: Array<{ valor: OrigenSaldos; titulo: string; ayuda: string }> = [
   { valor: "SOCIOS", titulo: "Lo pusieron los socios", ayuda: "La empresa arranca hoy: es el capital." },
-  { valor: "ANTES", titulo: "Ya venía de antes", ayuda: "La empresa ya funcionaba y trae su plata." },
+  { valor: "ANTES", titulo: "Ya venía de antes", ayuda: "La empresa ya funcionaba y trae su dinero." },
 ];
 
 /**
@@ -99,9 +99,9 @@ function Formulario({ estado, onCerrar }: { estado: EstadoSaldosIniciales; onCer
 
   const problema =
     fecha === ""
-      ? "Elegí la fecha de corte."
+      ? "Elija la fecha de corte."
       : lineas.length === 0
-        ? "Poné al menos un valor."
+        ? "Ingrese al menos un valor."
         : contrapartida === null
           ? origen === "SOCIOS"
             ? "Falta la cuenta del capital en el plan de cuentas."
@@ -148,7 +148,7 @@ function Formulario({ estado, onCerrar }: { estado: EstadoSaldosIniciales; onCer
         <div>
           <DialogTitle>Saldos iniciales</DialogTitle>
           <DialogDescription>
-            La plata que hay el día de corte en la caja y en cada cuenta. Se carga una sola vez, antes del primer
+            El dinero que hay el día de corte en la caja y en cada cuenta. Se carga una sola vez, antes del primer
             movimiento.
           </DialogDescription>
         </div>
@@ -172,7 +172,7 @@ function Formulario({ estado, onCerrar }: { estado: EstadoSaldosIniciales; onCer
         </ul>
 
         <fieldset>
-          <legend className="mb-2 text-sm font-medium">¿De dónde salió esta plata?</legend>
+          <legend className="mb-2 text-sm font-medium">¿De dónde salió este dinero?</legend>
           <div className="grid gap-3 sm:grid-cols-2">
             {ORIGENES.map((o) => (
               <label
@@ -227,7 +227,7 @@ function Formulario({ estado, onCerrar }: { estado: EstadoSaldosIniciales; onCer
         <p className="self-center text-sm text-muted-foreground">
           {problema ?? (
             <>
-              Arrancás con <span className="font-mono font-semibold whitespace-nowrap text-foreground">{formatCOP(total)}</span>
+              Arranca con <span className="font-mono font-semibold whitespace-nowrap text-foreground">{formatCOP(total)}</span>
             </>
           )}
         </p>

@@ -41,13 +41,13 @@ export function Cierre() {
           className={`${styles.rv} relative m-0 max-w-[980px] font-serif text-[clamp(2.5rem,7vw,5.5rem)] leading-[0.98] tracking-[-2px]`}
         >
           La contabilidad que se hace sola,{" "}
-          <span className="italic text-brand">con tu firma.</span>
+          <span className="italic text-brand">con su firma.</span>
         </h2>
 
         <p
           className={`${styles.rv} relative m-0 max-w-[520px] text-lg leading-relaxed text-rail-muted`}
         >
-          María propone. Vos decidís.
+          María propone. Usted decide.
         </p>
 
         <Link

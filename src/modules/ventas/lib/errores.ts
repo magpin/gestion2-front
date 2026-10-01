@@ -113,7 +113,7 @@ export async function manejarErrorEmision<T extends ConConfirmaciones>(
   }
   const seguir = await aviso.confirmar(
     mensajeDeError(e),
-    "Si emitís la factura igual, el inventario de ese producto queda en negativo y lo que falte queda anotado en la lista de compras pendientes, con la factura que lo sacó.",
+    "Si emite la factura igual, el inventario de ese producto queda en negativo y lo que falte queda anotado en la lista de compras pendientes, con la factura que lo sacó.",
     "Emitir igual",
   );
   if (seguir) reintentar({ ...datos, confirmaSinExistencia: true });

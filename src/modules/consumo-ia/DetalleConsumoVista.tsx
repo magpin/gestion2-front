@@ -74,7 +74,7 @@ export function DetalleConsumoVista({
           className="m-0 rounded-md bg-warning/10 px-4 py-2 text-sm text-warning"
         >
           El período tiene más de 100.000 registros y se cortó: las cifras están
-          incompletas. Elegí un rango más corto.
+          incompletas. Elija un rango más corto.
         </p>
       )}
 
@@ -176,7 +176,7 @@ export function DetalleConsumoVista({
           <CardTitle>Cada llamada</CardTitle>
           <CardDescription>
             {miles(datos.total)} {datos.total === 1 ? "llamada" : "llamadas"}{" "}
-            por {usd(datos.totalUsd)} ({cop(datos.totalUsd, tasa)}). Tocá una
+            por {usd(datos.totalUsd)} ({cop(datos.totalUsd, tasa)}). Pulse una
             fila para ver el costo desarmado.
           </CardDescription>
         </CardHeader>

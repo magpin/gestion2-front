@@ -213,14 +213,14 @@ export function FormularioProducto({
           />
         </Campo>
 
-        {/* El lector escribe acá y manda Enter: el campo acepta lo que venga
+        {/* El lector escribe aquí y manda Enter: el campo acepta lo que venga
             del empaque tal cual, sin normalizar, porque normalizarlo rompería
             el cruce con lo que el lector lee. */}
         <Campo
           id="codigoBarras"
           etiqueta="Código de barras"
           error={errores.codigoBarras?.message}
-          ayuda="Pasá el lector o escribilo. Opcional."
+          ayuda="Pase el lector o escríbalo. Opcional."
           escala="grande"
         >
           <Input
@@ -303,7 +303,7 @@ export function FormularioProducto({
             Cuentas contables <span className="font-normal text-muted-foreground">(opcional)</span>
           </summary>
           <p className="mt-2 text-xs text-muted-foreground">
-            Si no elegís ninguna, el producto usa las cuentas de la empresa para inventario, costo de venta e
+            Si no elige ninguna, el producto usa las cuentas de la empresa para inventario, costo de venta e
             ingreso.
           </p>
           <div className="mt-4 grid gap-5">

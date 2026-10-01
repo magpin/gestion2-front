@@ -148,10 +148,10 @@ export function BloquePeriodicidad() {
             </div>
           )}
 
-          {/* La tabla «Retenciones que practicás» del lienzo 15 vive en Impuestos (PC6):
+          {/* La tabla «Retenciones que practica» del lienzo 15 vive en Impuestos (PC6):
               ahí se ven y se ajustan las tarifas, las bases en UVT y las cuentas. */}
           <p className="rounded-xl border border-border px-4 py-3 text-sm text-muted-foreground">
-            Las retenciones que practicás —tarifa, base mínima en UVT y en pesos, y cuenta— están en{" "}
+            Las retenciones que practica —tarifa, base mínima en UVT y en pesos, y cuenta— están en{" "}
             <Link href="/dashboard/impuestos?pestana=tarifas" className="font-semibold text-foreground hover:underline">
               Impuestos → Tarifas y terceros
             </Link>

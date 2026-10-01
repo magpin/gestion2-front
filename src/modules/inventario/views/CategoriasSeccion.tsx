@@ -123,7 +123,7 @@ export function CategoriasSeccion() {
             <Tags className="size-8 text-muted-foreground" />
             <p className="font-semibold">Todavía no hay categorías</p>
             <p className="max-w-md text-sm text-muted-foreground">
-              Creá la primera arriba y después clasificá los productos desde su
+              Cree la primera arriba y después clasifique los productos desde su
               ficha.
             </p>
           </div>

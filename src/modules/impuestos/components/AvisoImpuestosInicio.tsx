@@ -52,13 +52,13 @@ export function AvisoImpuestosInicio() {
   const detalle: Record<AvisoImpuestos["tipo"], string> = {
     POR_PRESENTAR:
       fila.situacion.dias === null
-        ? "El período ya cerró: presentala en MUISCA y registrala en Impuestos."
-        : `El borrador sale del libro. Presentala en MUISCA antes del ${fila.vence ? fechaCorta(fila.vence).toLowerCase() : "vencimiento"}.`,
+        ? "El período ya cerró: preséntela en MUISCA y regístrela en Impuestos."
+        : `El borrador sale del libro. Preséntela en MUISCA antes del ${fila.vence ? fechaCorta(fila.vence).toLowerCase() : "vencimiento"}.`,
     POR_PAGAR: `${fila.formulario ? `Formulario ${fila.formulario} ` : ""}presentado${d ? ` el ${fechaCorta(d.presentadaEl).toLowerCase()}` : ""}. Falta pagarlo antes de ${cuando}.`,
-    VENCE_HOY: "Pagala hoy en el banco o por PSE con el recibo 490, y registrá el pago.",
+    VENCE_HOY: "Páguela hoy en el banco o por PSE con el recibo 490, y registre el pago.",
     VENCIDA: d
       ? "Ya corren intereses de mora: MUISCA liquida el valor a pagar hoy."
-      : "Ya corren intereses de mora y sanción por extemporaneidad: presentala cuanto antes.",
+      : "Ya corren intereses de mora y sanción por extemporaneidad: preséntela cuanto antes.",
     PAGADA: `${d?.egreso ? `Pagada ${d.egreso}${d.recibo490 ? ` con el ${fila.municipio ? "recibo" : "recibo 490"}` : ""}. ` : d?.recibo490 ? `Con el recibo · ${d.recibo490}. ` : ""}El aviso se va solo en unos días.`,
   };
   const puedePagar = paga && d !== null && d.estado === "PRESENTADA";

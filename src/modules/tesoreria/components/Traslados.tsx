@@ -82,7 +82,7 @@ export function ListaTraslados({ puedeAnular }: { puedeAnular: boolean }) {
       <>
         <EmptyState
           titulo="Todavía no hay traslados"
-          descripcion="Cuando consignés el efectivo de la caja, retirés del banco o pasés plata entre tus cuentas, registralo acá: no es ingreso ni gasto, la plata cambia de lugar."
+          descripcion="Cuando consigne el efectivo de la caja, retire del banco o pase dinero entre las cuentas de la empresa, regístrelo aquí: no es ingreso ni gasto, el dinero cambia de lugar."
           accion={puedeAnular ? { label: "Nuevo traslado", onClick: () => setTrasladando(true) } : undefined}
         />
         <TrasladoDialog abierto={trasladando} onCerrar={() => setTrasladando(false)} />
@@ -229,9 +229,9 @@ function Formulario({ onCerrar, desdeCaja }: { onCerrar: () => void; desdeCaja?:
     (origen.medio === destino.medio && origenId === destinoId
       ? "El origen y el destino son el mismo."
       : !(Number(valor) > 0)
-        ? "Escribí el valor."
+        ? "Escriba el valor."
         : fecha === ""
-          ? "Elegí la fecha."
+          ? "Elija la fecha."
           : null);
 
   const crear = useMutation({
@@ -260,7 +260,7 @@ function Formulario({ onCerrar, desdeCaja }: { onCerrar: () => void; desdeCaja?:
       <DialogHeader>
         <div>
           <DialogTitle>Nuevo traslado</DialogTitle>
-          <DialogDescription>Mover plata entre la caja y los bancos. No es ingreso ni gasto.</DialogDescription>
+          <DialogDescription>Mover dinero entre la caja y los bancos. No es ingreso ni gasto.</DialogDescription>
         </div>
         <DialogCloseIcon />
       </DialogHeader>

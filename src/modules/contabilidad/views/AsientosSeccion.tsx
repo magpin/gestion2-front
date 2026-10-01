@@ -446,7 +446,7 @@ function Vacio({
       <EmptyState
         icon={Search}
         titulo="Ningún asiento coincide"
-        descripcion="Con estos filtros no aparece nada. Probá con otro número o glosa, o quitá los filtros."
+        descripcion="Con estos filtros no aparece nada. Intente con otro número o glosa, o quite los filtros."
         accion={{ label: "Quitar filtros", onClick: onLimpiar }}
       />
     );
@@ -456,8 +456,8 @@ function Vacio({
       titulo="Todavía no hay asientos"
       descripcion={
         puedeAsentar
-          ? "Cada factura, compra, pago o cobro que registres se asienta solo y aparece acá. Si necesitás un ajuste, hacé un asiento a mano."
-          : "Cada factura, compra, pago o cobro que se registre se asienta solo y aparece acá."
+          ? "Cada factura, compra, pago o cobro que registre se asienta solo y aparece aquí. Si necesita un ajuste, haga un asiento a mano."
+          : "Cada factura, compra, pago o cobro que se registre se asienta solo y aparece aquí."
       }
       accion={
         puedeAsentar ? { label: "Nuevo asiento", onClick: onCrear } : undefined

@@ -134,7 +134,7 @@ export function SelectorProveedor({
             )}
           </div>
 
-          {/* Con 4.282 terceros, el que falta se descubre justo acá. Salir a
+          {/* Con 4.282 terceros, el que falta se descubre justo aquí. Salir a
             registrarlo al directorio obliga a abandonar el documento a medio
             digitar, así que se registra sin moverse. */}
           <div className="flex items-center gap-1 border-t border-border p-2">

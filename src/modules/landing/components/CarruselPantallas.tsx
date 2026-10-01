@@ -28,7 +28,7 @@ import {
 const PANTALLAS = [
   {
     src: "/landing/pantalla-chat.png",
-    titulo: "Preguntale a María",
+    titulo: "Pregúntele a María",
     texto: "Responde con el dato exacto y dice de dónde salió.",
   },
   {
@@ -39,12 +39,12 @@ const PANTALLAS = [
   {
     src: "/landing/pantalla-config.png",
     titulo: "Configuración en seis pasos",
-    texto: "A mano, o que María la llene con tu RUT.",
+    texto: "A mano, o que María la llene con su RUT.",
   },
   {
     src: "/landing/pantalla-inicio.png",
     titulo: "María esta semana",
-    texto: "Lo que leyó, lo que aprobaste y lo que espera tu revisión.",
+    texto: "Lo que leyó, lo que usted aprobó y lo que espera su revisión.",
   },
   {
     src: "/landing/pantalla-reportes.png",

@@ -53,7 +53,7 @@ export function MariaDelPanel() {
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-[15px] font-semibold text-rail-foreground">María</span>
         <span className="text-[13px] leading-snug text-rail-muted">
-          {lista ? "Lista para tu aprobación" : "Leyendo la FE-2231…"}
+          {lista ? "Lista para su aprobación" : "Leyendo la FE-2231…"}
         </span>
       </div>
     </div>

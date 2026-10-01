@@ -155,7 +155,7 @@ export function usePreguntar() {
         } else {
           aviso.error(
             "Se cortó la conexión",
-            "Lo que alcanzó a llegar quedó guardado. Recargá si falta algo.",
+            "Lo que alcanzó a llegar quedó guardado. Recargue la página si falta algo.",
           );
         }
       } finally {

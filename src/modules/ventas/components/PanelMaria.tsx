@@ -59,10 +59,10 @@ export function PanelMaria({
 
   const frases = [
     factura.historica
-      ? "Es histórica: vino del sistema anterior, así que no tiene asiento acá."
+      ? "Es histórica: vino del sistema anterior, así que no tiene asiento aquí."
       : null,
     pendiente > 0
-      ? `Falta cobrar ${formatCOP(pendiente)}${dias > 0 ? `, y la emitiste hace ${dias === 1 ? "1 día" : `${dias} días`}` : ""}.`
+      ? `Falta cobrar ${formatCOP(pendiente)}${dias > 0 ? `, y se emitió hace ${dias === 1 ? "1 día" : `${dias} días`}` : ""}.`
       : Number(factura.saldo_a_favor) > 0
         ? `Está cobrada, y el cliente quedó con ${formatCOP(Number(factura.saldo_a_favor))} a favor.`
         : "Está cobrada entera.",
@@ -83,10 +83,10 @@ export function PanelMaria({
       <div className="flex items-center gap-2">
         <Maria estado="reposo" tamano={24} />
         <span className="text-sm font-semibold">María</span>
-        <span className="text-xs text-muted-foreground">Ve lo mismo que vos</span>
+        <span className="text-xs text-muted-foreground">Ve lo mismo que usted</span>
       </div>
       <p className="m-0 text-[13px] leading-normal">
-        Estás viendo la {numero} de {factura.tercero_nombre}. {frases.join(" ")}
+        Está viendo la {numero} de {factura.tercero_nombre}. {frases.join(" ")}
       </p>
       <div className="flex flex-wrap gap-2">
         {alCobrar !== undefined && pendiente > 0 && (

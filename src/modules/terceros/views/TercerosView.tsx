@@ -292,7 +292,7 @@ export function TercerosView() {
             <AlertDialogDescription className="text-[15px] leading-6">
               {porDesactivar?.nombre} deja de aparecer al digitar facturas y
               compras. No se borra: su historia y los documentos que ya tiene
-              emitidos quedan intactos, y podés volver a verlo con “Ver
+              emitidos quedan intactos, y puede volver a verlo con “Ver
               inactivos”.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -560,8 +560,8 @@ function Vacio({
       </p>
       <p className="max-w-md text-sm leading-6 text-muted-foreground">
         {hayFiltro
-          ? "Probá con otro texto, o quitá los filtros."
-          : "Acá van los clientes a quienes les facturás y los proveedores a quienes les comprás."}
+          ? "Intente con otro texto, o quite los filtros."
+          : "Aquí van los clientes a quienes la empresa les factura y los proveedores a quienes les compra."}
       </p>
       {!hayFiltro && (
         <Button className="mt-2 h-12 rounded-xl px-6" onClick={onCrear}>

@@ -261,7 +261,7 @@ export function FormularioCerrarArqueo({
           ? "Lo contado coincide con el sistema: el cierre no genera ningún asiento."
           : diferencia > 0
             ? "Se asienta como sobrante de caja."
-            : "Decí qué pasa con la plata que falta: el asiento depende de eso."}
+            : "Indique qué pasa con el dinero que falta: el asiento depende de eso."}
       </Aviso>
 
       {faltante && (
@@ -295,7 +295,7 @@ export function FormularioCerrarArqueo({
             ))}
           </div>
           {intento && faltaTratamiento && (
-            <p className="text-sm text-danger">Elegí una de las dos para poder cerrar.</p>
+            <p className="text-sm text-danger">Elija una de las dos para poder cerrar.</p>
           )}
 
           {tratamiento === "RESPONSABLE" && (
@@ -304,10 +304,10 @@ export function FormularioCerrarArqueo({
               etiqueta="¿A quién se le cobra? *"
               ayuda={
                 caja.responsable
-                  ? "Viene el responsable de la caja; cambialo si ese día contó otra persona."
+                  ? "Viene el responsable de la caja; cámbielo si ese día contó otra persona."
                   : "Esta caja no tiene responsable asignado."
               }
-              error={intento && faltaResponsable ? "Elegí a quién se le cobra" : undefined}
+              error={intento && faltaResponsable ? "Elija a quién se le cobra" : undefined}
               escala="grande"
             >
               <SelectorTercero

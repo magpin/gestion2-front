@@ -111,10 +111,10 @@ export function LecturasSeccion() {
         <div className="flex items-center gap-3">
           <Maria estado={subir.isPending ? "leyendo" : "reposo"} tamano={32} />
           <div>
-            <p className="text-sm font-medium">Subí la factura y yo la leo</p>
+            <p className="text-sm font-medium">Suba la factura y yo la leo</p>
             <p className="text-xs text-muted-foreground">
-              En PDF o en foto. Te digo qué entendí y qué me falta; registrar lo
-              apretás vos.
+              En PDF o en foto. Le digo qué entendí y qué me falta; registrar lo
+              decide usted.
             </p>
           </div>
         </div>
@@ -165,11 +165,11 @@ export function LecturasSeccion() {
       ) : lecturas.length === 0 ? (
         <EmptyState
           icon={Upload}
-          titulo="Todavía no le pasaste ninguna factura a María"
+          titulo="Todavía no le ha pasado ninguna factura a María"
           descripcion={
             puedeSubir
-              ? "Subí la factura de un proveedor, en PDF o en foto. María la lee, te dice qué le falta y la registrás vos después de revisarla."
-              : "Cuando alguien de compras suba la factura de un proveedor, la vas a ver acá con lo que leyó María."
+              ? "Suba la factura de un proveedor, en PDF o en foto. María la lee, le dice qué le falta y usted la registra después de revisarla."
+              : "Cuando alguien de compras suba la factura de un proveedor, la va a ver aquí con lo que leyó María."
           }
           accion={
             puedeSubir && !subir.isPending

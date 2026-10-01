@@ -78,7 +78,7 @@ export const impuestosApi = {
       .then((r) => r.data);
     const respuesta = await fetch(url, { method: "PUT", headers: { "Content-Type": tipoMime }, body: archivo });
     if (!respuesta.ok) {
-      throw new Error(`El archivo no se pudo subir (${respuesta.status}). Revisá que el almacenamiento esté disponible.`);
+      throw new Error(`El archivo no se pudo subir (${respuesta.status}). Revise que el almacenamiento esté disponible.`);
     }
     return { clave, nombre: archivo.name };
   },

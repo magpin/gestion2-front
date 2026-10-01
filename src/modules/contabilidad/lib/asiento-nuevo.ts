@@ -24,7 +24,7 @@ export function problemaDelAsiento(a: {
       .map((l, i) => (malo(l) ? i + 1 : null))
       .filter((n): n is number => n !== null);
 
-  if (a.comprobanteTipoId === "") return "Elegí el tipo de comprobante.";
+  if (a.comprobanteTipoId === "") return "Elija el tipo de comprobante.";
   if (a.glosa.trim().length < 3)
     return "La glosa explica por qué existe el asiento. Es obligatoria.";
   if (lineas.length < 2)
@@ -34,7 +34,7 @@ export function problemaDelAsiento(a: {
     return `Falta la cuenta en ${nombrarRenglones(sinCuenta)}.`;
   const sinPata = renglonesSinUnaPata(lineas);
   if (sinPata.length > 0)
-    return `Cada línea lleva débito o crédito, nunca los dos ni ninguno. Revisá ${nombrarRenglones(sinPata)}.`;
+    return `Cada línea lleva débito o crédito, nunca los dos ni ninguno. Revise ${nombrarRenglones(sinPata)}.`;
   if (!calcularCuadre(lineas).cuadra) return "El asiento no cuadra todavía.";
   const faltaTercero = renglones(
     (l) => Boolean(l.cuenta?.exige_tercero) && !l.terceroId,

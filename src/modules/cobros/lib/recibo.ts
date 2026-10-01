@@ -110,19 +110,19 @@ export function problemaDelRecibo(
 ): string | null {
   const marcadas = abonos.filter((a) => a.marcada);
   if (marcadas.length === 0 && !(Number(anticipo) > 0)) {
-    return `Marcá al menos una ${cuales} o escribí un anticipo.`;
+    return `Marque al menos una ${cuales} o escriba un anticipo.`;
   }
   for (const a of marcadas) {
     const valor = centavos(a.valor);
     const descuento = centavos(a.descuento);
     if (valor < 0 || descuento < 0) return "Los valores no pueden ser negativos.";
-    if (valor + descuento === 0) return `Escribí cuánto se abona a ${a.factura.numero}.`;
+    if (valor + descuento === 0) return `Escriba cuánto se abona a ${a.factura.numero}.`;
     if (valor + descuento > Math.round(a.factura.pendiente * 100)) {
       return `A ${a.factura.numero} solo le faltan ${a.factura.pendiente.toLocaleString("es-CO")}: el abono y el descuento no pueden pasar de ahí.`;
     }
   }
-  const plata = Math.round(totalRecibo(abonos) * 100) + centavos(anticipo);
-  if (plata <= 0) return "No se mueve plata: un descuento se concede cuando se paga.";
-  if (centavos(comision) >= plata) return "La comisión tiene que ser menor que lo que entró.";
+  const plata = Math.round(totalRecibo(abonos) * 100) + centavos(anticipo); // voseo-ok: nombre de variable
+  if (plata <= 0) return "No se mueve dinero: un descuento se concede cuando se paga."; // voseo-ok: nombre de variable
+  if (centavos(comision) >= plata) return "La comisión tiene que ser menor que lo que entró."; // voseo-ok: nombre de variable
   return null;
 }

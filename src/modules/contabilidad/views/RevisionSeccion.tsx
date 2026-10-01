@@ -33,7 +33,7 @@ const GRUPOS: Array<{
     grupo: "DESCUADRE",
     titulo: "Lo que no cuadra",
     explicacion:
-      "Dos registros de la misma plata que tendrían que dar igual y no dan.",
+      "Dos registros del mismo dinero que tendrían que dar igual y no dan.",
     Icono: Scale,
   },
   {

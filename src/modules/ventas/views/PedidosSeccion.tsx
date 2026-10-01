@@ -92,7 +92,7 @@ export function PedidosSeccion() {
     if (archivo === undefined) return;
     if (!TIPOS.split(",").includes(archivo.type)) {
       aviso.error(
-        "Solo puedo leer pedidos en PDF o en foto. Si es otro formato, armá la factura a mano.",
+        "Solo puedo leer pedidos en PDF o en foto. Si es otro formato, arme la factura a mano.",
       );
       return;
     }
@@ -111,11 +111,11 @@ export function PedidosSeccion() {
           <Maria estado={subir.isPending ? "leyendo" : "reposo"} tamano={32} />
           <div>
             <p className="text-sm font-medium">
-              Subí el pedido del cliente y yo armo la factura
+              Suba el pedido del cliente y yo armo la factura
             </p>
             <p className="text-xs text-muted-foreground">
               Una orden de compra, un pedido o una cotización aceptada, en PDF o
-              en foto. Te la dejo lista para revisar; emitirla lo apretás vos.
+              en foto. Se la dejo lista para revisar; emitirla lo decide usted.
             </p>
           </div>
         </div>
@@ -165,11 +165,11 @@ export function PedidosSeccion() {
       ) : pedidos.length === 0 ? (
         <EmptyState
           icon={FileText}
-          titulo="Todavía no le pasaste ningún pedido a María"
+          titulo="Todavía no le ha pasado ningún pedido a María"
           descripcion={
             puedeFacturar
-              ? "Subí la orden de compra o el pedido de un cliente, en PDF o en foto, y María te arma la factura para que la revisés y la emitas."
-              : "Cuando alguien de ventas suba un pedido de un cliente, lo vas a ver acá con la factura que armó María."
+              ? "Suba la orden de compra o el pedido de un cliente, en PDF o en foto, y María le arma la factura para que la revise y la emita."
+              : "Cuando alguien de ventas suba un pedido de un cliente, lo va a ver aquí con la factura que armó María."
           }
           accion={
             puedeFacturar && !subir.isPending
@@ -226,7 +226,7 @@ export function PedidosSeccion() {
                     Armar la factura
                   </Button>
                   <p className="text-xs text-muted-foreground">
-                    Se abre el formulario de factura ya lleno. Revisalo y emitila
+                    Se abre el formulario de factura ya lleno. Revíselo y emítala
                     desde ahí.
                   </p>
                 </div>
@@ -303,7 +303,7 @@ function FacturaDesdePedido({
       }
       guardando={emitir.isPending}
       titulo="Factura desde el pedido"
-      descripcion={`Armada con el pedido${cruzado.pedido.numero === null ? "" : ` ${cruzado.pedido.numero}`} de ${cruzado.pedido.cliente.nombre}. Los precios son los de la lista. Revisá y emití.`}
+      descripcion={`Armada con el pedido${cruzado.pedido.numero === null ? "" : ` ${cruzado.pedido.numero}`} de ${cruzado.pedido.cliente.nombre}. Los precios son los de la lista. Revísela y emítala.`}
       etiquetaBoton="Emitir factura"
       fechaDeHoy
       conFormaPago
@@ -353,7 +353,7 @@ function DetallePedido({ cruzado }: { cruzado: PedidoCruzado }) {
       {cruzado.comprobaciones.length === 0 ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <TriangleAlert className="size-4 shrink-0 text-warning-foreground" />
-          El pedido no trae un subtotal con qué sumar los renglones: revisá las
+          El pedido no trae un subtotal con qué sumar los renglones: revise las
           cantidades contra el papel.
         </p>
       ) : fallan.length === 0 ? (

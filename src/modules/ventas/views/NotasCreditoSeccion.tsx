@@ -119,7 +119,7 @@ export function NotasCreditoSeccion({
         <EmptyState
           icon={FileMinus}
           titulo="Todavía no hay notas crédito"
-          descripcion={`Una nota crédito baja o reversa una factura ya emitida: una devolución, un descuento, un error de precio.${puedeCrear ? " Emitila con «Nueva nota crédito», arriba, o desde la factura en la pestaña Facturas." : ""}`}
+          descripcion={`Una nota crédito baja o reversa una factura ya emitida: una devolución, un descuento, un error de precio.${puedeCrear ? " Emítala con «Nueva nota crédito», arriba, o desde la factura en la pestaña Facturas." : ""}`}
         />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">

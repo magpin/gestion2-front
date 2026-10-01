@@ -46,13 +46,13 @@ describe("FormularioCobro en modo devolver", () => {
     const valor = screen.getByLabelText("Valor del renglón 1");
     await userEvent.clear(valor);
     await userEvent.type(valor, "119000");
-    expect(screen.queryByText(/Te pasaste/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Se pasó/)).not.toBeInTheDocument();
 
     // El pie muestra un problema a la vez (primero, elegir la caja); el
     // exceso lo marca el editor al lado del botón de agregar medio.
     await userEvent.clear(valor);
     await userEvent.type(valor, "119001");
-    expect(screen.getByText(/Te pasaste por/)).toBeInTheDocument();
+    expect(screen.getByText(/Se pasó por/)).toBeInTheDocument();
   });
 
   it("no dice «falta repartir» al devolver: no hay que devolverlo todo", () => {

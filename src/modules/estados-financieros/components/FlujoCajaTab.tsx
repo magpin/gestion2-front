@@ -50,16 +50,16 @@ function Real({ mes }: { mes: string }) {
         ))}
       </ul>
       {f.diferencia !== 0 && (
-        <Aviso tono="alarma" titulo="Hay plata que el flujo no explica" cifra={formatCOP(f.diferencia)}>
+        <Aviso tono="alarma" titulo="Hay dinero que el flujo no explica" cifra={formatCOP(f.diferencia)}>
           El saldo final de caja y bancos no sale del inicial más lo que se movió. Suele ser un asiento de caja sin
-          contrapartida; revisalo en el Libro.
+          contrapartida; revíselo en el Libro.
         </Aviso>
       )}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <TablaEstado titulo="Flujo de caja" subtitulo={`Método directo · ${rangoDelPeriodo(data.periodo)}`} columnas={[mesCorto(mes)]}>
           <Fila tipo="subtotal" etiqueta="Saldo inicial en caja y bancos" valor={f.saldoInicial} comparando={false} />
           {f.actividades.length === 0 && (
-            <Fila tipo="detalle" etiqueta="Este mes no entró ni salió plata de caja ni de bancos." comparando={false} />
+            <Fila tipo="detalle" etiqueta="Este mes no entró ni salió dinero de caja ni de bancos." comparando={false} />
           )}
           {f.actividades.map((a) => (
             <Fragment key={a.actividad}>
@@ -127,7 +127,7 @@ function ProximasSemanas() {
   return (
     <div className="flex flex-col gap-6">
       {faltante && (
-        <Aviso tono="alarma" titulo={`Falta plata: ${faltante.desde === null ? "con lo ya vencido" : faltante.etiqueta.toLowerCase()}`} cifra={formatCOP(faltante.saldo)}>
+        <Aviso tono="alarma" titulo={`Falta dinero: ${faltante.desde === null ? "con lo ya vencido" : faltante.etiqueta.toLowerCase()}`} cifra={formatCOP(faltante.saldo)}>
           Con lo que falta cobrar y pagar, caja y bancos quedarían en negativo. Conviene adelantar cobros o mover
           algún pago.
         </Aviso>

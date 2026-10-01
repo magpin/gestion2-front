@@ -121,7 +121,7 @@ export function NotasDebitoSeccion({
         <EmptyState
           icon={FilePlus}
           titulo="Todavía no hay notas débito"
-          descripcion={`Una nota débito le cobra de más al cliente sobre una factura ya emitida: un flete, un interés de mora, un mayor valor.${puedeCrear ? " Emitila con «Nueva nota débito», arriba, o desde la factura en la pestaña Facturas." : ""}`}
+          descripcion={`Una nota débito le cobra de más al cliente sobre una factura ya emitida: un flete, un interés de mora, un mayor valor.${puedeCrear ? " Emítala con «Nueva nota débito», arriba, o desde la factura en la pestaña Facturas." : ""}`}
         />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card">

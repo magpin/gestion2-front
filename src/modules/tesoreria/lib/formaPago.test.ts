@@ -23,7 +23,7 @@ const con = (cambio: Partial<FormaPagoBorrador>): FormaPagoBorrador => ({
 
 describe("problemaFormaPago", () => {
   it("sin elegir no deja guardar: crédito no es el valor por defecto", () => {
-    expect(problemaFormaPago(formaPagoVacia())).toMatch(/Elegí cómo se paga/);
+    expect(problemaFormaPago(formaPagoVacia())).toMatch(/Elija cómo se paga/);
   });
 
   it("crédito no pide nada más", () => {

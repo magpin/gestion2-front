@@ -33,39 +33,39 @@ interface Capitulo {
 
 const CAPITULOS: Capitulo[] = [
   {
-    titulo: "Configurá tu empresa con IA",
+    titulo: "Configure su empresa con IA",
     dura: 19000,
     leyendas: [
       [0, "Al abrir la configuración, María pide los documentos de la empresa."],
-      [2200, "Le soltás el RUT y lo lee casilla por casilla."],
-      [9800, "Te muestra lo que encontró, con la casilla de donde salió."],
-      [14000, "Lo que los papeles no dicen, te lo pregunta."],
+      [2200, "Usted le sube el RUT y ella lo lee casilla por casilla."],
+      [9800, "Le muestra lo que encontró, con la casilla de donde salió."],
+      [14000, "Lo que los papeles no dicen, se lo pregunta."],
     ],
   },
   {
-    titulo: "Preguntale a María",
+    titulo: "Pregúntele a María",
     dura: 14500,
     leyendas: [
-      [0, "Le preguntás como le preguntarías a una colega."],
+      [0, "Usted le pregunta como le preguntaría a una colega."],
       [4200, "Responde con el dato exacto y dice de dónde salió."],
     ],
   },
   {
-    titulo: "Registrá facturas",
+    titulo: "Registre facturas",
     dura: 18000,
     leyendas: [
-      [0, "Le soltás varias facturas de una."],
+      [0, "Usted le sube varias facturas a la vez."],
       [2200, "Las lee con avance real: cuántas lleva y cuántas faltan."],
       [8200, "Deja lista la que cuadra y aparta las demás con la razón."],
-      [13500, "La repetida la descartás con un clic; queda quién y por qué."],
+      [13500, "La repetida usted la descarta con un clic; queda quién y por qué."],
     ],
   },
   {
-    titulo: "Aprobá y rastreá",
+    titulo: "Apruebe y rastree",
     dura: 16000,
     leyendas: [
-      [0, "Revisás la factura: comprobaciones, renglones y la cuenta recordada."],
-      [4200, "La aprobás, y el asiento nace contabilizado a tu nombre."],
+      [0, "Usted revisa la factura: comprobaciones, renglones y la cuenta recordada."],
+      [4200, "La aprueba, y el asiento nace contabilizado a su nombre."],
       [6800, "Cada paso queda en la trazabilidad, que no se puede editar."],
     ],
   },
@@ -227,8 +227,8 @@ export function DemoMaria() {
                   className="flex h-11 items-center rounded-xl border border-input px-4 text-[13px] text-muted-foreground"
                 >
                   {cap === 0
-                    ? "Escribí o arrastrá acá el RUT, la Cámara de Comercio o la resolución"
-                    : "Preguntá cómo hacer algo, o arrastrá acá facturas, pedidos o el RUT"}
+                    ? "Escriba o arrastre aquí el RUT, la Cámara de Comercio o la resolución"
+                    : "Pregunte cómo hacer algo, o arrastre aquí facturas, pedidos o el RUT"}
                 </div>
               </div>
             </div>
@@ -407,7 +407,7 @@ function Costado({ cap, t }: { cap: number; t: number }) {
         </ol>
         <p className="m-0 mt-auto rounded-lg border border-rail-line p-3 text-xs leading-relaxed text-rail-muted">
           <strong className="text-rail-foreground">Modo IA.</strong> Los pasos se llenan a medida
-          que María lee tus documentos. Vos confirmás cada uno.
+          que María lee sus documentos. Usted confirma cada uno.
         </p>
       </aside>
     );
@@ -438,11 +438,11 @@ function Cabeza({ cap, t }: { cap: number; t: number }) {
   const sub =
     cap === 0
       ? t >= 2200 && t < 9800
-        ? "Leyendo tu documento…"
-        : "Nada se guarda sin tu confirmación"
+        ? "Leyendo su documento…"
+        : "Nada se guarda sin su confirmación"
       : cap === 1 && t >= 4200 && t < 5600
         ? "Escribiendo…"
-        : "Nada se asienta sin tu aprobación";
+        : "Nada se asienta sin su aprobación";
   return (
     <div className="flex h-14 shrink-0 flex-col justify-center border-b border-border px-4 @[700px]:px-7">
       <span className="text-[13px] font-semibold">{titulo}</span>
@@ -552,12 +552,12 @@ function Capitulo1({ t }: { t: number }) {
     <>
       <DeMaria>
         <p className="m-0">
-          Hola. Voy a configurar tu empresa con tus documentos, de a uno. Leo lo necesario y te
-          pregunto solo lo que los papeles no dicen.
+          Hola. Voy a configurar su empresa con sus documentos, uno por uno. Leo lo necesario y
+          le pregunto solo lo que los papeles no dicen.
         </p>
       </DeMaria>
       <Aparece t={t} en={1800}>
-        <DeLaPersona archivos={["RUT_2026.pdf"]}>Leé este documento.</DeLaPersona>
+        <DeLaPersona archivos={["RUT_2026.pdf"]}>Lea este documento.</DeLaPersona>
       </Aparece>
       <Aparece t={t} en={2600}>
         <DeMaria estado={leyendo ? "leyendo" : "reposo"}>
@@ -585,7 +585,7 @@ function Capitulo1({ t }: { t: number }) {
       <Aparece t={t} en={9800}>
         <DeMaria>
           <p className="m-0">
-            Esto encontré. Revisalo: lo que marqué en ámbar no lo leí con seguridad.
+            Esto encontré. Revíselo: lo que marqué en ámbar no lo leí con seguridad.
           </p>
           <Tarjeta>
             {ENCONTRADO.map(([etiqueta, valor, fuente, dudoso]) => (
@@ -628,7 +628,7 @@ function Capitulo1({ t }: { t: number }) {
 
 const PREGUNTA = "¿Cuánto le debo a proveedores y qué vence esta semana?";
 const RESPUESTA =
-  "Le debés $18.900.000 a 11 proveedores. Esta semana vencen 4 facturas por $4.537.300:";
+  "Le debe $18.900.000 a 11 proveedores. Esta semana vencen 4 facturas por $4.537.300:";
 const VENCEN: Array<[string, string, string, boolean?]> = [
   ["Papelería Central", "FC-0231", "$2.380.000"],
   ["Transportes Ruta 80", "TR-1182", "$1.120.000"],
@@ -694,7 +694,7 @@ function Capitulo3({ t }: { t: number }) {
     <>
       <Aparece t={t} en={600}>
         <DeLaPersona archivos={["FC-0231.pdf", "EPM_sep.pdf", "FC-9012.jpg"]}>
-          Leé estos 3 documentos.
+          Lea estos 3 documentos.
         </DeLaPersona>
       </Aparece>
       <Aparece t={t} en={2200}>
@@ -715,8 +715,8 @@ function Capitulo3({ t }: { t: number }) {
         ) : (
           <DeMaria estado={descartada ? "reposo" : "espera"}>
             <p className="m-0">
-              Listo. <strong>1</strong> está lista para que la apruebes, y <strong>2</strong> las
-              aparté porque hay algo que decidir. Nada se registra hasta que lo apruebes.
+              Listo. <strong>1</strong> está lista para que la apruebe, y <strong>2</strong> las
+              aparté porque hay algo que decidir. Nada se registra hasta que usted lo apruebe.
             </p>
             <Tarjeta>
               <FilaLote
@@ -745,9 +745,9 @@ function Capitulo3({ t }: { t: number }) {
                   descartada ? undefined : (
                     <span className="flex flex-wrap gap-2">
                       <Boton objetivo="descartar" apretado={t >= 14400 && t < 15200}>
-                        Es la misma, descartala
+                        Es la misma, descártela
                       </Boton>
-                      <Boton>Es distinta, revisala</Boton>
+                      <Boton>Es distinta, revísela</Boton>
                     </span>
                   )
                 }
@@ -758,7 +758,7 @@ function Capitulo3({ t }: { t: number }) {
       </Aparece>
       <Aparece t={t} en={16000}>
         <DeMaria>
-          <p className="m-0">Te queda 1 factura lista para aprobar y 1 que espera la cuenta.</p>
+          <p className="m-0">Le queda 1 factura lista para aprobar y 1 que espera la cuenta.</p>
         </DeMaria>
       </Aparece>
     </>
@@ -878,7 +878,7 @@ function Capitulo4({ t }: { t: number }) {
             </ol>
             <Aparece t={t} en={11800}>
               <span className="block rounded-md bg-secondary px-3 py-2 text-xs text-muted-foreground">
-                Este historial no se puede editar. Si el asiento se anula, la anulación se agrega acá con su motivo.
+                Este historial no se puede editar. Si el asiento se anula, la anulación se agrega aquí con su motivo.
               </span>
             </Aparece>
           </div>
@@ -893,7 +893,7 @@ function PantallaFinal() {
     <div className="flex h-[540px] flex-col items-center justify-center gap-5 px-6 text-center @[700px]:h-[560px]">
       <Maria estado="lista" tamano={64} intensidad="calma" aprueba />
       <p className="m-0 max-w-[560px] font-serif text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.05] tracking-[-0.8px]">
-        María propone. <span className="italic text-brand-text">Vos aprobás.</span>
+        María propone. <span className="italic text-brand-text">Usted aprueba.</span>
       </p>
     </div>
   );

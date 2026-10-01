@@ -104,7 +104,7 @@ export function RetencionesSeccion() {
         >
           {sinEquivalente.map((c) => `«${c.nombre}»`).join(", ")}{" "}
           {sinEquivalente.length === 1 ? "sigue" : "siguen"} calculando con la
-          tarifa que se les cargó. Pedile al contador que diga a qué concepto de
+          tarifa que se les cargó. Solicite al contador que indique a qué concepto de
           la ley corresponde{sinEquivalente.length === 1 ? "" : "n"}.
         </Aviso>
       )}
@@ -143,7 +143,7 @@ export function RetencionesSeccion() {
         <div className="border-b border-border p-6">
           <h2 className="text-2xl font-semibold">Tarifas de la ley</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Las que regían el {fechaCorta(fecha)}. Tocá un concepto para ver sus
+            Las que regían el {fechaCorta(fecha)}. Pulse un concepto para ver sus
             vigencias anteriores.
           </p>
         </div>
@@ -183,9 +183,9 @@ export function RetencionesSeccion() {
 
       <section className="overflow-hidden rounded-3xl border border-border bg-card">
         <div className="border-b border-border p-6">
-          <h2 className="text-2xl font-semibold">Tus cuentas</h2>
+          <h2 className="text-2xl font-semibold">Sus cuentas</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Se crearon solas con lo que dijiste en Configuración → Impuestos. Se
+            Se crearon solas con lo que indicó en Configuración → Impuestos. Se
             cambian en el Plan de cuentas, como cualquier cuenta.
           </p>
         </div>
@@ -199,7 +199,7 @@ export function RetencionesSeccion() {
             <table className="w-full min-w-[640px] text-left">
               <thead className="bg-muted/40 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 <tr>
-                  {["Concepto", "Lo que retenés", "Lo que te retienen"].map(
+                  {["Concepto", "Lo que retiene", "Lo que le retienen"].map(
                     (x) => (
                       <th key={x} scope="col" className="px-5 py-4">
                         {x}
@@ -222,7 +222,7 @@ export function RetencionesSeccion() {
                     <td className="px-5 py-3 font-mono text-sm">
                       {c.cuenta_codigo ?? (
                         <span className="font-sans text-xs text-muted-foreground">
-                          no sos agente
+                          no es agente
                         </span>
                       )}
                     </td>
@@ -264,9 +264,9 @@ function IcaMunicipios() {
   return (
     <section className="mt-6 overflow-hidden rounded-3xl border border-border bg-card">
       <div className="border-b border-border p-6">
-        <h2 className="text-2xl font-semibold">ICA en tus municipios</h2>
+        <h2 className="text-2xl font-semibold">ICA en sus municipios</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Si sos agente de ICA en cada municipio lo contestás en Configuración →
+          Si es agente de ICA en cada municipio se contesta en Configuración →
           Impuestos. Las bases y tarifas son de la ley de cada municipio.
         </p>
       </div>
@@ -279,10 +279,10 @@ function IcaMunicipios() {
             </span>
             <span className="text-muted-foreground">
               {m.es_agente_retenedor === true
-                ? "Sos agente de retención de ICA aquí."
+                ? "Es agente de retención de ICA aquí."
                 : m.es_agente_retenedor === false
-                  ? "No sos agente de retención de ICA aquí."
-                  : "Todavía no contestaste si sos agente aquí."}
+                  ? "No es agente de retención de ICA aquí."
+                  : "Todavía no ha contestado si es agente aquí."}
             </span>
             {m.acuerdo === null ? (
               m.es_agente_retenedor === true && (
@@ -332,8 +332,8 @@ function Aciertos() {
       <div className="border-b border-border p-6">
         <h2 className="text-2xl font-semibold">Aciertos</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          De dónde salió el concepto de cada renglón que registraste, y cuántas
-          veces lo aceptaste tal cual. Lo que propone la IA nunca se aplica
+          De dónde salió el concepto de cada renglón que registró, y cuántas
+          veces lo aceptó tal cual. Lo que propone la IA nunca se aplica
           solo: siempre lo confirma una persona.
         </p>
       </div>
@@ -352,7 +352,7 @@ function LoAprendido() {
   const quitar = useMutation({
     mutationFn: retencionesApi.quitarAprendido,
     onSuccess: async () => {
-      aviso.exito("Listo: la próxima vez lo vuelvo a deducir o te pregunto.");
+      aviso.exito("Listo: la próxima vez lo vuelvo a deducir o le pregunto.");
       await cliente.invalidateQueries({ queryKey: [...CLAVE, "aprendido"] });
     },
     onError: (e: unknown) => aviso.falla(e),
@@ -363,13 +363,13 @@ function LoAprendido() {
       <div className="border-b border-border p-6">
         <h2 className="text-2xl font-semibold">Lo que aprendí</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Cuando confirmás o cambiás el concepto de un renglón, lo recuerdo para
+          Cuando confirma o cambia el concepto de un renglón, lo recuerdo para
           ese proveedor.
         </p>
       </div>
       {aprendido.length === 0 ? (
         <p className="px-6 py-12 text-center text-sm text-muted-foreground">
-          Todavía nada. Aparece cuando contestás el concepto de una compra.
+          Todavía nada. Aparece cuando contesta el concepto de una compra.
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -401,8 +401,8 @@ function LoAprendido() {
                     {a.concepto_nombre}
                     <span className="block text-xs text-muted-foreground">
                       {a.origen === "CORREGIDO"
-                        ? "Lo cambiaste"
-                        : "Aceptaste lo que deduje"}
+                        ? "Lo cambió usted"
+                        : "Aceptó lo que deduje"}
                       {a.veces > 1 ? ` · ${a.veces} veces` : ""}
                     </span>
                   </td>

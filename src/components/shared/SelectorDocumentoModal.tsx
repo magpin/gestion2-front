@@ -170,7 +170,7 @@ export function SelectorDocumentoModal<T extends DocumentoEnSelector>({
           descripcion={
             encabezado && descripcionVaciaConEncabezado
               ? descripcionVaciaConEncabezado
-              : `Cuando alguna ${singular} llegue acá, la vas a ver en esta lista.`
+              : `Cuando alguna ${singular} llegue aquí, la verá en esta lista.`
           }
         />
       )}

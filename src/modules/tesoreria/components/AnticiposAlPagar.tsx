@@ -94,7 +94,7 @@ export function AnticiposAlPagar({
 
       {aplicado > 0 && cubierta && (
         <p className="text-sm text-muted-foreground">
-          El anticipo cubre la factura entera: no entra plata a caja ni a banco.
+          El anticipo cubre la factura entera: no entra dinero a caja ni a banco.
         </p>
       )}
 

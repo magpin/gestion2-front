@@ -151,8 +151,8 @@ export function BurbujaLectura({
         <div className="flex items-center justify-between gap-3 border-t border-dashed border-border pt-3">
           <span className="text-xs text-muted-foreground">
             {datos.length === 0
-              ? "Nada se guarda hasta que lo revises."
-              : `${datos.length} ${datos.length === 1 ? "dato" : "datos"} hasta ahora. Nada se guarda hasta que lo revises.`}
+              ? "Nada se guarda hasta que usted lo revise."
+              : `${datos.length} ${datos.length === 1 ? "dato" : "datos"} hasta ahora. Nada se guarda hasta que usted lo revise.`}
           </span>
           <BotonTarjeta disabled={deteniendo} onClick={() => alDetener(documento.id)}>
             {deteniendo ? "Deteniendo…" : "Detener"}

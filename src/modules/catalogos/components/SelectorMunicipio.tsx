@@ -86,7 +86,7 @@ export function SelectorMunicipio({
             autoFocus
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Escribe al menos tres letras"
+            placeholder="Escriba al menos tres letras"
             className="h-9"
             aria-label="Buscar municipio"
           />

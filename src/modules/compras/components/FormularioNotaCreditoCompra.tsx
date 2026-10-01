@@ -95,14 +95,14 @@ export function FormularioNotaCreditoCompra({
     .filter((l) => l.cantidad > 0);
 
   const impedimento = (): string | null => {
-    if (compra === null) return "Elegí la compra que se corrige.";
-    if (fecha === "") return "Elegí la fecha.";
+    if (compra === null) return "Elija la compra que se corrige.";
+    if (fecha === "") return "Elija la fecha.";
     if (numeroNota.trim() === "")
       return "Falta el número que el proveedor le puso a su nota.";
     if (motivo.trim().length < 3)
-      return "Contá por qué se corrige esta compra. Es lo primero que lee quien audita.";
+      return "Indique por qué se corrige esta compra. Es lo primero que lee quien audita.";
     if (porLineas && elegidas.length === 0)
-      return "Poné cuánto vuelve de al menos una línea.";
+      return "Indique cuánto vuelve de al menos una línea.";
     return null;
   };
 

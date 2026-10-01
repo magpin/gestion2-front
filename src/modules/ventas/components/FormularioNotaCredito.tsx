@@ -89,12 +89,12 @@ export function FormularioNotaCredito({
     .filter((l) => l.cantidad > 0);
 
   const impedimento = (): string | null => {
-    if (factura === null) return "Elegí la factura que vas a corregir.";
-    if (fecha === "") return "Elegí la fecha.";
+    if (factura === null) return "Elija la factura que va a corregir.";
+    if (fecha === "") return "Elija la fecha.";
     if (motivo.trim().length < 3)
-      return "Contá por qué se corrige esta factura. Es lo primero que lee quien audita.";
+      return "Indique por qué se corrige esta factura. Es lo primero que lee quien audita.";
     if (porLineas && elegidas.length === 0)
-      return "Poné cuánto vuelve de al menos una línea.";
+      return "Indique cuánto vuelve de al menos una línea.";
     return null;
   };
 
@@ -126,7 +126,7 @@ export function FormularioNotaCredito({
             <DialogTitle>Nota crédito</DialogTitle>
             <DialogDescription>
               Baja lo que el cliente debe: la factura completa, o solo las
-              cantidades que elijas. Si la mercancía vuelve a bodega, se
+              cantidades que elija. Si la mercancía vuelve a bodega, se
               registra aparte como ajuste de inventario.
             </DialogDescription>
           </div>

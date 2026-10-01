@@ -48,8 +48,8 @@ export function CalendarioTab({
       <PorPagar datos={data} />
       {data.filas.length === 0 ? (
         <EmptyState
-          titulo="Falta tu RUT"
-          descripcion="Con el RUT, María arma el calendario con tus fechas y tus responsabilidades."
+          titulo="Falta el RUT"
+          descripcion="Con el RUT, María arma el calendario con las fechas y las responsabilidades de la empresa."
           icon={CalendarDays}
           accion={{ label: "Subir RUT", href: "/configuracion/ia" }}
           accionSecundaria={{ label: "Marcarlas a mano", href: "/configuracion/impuestos" }}
@@ -94,13 +94,13 @@ export function CalendarioTab({
           {data.filas.some((f) => f.vence === null && f.situacion.estado !== "PAGADA") && (
             <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
               «Fecha por confirmar»: el calendario tributario de ley todavía no tiene esa fecha cargada. Al registrar la
-              presentación podés escribirla.
+              presentación puede escribirla.
             </p>
           )}
         </section>
       )}
       <p className="text-xs text-muted-foreground">
-        El sistema no presenta ni paga ante la DIAN: eso se hace en MUISCA con tu firma. Acá se registra lo que ya hiciste, y el
+        El sistema no presenta ni paga ante la DIAN: eso se hace en MUISCA con su firma. Aquí se registra lo que ya hizo, y el
         pago se asienta.
       </p>
     </div>
