@@ -50,6 +50,7 @@ next-env.d.ts
 # Pruebas de punta a punta
 /e2e/.sesion/
 /e2e/.resultados/
+/e2e/.resultados-*/
 /playwright-report/
 /e2e/.informe/
 /e2e/.capturas/
