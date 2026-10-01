@@ -82,7 +82,7 @@ describe("TurnosDelLote", () => {
     expect(alRevisar).toHaveBeenCalledWith(expect.objectContaining({ documentoId: "d1" }));
 
     const apartadas = screen.getByRole("region", { name: "Apartadas" });
-    await userEvent.click(within(apartadas).getByRole("button", { name: "Es la misma, descartala" }));
+    await userEvent.click(within(apartadas).getByRole("button", { name: "Es la misma, descártela" }));
     expect(alDescartar).toHaveBeenCalledWith(expect.objectContaining({ documentoId: "d2" }));
     expect(within(apartadas).getByRole("button", { name: "Es distinta, revísela" })).toBeInTheDocument();
   });

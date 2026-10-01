@@ -60,7 +60,7 @@ export function useDetenerLote() {
 }
 
 /**
- * «Es la misma, descartala». Cambia lo que espera una decisión: el número de
+ * «Es la misma, descártela». Cambia lo que espera una decisión: el número de
  * la barra y la píldora del encabezado también.
  */
 export function useDescartar() {
