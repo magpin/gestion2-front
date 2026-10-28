@@ -7,6 +7,7 @@ import { useAuthStore } from "@/core/store/authStore";
 import type { RolCodigo } from "@/modules/auth/types/auth.types";
 import { Maria } from "./Maria";
 import { ROLES_MARIA } from "../hooks/usePendientes";
+import { MARIA_PROXIMAMENTE } from "../proximamente";
 
 /**
  * Un estado vacío con María invitando a empezar, en vez de un ícono genérico
@@ -34,7 +35,8 @@ export function VacioConMaria({
   roles?: RolCodigo[];
 }) {
   const roles = useAuthStore((s) => s.roles);
-  const veMaria = ROLES_MARIA.some((r) => roles.includes(r) && quienes.includes(r));
+  const veMaria =
+    !MARIA_PROXIMAMENTE && ROLES_MARIA.some((r) => roles.includes(r) && quienes.includes(r));
 
   return (
     <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card px-6 py-20 text-center">

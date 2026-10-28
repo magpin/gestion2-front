@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/core/api/api";
 import { useAuthStore } from "@/core/store/authStore";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 
 export const CLAVE_DISPONIBLE = ["asistente", "disponible"] as const;
 
@@ -30,7 +31,9 @@ export const useDisponible = () => {
       api
         .get<{ disponible: boolean }>("/configuracion/ia/disponible")
         .then((r) => r.data.disponible),
-    enabled: operando,
+    // Con María cerrada ni se pregunta: sin respuesta, las dos entradas al
+    // modo IA quedan apagadas.
+    enabled: operando && !MARIA_PROXIMAMENTE,
     staleTime: Infinity,
     meta: { silencioso: true },
   });

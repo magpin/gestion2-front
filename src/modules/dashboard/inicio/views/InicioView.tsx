@@ -31,6 +31,7 @@ import { funcionActiva } from "@/core/config/funciones";
 import { useAuthStore } from "@/core/store/authStore";
 import { MariaEstaSemana } from "@/modules/asistente/components/MariaEstaSemana";
 import { ROLES_MARIA } from "@/modules/asistente/hooks/usePendientes";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { comprasApi } from "@/modules/compras/services/compras.service";
 import { productosApi } from "@/modules/inventario/services/inventario.service";
 import { planCuentasApi } from "@/modules/plan-cuentas/services/plan-cuentas.service";
@@ -89,7 +90,7 @@ const ROLES_PLATA = ["DIRECTOR", "CONTADOR", "CAJA", "CONSULTA"] as const; // vo
 export function InicioView() {
   const { data, isError, error, refetch } = useEstadoConfiguracion();
   const roles = useAuthStore((s) => s.roles);
-  const veMaria = ROLES_MARIA.some((r) => roles.includes(r));
+  const veMaria = !MARIA_PROXIMAMENTE && ROLES_MARIA.some((r) => roles.includes(r));
   // D3: con la configuración completa, Inicio es el tablero de la plata.
   // Mientras falte algo, siguen los pasos.
   const conTablero =

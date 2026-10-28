@@ -9,6 +9,7 @@ import { ErrorCarga } from "@/components/shared/ErrorCarga";
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
 import { useEstadoConfiguracion } from "../hooks/useEstadoConfiguracion";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { useDisponible } from "../hooks/useModoIa";
 import type { ClavePaso } from "../types/configuracion.types";
 import { configuracionService } from "../services/configuracion.service";
@@ -91,7 +92,8 @@ export function AsistenteShell({
 
   // Quien eligió IA no entra a los pasos sueltos hasta terminar: salir del modo
   // y volver era lo que lo metía en un bucle.
-  const enIa = data?.modo === "IA" && !data.completa;
+  // Con María cerrada, quien había elegido IA sigue a mano.
+  const enIa = !MARIA_PROXIMAMENTE && data?.modo === "IA" && !data.completa;
   useEffect(() => {
     if (!embebido && enIa) router.replace(RUTA_MODO_IA);
   }, [embebido, enIa, router]);

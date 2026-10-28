@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ScanLine } from "lucide-react";
 
+import { MARIA_PROXIMAMENTE } from "../proximamente";
+
 /**
  * El atajo de Ventas y Compras a lo que María leyó y espera aprobación.
  *
@@ -10,6 +12,7 @@ import { ScanLine } from "lucide-react";
  * pantalla, parada en su pestaña.
  */
 export function AtajoLeidos({ tipo }: { tipo: "facturas" | "pedidos" }) {
+  if (MARIA_PROXIMAMENTE) return null;
   return (
     <Link
       href={`/dashboard/asistente/leidos?tipo=${tipo}`}

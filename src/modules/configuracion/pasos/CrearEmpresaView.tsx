@@ -27,6 +27,7 @@ import { useCerrarSesion, useElegirEmpresa } from "@/modules/auth/hooks/useAuth"
 import { SelectorFormaAsociativa } from "@/modules/catalogos/components/SelectorFormaAsociativa";
 import { SelectorSectores } from "@/modules/catalogos/components/SelectorSectores";
 import { Destello } from "@/modules/landing/components/Marca";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { RUTA_MODO_IA } from "../components/AsistenteShell";
 import { Campo } from "../components/Campo";
 import { Recorrido } from "../components/Recorrido";
@@ -269,13 +270,14 @@ export function CrearEmpresaView() {
                   oscura
                   retraso={styles.d1}
                   icono={<Destello size={22} className="text-brand" />}
-                  insignia="Recomendado"
+                  insignia={MARIA_PROXIMAMENTE ? "Próximamente" : "Recomendado"}
                   titulo="Con "
                   tituloCursiva="IA"
                   texto="Suba el RUT y la IA arma la empresa. Después sigue con la Cámara de Comercio y la resolución, y le pregunta solo lo que los papeles no dicen."
                   puntos={PUNTOS_IA}
                   accion="Empezar con IA"
                   alElegir={() => setModo("IA")}
+                  deshabilitado={MARIA_PROXIMAMENTE}
                 />
                 <TarjetaModo
                   retraso={styles.d2}
