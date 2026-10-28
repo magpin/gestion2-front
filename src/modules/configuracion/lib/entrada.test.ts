@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import type { EstadoConfiguracion, EstadoPaso, Paso } from "../types/configuracion.types";
 import { destinoAlEntrar, permitidaSinConfigurar } from "./entrada";
 
@@ -61,7 +62,13 @@ describe("destinoAlEntrar", () => {
 });
 
 describe("destinoAlEntrar con modo y paso", () => {
-  it("quien eligió IA vuelve a IA", () => {
+  it.runIf(MARIA_PROXIMAMENTE)("con María cerrada, quien eligió IA sigue a mano", () => {
+    expect(destinoAlEntrar({ ...estado([["EMPRESA", "LISTO"], ["SEDES", "FALTA"]]), modo: "IA" })).toBe(
+      "/configuracion/sedes",
+    );
+  });
+
+  it.skipIf(MARIA_PROXIMAMENTE)("quien eligió IA vuelve a IA", () => {
     expect(destinoAlEntrar({ ...estado([["EMPRESA", "LISTO"], ["SEDES", "FALTA"]]), modo: "IA" })).toBe(
       "/configuracion/ia",
     );

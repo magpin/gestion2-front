@@ -7,6 +7,7 @@ import { useTieneRol } from "@/core/store/authStore";
 import { formatCOP, formatFecha, hoyEnColombia } from "@/lib/utils";
 import { Maria } from "@/modules/asistente/components/Maria";
 import { ROLES_MARIA } from "@/modules/asistente/hooks/usePendientes";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { facturasApi } from "../services/ventas.service";
 import type { VentaDocumentoResumen } from "../types/ventas.types";
 
@@ -36,7 +37,7 @@ export function PanelMaria({
   alCobrar?: () => void;
   alVerAsiento?: () => void;
 }) {
-  const veMaria = useTieneRol(...ROLES_MARIA);
+  const veMaria = useTieneRol(...ROLES_MARIA) && !MARIA_PROXIMAMENTE;
   const veAsientos = useTieneRol("DIRECTOR", "CONTADOR", "CONSULTA");
   const numero = `${factura.prefijo ?? ""}${factura.consecutivo}`;
 

@@ -24,6 +24,7 @@ import { useQuieto } from "@/hooks/useQuieto";
 import { aviso } from "@/lib/avisos";
 import { cn, formatCOP } from "@/lib/utils";
 import { ROLES_MARIA } from "@/modules/asistente/hooks/usePendientes";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { lineaCompraVacia, type LineaCompraBorrador } from "@/modules/compras/components/EditorLineasCompra";
 import { SelectorProveedor } from "@/modules/compras/components/SelectorProveedor";
 import { SelectorConcepto } from "@/modules/conceptos/components/SelectorConcepto";
@@ -87,7 +88,9 @@ function Formulario({
   onConFactura: (compra: CompraDesdeGasto) => void;
 }) {
   const queryClient = useQueryClient();
-  const veMaria = useAuthStore((s) => ROLES_MARIA.some((r) => s.roles.includes(r)));
+  const veMaria = useAuthStore(
+    (s) => !MARIA_PROXIMAMENTE && ROLES_MARIA.some((r) => s.roles.includes(r)),
+  );
   const [descripcion, setDescripcion] = useState("");
   // El centro de costo del gasto. `null`: el que proponga el servidor.
   const [centro, setCentro] = useState<string | null>(null);

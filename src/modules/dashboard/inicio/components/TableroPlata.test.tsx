@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { AlertasMaria } from "./TableroPlata";
 
 describe("alertas de María en el tablero", () => {
-  it("abren el chat con la pregunta escrita, o llevan a la pantalla donde se resuelve", () => {
+  it.skipIf(MARIA_PROXIMAMENTE)("abren el chat con la pregunta escrita, o llevan a la pantalla donde se resuelve", () => {
     render(
       <AlertasMaria
         alertas={[

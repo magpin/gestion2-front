@@ -7,6 +7,7 @@ import { ArrowRight, TrendingDown, TrendingUp, TriangleAlert } from "lucide-reac
 import { SkeletonCard } from "@/components/shared/SkeletonCard";
 import { funcionActiva } from "@/core/config/funciones";
 import { cn, formatCOP } from "@/lib/utils";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { nombreMes } from "@/modules/gastos/lib/mes";
 import type { Alerta, Tablero } from "../types/tablero.types";
 
@@ -337,9 +338,11 @@ export function AlertasMaria({ alertas }: { alertas: Alerta[] }) {
             )}
           </p>
           {a.accion.tipo === "MARIA" ? (
+            MARIA_PROXIMAMENTE ? null : (
             <BotonAlerta href={`/dashboard/asistente?pregunta=${encodeURIComponent(a.accion.pregunta)}`}>
               Preguntarle a María
             </BotonAlerta>
+            )
           ) : (
             <BotonAlerta href={a.accion.href}>{a.accion.etiqueta}</BotonAlerta>
           )}

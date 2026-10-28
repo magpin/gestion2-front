@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { ErrorCarga } from "@/components/shared/ErrorCarga";
 import { Destello } from "@/modules/landing/components/Marca";
 import { useAuthStore } from "@/core/store/authStore";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { RUTA_MODO_IA } from "../components/AsistenteShell";
 import { Recorrido } from "../components/Recorrido";
 import { RUTA_PASO } from "../components/rutas";
@@ -116,7 +117,7 @@ export function BienvenidaView() {
               oscura
               retraso={styles.d1}
               icono={<Destello size={22} className="text-brand" />}
-              insignia="Recomendado"
+              insignia={MARIA_PROXIMAMENTE ? "Próximamente" : "Recomendado"}
               titulo="Con "
               tituloCursiva="IA"
               texto="Suba sus documentos. La IA lee, llena los pasos y le pregunta solo lo que los papeles no dicen."
@@ -204,7 +205,7 @@ export function TarjetaModo({
 }) {
   const cuerpoBoton = (
     <>
-      {deshabilitado ? "Disponible pronto" : accion}
+      {deshabilitado ? (MARIA_PROXIMAMENTE ? "Próximamente" : "Disponible pronto") : accion}
       <ArrowRight className="size-[15px] shrink-0" />
     </>
   );

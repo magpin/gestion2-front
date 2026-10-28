@@ -1,3 +1,4 @@
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import type { EstadoConfiguracion } from "../types/configuracion.types";
 
 /** Los roles que pueden llenar la configuración (los de los pasos en el backend). */
@@ -18,7 +19,7 @@ export const ROLES_CONFIGURACION = ["ADMIN_TENANT", "DIRECTOR", "CONTADOR"] as c
  */
 export function destinoAlEntrar(estado: EstadoConfiguracion): string {
   if (estado.siguiente === null) return "/dashboard";
-  if (estado.modo === "IA") return "/configuracion/ia";
+  if (estado.modo === "IA" && !MARIA_PROXIMAMENTE) return "/configuracion/ia";
   const sinTocar = estado.pasos
     .filter((p) => p.clave !== "EMPRESA")
     .every((p) => p.estado === "PENDIENTE" || p.estado === "BLOQUEADO");

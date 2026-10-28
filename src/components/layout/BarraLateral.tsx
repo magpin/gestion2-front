@@ -45,6 +45,7 @@ import { funcionActiva, type Funcion } from "@/core/config/funciones";
 import { useAuthStore } from "@/core/store/authStore";
 import { Maria } from "@/modules/asistente/components/Maria";
 import { ROLES_MARIA, usePendientes } from "@/modules/asistente/hooks/usePendientes";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import type { RolCodigo } from "@/modules/auth/types/auth.types";
 
 interface Entrada {
@@ -73,6 +74,8 @@ interface Entrada {
   hastaQue?: Funcion;
   /** Otras rutas que también la marcan activa. */
   alias?: string[];
+  /** Se ve, pero no abre: lleva «Próximamente» en vez del enlace. */
+  proximamente?: boolean;
 }
 
 interface Grupo {
@@ -103,6 +106,7 @@ const GRUPOS: Grupo[] = [
         icono: Sparkle,
         roles: ROLES_MARIA,
         cara: true,
+        proximamente: MARIA_PROXIMAMENTE,
       },
     ],
   },
@@ -318,8 +322,9 @@ export function BarraLateral() {
     (entrada.roles === undefined || montado) && entradaVisible(entrada, roles);
 
   // Solo se pide si la persona ve a María: el número es suyo.
+  // Mientras María está cerrada, tampoco se piden sus pendientes.
   const pendientes = usePendientes(
-    montado && ROLES_MARIA.some((r) => roles.includes(r)),
+    !MARIA_PROXIMAMENTE && montado && ROLES_MARIA.some((r) => roles.includes(r)),
   );
   const hayPendientes = (pendientes?.total ?? 0) > 0;
 
@@ -331,7 +336,22 @@ export function BarraLateral() {
   const esActiva = (entrada: Entrada) =>
     coincide(entrada.href) || (entrada.alias ?? []).some(coincide);
 
-  const boton = (entrada: Entrada) => (
+  const boton = (entrada: Entrada) =>
+    entrada.proximamente ? (
+      <SidebarMenuItem key={entrada.href}>
+        <SidebarMenuButton
+          aria-disabled
+          tooltip={`${entrada.etiqueta} · Próximamente`}
+          className="cursor-not-allowed opacity-60 hover:bg-transparent"
+        >
+          {entrada.cara ? <Maria estado="reposo" tamano={20} /> : <entrada.icono />}
+          <span>{entrada.etiqueta}</span>
+          <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground group-data-[collapsible=icon]:hidden">
+            Próximamente
+          </span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ) : (
     <SidebarMenuItem key={entrada.href}>
       <SidebarMenuButton
         isActive={esActiva(entrada)}
@@ -360,7 +380,7 @@ export function BarraLateral() {
         )}
       </SidebarMenuButton>
     </SidebarMenuItem>
-  );
+    );
 
   const pie = PIE.filter(puedeVer);
 

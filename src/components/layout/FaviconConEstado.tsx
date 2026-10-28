@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 import { useAuthStore } from "@/core/store/authStore";
 import { ROLES_MARIA, usePendientes } from "@/modules/asistente/hooks/usePendientes";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 
 /**
  * El punto naranja en la pestaña cuando algo espera una decisión de quien mira
@@ -25,7 +26,7 @@ export function FaviconConEstado() {
     () => true,
     () => false,
   );
-  const veMaria = montado && ROLES_MARIA.some((r) => roles.includes(r));
+  const veMaria = !MARIA_PROXIMAMENTE && montado && ROLES_MARIA.some((r) => roles.includes(r));
   const pendientes = usePendientes(veMaria);
   const espera = veMaria && (pendientes?.total ?? 0) > 0;
 

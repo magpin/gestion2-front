@@ -9,6 +9,7 @@ import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import { Button } from "@/components/ui/button";
 import { useTieneRol } from "@/core/store/authStore";
 import { cn, formatCOP } from "@/lib/utils";
+import { MARIA_PROXIMAMENTE } from "@/modules/asistente/proximamente";
 import { CLASES_TONO, detalleDeFila, estadoEnPalabras, fechaCorta } from "../lib/impuestos";
 import { impuestosApi } from "../services/impuestos.service";
 import type { Calendario, FilaCalendario } from "../types/impuestos.types";
@@ -49,10 +50,22 @@ export function CalendarioTab({
       {data.filas.length === 0 ? (
         <EmptyState
           titulo="Falta el RUT"
-          descripcion="Con el RUT, María arma el calendario con las fechas y las responsabilidades de la empresa."
+          descripcion={
+            MARIA_PROXIMAMENTE
+              ? "Marque las responsabilidades de la empresa y el calendario se arma con sus fechas."
+              : "Con el RUT, María arma el calendario con las fechas y las responsabilidades de la empresa."
+          }
           icon={CalendarDays}
-          accion={{ label: "Subir RUT", href: "/configuracion/ia" }}
-          accionSecundaria={{ label: "Marcarlas a mano", href: "/configuracion/impuestos" }}
+          accion={
+            MARIA_PROXIMAMENTE
+              ? { label: "Marcarlas a mano", href: "/configuracion/impuestos" }
+              : { label: "Subir RUT", href: "/configuracion/ia" }
+          }
+          accionSecundaria={
+            MARIA_PROXIMAMENTE
+              ? undefined
+              : { label: "Marcarlas a mano", href: "/configuracion/impuestos" }
+          }
         />
       ) : (
         <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
